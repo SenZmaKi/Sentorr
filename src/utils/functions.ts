@@ -6,6 +6,15 @@ export function printRunTimeLater(task: string = ""): () => void {
     return () => { return console.log(`${task}: ${new Date().getTime() - currentTime} ms`) };
 }
 
+/**
+ * Maps an array by the callback then filters out the undefined values yielded from the map
+ * @param array
+ * @param callback  A function that returns a value or undefined
+ * @returns 
+ */
+export function filterMap<A, T>(array: Array<A>, callback: (elem: A) => T | undefined): Array<T> {
+    return array.map(callback).filter((elem) => elem !== undefined) as Array<T>;
+}
 export function zfill(num: number | string): string {
     num = num.toString();
     return num.padStart(num.length + 1, "0");

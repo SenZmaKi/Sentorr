@@ -1,7 +1,6 @@
 import { CLIENT } from "../../utils/client.js";
 import { JsonObject } from "../../utils/types.js";
 import {
-  Actor,
   AdvancedTitleSearchResultJson,
   BaseNode,
   BaseResult,
@@ -20,9 +19,9 @@ import {
   SortOrder,
 } from "./types.js";
 import { DATE, DEFAULT_RESULTS_LIMIT, DEBUG } from "../../utils/constants.js";
-import { capitalise, getFirst, parseHtml } from "../../utils/functions.js";
+import { capitalise, filterMap, getFirst, parseHtml } from "../../utils/functions.js";
 import { CheerioAPI } from "cheerio";
-import { MoreMetadataJson } from "./more-metadata.js";
+import { MoreMetadataJson } from "./moreMetadata.js";
 
 const HOME_URL = "https://imdb.com/";
 const API_ENTRY_POINT = "https://graphql.imdb.com/?operationName=";
@@ -31,7 +30,7 @@ const DEFAULT_RECOMMENDATIONS_VARIABLES = {
   ...DEFAULT_LOCALE,
   includeUserRating: false,
 };
-const DEFAUT_EPISODES_RESULTS_LIMIT = 250;
+const DEFAULT_EPISODES_RESULTS_LIMIT = 250;
 const FAN_FAVORITES_HASH =
   "7c01e0d9d8581975bf64701df0c96b02aaec777fdfc75734d68d009bde984b99"
 const POPULAR_TITLES_HASH =
@@ -59,7 +58,7 @@ function generateAPIURL(
   variables: JsonObject,
   sha256Hash: string,
 ): string {
-  const extensions = { persistedQuery: { sha256Hash: sha256Hash, version: 1 } };
+  const extensions = { persistedQuery: { sha256Hash, version: 1 } };
   const url = `${API_ENTRY_POINT}${operationName}&variables=${stringifyAndEncodeJson(
     variables,
   )}&extensions=${stringifyAndEncodeJson(extensions)}`;
@@ -88,7 +87,7 @@ function buildBaseResult(node: BaseNode): BaseResult {
   const rating = node.ratingsSummary?.aggregateRating;
   const ratingCount = node.ratingsSummary?.voteCount;
   let type = node.titleType?.displayableProperty?.value?.plainText;
-  if (!type) {
+  if (type) {
     // For movies the type plainText is an empty string but the type is stored in the id value as "movie"
     const titleID = node?.titleType?.id;
     if (titleID) {
@@ -144,11 +143,7 @@ async function getFanFavorites(): Promise<BaseResult[]> {
     undefined,
     SESSION_COOKIES,
   )) as FanFavoritesResultJson;
-  const results: BaseResult[] = [];
-  fanFavoritesJson.data.fanPicksTitles.edges.forEach((edge) =>
-    results.push(buildBaseResult(edge.node)),
-  );
-  return results;
+  return fanFavoritesJson.data.fanPicksTitles.edges.map((edge) => buildBaseResult(edge.node));
 }
 
 async function getPopularTitles(): Promise<BaseResult[]> {
@@ -159,11 +154,7 @@ async function getPopularTitles(): Promise<BaseResult[]> {
   };
   const url = generateAPIURL("PopularTitles", variables, POPULAR_TITLES_HASH);
   const popularTitleJson = (await apiGet(url)) as PopularTitlesJson;
-  const results: BaseResult[] = [];
-  popularTitleJson.data.popularTitles.titles.forEach((node) =>
-    results.push(buildBaseResult(node)),
-  );
-  return results;
+  return popularTitleJson.data.popularTitles.titles.map((node) => buildBaseResult(node));
 }
 
 async function filteredSearch(filters: {
@@ -211,10 +202,7 @@ async function filteredSearch(filters: {
   const advancedTitleSearchResultJson = (await apiGet(
     url,
   )) as AdvancedTitleSearchResultJson;
-  const results: BaseResult[] = [];
-  advancedTitleSearchResultJson.data.advancedTitleSearch.edges.forEach((edge) =>
-    results.push(buildBaseResult(edge.node.title)),
-  );
+  const results = advancedTitleSearchResultJson.data.advancedTitleSearch.edges.map((edge) => buildBaseResult(edge.node.title));
   const nextPageKey =
     advancedTitleSearchResultJson.data.advancedTitleSearch.pageInfo.endCursor;
   return { nextPageKey, results };
@@ -231,7 +219,7 @@ async function getEpisodes(
     originalTitleText: false,
     after: pageKey,
     const: mediaID,
-    first: DEFAUT_EPISODES_RESULTS_LIMIT,
+    first: DEFAULT_EPISODES_RESULTS_LIMIT,
     filter: { includeSeasons: [seasonNumber.toLocaleString()] },
   };
   const url = generateAPIURL(
@@ -240,8 +228,7 @@ async function getEpisodes(
     EPISODES_HASH,
   );
   const episodesResultsJson = (await apiGet(url)) as EpisodesResultsJson;
-  const results: Episode[] = [];
-  episodesResultsJson.data.title.episodes.episodes.edges.forEach((edge) => {
+  const results = episodesResultsJson.data.title.episodes.episodes.edges.map((edge) => {
     const ep = edge.node;
     const id = ep.id;
     const title = ep.titleText.text;
@@ -254,7 +241,7 @@ async function getEpisodes(
     const releaseDate = `${ep.releaseDate.day}-${ep.releaseDate.month}-${ep.releaseDate.year}`;
     const rating = ep.ratingsSummary.aggregateRating;
     const ratingCount = ep.ratingsSummary.voteCount;
-    results.push({
+    return {
       id,
       title,
       number,
@@ -264,11 +251,11 @@ async function getEpisodes(
       releaseDate,
       rating,
       ratingCount,
-    });
+    };
   });
   const nextPageKey =
     episodesResultsJson.data.title.episodes.episodes.pageInfo.endCursor;
-  return { nextPageKey, results: results };
+  return { nextPageKey, results };
 }
 
 async function getMedia(mediaID: string): Promise<Media> {
@@ -293,14 +280,8 @@ function combineMetadata(
   const genres = metadataJson.genre;
   const rating = metadataJson.aggregateRating?.ratingValue;
   const ratingCount = metadataJson.aggregateRating?.ratingCount;
-  const directors: string[] = [];
-  metadataJson.director?.forEach((val) => directors.push(val.name));
-  const creators: string[] = [];
-  metadataJson.creator?.forEach((cr) => {
-    if (cr.name) {
-      creators.push(cr.name);
-    }
-  });
+  const directors = metadataJson.director?.map((d) => d.name);
+  const creators = filterMap(metadataJson.creator, (cr) => cr.name);
   const contentRating = metadataJson.contentRating;
   const aboveTheFoldData = moreMetadata.props.pageProps.aboveTheFoldData;
   const id = aboveTheFoldData.id;
@@ -310,22 +291,18 @@ function combineMetadata(
   const plot = aboveTheFoldData.plot?.plotText?.plainText;
   const runtime =
     aboveTheFoldData.runtime?.displayableProperty?.value?.plainText;
-  const recommendations: BaseResult[] = [];
   const productionStatus =
     aboveTheFoldData.productionStatus?.currentProductionStage?.text;
   const mainColumnData = moreMetadata.props.pageProps.mainColumnData;
   const episodeCount = mainColumnData?.episodes?.totalEpisodes?.total;
   const seasonsCount = mainColumnData?.episodes?.seasons?.length;
-  mainColumnData.moreLikeThisTitles.edges.forEach((rec) => {
-    recommendations.push(buildBaseResult(rec.node));
-  });
-  const actors: Actor[] = [];
-  mainColumnData.cast.edges.forEach((edge) => {
+  const recommendations = mainColumnData.moreLikeThisTitles.edges.map((rec) => buildBaseResult(rec.node));
+  const actors = mainColumnData.cast.edges.map((edge) => {
     const name = edge.node.name.nameText.text;
     const imageUrl = edge.node.name.primaryImage?.url;
-    const c = getFirst(edge.node.characters); // Idk why characters is an array maybe whoever made the choice thought one actor could play 2 or more characters or sth
+    const c = getFirst(edge.node.characters); // Characters is probably an array cause an actor can play multiple characters e.g., an alter ego from a different universe
     const character = c ? c.name : undefined;
-    actors.push({ name, imageUrl, character });
+    return { name, imageUrl, character };
   });
 
   return {
@@ -353,9 +330,7 @@ function combineMetadata(
 }
 
 function extractReviews($: CheerioAPI): Review[] {
-  const reviewDivs = $("div.review-container > div.lister-item-content");
-  const reviews: Review[] = [];
-  reviewDivs.each((_, el) => {
+  return $("div.review-container > div.lister-item-content").toArray().map((el) => {
     const rD = $(el);
     const title = rD.find("a.title").text().trim();
     const ratingStr = rD
@@ -379,7 +354,7 @@ function extractReviews($: CheerioAPI): Review[] {
     const likes = parseInt(likesStr);
     const dislikes = parseInt(totalStr) - likes;
     const hasSpoilers = rD.find("span.spoiler-warning").length > 0;
-    const review = {
+    return {
       title,
       author,
       rating,
@@ -389,19 +364,14 @@ function extractReviews($: CheerioAPI): Review[] {
       dislikes,
       hasSpoilers,
     };
-    reviews.push(review);
   });
-  return reviews;
 }
 async function getReviews(
   mediaID: string,
   pageKey: string,
   hideSpoilers: boolean,
 ): Promise<Pagination<Review[]>> {
-  let url = `${HOME_URL}title/${mediaID}/reviews/_ajax?&sort=curated&dir=desc&ratingFilter=0&paginationKey=${pageKey}`;
-  if (hideSpoilers) {
-    url += "&spoiler=hide";
-  }
+  let url = `${HOME_URL}title/${mediaID}/reviews/_ajax?&sort=curated&dir=desc&ratingFilter=0&paginationKey=${pageKey}${hideSpoilers ? "&spoiler=hide" : ""}`;
   const response = await CLIENT.get(url);
   const page = await response.text();
   const $ = parseHtml(page);

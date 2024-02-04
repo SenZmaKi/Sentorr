@@ -8,8 +8,8 @@ import {
   getTop10Trending,
   getTop10OfAllTime,
   getEpisodes,
-} from "../src/backend/imdb-api/imdb-api.js";
-import { Pagination } from "../src/backend/imdb-api/types.js";
+} from "../src/backend/imdb/api.js";
+import { Pagination } from "../src/backend/imdb/types.js";
 import { SHOW_IMDB_ID, MOVIE_TITLE } from "./utils/constants.js";
 import { emptyArrayTest, emptyArrayTestHandler } from "./utils/functions.js";
 

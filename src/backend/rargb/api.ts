@@ -6,23 +6,24 @@ import * as vfp from "@ctrl/video-filename-parser"
 
 const HOME_URL = "https://rargb.to";
 
+async function getSeriesTorrents(title: string, seasonNumber: number, episodeNumber: number | undefined) {
+  const getCompleteSeason = episodeNumber === undefined;
+  const epsStr = getCompleteSeason ? "" : `E${zfill(episodeNumber)}`;
+  const formattedTitle = `${title} S${zfill(seasonNumber)}${epsStr}`
+  return getTorrents(formattedTitle, getCompleteSeason, true);
+}
+
+export async function getMovieTorrents(title: string) {
+  return getTorrents(title, false, false);
+}
+
 async function getTorrents(
   mediaTItle: string,
-  seasonNumber = 0,
-  episodeNumber = 0,
-  getCompleteSeason = true,
+  getCompleteSeason: boolean,
+  isTvSeries: boolean,
   torrents: Torrent[] = [],
 ): Promise<Torrent[]> {
-  const isTvSeries = seasonNumber !== 0;
-  let seasonStr = "";
-  let episodeStr = "";
-  if (isTvSeries) {
-    seasonStr = " S" + zfill(seasonNumber);
-    if (!getCompleteSeason) {
-      episodeStr = "E" + zfill(episodeNumber);
-    }
-  }
-  const url = `${HOME_URL}/search/?search=${mediaTItle}${seasonStr}${episodeStr}&order=seeders&by=DESC`;
+  const url = `${HOME_URL}/search/?search=${mediaTItle}&order=seeders&by=DESC`;
   const $ = parseHtml(await (await CLIENT.get(url)).text());
   const torrentElements = $("tr.lista2");
   for (const el of torrentElements) {
@@ -40,15 +41,6 @@ async function getTorrents(
         getCompleteSeason,
       );
     }
-  }
-  if (getCompleteSeason) {
-    return getTorrents(
-      mediaTItle,
-      seasonNumber,
-      episodeNumber,
-      false,
-      torrents,
-    );
   }
   return torrents;
 }
@@ -136,4 +128,3 @@ async function getMagnetLinkAndUpdateList(
     }
   }
 }
-

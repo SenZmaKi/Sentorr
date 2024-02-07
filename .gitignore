@@ -3,5 +3,5 @@ public/build/
 .scraps/
 .figma/
 .vscode/
-
-.DS_Store
+bun.lockb
+.env

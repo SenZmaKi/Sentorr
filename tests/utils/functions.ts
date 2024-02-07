@@ -1,15 +1,16 @@
 import { JsonObject } from "../../src/utils/types.js";
+import {expect} from "bun:test";
 
 export function emptyArrayTest(array: any[]) {
-  expect(array.length).toBeTruthy();
+    expect(array.length).toBeTruthy();
 }
 
 export async function emptyArrayTestHandler(callback: () => Promise<Array<any>>) {
-  const array = await callback();
-  emptyArrayTest(array)
+    const array = await callback();
+    emptyArrayTest(array)
 }
 
-// Apparently typed json objects have different constructors from usual json objects or sth
+// Apparently typed json objects have different constructors from usual objects or sth
 // So ```object instanceof Object``` won't work
 function isJsonObject(object: JsonObject): boolean {
     const t = typeof object;

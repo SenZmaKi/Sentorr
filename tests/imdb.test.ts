@@ -12,6 +12,7 @@ import {
 import { Pagination } from "../src/backend/imdb/types.js";
 import { SHOW_IMDB_ID, MOVIE_TITLE } from "./utils/constants.js";
 import { emptyArrayTest, emptyArrayTestHandler } from "./utils/functions.js";
+import { test, expect } from "bun:test";
 
 function haveSameElements<T>(array1: T[], array2: T[]): boolean {
   if (array1.length !== array2.length) {

@@ -1,4 +1,5 @@
+import { env } from "process";
+
 export const DEFAULT_RESULTS_LIMIT = 50;
 export const DATE = new Date();
-// FIXME: Change to false before production
-export const DEBUG = true;
+export const DEBUG = env.DEBUG === "true";

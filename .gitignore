@@ -1,7 +1,9 @@
 node_modules/
-public/build/
+build/
+out/
 .scraps/
 .figma/
 .vscode/
 bun.lockb
 .env
+.prettierrc.yaml

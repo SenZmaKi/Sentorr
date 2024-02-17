@@ -19,10 +19,14 @@ import {
   SortOrder,
 } from "./types.js";
 import { DATE, DEFAULT_RESULTS_LIMIT, DEBUG } from "../../utils/constants.js";
-import { capitalise, filterMap, getFirst, parseHtml } from "../../utils/functions.js";
+import {
+  capitalise,
+  filterMap,
+  getFirst,
+  parseHtml,
+} from "../../utils/functions.js";
 import { CheerioAPI } from "cheerio";
 import { MoreMetadataJson } from "./moreMetadata.js";
-
 const HOME_URL = "https://imdb.com/";
 const API_ENTRY_POINT = "https://graphql.imdb.com/?operationName=";
 const DEFAULT_LOCALE = { locale: "en-US" };
@@ -32,9 +36,9 @@ const DEFAULT_RECOMMENDATIONS_VARIABLES = {
 };
 const DEFAULT_EPISODES_RESULTS_LIMIT = 250;
 const FAN_FAVORITES_HASH =
-  "7c01e0d9d8581975bf64701df0c96b02aaec777fdfc75734d68d009bde984b99"
+  "7c01e0d9d8581975bf64701df0c96b02aaec777fdfc75734d68d009bde984b99";
 const POPULAR_TITLES_HASH =
-  "f928c4406df23ac79204ff916c3f7429d3a44c9aac069d332a9d7eb6932c4f2f"
+  "f928c4406df23ac79204ff916c3f7429d3a44c9aac069d332a9d7eb6932c4f2f";
 const EPISODES_HASH =
   "e5b755e1254e3bc3a36b34aff729b1d107a63263dec628a8f59935c9e778c70e";
 const ADVANCED_TITLE_SEARCH_HASH =
@@ -143,7 +147,9 @@ async function getFanFavorites(): Promise<BaseResult[]> {
     undefined,
     SESSION_COOKIES,
   )) as FanFavoritesResultJson;
-  return fanFavoritesJson.data.fanPicksTitles.edges.map((edge) => buildBaseResult(edge.node));
+  return fanFavoritesJson.data.fanPicksTitles.edges.map((edge) =>
+    buildBaseResult(edge.node),
+  );
 }
 
 async function getPopularTitles(): Promise<BaseResult[]> {
@@ -154,7 +160,9 @@ async function getPopularTitles(): Promise<BaseResult[]> {
   };
   const url = generateAPIURL("PopularTitles", variables, POPULAR_TITLES_HASH);
   const popularTitleJson = (await apiGet(url)) as PopularTitlesJson;
-  return popularTitleJson.data.popularTitles.titles.map((node) => buildBaseResult(node));
+  return popularTitleJson.data.popularTitles.titles.map((node) =>
+    buildBaseResult(node),
+  );
 }
 
 async function filteredSearch(filters: {
@@ -202,7 +210,10 @@ async function filteredSearch(filters: {
   const advancedTitleSearchResultJson = (await apiGet(
     url,
   )) as AdvancedTitleSearchResultJson;
-  const results = advancedTitleSearchResultJson.data.advancedTitleSearch.edges.map((edge) => buildBaseResult(edge.node.title));
+  const results =
+    advancedTitleSearchResultJson.data.advancedTitleSearch.edges.map((edge) =>
+      buildBaseResult(edge.node.title),
+    );
   const nextPageKey =
     advancedTitleSearchResultJson.data.advancedTitleSearch.pageInfo.endCursor;
   return { nextPageKey, results };
@@ -228,31 +239,33 @@ async function getEpisodes(
     EPISODES_HASH,
   );
   const episodesResultsJson = (await apiGet(url)) as EpisodesResultsJson;
-  const results = episodesResultsJson.data.title.episodes.episodes.edges.map((edge) => {
-    const ep = edge.node;
-    const id = ep.id;
-    const title = ep.titleText.text;
-    const number = parseInt(
-      ep.series.displayableEpisodeNumber.episodeNumber.displayableProperty.value
-        .plainText,
-    );
-    const imageUrl = ep.primaryImage.url;
-    const plot = ep.plot?.plotText.plaidHtml;
-    const releaseDate = `${ep.releaseDate.day}-${ep.releaseDate.month}-${ep.releaseDate.year}`;
-    const rating = ep.ratingsSummary.aggregateRating;
-    const ratingCount = ep.ratingsSummary.voteCount;
-    return {
-      id,
-      title,
-      number,
-      seasonNumber,
-      imageUrl,
-      plot,
-      releaseDate,
-      rating,
-      ratingCount,
-    };
-  });
+  const results = episodesResultsJson.data.title.episodes.episodes.edges.map(
+    (edge) => {
+      const ep = edge.node;
+      const id = ep.id;
+      const title = ep.titleText.text;
+      const number = parseInt(
+        ep.series.displayableEpisodeNumber.episodeNumber.displayableProperty
+          .value.plainText,
+      );
+      const imageUrl = ep.primaryImage.url;
+      const plot = ep.plot?.plotText.plaidHtml;
+      const releaseDate = `${ep.releaseDate.day}-${ep.releaseDate.month}-${ep.releaseDate.year}`;
+      const rating = ep.ratingsSummary.aggregateRating;
+      const ratingCount = ep.ratingsSummary.voteCount;
+      return {
+        id,
+        title,
+        number,
+        seasonNumber,
+        imageUrl,
+        plot,
+        releaseDate,
+        rating,
+        ratingCount,
+      };
+    },
+  );
   const nextPageKey =
     episodesResultsJson.data.title.episodes.episodes.pageInfo.endCursor;
   return { nextPageKey, results };
@@ -296,7 +309,9 @@ function combineMetadata(
   const mainColumnData = moreMetadata.props.pageProps.mainColumnData;
   const episodeCount = mainColumnData?.episodes?.totalEpisodes?.total;
   const seasonsCount = mainColumnData?.episodes?.seasons?.length;
-  const recommendations = mainColumnData.moreLikeThisTitles.edges.map((rec) => buildBaseResult(rec.node));
+  const recommendations = mainColumnData.moreLikeThisTitles.edges.map((rec) =>
+    buildBaseResult(rec.node),
+  );
   const actors = mainColumnData.cast.edges.map((edge) => {
     const name = edge.node.name.nameText.text;
     const imageUrl = edge.node.name.primaryImage?.url;
@@ -330,48 +345,52 @@ function combineMetadata(
 }
 
 function extractReviews($: CheerioAPI): Review[] {
-  return $("div.review-container > div.lister-item-content").toArray().map((el) => {
-    const rD = $(el);
-    const title = rD.find("a.title").text().trim();
-    const ratingStr = rD
-      .find("div.ipl-ratings-bar > span.rating-other-user-rating > span:first")
-      .text();
-    let rating: number | undefined = undefined;
-    if (ratingStr) {
-      rating = parseInt(ratingStr);
-    }
-    const authorAndDateDiv = rD.find("div.display-name-date");
-    const author = authorAndDateDiv.find("span.display-name-link > a").text();
-    const date = authorAndDateDiv.find("span.review-date").text();
-    const contentDiv = rD.find("div.content");
-    const content = contentDiv.find("div.text").text();
-    const foundHelpFulStr = contentDiv
-      .find("div.actions")
-      .text()
-      .trim()
-      .replace(/,/g, "");
-    const [likesStr, , , totalStr] = foundHelpFulStr.split(" ");
-    const likes = parseInt(likesStr);
-    const dislikes = parseInt(totalStr) - likes;
-    const hasSpoilers = rD.find("span.spoiler-warning").length > 0;
-    return {
-      title,
-      author,
-      rating,
-      content,
-      date,
-      likes,
-      dislikes,
-      hasSpoilers,
-    };
-  });
+  return $("div.review-container > div.lister-item-content")
+    .toArray()
+    .map((el) => {
+      const rD = $(el);
+      const title = rD.find("a.title").text().trim();
+      const ratingStr = rD
+        .find(
+          "div.ipl-ratings-bar > span.rating-other-user-rating > span:first",
+        )
+        .text();
+      let rating: number | undefined = undefined;
+      if (ratingStr) {
+        rating = parseInt(ratingStr);
+      }
+      const authorAndDateDiv = rD.find("div.display-name-date");
+      const author = authorAndDateDiv.find("span.display-name-link > a").text();
+      const date = authorAndDateDiv.find("span.review-date").text();
+      const contentDiv = rD.find("div.content");
+      const content = contentDiv.find("div.text").text();
+      const foundHelpFulStr = contentDiv
+        .find("div.actions")
+        .text()
+        .trim()
+        .replace(/,/g, "");
+      const [likesStr, , , totalStr] = foundHelpFulStr.split(" ");
+      const likes = parseInt(likesStr);
+      const dislikes = parseInt(totalStr) - likes;
+      const hasSpoilers = rD.find("span.spoiler-warning").length > 0;
+      return {
+        title,
+        author,
+        rating,
+        content,
+        date,
+        likes,
+        dislikes,
+        hasSpoilers,
+      };
+    });
 }
 async function getReviews(
   mediaID: string,
   pageKey: string,
   hideSpoilers: boolean,
 ): Promise<Pagination<Review[]>> {
-  let url = `${HOME_URL}title/${mediaID}/reviews/_ajax?&sort=curated&dir=desc&ratingFilter=0&paginationKey=${pageKey}${hideSpoilers ? "&spoiler=hide" : ""}`;
+  const url = `${HOME_URL}title/${mediaID}/reviews/_ajax?&sort=curated&dir=desc&ratingFilter=0&paginationKey=${pageKey}${hideSpoilers ? "&spoiler=hide" : ""}`;
   const response = await CLIENT.get(url);
   const page = await response.text();
   const $ = parseHtml(page);

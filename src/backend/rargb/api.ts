@@ -2,14 +2,18 @@ import { CLIENT } from "../../utils/client.js";
 import { parseHtml, zfill } from "../../utils/functions.js";
 import { Torrent } from "./types.js";
 import { CheerioAPI, Element } from "cheerio";
-import * as vfp from "@ctrl/video-filename-parser"
+import * as vfp from "@ctrl/video-filename-parser";
 
 const HOME_URL = "https://rargb.to";
 
-async function getSeriesTorrents(title: string, seasonNumber: number, episodeNumber: number | undefined) {
+export async function getSeriesTorrents(
+  title: string,
+  seasonNumber: number,
+  episodeNumber: number | undefined,
+) {
   const getCompleteSeason = episodeNumber === undefined;
   const epsStr = getCompleteSeason ? "" : `E${zfill(episodeNumber)}`;
-  const formattedTitle = `${title} S${zfill(seasonNumber)}${epsStr}`
+  const formattedTitle = `${title} S${zfill(seasonNumber)}${epsStr}`;
   return getTorrents(formattedTitle, getCompleteSeason, true);
 }
 

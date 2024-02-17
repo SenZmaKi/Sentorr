@@ -30,7 +30,7 @@ async function paginationTest(callback: () => Promise<Pagination<any>>) {
   expect(page2.nextPageKey).toBeTruthy();
   expect(
     page.nextPageKey !== page2.nextPageKey &&
-    !haveSameElements(page.results, page2.results),
+      !haveSameElements(page.results, page2.results),
   );
 }
 

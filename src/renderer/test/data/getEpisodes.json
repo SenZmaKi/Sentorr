@@ -1,0 +1,112 @@
+[
+  {
+    "id": "tt4652838",
+    "title": "eps1.0_hellofriend.mov",
+    "number": 1,
+    "seasonNumber": 1,
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTg2MDM5MzgyMl5BMl5BanBnXkFtZTgwMTkzMzk5NTE@._V1_.jpg",
+    "plot": "A notorious hacker takes an interest in cyber security engineer and vigilante styled computer hacker Elliot, while an evil corporation is hacked.",
+    "releaseDate": "24-6-2015",
+    "rating": 9.2,
+    "ratingCount": 18648
+  },
+  {
+    "id": "tt4686038",
+    "title": "eps1.1_ones-and-zer0es.mpeg",
+    "number": 2,
+    "seasonNumber": 1,
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BZjIzZGNlZDAtN2NmMi00NzNlLWEyNmItNjI1M2M3ZThlMmZmXkEyXkFqcGdeQXVyNzgxMzc3OTc@._V1_.jpg",
+    "plot": "Elliot is hesitant about fsociety and is offered a new job. Elliot worries about Shayla&#39;s association with Fernando Vera; Ollie is given a CD outside of Allsafe. Mr. Robot makes Elliot talk about his father.",
+    "releaseDate": "1-7-2015",
+    "rating": 8.5,
+    "ratingCount": 13071
+  },
+  {
+    "id": "tt4730002",
+    "title": "eps1.2_d3bug.mkv",
+    "number": 3,
+    "seasonNumber": 1,
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTg5OTkyMDc0M15BMl5BanBnXkFtZTgwMjA4MzgxNjE@._V1_.jpg",
+    "plot": "Elliot tries to live a bug-free life, but is quickly drawn back in. Tyrell takes matters into his own hands when the CTO position becomes available; Ollie gets blackmailed. Gideon starts getting suspicious of the infected server.",
+    "releaseDate": "8-7-2015",
+    "rating": 8.1,
+    "ratingCount": 11696
+  },
+  {
+    "id": "tt4659980",
+    "title": "eps1.3_da3m0ns.mp4",
+    "number": 4,
+    "seasonNumber": 1,
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjA5OTcwODc3NF5BMl5BanBnXkFtZTgwNDMzODgwNzE@._V1_.jpg",
+    "plot": "While dealing with his withdrawal, Elliot suffers a series of hallucinations about his life, while Shayla helps Angela take an unexpected trip.",
+    "releaseDate": "15-7-2015",
+    "rating": 7.9,
+    "ratingCount": 11799
+  },
+  {
+    "id": "tt4730012",
+    "title": "eps1.4_3xpl0its.wmv",
+    "number": 5,
+    "seasonNumber": 1,
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BMzQ5NTg5ODQyMV5BMl5BanBnXkFtZTgwNjcxNzMzNjE@._V1_.jpg",
+    "plot": "Fsociety attempts to penetrate Steel Mountain, the most secure data facility in America, while Angela makes an important decision.",
+    "releaseDate": "22-7-2015",
+    "rating": 8.4,
+    "ratingCount": 10512
+  },
+  {
+    "id": "tt4730014",
+    "title": "eps1.5_br4ve-trave1er.asf",
+    "number": 6,
+    "seasonNumber": 1,
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTc2NDc0ODc3MV5BMl5BanBnXkFtZTgwODYxNzMzNjE@._V1_.jpg",
+    "plot": "Elliot attempts to hack Vera out of jail in order to save someone he cares about; Tyrell&#39;s &quot;game&quot; gets crazy; and Angela digs deeper into her mother&#39;s death.",
+    "releaseDate": "29-7-2015",
+    "rating": 9.1,
+    "ratingCount": 12462
+  },
+  {
+    "id": "tt4730018",
+    "title": "eps1.6_v1ew-s0urce.flv",
+    "number": 7,
+    "seasonNumber": 1,
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNzM3OTY1NDkwOV5BMl5BanBnXkFtZTgwODI1ODU0NjE@._V1_.jpg",
+    "plot": "Elliot misses Shayla. Angela makes a deal with Colby. Sharon Knowles has an encounter with Tyrell.",
+    "releaseDate": "5-8-2015",
+    "rating": 8.4,
+    "ratingCount": 9965
+  },
+  {
+    "id": "tt4730026",
+    "title": "eps1.7_wh1ter0se.m4v",
+    "number": 8,
+    "seasonNumber": 1,
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNzlkMGU5YTQtNDdkYi00NzU3LThmODktMzhjYTdkYjVkNjVlXkEyXkFqcGdeQXVyMTM2MjM1NDAx._V1_.jpg",
+    "plot": "Allsafe is hacked and Elliot is meeting White Rose. Tyrell is interrogated by the police and Elliot remembers who he really is.",
+    "releaseDate": "12-8-2015",
+    "rating": 9.4,
+    "ratingCount": 14638
+  },
+  {
+    "id": "tt4799588",
+    "title": "eps1.8_m1rr0r1ng.qt",
+    "number": 9,
+    "seasonNumber": 1,
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNzg0NTcyOTQ5Ml5BMl5BanBnXkFtZTgwMjE3OTM2NjE@._V1_.jpg",
+    "plot": "Elliot has to face the challenges of his past, and become accustomed to his new found family.",
+    "releaseDate": "19-8-2015",
+    "rating": 9.2,
+    "ratingCount": 12185
+  },
+  {
+    "id": "tt4652854",
+    "title": "eps1.9_zer0-day.avi",
+    "number": 10,
+    "seasonNumber": 1,
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BMzUyMzIxMDY2N15BMl5BanBnXkFtZTgwNTU3MDk1NjE@._V1_.jpg",
+    "plot": "Another huge discovery for Elliot surrounding his family and fsociety, Tyrell&#39;s world starts to close around him and Angela has a rather unexpected visitor.",
+    "releaseDate": "2-9-2015",
+    "rating": 8.7,
+    "ratingCount": 10704
+  }
+]

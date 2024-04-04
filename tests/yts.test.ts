@@ -4,5 +4,5 @@ import { MOVIE_IMDB_ID } from "./utils/constants.js";
 import { test } from "bun:test";
 
 test("getTorrents", async () => {
-  emptyArrayTest(await getTorrents(MOVIE_IMDB_ID));
+  emptyArrayTest("getTorrents", await getTorrents(MOVIE_IMDB_ID));
 });

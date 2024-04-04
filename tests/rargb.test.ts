@@ -12,17 +12,19 @@ import { emptyArrayTest } from "./utils/functions.js";
 import { test } from "bun:test";
 
 test("getMovieTorrents", async () => {
-  emptyArrayTest(await getMovieTorrents(MOVIE_TITLE));
+  emptyArrayTest("getMovieTorrents", await getMovieTorrents(MOVIE_TITLE));
 });
 
 test("getSeriesEpisodeTorrents", async () => {
   emptyArrayTest(
-    await getSeriesTorrents(SERIES_TITLE, SERIES_SEASON, SERIES_EPISODE),
+    "getSeriesEpisodeTorrents",
+    await getSeriesTorrents("", SERIES_TITLE, SERIES_SEASON, SERIES_EPISODE),
   );
 });
 
 test("getSeriesSeasonTorrents", async () => {
   emptyArrayTest(
+    "getSeriesSeasonTorrents",
     await getSeriesTorrents(SERIES_TITLE, SERIES_SEASON, undefined),
   );
 });

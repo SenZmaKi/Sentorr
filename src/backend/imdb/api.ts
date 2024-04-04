@@ -1,32 +1,25 @@
 import { CLIENT } from "../../utils/client.js";
-import { JsonObject } from "../../utils/types.js";
 import {
-  AdvancedTitleSearchResultJson,
-  BaseNode,
-  BaseResult,
-  Episode,
-  EpisodesResultsJson,
-  FanFavoritesResultJson,
-  Genre,
-  Media,
-  MediaMetadataJson,
-  Pagination,
-  PopularTitlesJson,
-  Range,
-  ReleaseDateRange,
-  Review,
+  type AdvancedTitleSearchResultJson,
+  type BaseNode,
+  type BaseResult,
+  type Episode,
+  type EpisodesResultsJson,
+  type FanFavoritesResultJson,
+  type Media,
+  type MediaMetadataJson,
+  type Pagination,
+  type PopularTitlesJson,
+  type Review,
   SortBy,
   SortOrder,
+  type SearchFilters,
 } from "./types.js";
-import { DATE, DEFAULT_RESULTS_LIMIT, DEBUG } from "../../utils/constants.js";
-import {
-  capitalise,
-  filterMap,
-  getFirst,
-  parseHtml,
-} from "../../utils/functions.js";
-import { CheerioAPI } from "cheerio";
-import { MoreMetadataJson } from "./moreMetadata.js";
+import { DATE, DEBUG, DEFAULT_RESULTS_LIMIT, } from "@/utils/constants.js";
+import { filterMap, getFirst, parseHtml } from "@/utils/functions.js";
+import { type CheerioAPI } from "cheerio";
+import { type MoreMetadataJson } from "./moreMetadata.js";
+import { DEFAULT_SORT_BY, DEFAULT_SORT_ORDER } from "./constants.js";
 const HOME_URL = "https://imdb.com/";
 const API_ENTRY_POINT = "https://graphql.imdb.com/?operationName=";
 const DEFAULT_LOCALE = { locale: "en-US" };
@@ -42,24 +35,24 @@ const POPULAR_TITLES_HASH =
 const EPISODES_HASH =
   "e5b755e1254e3bc3a36b34aff729b1d107a63263dec628a8f59935c9e778c70e";
 const ADVANCED_TITLE_SEARCH_HASH =
-  "e7a1c7b10a7a9765731e5c874cef0342dfbd0dd7a87fa796e828778e54a07a20";
+  "65dd1bac6fea9c75c87e2c0435402c1296b5cc5dd908eb897269aaa31fff44b1";
 // IMDB API accepts data in ISO format YYYY-MM-DD
 const DATE_STR = DATE.toISOString().split("T")[0];
 
 let SESSION_COOKIES: string[] = [];
 
-async function setSessionCookies(): Promise<string[]> {
+export async function setSessionCookies(): Promise<string[]> {
   const response = await CLIENT.get(HOME_URL);
   const cookies = response.headers.getSetCookie();
   SESSION_COOKIES = cookies;
   return cookies;
 }
-function stringifyAndEncodeJson(json: JsonObject): string {
+function stringifyAndEncodeJson(json: any): string {
   return encodeURIComponent(JSON.stringify(json));
 }
 function generateAPIURL(
   operationName: string,
-  variables: JsonObject,
+  variables: any,
   sha256Hash: string,
 ): string {
   const extensions = { persistedQuery: { sha256Hash, version: 1 } };
@@ -73,39 +66,40 @@ async function apiGet(
   url: string,
   headers: HeadersInit | undefined = undefined,
   cookies: string[] = [],
-): Promise<JsonObject> {
+): Promise<any> {
   headers = { ...headers, ...{ "Content-Type": "application/json" } };
   const response = await CLIENT.get(url, headers, cookies);
   const resp_json = await response.json();
-  if (DEBUG) {
-    console.log(
-      `Url: ${url}\nStatus Code: ${response.status}\nJson:\n${JSON.stringify(resp_json, undefined, 4)}`,
-    );
-  }
+  // if (DEBUG) {
+  // console.log(
+  // `Url: ${url}\nStatus Code: ${response.status}\nJson:\n${JSON.stringify(resp_json, undefined, 4)}`,
+  // );
+  // }
   return resp_json;
 }
 
 function buildBaseResult(node: BaseNode): BaseResult {
   const id = node.id;
-  const title = node.titleText.text;
+  const title = node.titleText?.text;
   const rating = node.ratingsSummary?.aggregateRating;
   const ratingCount = node.ratingsSummary?.voteCount;
-  let type = node.titleType?.displayableProperty?.value?.plainText;
-  if (type) {
-    // For movies the type plainText is an empty string but the type is stored in the id value as "movie"
-    const titleID = node?.titleType?.id;
-    if (titleID) {
-      type = capitalise(titleID);
-    }
-  }
+  let type =
+    node.titleType?.displayableProperty?.value?.plainText ||
+    node.titleType?.text;
   const imageUrl = node.primaryImage?.url;
+  const plot = node.plot?.plotText?.plainText;
   const releaseYear = node.releaseYear?.year;
   const endYear = node.releaseYear?.endYear;
+  const runtime = node.runtime?.seconds;
+  const genres = node.titleGenres?.genres?.map((g) => g.genre.text);
   return {
     id,
     title,
     type,
     imageUrl,
+    plot,
+    genres,
+    runtime,
     releaseYear,
     endYear,
     rating,
@@ -113,26 +107,24 @@ function buildBaseResult(node: BaseNode): BaseResult {
   };
 }
 // On IMDB the popularity is more akin to trending cause the popular media frequently change and are usually recently released media
-async function getTop10Trending(): Promise<BaseResult[]> {
-  const page = await filteredSearch({
+export async function getTop10Trending(): Promise<BaseResult[]> {
+  const page = await search({
     pageKey: "",
-    sortBy: "POPULARITY",
-    sortOrder: "ASC",
+    sortBy: SortBy.POPULARITY,
+    sortOrder: SortOrder.ASC,
   });
   return page.results.slice(0, 10);
 }
 
-async function getTop10OfAllTime(): Promise<BaseResult[]> {
-  const page = await filteredSearch({
+export async function getTop10OfAllTime(): Promise<BaseResult[]> {
+  const page = await search({
     pageKey: "",
-    sortBy: "USER_RATING_COUNT",
-    sortOrder: "DESC",
   });
   return page.results.slice(0, 10);
 }
 
 // This seems to be the only request that needs the session cookies
-async function getFanFavorites(): Promise<BaseResult[]> {
+export async function getFanFavorites(): Promise<BaseResult[]> {
   const variables = {
     first: DEFAULT_RESULTS_LIMIT,
     ...DEFAULT_RECOMMENDATIONS_VARIABLES,
@@ -152,7 +144,7 @@ async function getFanFavorites(): Promise<BaseResult[]> {
   );
 }
 
-async function getPopularTitles(): Promise<BaseResult[]> {
+export async function getPopularTitles(): Promise<BaseResult[]> {
   const variables = {
     limit: DEFAULT_RESULTS_LIMIT,
     ...DEFAULT_RECOMMENDATIONS_VARIABLES,
@@ -165,41 +157,36 @@ async function getPopularTitles(): Promise<BaseResult[]> {
   );
 }
 
-async function filteredSearch(filters: {
-  pageKey?: string;
-  searchTerm?: string;
-  genres?: Genre[];
-  sortBy?: SortBy;
-  sortOrder?: SortOrder;
-  ratingRange?: Range;
-  ratingsCountRange?: Range;
-  releaseDateRange?: ReleaseDateRange;
-  runtimeRangeMinutes?: Range;
-}): Promise<Pagination<BaseResult[]>> {
+export async function search(
+  filters: SearchFilters,
+): Promise<Pagination<BaseResult[]>> {
   const {
     pageKey = "",
     searchTerm = "",
     genres = [],
-    sortBy = "USER_RATING_COUNT",
-    sortOrder = "DESC",
+    mediaTypes = [],
+    sortBy = DEFAULT_SORT_BY,
+    sortOrder = DEFAULT_SORT_ORDER,
     ratingRange = {},
     ratingsCountRange = {},
     releaseDateRange = {},
     runtimeRangeMinutes = {},
   } = filters;
+  console.log("searching")
   const variables = {
     ...DEFAULT_LOCALE,
     after: pageKey,
     first: DEFAULT_RESULTS_LIMIT,
-    titleTextConstraint: { searchTerm: searchTerm },
+    titleTextConstraint: { searchTerm },
     genreConstraint: { allGenreIds: genres },
-    releaseDateConstraint: { releaseDateRange: releaseDateRange },
-    runtimeConstraint: { runtimeRangeMinutes: runtimeRangeMinutes },
-    sortBy: sortBy,
-    sortOrder: sortOrder,
+    releaseDateConstraint: { releaseDateRange },
+    runtimeConstraint: { runtimeRangeMinutes },
+    sortBy,
+    sortOrder,
+    titleTypeConstraint: { anyTitleTypeIds: mediaTypes, excludeTitleTypeIds: ["tvEpisode", "musicVideo", "podcastSeries", "podcastEpisode", "video", "videoGame"] },
     userRatingsConstraint: {
       aggregateRatingRange: ratingRange,
-      ratingsCountRange: ratingsCountRange,
+      ratingsCountRange,
     },
   };
   const url = generateAPIURL(
@@ -216,19 +203,20 @@ async function filteredSearch(filters: {
     );
   const nextPageKey =
     advancedTitleSearchResultJson.data.advancedTitleSearch.pageInfo.endCursor;
-  return { nextPageKey, results };
+  const next = nextPageKey ? async () => search({ ...filters, pageKey: nextPageKey }) : undefined;
+  return { results, next };
 }
 
-async function getEpisodes(
+export async function getEpisodes(
   mediaID: string,
   seasonNumber: number,
-  pageKey: string,
+  pageKey?: string,
 ): Promise<Pagination<Episode[]>> {
   const variables = {
     ...DEFAULT_LOCALE,
     returnUrl: `${HOME_URL}close_me`,
     originalTitleText: false,
-    after: pageKey,
+    after: pageKey || "",
     const: mediaID,
     first: DEFAULT_EPISODES_RESULTS_LIMIT,
     filter: { includeSeasons: [seasonNumber.toLocaleString()] },
@@ -268,10 +256,11 @@ async function getEpisodes(
   );
   const nextPageKey =
     episodesResultsJson.data.title.episodes.episodes.pageInfo.endCursor;
-  return { nextPageKey, results };
+  const next = nextPageKey ? async () => getEpisodes(mediaID, seasonNumber, nextPageKey) : undefined;
+  return { results, next };
 }
 
-async function getMedia(mediaID: string): Promise<Media> {
+export async function getMedia(mediaID: string): Promise<Media> {
   const url = `${HOME_URL}title/${mediaID}`;
   const response = await CLIENT.get(url);
   const page = await response.text();
@@ -309,8 +298,9 @@ function combineMetadata(
   const mainColumnData = moreMetadata.props.pageProps.mainColumnData;
   const episodeCount = mainColumnData?.episodes?.totalEpisodes?.total;
   const seasonsCount = mainColumnData?.episodes?.seasons?.length;
-  const recommendations = mainColumnData.moreLikeThisTitles.edges.map((rec) =>
-    buildBaseResult(rec.node),
+  const recommendations = mainColumnData.moreLikeThisTitles.edges.map(
+    (rec) => buildBaseResult(rec.node),
+    plot,
   );
   const actors = mainColumnData.cast.edges.map((edge) => {
     const name = edge.node.name.nameText.text;
@@ -385,29 +375,17 @@ function extractReviews($: CheerioAPI): Review[] {
       };
     });
 }
-async function getReviews(
+export async function getReviews(
   mediaID: string,
-  pageKey: string,
   hideSpoilers: boolean,
+  pageKey?: string,
 ): Promise<Pagination<Review[]>> {
-  const url = `${HOME_URL}title/${mediaID}/reviews/_ajax?&sort=curated&dir=desc&ratingFilter=0&paginationKey=${pageKey}${hideSpoilers ? "&spoiler=hide" : ""}`;
+  const url = `${HOME_URL}title/${mediaID}/reviews/_ajax?&sort=curated&dir=desc&ratingFilter=0&paginationKey=${pageKey || ""}${hideSpoilers ? "&spoiler=hide" : ""}`;
   const response = await CLIENT.get(url);
   const page = await response.text();
   const $ = parseHtml(page);
   const results = extractReviews($);
-  const nextPaginationKeyDiv = $("div.load-more-data").attr("data-key");
-  const nextPageKey = nextPaginationKeyDiv ?? "";
-  return { nextPageKey, results: results };
+  const nextPageKey = $("div.load-more-data").attr("data-key");
+  const next = nextPageKey ? async () => getReviews(mediaID, hideSpoilers, nextPageKey) : undefined;
+  return { results, next };
 }
-
-export {
-  filteredSearch,
-  getEpisodes,
-  getFanFavorites,
-  getMedia,
-  getPopularTitles,
-  getReviews,
-  getTop10OfAllTime,
-  getTop10Trending,
-  setSessionCookies,
-};

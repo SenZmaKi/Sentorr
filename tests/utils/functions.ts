@@ -1,20 +1,37 @@
-import { JsonObject } from "../../utils/types.js";
+import path from "node:path/posix";
+import fs from "node:fs";
 import { expect } from "bun:test";
+import { ROOT_DIR } from "./constants.js";
 
-export function emptyArrayTest(array: any[]) {
+export function saveResults<T>(name: string, results: T) {
+  const resultsJson = JSON.stringify(results, null, 2);
+  const resultsSaveFolder = path.join(
+    ROOT_DIR,
+    "src",
+    "renderer",
+    "test",
+    "data",
+  );
+  const saveFilePath = path.join(resultsSaveFolder, `${name}.json`);
+  fs.writeFileSync(saveFilePath, resultsJson, { mode: 0o755 });
+}
+
+export function emptyArrayTest<T>(name: string, array: T[]) {
+  saveResults(name, array);
   expect(array.length).toBeTruthy();
 }
 
-export async function emptyArrayTestHandler(
-  callback: () => Promise<Array<any>>,
+export async function emptyArrayTestHandler<T>(
+  name: string,
+  callback: () => Promise<Array<T>>,
 ) {
   const array = await callback();
-  emptyArrayTest(array);
+  emptyArrayTest(name, array);
 }
 
 // Apparently typed json objects have different constructors from usual objects or sth
 // So ```object instanceof Object``` won't work
-function isJsonObject(object: JsonObject): boolean {
+function isJsonObject(object: any): boolean {
   const t = typeof object;
   return ![
     "boolean",
@@ -25,10 +42,7 @@ function isJsonObject(object: JsonObject): boolean {
     "undefined",
   ].includes(t);
 }
-export function throwErrorIfContainsFalsy(
-  object: JsonObject,
-  except: string[] = [],
-) {
+export function throwErrorIfContainsFalsy(object: any, except: string[] = []) {
   if (!isJsonObject(object)) {
     throw new Error(`ValueError - Expected ${object} to be a JSON object`);
   }
@@ -50,10 +64,7 @@ export function throwErrorIfContainsFalsy(
   }
 }
 
-export function findFalsyKeys(
-  object: JsonObject,
-  except: string[] = [],
-): string[] {
+export function findFalsyKeys(object: any, except: string[] = []): string[] {
   if (!isJsonObject(object)) {
     throw new Error(`ValueError - Expected ${object} to be a JSON object`);
   }

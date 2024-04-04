@@ -1,0 +1,694 @@
+[
+  {
+    "id": "tt15398776",
+    "title": "Oppenheimer",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BMDBmYTZjNjUtN2M1MS00MTQ2LTk2ODgtNzc2M2QyZGE5NTVjXkEyXkFqcGdeQXVyNzAwMjU2MTY@._V1_.jpg",
+    "plot": "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.",
+    "genres": [
+      "Biography",
+      "Drama",
+      "History"
+    ],
+    "runtime": 10800,
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": 8.4,
+    "ratingCount": 681957
+  },
+  {
+    "id": "tt27192512",
+    "title": "Oppenheimer: The Real Story",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNDg1ZWE5MmYtZGU5YS00MzU2LThjMjktYThiNmVmMmZjMDkxXkEyXkFqcGdeQXVyMTU3ODE5NzYy._V1_.jpg",
+    "plot": "The documentary covers Oppenheimer's contribution to nuclear physics as a professor and leader of the Los Alamos Laboratory.",
+    "genres": [
+      "Documentary"
+    ],
+    "runtime": 5760,
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": 7,
+    "ratingCount": 336
+  },
+  {
+    "id": "tt0078037",
+    "title": "Oppenheimer",
+    "type": "TV Mini Series",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNDJmYTEyODAtMDgwMS00ZDU4LWEwYTYtOTQxYmQ2NTE5ZGY5XkEyXkFqcGdeQXVyNTEwNzU0NzY@._V1_.jpg",
+    "plot": "Biography of the American physicist who led the U.S. effort to develop the atomic bomb during World War II, only to find himself suspected as a security risk in the 1950s.",
+    "genres": [
+      "Biography",
+      "Drama",
+      "History"
+    ],
+    "runtime": 25200,
+    "releaseYear": 1980,
+    "endYear": 1980,
+    "rating": 8.2,
+    "ratingCount": 698
+  },
+  {
+    "id": "tt28240284",
+    "title": "To End All War: Oppenheimer & the Atomic Bomb",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTI1ZjI3MDctMzFmOC00NTZkLWI3ZjUtODMzNmI4MzM1NmRkXkEyXkFqcGdeQXVyNjQzMDEyOTI@._V1_.jpg",
+    "plot": "Exploring how one man's brilliance, hubris and relentless drive changed the nature of war forever.",
+    "genres": [
+      "Documentary"
+    ],
+    "runtime": 5220,
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": 7.4,
+    "ratingCount": 2380
+  },
+  {
+    "id": "tt1559008",
+    "title": "The Trials of J. Robert Oppenheimer",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BODVkZGI1MDYtYTBkYy00NDBhLWJhZGMtZGZiNWQ2MDI3YWRmXkEyXkFqcGdeQXVyNjc5NjEzNA@@._V1_.jpg",
+    "plot": "Profile of Robert Oppenheimer, controversial father of the atomic bomb.",
+    "genres": [
+      "Documentary",
+      "Biography",
+      "History"
+    ],
+    "runtime": 6540,
+    "releaseYear": 2010,
+    "endYear": null,
+    "rating": 7.4,
+    "ratingCount": 211
+  },
+  {
+    "id": "tt28017314",
+    "title": "Oppenheimer After Trinity",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BYTg1MDc3Y2UtOGQwOC00NGQyLWExMmItZDQ0ZTRmZjhkZGM2XkEyXkFqcGdeQXVyMTI2OTA5MDQ3._V1_.jpg",
+    "plot": "This documentary film, produced by award-winning producer Larry L. Sheffield, explores events that occurred immediately after the testing of the world's first atomic bomb in July of 1945.",
+    "genres": [
+      "Documentary"
+    ],
+    "runtime": 3480,
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": 8.1,
+    "ratingCount": 18
+  },
+  {
+    "id": "tt29466107",
+    "title": "Oppenheimer",
+    "type": "Short",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNTY3NDdjYmMtMDU0My00ZDg0LTk0OTktNzU2MTI0ZDYwZmQ2XkEyXkFqcGdeQXVyMzEwMTQxOTU@._V1_.jpg",
+    "plot": "This documentary explores famous figure J. Robert Oppenheimer, an American theoretical physicist who was called, \"father of the atomic bomb\" for his role in the Manhattan Project.",
+    "genres": [
+      "Short",
+      "History"
+    ],
+    "runtime": 2580,
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": 4.3,
+    "ratingCount": 10
+  },
+  {
+    "id": "tt28655290",
+    "title": "The Real Oppenheimer",
+    "type": "Movie",
+    "plot": "In 1945, the world was ushered into the atomic age. With his role as the Father of the Bomb solidified, Oppenheimer became increasingly worried about the potential danger that scientific inventions could pose to humanity.",
+    "genres": [
+      "Documentary"
+    ],
+    "runtime": 2700,
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": 5.3,
+    "ratingCount": 16
+  },
+  {
+    "id": "tt30700968",
+    "title": "The Story of Our Time: The Making of Oppenheimer",
+    "type": "Movie",
+    "plot": "Seven-part documentary showcasing exclusive behind-the-scenes footage and interviews with Nolan and his collaborators, offering access inside the process, performances, effects, music and artistry responsible for the film Oppenheimer.",
+    "genres": [
+      "Documentary"
+    ],
+    "runtime": 4320,
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": 6.9,
+    "ratingCount": 28
+  },
+  {
+    "id": "tt28522133",
+    "title": "Inside Christopher Nolan's Oppenheimer",
+    "type": "TV Special",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjY5ZDI0MGYtMGJlZS00ODA4LWE4NmUtMjI3OWRjYjFmNGE4XkEyXkFqcGdeQXVyMTM1NDIzMDgw._V1_.jpg",
+    "plot": "Join Alex Zane as he speaks exclusively with acclaimed director Christopher Nolan about his new film Oppenheimer. Plus, hear from stars Robert Downey Jr, Florence Pugh and Matt Damon.",
+    "genres": [
+      "Documentary"
+    ],
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": 6.7,
+    "ratingCount": 23
+  },
+  {
+    "id": "tt29080313",
+    "title": "RadioActive Soldiers - The Oppenheimer Aftermath",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BZjZkNDU4NjgtMjQ0Ni00MzA4LWEzODQtMmM4NmI3MzQ2NzBhXkEyXkFqcGdeQXVyMjIzOTk5MzA@._V1_.jpg",
+    "plot": "Surviving soldiers of the first nuclear bomb tests share their gruesome stories revealing how the military misled them into believing that exposure to these bombs would have no lasting effects on them.",
+    "genres": [
+      "War"
+    ],
+    "runtime": 3360,
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt28454751",
+    "title": "Oppenheimer Barbie",
+    "type": "Short",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BMGQ1Y2UxNzEtM2Y3Yy00ZWU2LWE1MjItNjY3YjgwZWI2ZDVlXkEyXkFqcGdeQXVyNTc3MjA3MzE@._V1_.jpg",
+    "genres": [
+      "Short",
+      "Comedy"
+    ],
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt3695394",
+    "title": "Oppenheimer",
+    "type": "Short",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNzVhNWUwZWEtZTFkYi00YzkwLThhMjktYTRjYTkzZDAxNzE3XkEyXkFqcGdeQXVyNjQyMDA5Njk@._V1_.jpg",
+    "plot": "Based on a dark moment in the life of Dr. J. Robert Oppenheimer, father of the atomic bomb, 'Oppenheimer' explores nostalgia, optimism, and betrayal under the threat of impending failure.",
+    "genres": [
+      "Short",
+      "Drama",
+      "History"
+    ],
+    "runtime": 420,
+    "releaseYear": 2014,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt0443178",
+    "title": "The Case of Oppenheimer",
+    "type": "TV Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNzE2Yzc3MTEtM2I5Yi00MGY1LWFiN2UtMTMwMzU2Y2MzNjUzXkEyXkFqcGdeQXVyMjMxOTAwMTM@._V1_.jpg",
+    "plot": "A Finnish dramatization of the Atomic Energy Commission's security hearing in 1954, exploring the background, actions and associations of the American scientist J. Robert Oppenheimer.",
+    "genres": [
+      "Drama"
+    ],
+    "runtime": 6300,
+    "releaseYear": 1967,
+    "endYear": null,
+    "rating": 7.5,
+    "ratingCount": 16
+  },
+  {
+    "id": "tt0058228",
+    "title": "In der Sache J. Robert Oppenheimer",
+    "type": "TV Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTdkYzgyNmMtNDhiNi00ZDc5LWEyZjMtYTljZGJkOTg1ZWFlXkEyXkFqcGdeQXVyMDcxNzEyNw@@._V1_.jpg",
+    "genres": [
+      "Drama"
+    ],
+    "runtime": 8100,
+    "releaseYear": 1964,
+    "endYear": null,
+    "rating": 8.8,
+    "ratingCount": 38
+  },
+  {
+    "id": "tt0031915",
+    "title": "The Oppenheim Family",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BYzQyYjg0MzMtMTVmMS00NTY0LTk4Y2EtNTkwZTdiNTY3MmQyXkEyXkFqcGdeQXVyMzIwNDY4NDI@._V1_.jpg",
+    "plot": "During the Nazi regime, a Berlin Jewish family is persecuted, with mobs smashing windows and Storm troopers beating their innocent victims.",
+    "genres": [
+      "Drama"
+    ],
+    "runtime": 5820,
+    "releaseYear": 1939,
+    "endYear": null,
+    "rating": 6.3,
+    "ratingCount": 28
+  },
+  {
+    "id": "tt11269084",
+    "title": "In der Sache J. Robert Oppenheimer",
+    "type": "Movie",
+    "genres": [
+      "Drama"
+    ],
+    "releaseYear": 1964,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt5136682",
+    "title": "The Ballad of Oppenheimer Park",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjM0MmFhODgtMTdmOS00MDk0LTkxMmQtYjkxNWEzNDAzMzJlXkEyXkFqcGdeQXVyMTMxNDk0MDU@._V1_.jpg",
+    "plot": "A band of Canadian Native Americans transform their daily hardships into a celebration of their heritage and historical struggles over the course of a fleeting Vancouver summer.",
+    "genres": [
+      "Documentary",
+      "Adventure",
+      "Comedy"
+    ],
+    "runtime": 4260,
+    "releaseYear": 2016,
+    "endYear": null,
+    "rating": 6.7,
+    "ratingCount": 26
+  },
+  {
+    "id": "tt3950666",
+    "title": "Oppenheimer's Anguish",
+    "type": "Short",
+    "plot": "Jake receives a mysterious email that makes him see disturbing images in his mind. The unknown sender of the email also promise that something bad will happen if he doesn't forward the email to someone else.",
+    "genres": [
+      "Short",
+      "Sci-Fi"
+    ],
+    "runtime": 480,
+    "releaseYear": 2014,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt28249545",
+    "title": "The LEGO Oppenheimer Movie",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTQwN2RlMGItMDFiZS00ZDZkLWFiNjgtMGJkYTY1ODRlN2Q5XkEyXkFqcGdeQXVyMTU4MTA2NzQ3._V1_.jpg",
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt0876466",
+    "title": "In der Sache J. Robert Oppenheimer",
+    "type": "TV Movie",
+    "genres": [
+      "Drama"
+    ],
+    "runtime": 6720,
+    "releaseYear": 1981,
+    "endYear": null,
+    "rating": 7.7,
+    "ratingCount": 13
+  },
+  {
+    "id": "tt5521714",
+    "title": "Moritz Daniel Oppenheim: The first Jewish painter",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BZjAzZTc0MWYtYzg1Mi00MjQxLWE5MDctYTkwYzA2NDVkMGNiXkEyXkFqcGdeQXVyNzM0OTU3OTc@._V1_.jpg",
+    "plot": "For the first time ever a documentary feature film is dedicated to Moritz Daniel Oppenheim, who was credited as the first Jewish painter establishing a Jewish self-awareness in art history.",
+    "genres": [
+      "Documentary"
+    ],
+    "runtime": 4320,
+    "releaseYear": 2016,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt2241393",
+    "title": "Oppenheimer",
+    "type": "Short",
+    "plot": "The father of the Atomic bomb retreats to his bedroom the night following the bombing of Hiroshima. Confounded by the day events, Robert J. Oppenheimer is left to contemplate the cause and consequence of his creation.",
+    "genres": [
+      "Short",
+      "Biography",
+      "Drama"
+    ],
+    "runtime": 420,
+    "releaseYear": 2011,
+    "endYear": null,
+    "rating": 6.8,
+    "ratingCount": 14
+  },
+  {
+    "id": "tt2842060",
+    "title": "Josef Süß Oppenheimer",
+    "type": "TV Movie",
+    "genres": [
+      "Drama"
+    ],
+    "releaseYear": 1984,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt5581452",
+    "title": "Oppenheimer at Trinity",
+    "type": "Short",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BZTA2ZjQ1NzktYjcxNS00ZDU0LTljMjQtYzAxNjdmZjgzOWIyXkEyXkFqcGdeQXVyNjQ5MDM4ODY@._V1_.jpg",
+    "plot": "Oppenheimer creates the atomic bomb and fantasizes that bomb is actually a living woman he has created in in his mind.",
+    "genres": [
+      "Short",
+      "Drama"
+    ],
+    "releaseYear": 2016,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt7817978",
+    "title": "The Act of Killing Masterclass: Joshua Oppenheimer in conversation with Penny Woolcock",
+    "type": "Video",
+    "genres": [
+      "Documentary",
+      "Biography",
+      "History"
+    ],
+    "runtime": 5580,
+    "releaseYear": 2013,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt13046592",
+    "title": "The Rags of Time: J. Robert Oppenheimer",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BYmNlZDc0ZmYtZDEyZS00YTEwLTg2ODAtNTJmYjdlN2M0MGM1XkEyXkFqcGdeQXVyMTIzMDk0NTM@._V1_.jpg",
+    "genres": [
+      "Biography"
+    ],
+    "runtime": 2700,
+    "releaseYear": 2020,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt16047896",
+    "title": "Oppenheimer",
+    "type": "Podcast Series",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjEyYWNiNzItOTExNS00NzgwLThiM2ItZjIyYWM3MmFjMTgyXkEyXkFqcGdeQXVyMTM1MTE1NDM1._V1_.jpg",
+    "genres": [
+      "News"
+    ],
+    "releaseYear": 2017,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt2005416",
+    "title": "Yritys päästää helvetti valloilleen - Dennis Oppenheim",
+    "type": "Short",
+    "genres": [
+      "Documentary",
+      "Short"
+    ],
+    "runtime": 1200,
+    "releaseYear": 1994,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt10570170",
+    "title": "Imago Meret Oppenheim",
+    "type": "Movie",
+    "genres": [
+      "Documentary"
+    ],
+    "runtime": 5520,
+    "releaseYear": 1988,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt0443119",
+    "title": "Meet Michael Oppenheim",
+    "type": "Short",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjU4Y2QzMjAtYzdlYS00NTg5LWFiOTctZjZjODZhNDk1MGQzXkEyXkFqcGdeQXVyMjMyMzI4MzY@._V1_.jpg",
+    "plot": "A series of portraits of one-year-old Michael Shlomo Oppenheim.",
+    "genres": [
+      "Documentary",
+      "Short"
+    ],
+    "runtime": 240,
+    "releaseYear": 2004,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt28498810",
+    "title": "Leni Oppenheimer: Hollywood",
+    "type": "Short",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BN2QwM2NkODQtY2Y0NC00ZjE1LTg4NGYtN2RiOGZmODZkZmMxXkEyXkFqcGdeQXVyMTAyMDQyNTI1._V1_.jpg",
+    "plot": "A young actor embarks on a rather disappointing journey to Tinseltown.",
+    "genres": [
+      "Short",
+      "Music"
+    ],
+    "runtime": 300,
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt4082148",
+    "title": "10 Questions for Joshua Oppenheimer",
+    "type": "Video",
+    "plot": "Interview with Joshua Oppenheimer during his visit to the Indiana University Cinema.",
+    "genres": [
+      "Short"
+    ],
+    "runtime": 1080,
+    "releaseYear": 2014,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt22937366",
+    "title": "Die Akte Oppenheimer",
+    "type": "TV Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjQ5YTQwM2UtNzA5OS00NTE5LWE4NjItZTc3ZTlmNmVmNzM5XkEyXkFqcGdeQXVyMjAwMTE0OTk@._V1_.jpg",
+    "genres": [
+      "Documentary"
+    ],
+    "runtime": 5820,
+    "releaseYear": 2022,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt1268159",
+    "title": "100 Millionen Karat - Die Diamanten-Dynastie Oppenheimer",
+    "type": "TV Movie",
+    "genres": [
+      "Documentary"
+    ],
+    "runtime": 2700,
+    "releaseYear": 2006,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt0400005",
+    "title": "Oppenheimer presenta",
+    "type": "TV Series",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTlhNzVkNTgtMjBlZi00MTNkLTkwMzEtNGExMzk2MDE5YzE4XkEyXkFqcGdeQXVyOTE2MDk0MzY@._V1_.jpg",
+    "releaseYear": 2003,
+    "endYear": null,
+    "rating": 7.7,
+    "ratingCount": 11
+  },
+  {
+    "id": "tt6623316",
+    "title": "Moritz Daniel Oppenheim: Director's Cut - Extended Version",
+    "type": "Movie",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNzNlOWVmNjEtN2Y4Yy00YWE2LWFjYWMtN2MyYzFlMTYzOGQ0XkEyXkFqcGdeQXVyNzM0OTU3OTc@._V1_.jpg",
+    "plot": "For the first time ever a documentary feature is dedicated to Moritz Daniel Oppenheim who made history being credited as 'the first Jewish painter' as well as 'the painter of the Rothschilds and the Rothschild of the painters', as his pictures of traditional Jewish family life built bridges for an interfaith dialogue - a subject that couldn't be more up to date. Seeking traces of the artist - his motifs, descendants and heritage - in Germany, France and Israel, it quickly becomes clear that the story of this extraordinary personality of Jewish Emancipation whose lifespan covered almost the complete 19th century - a revolutionary phase for the European jewry - is not yet untold, but keeps on living in the people and places whose personal story are strongly connected to Oppenheim. Interview sequences with internationally renowned experts on Oppenheim alternate with very personal encounters of direct descendants of the artist as well as descendants of the people portrayed in his paintings. On the occasion of the first Oppenheim monument worldwide which was set up in his hometown, Hanau close to Frankfurt/M. in Germany, the film is documenting the symbolic 'becoming of the artist', represented by his steel statue and its creative development process from the workshop of the sculptor, to the spark-throwing steel works until he's traveling home, strapped on a arctic truck across Germany and finally re-settles in the very heart of his hometown.",
+    "genres": [
+      "Documentary",
+      "Biography"
+    ],
+    "runtime": 6060,
+    "releaseYear": 2017,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt28637567",
+    "title": "In the Bleak Midwinter | Part I Oppenheimer",
+    "type": "Music Video",
+    "plot": "In the Bleak Midwinter describe the story of Robert J. Oppenheimer that was a theoretical physicist from the United States. Robert J. Oppenheimer headed the Manhattan Project, which produced the atomic bombs used in the bombings of Hiroshima and Nagasaki, which resulted in the deaths of over 226,000 people.",
+    "genres": [
+      "Music"
+    ],
+    "runtime": 300,
+    "releaseYear": 2023,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt12696390",
+    "title": "Alan Oppenheimer, Sarah Bolger and Nicolai Kornum",
+    "type": "Podcast Episode",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjA5MmMzNzQtYzFkMC00YmM3LTkxMDUtZTBlYWFiMmIxZTdhXkEyXkFqcGdeQXVyNTc0MTU2Nw@@._V1_.jpg",
+    "plot": "Alan Oppenheimer the voice of \"Skeletor\" talks about his new series \"JJ Villard's Fairy Tales\". Sarah Bolger lead of \"A Good Woman Is Hard To Find\". Nicolai Kornum talks his new anthology \"The Isolation Horrors\" streaming now.",
+    "genres": [
+      "Horror",
+      "Talk-Show",
+      "Thriller"
+    ],
+    "releaseYear": 2020,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt13242070",
+    "title": "Mark Oppenheimer²",
+    "type": "Podcast Episode",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BZmI0NDUxNjgtNjkwNi00OWRlLWEwMGMtODEwNDRhYWU3MDkwXkEyXkFqcGdeQXVyMjY0MjYzNjc@._V1_.jpg",
+    "plot": "Atom bombs, diamond billionaires, and hate mail have a special role to play in this bonus episode.",
+    "genres": [
+      "Talk-Show"
+    ],
+    "releaseYear": 2020,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt14290874",
+    "title": "Oppenheimer and the Rhetoric of Science Advisers",
+    "type": "Podcast Episode",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BZmYzMTU3YmYtOTMyMC00NWU4LTkxNjktZjYyOWQxYjQzMWY0XkEyXkFqcGdeQXVyMTU3MzMwNQ@@._V1_.jpg",
+    "genres": [
+      "Talk-Show"
+    ],
+    "releaseYear": 2014,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt16426740",
+    "title": "Designing Iconic Homes with Award Winning Architect Chad Oppenheim",
+    "type": "Podcast Episode",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BZWQwZjlhY2ItMTUyZS00YmEzLThhZDYtODEzZDZiN2I4Njc1XkEyXkFqcGdeQXVyMTM1NjM2ODg1._V1_.jpg",
+    "plot": "Chad Oppenheim, founder of Oppenheim Architecture, joins to tell us that grit is what you need to be successful in your career, speaks to us about his book Lair which shows that movie villains always have the coolest homes, and warns that renovating your house could lead to a divorce.",
+    "genres": [
+      "Talk-Show"
+    ],
+    "runtime": 3960,
+    "releaseYear": 2020,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt16517550",
+    "title": "Clive Oppenheimer on the volcanic offerings of our angry earth",
+    "type": "Podcast Episode",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BYjU3ZDU4M2ItYTc0Yi00NjQ2LTlmYjItZmQzYjM4ZjU0ZWRlXkEyXkFqcGdeQXVyMTM1MTE1NDM1._V1_.jpg",
+    "releaseYear": 2018,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt16833740",
+    "title": "Fireball with Werner Herzog and Clive Oppenheimer",
+    "type": "Podcast Episode",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BYzJkOWI1NTEtNWQyMy00YWU3LTg0ZDktMzdkOTVjZTYyYzY2XkEyXkFqcGdeQXVyMTUyMTUzNjE0._V1_.jpg",
+    "genres": [
+      "Documentary"
+    ],
+    "releaseYear": 2020,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt16919808",
+    "title": "Questions for Q4 Earnings Call, Oppenheimer TSLA Price Target, EU Price Cuts (01.20.21)",
+    "type": "Podcast Episode",
+    "releaseYear": 2021,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt16919902",
+    "title": "TSLA Breaks $500, Oppenheimer Upgrade, FSD \"Soon\", China Subsidies, Updated Short Interest (01.13.20)",
+    "type": "Podcast Episode",
+    "releaseYear": 2020,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt17136428",
+    "title": "South Africa's Heated Election & Sexist 2020 Coverage - Mark Jonathan Harris & Deborah Oppenheimer",
+    "type": "Podcast Episode",
+    "imageUrl": "https://m.media-amazon.com/images/M/MV5BN2E4M2M5OWQtZjgyMy00ZGQ5LTg2YTAtMGE3Y2FiZjA3Y2Y3XkEyXkFqcGdeQXVyMTM2Mzg4MA@@._V1_.jpg",
+    "genres": [
+      "Comedy"
+    ],
+    "runtime": 1620,
+    "releaseYear": 2019,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt17438990",
+    "title": "Machine Learning Deployments with Diego Oppenheimer",
+    "type": "Podcast Episode",
+    "runtime": 3180,
+    "releaseYear": 2018,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt17439148",
+    "title": "Algorithm Marketplace with Diego Oppenheimer of Algorithmia",
+    "type": "Podcast Episode",
+    "runtime": 3300,
+    "releaseYear": 2016,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  },
+  {
+    "id": "tt17596716",
+    "title": "NBA set to return earlier than we thought and speaking of returns....Josh Oppenheimer?!",
+    "type": "Podcast Episode",
+    "runtime": 1740,
+    "releaseYear": 2020,
+    "endYear": null,
+    "rating": null,
+    "ratingCount": 0
+  }
+]

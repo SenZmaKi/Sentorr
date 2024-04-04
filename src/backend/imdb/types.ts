@@ -21,14 +21,14 @@ export type EpisodesResultsJson = {
                 __typename: string;
               };
               plot:
-                | {
-                    plotText: {
-                      plaidHtml: string;
-                      __typename: string;
-                    };
-                    __typename: string;
-                  }
-                | undefined;
+              | {
+                plotText: {
+                  plaidHtml: string;
+                  __typename: string;
+                };
+                __typename: string;
+              }
+              | undefined;
               releaseDate: {
                 month: number;
                 day: number;
@@ -114,7 +114,7 @@ export type Episode = {
   number: number;
   seasonNumber: number;
   imageUrl: string;
-  plot: string | undefined;
+  plot?: string;
   releaseDate: string;
   rating: number;
   ratingCount: number;
@@ -122,18 +122,25 @@ export type Episode = {
 
 export type BaseResult = {
   id: string;
-  title: string;
-  type: string | undefined;
-  imageUrl: string | undefined;
-  releaseYear: number | undefined;
-  endYear: number | undefined;
-  rating: number | undefined;
-  ratingCount: number | undefined;
+  title?: string;
+  type?: string;
+  imageUrl?: string;
+  plot?: string;
+  releaseYear?: number;
+  endYear?: number | null;
+  rating?: number | null;
+  ratingCount?: number;
+  genres?: string[];
+  /**
+   * In seconds
+   */
+  runtime?: number;
+
 };
 
 export type BaseNode = {
   id: string;
-  titleText: {
+  titleText?: {
     text: string;
     __typename: string;
   };
@@ -165,6 +172,11 @@ export type BaseNode = {
     };
     __typename: string;
   };
+  plot?: {
+    plotText?: {
+      plainText: string;
+    };
+  }
   releaseYear: {
     year: number;
     endYear?: number;
@@ -188,8 +200,8 @@ export type BaseNode = {
     isRatable: boolean;
     __typename: string;
   };
-  titleGenres: {
-    genres: Array<{
+  titleGenres?: {
+    genres?: Array<{
       genre: {
         text: string;
         __typename: string;
@@ -252,25 +264,25 @@ export type MoreMetadata = {};
 
 export type Media = {
   id: string;
-  title: string;
-  imageUrl: string | undefined;
-  trailerUrl: string | undefined;
-  plot: string | undefined;
-  genres: string[] | undefined;
-  releaseYear: number | undefined;
-  endYear: number | undefined;
-  rating: number | undefined;
-  ratingCount: number | undefined;
-  popularityScore: number | undefined;
-  contentRating: string | undefined;
-  actors: Actor[];
-  directors: string[];
-  creators: string[];
-  runtime: string | undefined;
-  episodeCount: number | undefined;
-  seasonsCount: number | undefined;
-  productionStatus: string | undefined;
-  recommendations: BaseResult[];
+  title?: string;
+  imageUrl?: string;
+  trailerUrl?: string;
+  plot?: string;
+  genres?: string[];
+  releaseYear?: number;
+  endYear?: number;
+  rating?: number;
+  ratingCount?: number;
+  popularityScore?: number;
+  contentRating?: string;
+  actors?: Actor[];
+  directors?: string[];
+  creators?: string[];
+  runtime?: string;
+  episodeCount?: number;
+  seasonsCount?: number;
+  productionStatus?: string;
+  recommendations?: BaseResult[];
 };
 
 export type MediaMetadataJson = {
@@ -349,10 +361,10 @@ export type Review = {
   hasSpoilers: boolean;
 };
 
-export type Pagination<T> = {
-  nextPageKey: string;
+export type Pagination<T> =  {
   results: T;
-};
+  next: (() => Promise<Pagination<T>>) | undefined;
+}
 
 export type Actor = {
   name: string;
@@ -393,7 +405,6 @@ export type AdvancedTitleSearchResultJson = {
     };
   };
 };
-
 export enum Genre {
   Action = "Action",
   Adventure = "Adventure",
@@ -423,43 +434,57 @@ export enum Genre {
   War = "War",
   Western = "Western",
 }
-export type SortBy =
-  | "POPULARITY"
-  | "TITLE_REGIONAL"
-  | "USER_RATING"
-  | "USER_RATING_COUNT"
-  | "BOX_OFFICE_GROSS_DOMESTIC"
-  | "RUNTIME"
-  | "YEAR"
-  | "RELEASE_DATE";
 
-export type SortOrder = "ASC" | "DESC";
 
+export enum MediaType {
+  Movie = "movie",
+  TVSeries = "tvSeries",
+  Short = "short",
+  TVMiniSeries = "tvMiniSeries",
+  TVMovie = "tvMovie",
+  TVSpecial = "tvSpecial",
+  TVShort = "tvShort",
+  Documentary = "documentary"
+}
+
+export enum SortBy {
+  POPULARITY = "POPULARITY",
+  TITLE_REGIONAL = "TITLE_REGIONAL",
+  USER_RATING = "USER_RATING",
+  USER_RATING_COUNT = "USER_RATING_COUNT",
+  BOX_OFFICE_GROSS_DOMESTIC = "BOX_OFFICE_GROSS_DOMESTIC",
+  RUNTIME = "RUNTIME",
+  YEAR = "YEAR",
+  RELEASE_DATE = "RELEASE_DATE",
+}
+
+
+export enum SortOrder {
+  ASC = "ASC",
+  DESC = "DESC",
+}
 export type Range =
   | {
-      min: number | string;
-      max: number | string;
-    }
-  | {};
+    min?: number | string;
+    max?: number | string;
+  }
 
 export type ReleaseDateRange =
   | {
-      start: string;
-      end: string;
-    }
-  | {};
+    start?: string;
+    end?: string;
+  }
 
-type MediaType =
-  | "Movie"
-  | "TV Series"
-  | "Short"
-  | "TV Episode"
-  | "TV Mini Series"
-  | "TV Movie"
-  | "TV Special"
-  | "TV Short"
-  | "Video Game"
-  | "Video"
-  | "Music Video"
-  | "Podcast Series"
-  | "Podcast Episode";
+export type SearchFilters =
+  {
+    pageKey?: string;
+    searchTerm?: string;
+    genres?: Genre[];
+    mediaTypes?: MediaType[];
+    sortBy?: SortBy;
+    sortOrder?: SortOrder;
+    ratingRange?: Range;
+    ratingsCountRange?: Range;
+    releaseDateRange?: ReleaseDateRange;
+    runtimeRangeMinutes?: Range;
+  }

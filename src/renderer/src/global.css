@@ -1,0 +1,60 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+:root {
+  color-scheme: dark;
+}
+
+input {
+  padding-left: 0.5rem;
+  outline: none;
+  border-radius: 0.25rem;
+}
+
+select {
+  padding-left: 0.5rem;
+  outline: none;
+  border-radius: 0.25rem;
+}
+
+svg {
+  fill: currentColor;
+}
+
+body {
+  background-color: #141414;
+  overflow: hidden;
+}
+
+.default-dark {
+  background-color: #141414;
+}
+
+.xxs-dark {
+  background-color: #121212;
+}
+
+.xs-dark {
+  background-color: #101010;
+}
+
+.s-dark {
+  background-color: #0e0e0e;
+}
+
+.m-dark {
+  background-color: #090909;
+}
+
+.l-dark {
+  background-color: #070707;
+}
+
+.xl-dark {
+  background-color: #040404;
+}
+
+.xxl-dark {
+  background-color: #010101;
+}

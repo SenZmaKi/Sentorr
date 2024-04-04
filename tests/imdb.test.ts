@@ -1,5 +1,5 @@
 import {
-  filteredSearch,
+  search,
   getFanFavorites,
   getPopularTitles,
   setSessionCookies,
@@ -11,27 +11,24 @@ import {
 } from "../src/backend/imdb/api.js";
 import { Pagination } from "../src/backend/imdb/types.js";
 import { SHOW_IMDB_ID, MOVIE_TITLE } from "./utils/constants.js";
-import { emptyArrayTest, emptyArrayTestHandler } from "./utils/functions.js";
+import {
+  emptyArrayTest,
+  emptyArrayTestHandler,
+  saveResults,
+} from "./utils/functions.js";
 import { test, expect } from "bun:test";
 
-function haveSameElements<T>(array1: T[], array2: T[]): boolean {
-  if (array1.length !== array2.length) {
-    return false;
-  }
-  return array1.find((elem, idx) => elem == array2[idx]) !== undefined;
-}
-
-async function paginationTest(callback: () => Promise<Pagination<any>>) {
+async function paginationTest(
+  name: string,
+  callback: () => Promise<Pagination<any>>,
+) {
   const page = await callback();
-  emptyArrayTest(page.results);
-  expect(page.nextPageKey).toBeTruthy();
-  const page2 = await callback();
-  emptyArrayTest(page2.results);
-  expect(page2.nextPageKey).toBeTruthy();
-  expect(
-    page.nextPageKey !== page2.nextPageKey &&
-      !haveSameElements(page.results, page2.results),
-  );
+  emptyArrayTest(name, page.results);
+  expect(page.next).toBeTruthy();
+  if (page.next) { // for typescript to not complain about page.next being undefined
+    const page2 = await page.next();
+    emptyArrayTest(`${name}2`, page2.results);
+  }
 }
 
 test("fakeTest", () => {
@@ -39,40 +36,41 @@ test("fakeTest", () => {
 });
 
 test("setSessionCookies", async () => {
-  await emptyArrayTestHandler(setSessionCookies);
+  await emptyArrayTestHandler("setSessionCookies", setSessionCookies);
 });
 test("search", async () => {
-  const callback = async () => filteredSearch({ searchTerm: MOVIE_TITLE });
-  await paginationTest(callback);
+  const callback = async () => search({ searchTerm: MOVIE_TITLE });
+  await paginationTest("search", callback);
 });
 
 test("fanFavorites", async () => {
-  await emptyArrayTestHandler(getFanFavorites);
+  await emptyArrayTestHandler("fanFavorites", getFanFavorites);
 });
 
 test("popularTitles", async () => {
-  await emptyArrayTestHandler(getPopularTitles);
+  await emptyArrayTestHandler("popularTitles", getPopularTitles);
 });
 
 test("getMedia", async () => {
   const media = await getMedia(SHOW_IMDB_ID);
+  saveResults("getMedia", media);
   expect(media.title).toBeTruthy();
 });
 
 test("getReviews", async () => {
-  const callback = async () => getReviews(SHOW_IMDB_ID, "", true);
-  await paginationTest(callback);
+  const callback = async () => getReviews(SHOW_IMDB_ID, true);
+  await paginationTest("getReviews", callback);
 });
 
 test("getTop10Trending", async () => {
-  await emptyArrayTestHandler(getTop10Trending);
+  await emptyArrayTestHandler("getTop10Trending", getTop10Trending);
 });
 
 test("getEpisodes", async () => {
-  const callback = async () => getEpisodes(SHOW_IMDB_ID, 1, "");
-  await paginationTest(callback);
+  const callback = async () => getEpisodes(SHOW_IMDB_ID, 1);
+  await paginationTest("getEpisodes", callback);
 });
 
 test("getTop10OfAllTime", async () => {
-  await emptyArrayTestHandler(getTop10OfAllTime);
+  await emptyArrayTestHandler("getTop10OfAllTime", getTop10OfAllTime);
 });

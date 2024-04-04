@@ -1,0 +1,300 @@
+{
+  "id": "tt4158110",
+  "title": "Mr. Robot",
+  "imageUrl": "https://m.media-amazon.com/images/M/MV5BM2QyNDIzOGMtNThhNS00NmUwLWI0ZjUtZjdkN2I1OTRjZWQ3XkEyXkFqcGdeQXVyNzQ1ODk3MTQ@._V1_.jpg",
+  "trailerUrl": "https://www.imdb.com/video/imdb/vi699842329",
+  "plot": "Elliot, a brilliant but unstable cyber-security engineer and vigilante hacker, becomes a key figure in a complex game of global chaos when he and his shadowy allies try to take down the corrupt corporation his company is paid to protect.",
+  "genres": [
+    "Crime",
+    "Drama",
+    "Thriller"
+  ],
+  "releaseYear": 2015,
+  "rating": 8.5,
+  "ratingCount": 416085,
+  "popularityScore": 246,
+  "contentRating": "TV-MA",
+  "actors": [
+    {
+      "name": "Rami Malek",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BODA3OTM4ODU0MV5BMl5BanBnXkFtZTgwNjQ5Njg3NjM@._V1_.jpg",
+      "character": "Elliot Alderson"
+    },
+    {
+      "name": "Christian Slater",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTY5ODA1ODY2Nl5BMl5BanBnXkFtZTgwNjcwNDczNzE@._V1_.jpg",
+      "character": "Mr. Robot"
+    },
+    {
+      "name": "Carly Chaikin",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjM5MzIyNTc2OV5BMl5BanBnXkFtZTcwNzI4MzQ5OQ@@._V1_.jpg",
+      "character": "Darlene"
+    },
+    {
+      "name": "Martin Wallström",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNzJkNWQ3Y2YtNmVhNC00ODE4LTg2NTQtM2U5NmFjMjExM2IxXkEyXkFqcGdeQXVyMzIxNTMwMQ@@._V1_.jpg",
+      "character": "Tyrell Wellick"
+    },
+    {
+      "name": "Portia Doubleday",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNGZjNDlhZGMtMzlkNy00NmQzLTlhMDAtMjY3YjllYTM4OWZkXkEyXkFqcGdeQXVyMTMzOTMyOTM4._V1_.jpg",
+      "character": "Angela Moss"
+    },
+    {
+      "name": "Michael Cristofer",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjA5MDY2NTE0OV5BMl5BanBnXkFtZTYwODU3NzM3._V1_.jpg",
+      "character": "Phillip Price"
+    },
+    {
+      "name": "Grace Gummer",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTkwNTAwMjAwM15BMl5BanBnXkFtZTgwODI5NDE3NTE@._V1_.jpg",
+      "character": "Dominique DiPierro"
+    },
+    {
+      "name": "BD Wong",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTYxNTEyMjEyOF5BMl5BanBnXkFtZTcwNjAwNTMwNA@@._V1_.jpg",
+      "character": "Whiterose"
+    },
+    {
+      "name": "Stephanie Corneliussen",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTM3MTUzMzQ3OV5BMl5BanBnXkFtZTcwMzQ1MTYwOQ@@._V1_.jpg",
+      "character": "Joanna Wellick"
+    },
+    {
+      "name": "Vaishnavi Sharma",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjJkMTk2OWEtYTdhNC00YmZmLWIwYTUtM2YxZjViNzljYWE1XkEyXkFqcGdeQXVyMjQwMDg0Ng@@._V1_.jpg",
+      "character": "Elliot's Mother"
+    },
+    {
+      "name": "Gloria Reuben",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjAxNGZjYmEtZDI4OS00MzQyLWEyN2YtYWI1Y2I3ODAxZjQ4XkEyXkFqcGdeQXVyOTExOTIzMg@@._V1_.jpg",
+      "character": "Krista Gordon"
+    },
+    {
+      "name": "Sunita Mani",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZjI0M2IzZWUtYjYyNS00MWUyLWE5YWItNmYzNjY1MWNlODNjXkEyXkFqcGdeQXVyMTE1MTYxNDAw._V1_.jpg",
+      "character": "Trenton"
+    },
+    {
+      "name": "Azhar Khan",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTUxMmQ0MmUtYjE5MC00MjU2LWExYzctZWI2MTRjOGRjMDBmXkEyXkFqcGdeQXVyMjQwMDg0Ng@@._V1_.jpg",
+      "character": "Mobley"
+    },
+    {
+      "name": "Joey Bada$$",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTQ0NDM0NzcyMl5BMl5BanBnXkFtZTgwMjM3ODMyOTE@._V1_.jpg",
+      "character": "Leon"
+    },
+    {
+      "name": "Omar Metwally",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMGZlMGVjYmQtNzc1Mi00NzY5LThjYTctNTg4OGQ1ZGQ2NjE0XkEyXkFqcGdeQXVyMjQwMDg0Ng@@._V1_.jpg",
+      "character": "Agent Santiago"
+    },
+    {
+      "name": "Michael Drayer",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMmU0MTMwZTYtMmNhOC00NGI2LWExZmUtYTI4MDM4OTRjYTgzXkEyXkFqcGdeQXVyMjQwMDg0Ng@@._V1_.jpg",
+      "character": "Cisco"
+    },
+    {
+      "name": "Michel Gill",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMDk1ODM5YzktOWRlMS00ZWRmLTkyMjgtYTM0YTE4ODQ1YTNmXkEyXkFqcGdeQXVyNzI5Mzg2OA@@._V1_.jpg",
+      "character": "Gideon Goddard"
+    },
+    {
+      "name": "Jeremy Holm",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNDMzMTRkNDUtNTg0Ni00MThhLWI5ZjgtMGY3NDRmMWY2MDQ1XkEyXkFqcGdeQXVyMTE5NjM0NjI3._V1_.jpg",
+      "character": "Mr. Sutherland"
+    }
+  ],
+  "runtime": "49m",
+  "recommendations": [
+    {
+      "id": "tt5753856",
+      "title": "Dark",
+      "type": "TV Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTk2NzUyOTctZDdlMS00MDJlLTgzNTEtNzQzYjFhNjA0YjBjXkEyXkFqcGdeQXVyMjg1NDcxNDE@._V1_.jpg",
+      "genres": [
+        "Crime",
+        "Drama",
+        "Mystery"
+      ],
+      "releaseYear": 2017,
+      "endYear": 2020,
+      "rating": 8.7,
+      "ratingCount": 439385
+    },
+    {
+      "id": "tt0475784",
+      "title": "Westworld",
+      "type": "TV Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZDg1OWRiMTktZDdiNy00NTZlLTg2Y2EtNWRiMTcxMGE5YTUxXkEyXkFqcGdeQXVyMTM2MDY0OTYx._V1_.jpg",
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Sci-Fi"
+      ],
+      "runtime": 3720,
+      "releaseYear": 2016,
+      "endYear": 2022,
+      "rating": 8.5,
+      "ratingCount": 530558
+    },
+    {
+      "id": "tt3032476",
+      "title": "Better Call Saul",
+      "type": "TV Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZDA4YmE0OTYtMmRmNS00Mzk2LTlhM2MtNjk4NzBjZGE1MmIyXkEyXkFqcGdeQXVyMTMzNDExODE5._V1_.jpg",
+      "genres": [
+        "Crime",
+        "Drama"
+      ],
+      "releaseYear": 2015,
+      "endYear": 2022,
+      "rating": 9,
+      "ratingCount": 639963
+    },
+    {
+      "id": "tt5290382",
+      "title": "Mindhunter",
+      "type": "TV Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNWNmYzQ1ZWUtYTQ3ZS00Y2UwLTlkMDctZThlOTJkMGJiNzBiXkEyXkFqcGdeQXVyNjg2NjQwMDQ@._V1_.jpg",
+      "genres": [
+        "Crime",
+        "Drama",
+        "Mystery"
+      ],
+      "runtime": 3600,
+      "releaseYear": 2017,
+      "endYear": 2019,
+      "rating": 8.6,
+      "ratingCount": 332358
+    },
+    {
+      "id": "tt0773262",
+      "title": "Dexter",
+      "type": "TV Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZjkzMmU5MjMtODllZS00OTA5LTk2ZTEtNjdhYjZhMDA5ZTRhXkEyXkFqcGdeQXVyOTA3MTMyOTk@._V1_.jpg",
+      "genres": [
+        "Crime",
+        "Drama",
+        "Mystery"
+      ],
+      "runtime": 3300,
+      "releaseYear": 2006,
+      "endYear": 2013,
+      "rating": 8.7,
+      "ratingCount": 760812
+    },
+    {
+      "id": "tt2243973",
+      "title": "Hannibal",
+      "type": "TV Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNWU5YmJhNWEtZGVlOS00NmRhLThmNzUtYjAyMDA2MDg5ZTM4XkEyXkFqcGdeQXVyNDIzMzcwNjc@._V1_.jpg",
+      "genres": [
+        "Crime",
+        "Drama",
+        "Horror"
+      ],
+      "releaseYear": 2013,
+      "endYear": 2015,
+      "rating": 8.5,
+      "ratingCount": 274989
+    },
+    {
+      "id": "tt7366338",
+      "title": "Chernobyl",
+      "type": "TV Mini Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNTdkN2QwMDItMDVhNS00ZjFiLWEzNTctMzY5ODQzYWNkMDllXkEyXkFqcGdeQXVyMTMzNDExODE5._V1_.jpg",
+      "genres": [
+        "Drama",
+        "History",
+        "Thriller"
+      ],
+      "releaseYear": 2019,
+      "endYear": 2019,
+      "rating": 9.3,
+      "ratingCount": 856193
+    },
+    {
+      "id": "tt1475582",
+      "title": "Sherlock",
+      "type": "TV Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMWEzNTFlMTQtMzhjOS00MzQ1LWJjNjgtY2RhMjFhYjQwYjIzXkEyXkFqcGdeQXVyNDIzMzcwNjc@._V1_.jpg",
+      "genres": [
+        "Crime",
+        "Drama",
+        "Mystery"
+      ],
+      "runtime": 5280,
+      "releaseYear": 2010,
+      "endYear": 2017,
+      "rating": 9.1,
+      "ratingCount": 991666
+    },
+    {
+      "id": "tt2707408",
+      "title": "Narcos",
+      "type": "TV Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNmFjODU3YzgtMGUwNC00ZGI3LWFkZjQtMjkxZDc3NmQ1MzcyXkEyXkFqcGdeQXVyNjUwNzk3NDc@._V1_.jpg",
+      "genres": [
+        "Biography",
+        "Crime",
+        "Drama"
+      ],
+      "runtime": 2940,
+      "releaseYear": 2015,
+      "endYear": 2017,
+      "rating": 8.8,
+      "ratingCount": 467229
+    },
+    {
+      "id": "tt2085059",
+      "title": "Black Mirror",
+      "type": "TV Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZTgyNTBkNzctN2I3NC00NTA1LWJiMDMtYzA2MmYyZjc1NWQzXkEyXkFqcGdeQXVyMTUzMTg2ODkz._V1_.jpg",
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Sci-Fi"
+      ],
+      "runtime": 3600,
+      "releaseYear": 2011,
+      "endYear": null,
+      "rating": 8.7,
+      "ratingCount": 635319
+    },
+    {
+      "id": "tt1856010",
+      "title": "House of Cards",
+      "type": "TV Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNmM4ODU1MzItODYyYi00Y2U0LWFjZjItYTRhZWIwOGMyZTRhXkEyXkFqcGdeQXVyNjc2NTQ4Nzk@._V1_.jpg",
+      "genres": [
+        "Drama"
+      ],
+      "releaseYear": 2013,
+      "endYear": 2018,
+      "rating": 8.6,
+      "ratingCount": 529061
+    },
+    {
+      "id": "tt10048342",
+      "title": "The Queen's Gambit",
+      "type": "TV Mini Series",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BM2EwMmRhMmUtMzBmMS00ZDQ3LTg4OGEtNjlkODk3ZTMxMmJlXkEyXkFqcGdeQXVyMjM5ODk1NDU@._V1_.jpg",
+      "genres": [
+        "Drama"
+      ],
+      "releaseYear": 2020,
+      "endYear": 2020,
+      "rating": 8.5,
+      "ratingCount": 545660
+    }
+  ],
+  "productionStatus": "Released",
+  "creators": [
+    "Sam Esmail"
+  ],
+  "seasonsCount": 4,
+  "episodeCount": 45,
+  "endYear": 2019
+}

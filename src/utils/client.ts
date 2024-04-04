@@ -15,10 +15,13 @@ class Client {
   public async get(
     url: string,
     headers: HeadersInit | undefined = undefined,
-    cookies: string[] = [],
+    cookies: string[] | undefined = undefined,
   ): Promise<Response> {
-    const strCookies = cookies.join(";");
-    headers = { ...headers, ...this.headers, Cookie: strCookies };
+    headers = {
+      ...headers,
+      ...this.headers,
+      Cookie: cookies ? cookies.join("; ") : "",
+    };
     return fetch(url, { method: "GET", headers: headers });
   }
 }

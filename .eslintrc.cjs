@@ -3,11 +3,11 @@ module.exports = {
     extraFileExtensions: [".svelte"],
   },
   extends: [
+    "prettier",
     "eslint:recommended",
     "plugin:svelte/recommended",
     "@electron-toolkit/eslint-config-ts/recommended",
     "@electron-toolkit/eslint-config-prettier",
-    "prettier",
   ],
   overrides: [
     {

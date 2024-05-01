@@ -1,4 +1,4 @@
-import { CLIENT } from "../../utils/client.js";
+import { CLIENT } from "@/common/constants";
 import { SearchResultsJson, Torrent } from "./types.js";
 
 const API_ENTRY_POINT = "https://yts.mx/api/v2/";

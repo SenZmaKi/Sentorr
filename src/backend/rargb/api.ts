@@ -1,5 +1,5 @@
-import { CLIENT } from "../../utils/client.js";
-import { parseHtml, zfill } from "../../utils/functions.js";
+import { CLIENT } from "@/common/types.js";
+import { parseHtml, zfill } from "@/common/functions.js";
 import { Torrent } from "./types.js";
 import { CheerioAPI, Element } from "cheerio";
 import * as vfp from "@ctrl/video-filename-parser";

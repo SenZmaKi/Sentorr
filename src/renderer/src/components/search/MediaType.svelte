@@ -1,17 +1,16 @@
 <script lang="ts">
+  import {
+    formattedMediaTypes,
+    formattedMediaTypesMap,
+  } from "../common/constants";
   import EnumFilter from "./EnumFilter.svelte";
   import FilterIcon from "./FilterIcon.svelte";
-  import {
-    formattedMediaTypesVariants,
-    selectedFormattedMediaTypes,
-    mediaTypes,
-    formattedMediaTypes,
-  } from "./store.js";
+  import { selectedFormattedMediaTypes, mediaTypes } from "./store.js";
 
   $: {
     if ($selectedFormattedMediaTypes !== undefined) {
       $mediaTypes = $selectedFormattedMediaTypes.map(
-        (key) => formattedMediaTypes[key],
+        (key) => formattedMediaTypesMap[key],
       );
     } else {
       $mediaTypes = undefined;
@@ -21,7 +20,7 @@
 
 <EnumFilter
   bind:selectedVariants={$selectedFormattedMediaTypes}
-  variants={formattedMediaTypesVariants}
+  variants={formattedMediaTypes}
   name="Type"
 >
   <FilterIcon viewBox="0 0 50 50">

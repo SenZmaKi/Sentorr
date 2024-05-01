@@ -1,9 +1,10 @@
 node_modules/
 build/
 out/
-.scraps/
 .figma/
 .vscode/
+.scraps/
+src/test-results/
 bun.lockb
 .env
 .prettierrc.yaml

@@ -260,12 +260,13 @@ export type PopularTitlesJson = {
   };
 };
 
-export type MoreMetadata = {};
 
 export type Media = {
   id: string;
   title?: string;
+  type?: string;
   imageUrl?: string;
+  bannerImageUrl?: string;
   trailerUrl?: string;
   plot?: string;
   genres?: string[];
@@ -318,7 +319,7 @@ export type MediaMetadataJson = {
   genre: Array<string>;
   datePublished: string;
   keywords: string;
-  trailer: {
+  trailer?: {
     "@type": string;
     name: string;
     embedUrl: string;
@@ -332,17 +333,17 @@ export type MediaMetadataJson = {
     duration: string;
     uploadDate: string;
   };
-  actor: Array<{
+  actor?: Array<{
     "@type": string;
     url: string;
     name: string;
   }>;
-  director: Array<{
+  director?: Array<{
     "@type": string;
     url: string;
     name: string;
   }>;
-  creator: Array<{
+  creator?: Array<{
     "@type": string;
     url: string;
     name?: string;
@@ -353,7 +354,7 @@ export type MediaMetadataJson = {
 export type Review = {
   title: string;
   author: string;
-  rating: number | undefined;
+  rating?: number | undefined;
   content: string;
   date: string;
   likes: number;
@@ -368,8 +369,8 @@ export type Pagination<T> =  {
 
 export type Actor = {
   name: string;
-  character: string | undefined;
-  imageUrl: string | undefined;
+  character?: string;
+  imageUrl?: string;
 };
 
 export type AdvancedTitleSearchResultJson = {

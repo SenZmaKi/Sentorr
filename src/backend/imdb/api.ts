@@ -1,4 +1,3 @@
-import { CLIENT } from "../../utils/client.js";
 import {
   type AdvancedTitleSearchResultJson,
   type BaseNode,
@@ -15,29 +14,24 @@ import {
   SortOrder,
   type SearchFilters,
 } from "./types.js";
-import { DATE, DEBUG, DEFAULT_RESULTS_LIMIT, } from "@/utils/constants.js";
-import { filterMap, getFirst, parseHtml } from "@/utils/functions.js";
+import { DEFAULT_RESULTS_LIMIT } from "./constants.js";
+import { filterMap, getFirst, parseHtml } from "@/common/functions.js";
+import { DEBUG, CLIENT } from "@/common/constants.js";
 import { type CheerioAPI } from "cheerio";
 import { type MoreMetadataJson } from "./moreMetadata.js";
 import { DEFAULT_SORT_BY, DEFAULT_SORT_ORDER } from "./constants.js";
-const HOME_URL = "https://imdb.com/";
-const API_ENTRY_POINT = "https://graphql.imdb.com/?operationName=";
-const DEFAULT_LOCALE = { locale: "en-US" };
-const DEFAULT_RECOMMENDATIONS_VARIABLES = {
-  ...DEFAULT_LOCALE,
-  includeUserRating: false,
-};
-const DEFAULT_EPISODES_RESULTS_LIMIT = 250;
-const FAN_FAVORITES_HASH =
-  "7c01e0d9d8581975bf64701df0c96b02aaec777fdfc75734d68d009bde984b99";
-const POPULAR_TITLES_HASH =
-  "f928c4406df23ac79204ff916c3f7429d3a44c9aac069d332a9d7eb6932c4f2f";
-const EPISODES_HASH =
-  "e5b755e1254e3bc3a36b34aff729b1d107a63263dec628a8f59935c9e778c70e";
-const ADVANCED_TITLE_SEARCH_HASH =
-  "65dd1bac6fea9c75c87e2c0435402c1296b5cc5dd908eb897269aaa31fff44b1";
-// IMDB API accepts data in ISO format YYYY-MM-DD
-const DATE_STR = DATE.toISOString().split("T")[0];
+import {
+  HOME_URL,
+  DATE_STR,
+  FAN_FAVORITES_HASH,
+  ADVANCED_TITLE_SEARCH_HASH,
+  EPISODES_HASH,
+  POPULAR_TITLES_HASH,
+  API_ENTRY_POINT,
+  DEFAULT_RECOMMENDATIONS_VARIABLES,
+  DEFAULT_LOCALE,
+  DEFAULT_EPISODES_RESULTS_LIMIT,
+} from "./constants.js";
 
 let SESSION_COOKIES: string[] = [];
 
@@ -70,11 +64,12 @@ async function apiGet(
   headers = { ...headers, ...{ "Content-Type": "application/json" } };
   const response = await CLIENT.get(url, headers, cookies);
   const resp_json = await response.json();
-  // if (DEBUG) {
-  // console.log(
-  // `Url: ${url}\nStatus Code: ${response.status}\nJson:\n${JSON.stringify(resp_json, undefined, 4)}`,
-  // );
-  // }
+  if (DEBUG) {
+    // console.log(
+    //   `Url: ${url}\nStatus Code: ${response.status}\nJson:\n${JSON.stringify(resp_json, undefined, 4)}`,
+    // );
+    console.log("IMDB api call made");
+  }
   return resp_json;
 }
 
@@ -172,7 +167,6 @@ export async function search(
     releaseDateRange = {},
     runtimeRangeMinutes = {},
   } = filters;
-  console.log("searching")
   const variables = {
     ...DEFAULT_LOCALE,
     after: pageKey,
@@ -183,7 +177,17 @@ export async function search(
     runtimeConstraint: { runtimeRangeMinutes },
     sortBy,
     sortOrder,
-    titleTypeConstraint: { anyTitleTypeIds: mediaTypes, excludeTitleTypeIds: ["tvEpisode", "musicVideo", "podcastSeries", "podcastEpisode", "video", "videoGame"] },
+    titleTypeConstraint: {
+      anyTitleTypeIds: mediaTypes,
+      excludeTitleTypeIds: [
+        "tvEpisode",
+        "musicVideo",
+        "podcastSeries",
+        "podcastEpisode",
+        "video",
+        "videoGame",
+      ],
+    },
     userRatingsConstraint: {
       aggregateRatingRange: ratingRange,
       ratingsCountRange,
@@ -203,7 +207,9 @@ export async function search(
     );
   const nextPageKey =
     advancedTitleSearchResultJson.data.advancedTitleSearch.pageInfo.endCursor;
-  const next = nextPageKey ? async () => search({ ...filters, pageKey: nextPageKey }) : undefined;
+  const next = nextPageKey
+    ? async () => search({ ...filters, pageKey: nextPageKey })
+    : undefined;
   return { results, next };
 }
 
@@ -256,7 +262,9 @@ export async function getEpisodes(
   );
   const nextPageKey =
     episodesResultsJson.data.title.episodes.episodes.pageInfo.endCursor;
-  const next = nextPageKey ? async () => getEpisodes(mediaID, seasonNumber, nextPageKey) : undefined;
+  const next = nextPageKey
+    ? async () => getEpisodes(mediaID, seasonNumber, nextPageKey)
+    : undefined;
   return { results, next };
 }
 
@@ -278,12 +286,13 @@ function combineMetadata(
 ): Media {
   const title = metadataJson.name;
   const imageUrl = metadataJson.image;
+  const bannerImageUrl = metadataJson.trailer?.thumbnailUrl;
   const trailerUrl = metadataJson.trailer?.embedUrl;
   const genres = metadataJson.genre;
   const rating = metadataJson.aggregateRating?.ratingValue;
   const ratingCount = metadataJson.aggregateRating?.ratingCount;
   const directors = metadataJson.director?.map((d) => d.name);
-  const creators = filterMap(metadataJson.creator, (cr) => cr.name);
+  const creators = filterMap(metadataJson.creator ?? [], (cr) => cr.name);
   const contentRating = metadataJson.contentRating;
   const aboveTheFoldData = moreMetadata.props.pageProps.aboveTheFoldData;
   const id = aboveTheFoldData.id;
@@ -295,6 +304,7 @@ function combineMetadata(
     aboveTheFoldData.runtime?.displayableProperty?.value?.plainText;
   const productionStatus =
     aboveTheFoldData.productionStatus?.currentProductionStage?.text;
+  const type = aboveTheFoldData.titleType?.text;
   const mainColumnData = moreMetadata.props.pageProps.mainColumnData;
   const episodeCount = mainColumnData?.episodes?.totalEpisodes?.total;
   const seasonsCount = mainColumnData?.episodes?.seasons?.length;
@@ -305,7 +315,7 @@ function combineMetadata(
   const actors = mainColumnData.cast.edges.map((edge) => {
     const name = edge.node.name.nameText.text;
     const imageUrl = edge.node.name.primaryImage?.url;
-    const c = getFirst(edge.node.characters); // Characters is probably an array cause an actor can play multiple characters e.g., an alter ego from a different universe
+    const c = getFirst(edge.node.characters ?? []); // Characters is probably an array cause an actor can play multiple characters e.g., an alter ego from a different universe
     const character = c ? c.name : undefined;
     return { name, imageUrl, character };
   });
@@ -313,7 +323,9 @@ function combineMetadata(
   return {
     id,
     title,
+    type,
     imageUrl,
+    bannerImageUrl,
     trailerUrl,
     plot,
     genres,
@@ -386,6 +398,8 @@ export async function getReviews(
   const $ = parseHtml(page);
   const results = extractReviews($);
   const nextPageKey = $("div.load-more-data").attr("data-key");
-  const next = nextPageKey ? async () => getReviews(mediaID, hideSpoilers, nextPageKey) : undefined;
+  const next = nextPageKey
+    ? async () => getReviews(mediaID, hideSpoilers, nextPageKey)
+    : undefined;
   return { results, next };
 }

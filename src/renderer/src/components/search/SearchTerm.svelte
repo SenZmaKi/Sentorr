@@ -1,8 +1,12 @@
 <script lang="ts">
   import FilterHeader from "./FilterHeader.svelte";
   import FilterIcon from "./FilterIcon.svelte";
-  import { searchTerm } from "./store.js";
+  import { searchFilters, searchTerm } from "./store.js";
   let value = "";
+  $: {
+    if (value == "") $searchTerm = undefined;
+    else $searchTerm = value;
+  }
 </script>
 
 <div>
@@ -18,13 +22,5 @@
       />
     </FilterIcon>
   </FilterHeader>
-  <input
-    bind:value
-    type="text"
-    placeholder="Any"
-    on:change={() => {
-      if (value == "") $searchTerm = undefined;
-      else $searchTerm = value;
-    }}
-  />
+  <input bind:value type="text" placeholder="Any" />
 </div>

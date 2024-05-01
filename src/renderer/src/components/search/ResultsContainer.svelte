@@ -1,59 +1,49 @@
 <script lang="ts">
   import { search } from "$backend/imdb/api";
-  // import results from "$frontend/test/data/search.json";
-  import type { BaseResult } from "$backend/imdb/types";
-  import MediaCard from "./common/mediacard/Complex.svelte";
-  import ComplexPlaceholder from "./common/mediacard/ComplexPlaceholder.svelte";
+  // import results from "@/test-results/search.json";
+  import Complex from "../common/mediacard/Complex.svelte";
+  import Simple from "../common/mediacard/Simple.svelte";
+  import ComplexPlaceholder from "../common/mediacard/ComplexPlaceholder.svelte";
+  import SimplePlaceholder from "../common/mediacard/SimplePlaceholder.svelte";
   import { searchFilters } from "./store";
-
-  $: pagination = search($searchFilters);
-  let accumulatedResults: (BaseResult | undefined)[];
-  $: console.log(accumulatedResults.length);
+  import { createInfiniteScrollStore } from "../common/functions";
+  import type { Writable } from "svelte/store";
+  import type { BaseResult } from "$backend/imdb/types";
+  export let useSimple = false;
+  let accumulatedResults: Writable<(BaseResult | undefined)[]>;
+  let infiniteScroll: (event: Event | null) => void;
   $: {
-    $searchFilters;
-    accumulatedResults = [];
+    [accumulatedResults, infiniteScroll] = createInfiniteScrollStore(
+      search($searchFilters),
+      false,
+      25,
+    );
   }
-  let resultsDiv: HTMLElement;
+  let resultsDiv: HTMLDivElement;
   $: {
     $searchFilters;
     if (resultsDiv) resultsDiv.scrollTo(0, 0);
   }
-  $: pagination, updateAccumulatedResults();
-  async function updateAccumulatedResults() {
-    accumulatedResults = [
-      ...accumulatedResults,
-      ...Array.from({ length: 25 }, (_) => undefined),
-    ];
-    const results = (await pagination).results;
-    accumulatedResults = accumulatedResults.slice(undefined, -25);
-    accumulatedResults = [...accumulatedResults, ...results];
-  }
-
-  async function infiniteScroll(event: Event | null) {
-    if (!event) return;
-    const element = event.target as HTMLElement;
-    // when the user is 30% away from the bottom of the page or rather scrolled 70% of the page
-    const nearingBottom =
-      (element.clientHeight + element.scrollTop) / element.scrollHeight >= 0.7;
-    if (nearingBottom) {
-      const awaitedPagination = await pagination;
-      if (awaitedPagination.next) {
-        pagination = awaitedPagination.next();
-      }
-    }
-  }
 </script>
 
-{#if accumulatedResults.length}
+{#if $accumulatedResults.length}
   <div
     bind:this={resultsDiv}
     on:scroll={infiniteScroll}
     class="grid gap-x-10 gap-y-5 overflow-y-auto max-h-[82vh]"
-    style="grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));"
+    style={useSimple
+      ? "grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));"
+      : "grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));"}
   >
-    {#each accumulatedResults as result}
+    {#each $accumulatedResults as result}
       {#if result}
-        <MediaCard {result} />
+        {#if useSimple}
+          <Simple {result} />
+        {:else}
+          <Complex {result} />
+        {/if}
+      {:else if useSimple}
+        <SimplePlaceholder />
       {:else}
         <ComplexPlaceholder />
       {/if}

@@ -1,7 +1,7 @@
-<script lang="ts">
-  import Search from "./components/search/Main.svelte";
+<script>
+  import Main from "./components/Main.svelte";
 </script>
 
 <body>
-  <Search />
+  <Main />
 </body>

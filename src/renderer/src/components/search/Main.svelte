@@ -8,20 +8,23 @@
   import AllSelectedVariants from "./AllSelectedVariants.svelte";
   import Sort from "./Sort.svelte";
   import ResultsContainer from "./ResultsContainer.svelte";
+  import PageWrapper from "../common/PageWrapper.svelte";
 </script>
 
-<div class="flex-col justify-between p-3">
-  <div class="flex justify-between">
-    <SearchTerm />
-    <Genre />
-    <MediaType />
-    <Rating />
-    <Year />
-    <Runtime />
+<PageWrapper>
+  <div class="opacity-90 flex-col justify-between p-3">
+    <div class="flex justify-between">
+      <SearchTerm />
+      <Genre />
+      <MediaType />
+      <Rating />
+      <Year />
+      <Runtime />
+    </div>
+    <div class="flex items-baseline pt-3 pb-3 justify-between">
+      <AllSelectedVariants />
+      <Sort />
+    </div>
+    <ResultsContainer />
   </div>
-  <div class="flex items-baseline pt-3 pb-3 justify-between">
-    <AllSelectedVariants />
-    <Sort />
-  </div>
-  <ResultsContainer/>
-</div>
+</PageWrapper>

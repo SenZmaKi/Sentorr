@@ -58,3 +58,25 @@ body {
 .xxl-dark {
   background-color: #010101;
 }
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #2b2b2b;
+}
+
+::-webkit-scrollbar-thumb {
+  /*
+* Mildly undecided on which looks better
+* background-color: #4d4d4d;
+*/
+  background-color: #666;
+  border-radius: 3.5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #7f7f7f;
+}

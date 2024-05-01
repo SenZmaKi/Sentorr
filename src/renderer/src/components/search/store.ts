@@ -1,5 +1,4 @@
 import { writable, derived, type Writable } from "svelte/store";
-import { search } from "$backend/imdb/api.js";
 import {
   MediaType,
   SortBy,
@@ -12,7 +11,6 @@ import {
   DEFAULT_SORT_BY,
   DEFAULT_SORT_ORDER,
 } from "$backend/imdb/constants.js";
-import { DEBUG } from "@/utils/constants";
 
 // Individual writable stores for each field in searchFilters
 export let searchTerm: Writable<string | undefined> = writable(undefined);
@@ -60,16 +58,4 @@ export let searchFilters = derived(
 );
 
 
-export const formattedMediaTypes = {
-  Movie: MediaType.Movie,
-  "TV Series": MediaType.TVSeries,
-  Short: MediaType.Short,
-  "TV Mini Series": MediaType.TVMiniSeries,
-  "TV Movie": MediaType.TVMovie,
-  "TV Special": MediaType.TVSpecial,
-  "TV Short": MediaType.TVShort,
-  Documentary: MediaType.Documentary,
-} as const;
-
-export const formattedMediaTypesVariants = Object.keys(formattedMediaTypes);
 export let selectedFormattedMediaTypes: Writable<MediaType[] | undefined> = writable(undefined);

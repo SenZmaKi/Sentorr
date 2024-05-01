@@ -8,9 +8,7 @@ export function saveResults<T>(name: string, results: T) {
   const resultsSaveFolder = path.join(
     ROOT_DIR,
     "src",
-    "renderer",
-    "test",
-    "data",
+    "test-results",
   );
   const saveFilePath = path.join(resultsSaveFolder, `${name}.json`);
   fs.writeFileSync(saveFilePath, resultsJson, { mode: 0o755 });

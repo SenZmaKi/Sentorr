@@ -7,8 +7,8 @@ import {
   SERIES_EPISODE,
   SERIES_SEASON,
   SERIES_TITLE,
-} from "./utils/constants.js";
-import { emptyArrayTest } from "./utils/functions.js";
+} from "./common/constants.js";
+import { emptyArrayTest } from "./common/functions.js";
 import { test } from "bun:test";
 
 test("getMovieTorrents", async () => {

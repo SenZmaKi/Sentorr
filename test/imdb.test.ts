@@ -10,12 +10,12 @@ import {
   getEpisodes,
 } from "../src/backend/imdb/api.js";
 import { Pagination } from "../src/backend/imdb/types.js";
-import { SHOW_IMDB_ID, MOVIE_TITLE } from "./utils/constants.js";
+import { SHOW_IMDB_ID, MOVIE_TITLE } from "./common/constants.js";
 import {
   emptyArrayTest,
   emptyArrayTestHandler,
   saveResults,
-} from "./utils/functions.js";
+} from "./common/functions.js";
 import { test, expect } from "bun:test";
 
 async function paginationTest(

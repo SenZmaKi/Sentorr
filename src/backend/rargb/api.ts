@@ -1,7 +1,7 @@
-import { CLIENT } from "@/common/types.js";
-import { parseHtml, zfill } from "@/common/functions.js";
-import { Torrent } from "./types.js";
-import { CheerioAPI, Element } from "cheerio";
+import { CLIENT } from "@/common/constants";
+import { parseHtml, zfill } from "@/common/functions";
+import { type Torrent } from "./types";
+import type { CheerioAPI, Element } from "cheerio";
 import * as vfp from "@ctrl/video-filename-parser";
 
 const HOME_URL = "https://rargb.to";

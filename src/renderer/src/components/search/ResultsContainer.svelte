@@ -3,8 +3,8 @@
   // import results from "@/test-results/search.json";
   import Complex from "../common/mediacard/Complex.svelte";
   import Simple from "../common/mediacard/Simple.svelte";
-  import ComplexPlaceholder from "../common/mediacard/ComplexPlaceholder.svelte";
-  import SimplePlaceholder from "../common/mediacard/SimplePlaceholder.svelte";
+  import ComplexSkeleton from "../common/mediacard/ComplexSkeleton.svelte";
+  import SimpleSkeleton from "../common/mediacard/SimpleSkeleton.svelte";
   import { searchFilters } from "./store";
   import { createInfiniteScrollStore } from "../common/functions";
   import type { Writable } from "svelte/store";
@@ -43,9 +43,9 @@
           <Complex {result} />
         {/if}
       {:else if useSimple}
-        <SimplePlaceholder />
+        <SimpleSkeleton />
       {:else}
-        <ComplexPlaceholder />
+        <ComplexSkeleton />
       {/if}
     {/each}
     <div class="pt-6"></div>

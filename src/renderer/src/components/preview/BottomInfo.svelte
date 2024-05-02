@@ -5,7 +5,7 @@
   import { getReviews } from "$backend/imdb/api";
 
   import { createInfiniteScrollStore } from "../common/functions";
-  import ReviewPlaceholder from "../common/ReviewPlaceholder.svelte";
+  import ReviewSkeleton from "../common/ReviewSkeleton.svelte";
 
   export let media: Media;
 
@@ -81,7 +81,7 @@
         {#if review}
           <Review {review} width={256} height={192} />
         {:else}
-          <ReviewPlaceholder width={256} height={192} />
+          <ReviewSkeleton width={256} height={192} />
         {/if}
       {/each}
     </div>

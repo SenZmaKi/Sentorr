@@ -3,13 +3,16 @@
 <script lang="ts">
   import { previewMedia } from "../common/store";
   import Preview from "./Preview.svelte";
+  import PreviewSkeleton from "./PreviewSkeleton.svelte";
   // import media from "@/test-results/getMedia.json";
 </script>
 
-{#key $previewMedia}
-  {#if $previewMedia}
-    <Preview media={$previewMedia} />
-  {/if}
-{/key}
-
-<!-- <Preview {media}/> -->
+{#await $previewMedia}
+  <PreviewSkeleton />
+{:then media}
+  {#key media}
+    {#if media}
+      <Preview {media} />
+    {/if}
+  {/key}
+{/await}

@@ -1,6 +1,6 @@
 <script lang="ts" ii l>
   import type { Media } from "$backend/imdb/types";
-  import ImagePlaceholder from "../common/ImagePlaceholder.svelte";
+  import ImageSkeleton from "../common/ImageSkeleton.svelte";
   import Rating from "../common/Rating.svelte";
   import { prettyFormatNumber } from "../common/functions";
   export let media: Media;
@@ -9,7 +9,7 @@
 
 <div class="flex mb-16">
   <div class="mr-4 relative h-[400px] w-[300px]">
-    <ImagePlaceholder url={media.imageUrl} width={300} height={400} />
+    <ImageSkeleton url={media.imageUrl} width={300} height={400} />
     {#if media.contentRating}
       <span
         class="opacity-90 absolute top-0 right-0 text-white text-xs font-semibold xs-dark p-1 rounded-bl-md"
@@ -164,9 +164,15 @@
         </div>
         <div>
           {#if isMovie}
-            <span>{media.releaseYear}</span>
+            {#if media.releaseYear}
+              <span>{media.releaseYear}</span>
+            {/if}
           {:else if media.releaseYear && media.endYear}
-            <span>{media.releaseYear} - {media.endYear}</span>
+            {#if media.releaseYear == media.endYear}
+              <span>{media.releaseYear}</span>
+            {:else}
+              <span>{media.releaseYear} - {media.endYear}</span>
+            {/if}
           {:else if media.releaseYear}
             <span>{media.releaseYear} - Ongoing</span>
           {/if}

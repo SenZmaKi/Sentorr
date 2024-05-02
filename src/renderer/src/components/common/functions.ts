@@ -81,21 +81,20 @@ export function createInfiniteScrollStore<T>(
   return [accumulatedResults, infiniteScroll] as const;
 }
 
-export function switchToPreviewPage(media: Media): void {
+function clearPreviewMedia() {
+  previewMedia.set(undefined);
+}
+export function switchToPreviewPage(media: Promise<Media>): void {
   previewMedia.set(media);
   currentPage.set(Page.Preview);
 }
 
 export function switchToSearchPage(): void {
   currentPage.set(Page.Search);
+  clearPreviewMedia();
 }
-export function setLoadingTask(task: () => Promise<void>): boolean {
-  let wasSet = false;
-  loadingTask.update((currTask) => {
-    wasSet = currTask === undefined;
-    return wasSet ? task : currTask;
-  });
-  return wasSet;
+export function setLoadingTask(task: () => Promise<void>) {
+  loadingTask.update((currTask) => (currTask ? currTask : task));
 }
 export function clearLoadingTask(): void {
   loadingTask.set(undefined);

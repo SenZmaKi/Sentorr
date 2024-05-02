@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { BaseResult } from "$backend/imdb/types";
-  import ImagePlaceholder from "../ImagePlaceholder.svelte";
+  import ImageSkeleton from "../ImageSkeleton.svelte";
   import Rating from "../Rating.svelte";
   import { secondsToHm } from "../functions";
   import ButtonWrapper from "./ButtonWrapper.svelte";
@@ -13,7 +13,7 @@
   mediaID={result.id}
 >
   <div class="w-[200px]">
-    <ImagePlaceholder url={result.imageUrl} width={200} height={280} />
+    <ImageSkeleton url={result.imageUrl} width={200} height={280} />
   </div>
   <div class="p-2 opacity-90 h-[250px] justify-between flex flex-col">
     <!--TODO: Fix long titles-->

@@ -6,6 +6,7 @@
   import { switchToSearchPage } from "../common/functions";
   import PageWrapper from "../common/PageWrapper.svelte";
   export let media: Media;
+  console.log(media)
   const mediaType = formattedMediaTypesMap[
     media?.type ?? MediaType.TVSeries
   ] as MediaType;

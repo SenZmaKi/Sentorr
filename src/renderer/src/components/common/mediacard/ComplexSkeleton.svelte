@@ -1,9 +1,9 @@
 <script lang="ts">
-  import ImagePlaceholder from "../ImagePlaceholder.svelte";
+  import ImageSkeleton from "../ImageSkeleton.svelte";
 </script>
 
 <div class="xxs-dark flex w-[550px] h-[280px]">
-  <ImagePlaceholder animate={true} width={200} height={280} />
+  <ImageSkeleton animate={true} width={200} height={280} />
 
   <div class="animate-pulse p-3">
     <div class="min-h-[35px] w-[325px] rounded bg-gray-700 mb-2"></div>

@@ -1,5 +1,5 @@
 import { DATE } from "@/common/constants";
-import { Genre, MediaType, SortBy, SortOrder } from "./types";
+import { Genre, ApiMediaType, SortBy, SortOrder, MediaType } from "./types";
 
 export const HOME_URL = "https://imdb.com/";
 export const API_ENTRY_POINT = "https://graphql.imdb.com/?operationName=";
@@ -20,10 +20,21 @@ export const ADVANCED_TITLE_SEARCH_HASH =
   "42714660b115c035a3c14572bfd2765c622e2659f7b346e2ee7a1f24296f08e7";
 // IMDB API accepts data in ISO format YYYY-MM-DD
 export const DATE_STR = DATE.toISOString().split("T")[0];
+export const MAX_RATING = 10;
 
 export const DEFAULT_SORT_BY = SortBy.POPULARITY;
 export const DEFAULT_SORT_ORDER = SortOrder.ASC;
-export const SortBys = Object.values(SortBy) as SortBy[];
-export const MediaTypes = Object.values(MediaType) as MediaType[];
-export const Genres = Object.values(Genre) as Genre[];
-export const MAX_RATING = 10;
+export const SortBys = Object.values(SortBy);
+export const Genres = Object.values(Genre);
+export const MediaTypes = Object.values(MediaType);
+
+export const mediaTypeMap = {
+  [MediaType.Movie]: ApiMediaType.Movie,
+  [MediaType.TVSeries]: ApiMediaType.TVSeries,
+  [MediaType.Short]: ApiMediaType.Short,
+  [MediaType.TVMiniSeries]: ApiMediaType.TVMiniSeries,
+  [MediaType.TVMovie]: ApiMediaType.TVMovie,
+  [MediaType.TVSpecial]: ApiMediaType.TVSpecial,
+  [MediaType.TVShort]: ApiMediaType.TVShort,
+  [MediaType.Documentary]: ApiMediaType.Documentary,
+} as const;

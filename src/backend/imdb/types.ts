@@ -21,14 +21,14 @@ export type EpisodesResultsJson = {
                 __typename: string;
               };
               plot:
-              | {
-                plotText: {
-                  plaidHtml: string;
-                  __typename: string;
-                };
-                __typename: string;
-              }
-              | undefined;
+                | {
+                    plotText: {
+                      plaidHtml: string;
+                      __typename: string;
+                    };
+                    __typename: string;
+                  }
+                | undefined;
               releaseDate: {
                 month: number;
                 day: number;
@@ -135,7 +135,6 @@ export type BaseResult = {
    * In seconds
    */
   runtime?: number;
-
 };
 
 export type BaseNode = {
@@ -176,7 +175,7 @@ export type BaseNode = {
     plotText?: {
       plainText: string;
     };
-  }
+  };
   releaseYear: {
     year: number;
     endYear?: number;
@@ -260,16 +259,15 @@ export type PopularTitlesJson = {
   };
 };
 
-
 export type Media = {
   id: string;
   title?: string;
-  type?: string;
+  type?: MediaType;
   imageUrl?: string;
   bannerImageUrl?: string;
   trailerUrl?: string;
   plot?: string;
-  genres?: string[];
+  genres?: Genre[];
   releaseYear?: number;
   endYear?: number;
   rating?: number;
@@ -284,6 +282,8 @@ export type Media = {
   seasonsCount?: number;
   productionStatus?: string;
   recommendations?: BaseResult[];
+  isMovie: boolean;
+  isOngoing: boolean;
 };
 
 export type MediaMetadataJson = {
@@ -362,10 +362,10 @@ export type Review = {
   hasSpoilers: boolean;
 };
 
-export type Pagination<T> =  {
+export type Pagination<T> = {
   results: T;
   next: (() => Promise<Pagination<T>>) | undefined;
-}
+};
 
 export type Actor = {
   name: string;
@@ -436,8 +436,7 @@ export enum Genre {
   Western = "Western",
 }
 
-
-export enum MediaType {
+export enum ApiMediaType {
   Movie = "movie",
   TVSeries = "tvSeries",
   Short = "short",
@@ -445,7 +444,18 @@ export enum MediaType {
   TVMovie = "tvMovie",
   TVSpecial = "tvSpecial",
   TVShort = "tvShort",
-  Documentary = "documentary"
+  Documentary = "documentary",
+}
+
+export enum MediaType {
+  Movie = "Movie",
+  TVSeries = "TV Series",
+  Short = "Short",
+  TVMiniSeries = "TV Mini Series",
+  TVMovie = "TV Movie",
+  TVSpecial = "TV Special",
+  TVShort = "TV Short",
+  Documentary = "Documentary",
 }
 
 export enum SortBy {
@@ -459,33 +469,29 @@ export enum SortBy {
   RELEASE_DATE = "RELEASE_DATE",
 }
 
-
 export enum SortOrder {
   ASC = "ASC",
   DESC = "DESC",
 }
-export type Range =
-  | {
-    min?: number | string;
-    max?: number | string;
-  }
+export type Range = {
+  min?: number | string;
+  max?: number | string;
+};
 
-export type ReleaseDateRange =
-  | {
-    start?: string;
-    end?: string;
-  }
+export type ReleaseDateRange = {
+  start?: string;
+  end?: string;
+};
 
-export type SearchFilters =
-  {
-    pageKey?: string;
-    searchTerm?: string;
-    genres?: Genre[];
-    mediaTypes?: MediaType[];
-    sortBy?: SortBy;
-    sortOrder?: SortOrder;
-    ratingRange?: Range;
-    ratingsCountRange?: Range;
-    releaseDateRange?: ReleaseDateRange;
-    runtimeRangeMinutes?: Range;
-  }
+export type SearchFilters = {
+  pageKey?: string;
+  searchTerm?: string;
+  genres?: Genre[];
+  mediaTypes?: MediaType[];
+  sortBy?: SortBy;
+  sortOrder?: SortOrder;
+  ratingRange?: Range;
+  ratingsCountRange?: Range;
+  releaseDateRange?: ReleaseDateRange;
+  runtimeRangeMinutes?: Range;
+};

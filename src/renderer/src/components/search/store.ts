@@ -1,29 +1,26 @@
-import { writable, derived, type Writable } from "svelte/store";
+import { writable, derived } from "svelte/store";
 import {
-  MediaType,
   SortBy,
   type Range,
   type ReleaseDateRange,
   SortOrder,
   Genre,
+  MediaType,
 } from "$backend/imdb/types.js";
 import {
   DEFAULT_SORT_BY,
   DEFAULT_SORT_ORDER,
 } from "$backend/imdb/constants.js";
 
-// Individual writable stores for each field in searchFilters
-export let searchTerm: Writable<string | undefined> = writable(undefined);
-export let releaseDateRange: Writable<ReleaseDateRange | undefined> =
-  writable(undefined);
-export let ratingRange: Writable<Range | undefined> = writable(undefined);
-export let runtimeRangeMinutes: Writable<Range | undefined> =
-  writable(undefined);
-export let genres: Writable<Genre[] | undefined> = writable(undefined);
-export let mediaTypes: Writable<MediaType[] | undefined> = writable(undefined);
-export let sortBy: Writable<SortBy | undefined> = writable(DEFAULT_SORT_BY);
-export let sortOrder: Writable<SortOrder | undefined> =
-  writable(DEFAULT_SORT_ORDER);
+// Individual stores for each field in searchFilters
+export let searchTerm = writable<string | undefined>(undefined);
+export let releaseDateRange = writable<ReleaseDateRange | undefined>(undefined);
+export let ratingRange = writable<Range | undefined>(undefined);
+export let runtimeRangeMinutes = writable<Range | undefined>(undefined);
+export let genres = writable<Genre[] | undefined>(undefined);
+export let mediaTypes = writable<MediaType[] | undefined>(undefined);
+export let sortBy = writable<SortBy | undefined>(DEFAULT_SORT_BY);
+export let sortOrder = writable<SortOrder | undefined>(DEFAULT_SORT_ORDER);
 
 export let searchFilters = derived(
   [
@@ -37,25 +34,22 @@ export let searchFilters = derived(
     sortOrder,
   ],
   ([
-    $searchTerm,
-    $releaseDateRange,
-    $ratingRange,
-    $runtimeRangeMinutes,
-    $genres,
-    $mediaTypes,
-    $sortBy,
-    $sortOrder,
+    searchTerm,
+    releaseDateRange,
+    ratingRange,
+    runtimeRangeMinutes,
+    genres,
+    mediaTypes,
+    sortBy,
+    sortOrder,
   ]) => ({
-    searchTerm: $searchTerm,
-    releaseDateRange: $releaseDateRange,
-    ratingRange: $ratingRange,
-    runtimeRangeMinutes: $runtimeRangeMinutes,
-    genres: $genres,
-    mediaTypes: $mediaTypes,
-    sortBy: $sortBy,
-    sortOrder: $sortOrder,
+    searchTerm,
+    releaseDateRange,
+    ratingRange,
+    runtimeRangeMinutes,
+    genres,
+    mediaTypes,
+    sortBy,
+    sortOrder,
   }),
 );
-
-
-export let selectedFormattedMediaTypes: Writable<MediaType[] | undefined> = writable(undefined);

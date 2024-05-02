@@ -1,6 +1,6 @@
 <script lang="ts">
   import SelectedVariants from "./SelectedVariants.svelte";
-  import { genres, selectedFormattedMediaTypes } from "./store.js";
+  import { genres, mediaTypes } from "./store.js";
 </script>
 
 <div class="flex">
@@ -10,5 +10,5 @@
     ></path></svg
   >
   <SelectedVariants bind:selectedVariants={$genres} />
-  <SelectedVariants bind:selectedVariants={$selectedFormattedMediaTypes} />
+  <SelectedVariants bind:selectedVariants={$mediaTypes} />
 </div>

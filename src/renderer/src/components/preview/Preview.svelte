@@ -1,17 +1,10 @@
 <script lang="ts">
-  import { type Media, MediaType } from "$backend/imdb/types";
-  import { formattedMediaTypesMap } from "../common/constants";
+  import { type Media, } from "$backend/imdb/types";
   import TopInfo from "./TopInfo.svelte";
   import BottomInfo from "./BottomInfo.svelte";
   import { switchToSearchPage } from "../common/functions";
   import PageWrapper from "../common/PageWrapper.svelte";
   export let media: Media;
-  console.log(media)
-  const mediaType = formattedMediaTypesMap[
-    media?.type ?? MediaType.TVSeries
-  ] as MediaType;
-  const isMovie =
-    mediaType === MediaType.TVMovie || mediaType === MediaType.Movie;
   let bannerIsLoading = true;
 </script>
 
@@ -29,7 +22,7 @@
     <div class="overflow-y-auto absolute w-2/3 h-full p-2">
       <!-- TODO: Make this prettier -->
       <button on:click={switchToSearchPage}>Search</button>
-      <TopInfo {media} {isMovie} />
+      <TopInfo {media} />
       <BottomInfo {media} />
     </div>
   </div>

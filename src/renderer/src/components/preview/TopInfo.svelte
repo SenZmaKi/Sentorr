@@ -4,7 +4,6 @@
   import Rating from "../common/Rating.svelte";
   import { prettyFormatNumber } from "../common/functions";
   export let media: Media;
-  export let isMovie: boolean;
 </script>
 
 <div class="flex mb-16">
@@ -150,7 +149,7 @@
           </div>
         {/if}
         <div class="pr-4">
-          {#if !isMovie && media.seasonsCount && media.episodeCount}
+          {#if !media.isMovie && media.seasonsCount && media.episodeCount}
             <span
               >{media.seasonsCount} SN&nbsp•&nbsp{prettyFormatNumber(
                 media.episodeCount,
@@ -163,18 +162,16 @@
           {/if}
         </div>
         <div>
-          {#if isMovie}
+          {#if media.isMovie}
             {#if media.releaseYear}
               <span>{media.releaseYear}</span>
             {/if}
-          {:else if media.releaseYear && media.endYear}
-            {#if media.releaseYear == media.endYear}
-              <span>{media.releaseYear}</span>
-            {:else}
-              <span>{media.releaseYear} - {media.endYear}</span>
-            {/if}
-          {:else if media.releaseYear}
+          {:else if media.isOngoing}
             <span>{media.releaseYear} - Ongoing</span>
+          {:else if media.releaseYear == media.endYear}
+            <span>{media.releaseYear}</span>
+          {:else}
+            <span>{media.releaseYear} - {media.endYear}</span>
           {/if}
         </div>
       </div>

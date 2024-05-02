@@ -13,8 +13,10 @@ import {
   SortBy,
   SortOrder,
   type SearchFilters,
+  type Genre,
+  MediaType,
 } from "./types.js";
-import { DEFAULT_RESULTS_LIMIT } from "./constants.js";
+import { DEFAULT_RESULTS_LIMIT, mediaTypeMap } from "./constants.js";
 import { filterMap, getFirst, parseHtml } from "@/common/functions.js";
 import { DEBUG, CLIENT } from "@/common/constants.js";
 import { type CheerioAPI } from "cheerio";
@@ -178,7 +180,7 @@ export async function search(
     sortBy,
     sortOrder,
     titleTypeConstraint: {
-      anyTitleTypeIds: mediaTypes,
+      anyTitleTypeIds: mediaTypes.map((mediaType) => mediaTypeMap[mediaType]),
       excludeTitleTypeIds: [
         "tvEpisode",
         "musicVideo",
@@ -288,7 +290,7 @@ function combineMetadata(
   const imageUrl = metadataJson.image;
   const bannerImageUrl = metadataJson.trailer?.thumbnailUrl;
   const trailerUrl = metadataJson.trailer?.embedUrl;
-  const genres = metadataJson.genre;
+  const genres = metadataJson.genre as Genre[] | undefined;
   const rating = metadataJson.aggregateRating?.ratingValue;
   const ratingCount = metadataJson.aggregateRating?.ratingCount;
   const directors = metadataJson.director?.map((d) => d.name);
@@ -304,7 +306,7 @@ function combineMetadata(
     aboveTheFoldData.runtime?.displayableProperty?.value?.plainText;
   const productionStatus =
     aboveTheFoldData.productionStatus?.currentProductionStage?.text;
-  const type = aboveTheFoldData.titleType?.text;
+  const type = aboveTheFoldData.titleType?.text as MediaType | undefined;
   const mainColumnData = moreMetadata.props.pageProps.mainColumnData;
   const episodeCount = mainColumnData?.episodes?.totalEpisodes?.total;
   const seasonsCount = mainColumnData?.episodes?.seasons?.length;
@@ -320,6 +322,8 @@ function combineMetadata(
     return { name, imageUrl, character };
   });
 
+  const isMovie = type == MediaType.TVMovie || type == MediaType.Movie;
+  const isOngoing = !isMovie && !endYear;
   return {
     id,
     title,
@@ -343,6 +347,8 @@ function combineMetadata(
     seasonsCount,
     episodeCount,
     endYear,
+    isMovie,
+    isOngoing,
   };
 }
 

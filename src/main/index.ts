@@ -1,7 +1,39 @@
-import { app, shell, BrowserWindow, ipcMain, session } from "electron";
+import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import icon from "../../resources/icon.png?asset";
+import icon from "../../resources/icon.png";
+
+// https://github.com/ThaUnknown/miru/blob/master/electron/src/main/util.js#L6
+const flags = [
+  // not sure if safe?
+  ["disable-gpu-sandbox"],
+  ["disable-direct-composition-video-overlays"],
+  ["double-buffer-compositing"],
+  ["enable-zero-copy"],
+  ["ignore-gpu-blocklist"],
+  // should be safe
+  ["enable-hardware-overlays", "single-fullscreen,single-on-top,underlay"],
+  // safe performance stuff
+  [
+    "enable-features",
+    "PlatformEncryptedDolbyVision,CanvasOopRasterization,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes,UseSkiaRenderer,WebAssemblyLazyCompilation",
+  ],
+  // disabling shit, vulkan rendering, widget layering aka right click context menus [I think] for macOS [I think]
+  ["disable-features", "Vulkan,WidgetLayering"],
+  // utility stuff, aka website security that's useless for a native app:
+  ["autoplay-policy", "no-user-gesture-required"],
+  ["disable-notifications"],
+  ["disable-logging"],
+  ["disable-permissions-api"],
+  ["no-sandbox"],
+  ["no-zygote"],
+  ["bypasscsp-schemes"],
+  ["force_high_performance_gpu", "disable-renderer-backgroundin"],
+];
+
+for (const [flag, value] of flags) {
+  app.commandLine.appendSwitch(flag, value);
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -43,7 +75,7 @@ function createWindow(): void {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId("com.electron");
+  electronApp.setAppUserModelId("com.sentorr.app");
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

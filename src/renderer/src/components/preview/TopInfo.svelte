@@ -166,11 +166,11 @@
             {#if media.releaseYear}
               <span>{media.releaseYear}</span>
             {/if}
-          {:else if media.isOngoing}
+          {:else if media.isOngoing && media.releaseYear}
             <span>{media.releaseYear} - Ongoing</span>
-          {:else if media.releaseYear == media.endYear}
+          {:else if media.releaseYear == media.endYear && media.releaseYear}
             <span>{media.releaseYear}</span>
-          {:else}
+          {:else if media.releaseYear && media.endYear}
             <span>{media.releaseYear} - {media.endYear}</span>
           {/if}
         </div>

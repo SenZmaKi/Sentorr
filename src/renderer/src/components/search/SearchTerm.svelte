@@ -1,7 +1,7 @@
 <script lang="ts">
   import FilterHeader from "./FilterHeader.svelte";
   import FilterIcon from "./FilterIcon.svelte";
-  import { searchFilters, searchTerm } from "./store.js";
+  import { searchTerm } from "./store.js";
   let value = "";
   $: {
     if (value == "") $searchTerm = undefined;

@@ -13,16 +13,18 @@ import {
 } from "$backend/imdb/constants.js";
 
 // Individual stores for each field in searchFilters
-export let searchTerm = writable<string | undefined>(undefined);
-export let releaseDateRange = writable<ReleaseDateRange | undefined>(undefined);
-export let ratingRange = writable<Range | undefined>(undefined);
-export let runtimeRangeMinutes = writable<Range | undefined>(undefined);
-export let genres = writable<Genre[] | undefined>(undefined);
-export let mediaTypes = writable<MediaType[] | undefined>(undefined);
-export let sortBy = writable<SortBy | undefined>(DEFAULT_SORT_BY);
-export let sortOrder = writable<SortOrder | undefined>(DEFAULT_SORT_ORDER);
+export const searchTerm = writable<string | undefined>(undefined);
+export const releaseDateRange = writable<ReleaseDateRange | undefined>(
+  undefined,
+);
+export const ratingRange = writable<Range | undefined>(undefined);
+export const runtimeRangeMinutes = writable<Range | undefined>(undefined);
+export const genres = writable<Genre[] | undefined>(undefined);
+export const mediaTypes = writable<MediaType[] | undefined>(undefined);
+export const sortBy = writable<SortBy | undefined>(DEFAULT_SORT_BY);
+export const sortOrder = writable<SortOrder | undefined>(DEFAULT_SORT_ORDER);
 
-export let searchFilters = derived(
+export const searchFilters = derived(
   [
     searchTerm,
     releaseDateRange,

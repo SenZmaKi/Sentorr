@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Media, } from "$backend/imdb/types";
+  import { type Media } from "$backend/imdb/types";
   import TopInfo from "./TopInfo.svelte";
   import BottomInfo from "./BottomInfo.svelte";
   import { switchToSearchPage } from "../common/functions";

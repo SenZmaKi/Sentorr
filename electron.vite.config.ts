@@ -21,7 +21,9 @@ export default defineConfig({
         },
         {
           find: "$frontend",
-          replacement: fileURLToPath(new URL("./src/renderer/", import.meta.url)),
+          replacement: fileURLToPath(
+            new URL("./src/renderer/", import.meta.url),
+          ),
         },
         {
           find: "@",

@@ -5,11 +5,7 @@ import { ROOT_DIR } from "./constants.js";
 
 export function saveResults<T>(name: string, results: T) {
   const resultsJson = JSON.stringify(results, null, 2);
-  const resultsSaveFolder = path.join(
-    ROOT_DIR,
-    "src",
-    "test-results",
-  );
+  const resultsSaveFolder = path.join(ROOT_DIR, "src", "test-results");
   const saveFilePath = path.join(resultsSaveFolder, `${name}.json`);
   fs.writeFileSync(saveFilePath, resultsJson, { mode: 0o755 });
 }

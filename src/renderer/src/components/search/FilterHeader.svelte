@@ -3,6 +3,6 @@
 </script>
 
 <div class="flex items-center pb-5">
-  <slot/>
+  <slot />
   <div class="text-3xl pl-2">{name}</div>
-  </div>
+</div>

@@ -34,17 +34,17 @@
   >
     {#each $accumulatedResults as result}
       <div class="m-4">
-      {#if result}
-        {#if useSimple}
-          <Simple {result} />
+        {#if result}
+          {#if useSimple}
+            <Simple {result} />
+          {:else}
+            <Complex {result} />
+          {/if}
+        {:else if useSimple}
+          <SimpleSkeleton />
         {:else}
-          <Complex {result} />
+          <ComplexSkeleton />
         {/if}
-      {:else if useSimple}
-        <SimpleSkeleton />
-      {:else}
-        <ComplexSkeleton />
-      {/if}
       </div>
     {/each}
     <div class="h-[50px] w-full"></div>

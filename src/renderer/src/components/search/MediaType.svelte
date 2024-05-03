@@ -3,7 +3,6 @@
   import FilterIcon from "./FilterIcon.svelte";
   import { MediaTypes } from "$backend/imdb/constants";
   import { mediaTypes } from "./store.js";
-
 </script>
 
 <EnumFilter

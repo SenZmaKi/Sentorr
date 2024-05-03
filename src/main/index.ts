@@ -52,7 +52,7 @@ function createWindow(): void {
   });
 
   mainWindow.on("ready-to-show", () => {
-  mainWindow.maximize();
+    mainWindow.maximize();
     mainWindow.show();
   });
 

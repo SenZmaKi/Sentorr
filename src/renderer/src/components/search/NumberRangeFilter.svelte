@@ -24,16 +24,15 @@
     }
     if (minInput !== null && minInput < minRange) minInput = minRange;
     if (maxInput !== null && maxInput < minRange) maxInput = minRange;
-
   }
 
   function updateRange() {
     if (minInput === null && maxInput === null) {
       range = undefined;
-    // The !== null checks are redundant, but they are here to satisfy TypeScript
+      // The !== null checks are redundant, but they are here to satisfy TypeScript
     } else if (minInput === null && maxInput !== null) {
       range = { max: maxInput };
-    } else if (maxInput === null && minInput !== null){
+    } else if (maxInput === null && minInput !== null) {
       range = { min: minInput };
     } else if (minInput !== null && maxInput !== null) {
       range = { min: minInput, max: maxInput };

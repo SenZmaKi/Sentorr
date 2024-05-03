@@ -4,10 +4,9 @@
 </script>
 
 <div class="flex">
-  {#if !!selectedVariants }
+  {#if !!selectedVariants}
     {#each selectedVariants as sv}
-      <SelectedVariant name={sv} bind:selectedVariants/>
+      <SelectedVariant name={sv} bind:selectedVariants />
     {/each}
   {/if}
 </div>
-

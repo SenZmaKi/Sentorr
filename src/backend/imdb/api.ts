@@ -80,7 +80,7 @@ function buildBaseResult(node: BaseNode): BaseResult {
   const title = node.titleText?.text;
   const rating = node.ratingsSummary?.aggregateRating;
   const ratingCount = node.ratingsSummary?.voteCount;
-  let type =
+  const type =
     node.titleType?.displayableProperty?.value?.plainText ||
     node.titleType?.text;
   const imageUrl = node.primaryImage?.url;

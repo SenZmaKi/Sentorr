@@ -25,7 +25,8 @@ async function paginationTest(
   const page = await callback();
   emptyArrayTest(name, page.results);
   expect(page.next).toBeTruthy();
-  if (page.next) { // for typescript to not complain about page.next being undefined
+  if (page.next) {
+    // for typescript to not complain about page.next being undefined
     const page2 = await page.next();
     emptyArrayTest(`${name}2`, page2.results);
   }

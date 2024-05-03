@@ -57,7 +57,9 @@
 </div>
 {#if media.recommendations && media.recommendations.length > 0}
   <div class="text-opacity-90 pt-6 flex flex-col">
-    <span class="font-semibold text-center text-lg opacity-90">Recommendations</span>
+    <span class="font-semibold text-center text-lg opacity-90"
+      >Recommendations</span
+    >
     <hr class="h-2 mt-2 mb-2 xs-dark border-none" />
     <div class="flex overflow-y-auto">
       {#each media.recommendations as recommendation}

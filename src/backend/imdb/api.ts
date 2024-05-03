@@ -323,7 +323,7 @@ function combineMetadata(
   });
 
   const isMovie = type == MediaType.TVMovie || type == MediaType.Movie;
-  const isOngoing = !isMovie && releaseYear !== undefined && !endYear;
+  const isOngoing = !isMovie && !!releaseYear && !endYear;
   return {
     id,
     title,

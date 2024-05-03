@@ -30,12 +30,10 @@
   <div
     bind:this={resultsDiv}
     on:scroll={infiniteScroll}
-    class="grid gap-x-10 gap-y-5 overflow-y-auto max-h-[82vh]"
-    style={useSimple
-      ? "grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));"
-      : "grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));"}
+    class="max-h-[82vh] flex-wrap justify-center items-center flex overflow-y-auto"
   >
     {#each $accumulatedResults as result}
+      <div class="m-4">
       {#if result}
         {#if useSimple}
           <Simple {result} />
@@ -47,8 +45,9 @@
       {:else}
         <ComplexSkeleton />
       {/if}
+      </div>
     {/each}
-    <div class="pt-6"></div>
+    <div class="h-[50px] w-full"></div>
   </div>
 {:else}
   <div class="pt-28 justify-center items-center flex-col flex">

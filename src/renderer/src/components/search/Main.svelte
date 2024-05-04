@@ -9,6 +9,7 @@
   import Sort from "./Sort.svelte";
   import ResultsContainer from "./ResultsContainer.svelte";
   import PageWrapper from "../common/PageWrapper.svelte";
+  import MediaCardTypes from "./MediaCardTypes.svelte";
 </script>
 
 <PageWrapper>
@@ -23,7 +24,10 @@
     </div>
     <div class="flex items-baseline pt-3 pb-3 justify-between">
       <AllSelectedVariants />
+      <div class="flex pt-2">
+      <MediaCardTypes />
       <Sort />
+      </div>
     </div>
     <ResultsContainer />
   </div>

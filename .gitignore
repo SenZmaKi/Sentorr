@@ -6,6 +6,8 @@ out/
 .vscode/
 .scraps/
 src/test-results/
+
 bun.lockb
 .env
 .prettierrc.yaml
+test.sh

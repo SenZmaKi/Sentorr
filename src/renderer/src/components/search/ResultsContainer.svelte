@@ -9,7 +9,9 @@
   import { createInfiniteScrollStore } from "../common/functions";
   import type { Writable } from "svelte/store";
   import type { BaseResult } from "$backend/imdb/types";
-  export let useSimple = false;
+  import { mediaCardType } from "../common/store";
+  import {MediaCardType} from "../common/types";
+
   let accumulatedResults: Writable<(BaseResult | undefined)[]>;
   let infiniteScroll: (event: Event | null) => void;
   $: {
@@ -35,12 +37,12 @@
     {#each $accumulatedResults as result}
       <div class="m-4">
         {#if result}
-          {#if useSimple}
+          {#if $mediaCardType == MediaCardType.Simple}
             <Simple {result} />
           {:else}
             <Complex {result} />
           {/if}
-        {:else if useSimple}
+        {:else if $mediaCardType == MediaCardType.Simple}
           <SimpleSkeleton />
         {:else}
           <ComplexSkeleton />

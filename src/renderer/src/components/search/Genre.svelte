@@ -2,11 +2,9 @@
   import EnumFilter from "./EnumFilter.svelte";
   import { Genres } from "$backend/imdb/constants.js";
   import { genres } from "./store.js";
-  import FilterIcon from "./FilterIcon.svelte";
 </script>
 
-<EnumFilter bind:selectedVariants={$genres} variants={Genres} name="Genre">
-  <FilterIcon viewBox="0 0 492.526 492.527">
+<EnumFilter bind:selectedVariants={$genres} viewBox="0 0 492.526 492.527" variants={Genres} name="Genre">
     <g>
       <g>
         <path
@@ -17,5 +15,4 @@
         />
       </g>
     </g>
-  </FilterIcon>
 </EnumFilter>

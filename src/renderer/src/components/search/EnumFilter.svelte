@@ -1,7 +1,8 @@
 <script lang="ts">
-  import FilterHeader from "./FilterHeader.svelte";
+  import FilterWrapper from "./FilterWrapper.svelte";
 
   export let name: string;
+  export let viewBox: string;
   export let variants: string[];
   export let selectedVariants: string[] | undefined;
   let currentVariant: string | undefined = undefined;
@@ -21,14 +22,12 @@
   }
 </script>
 
-<div>
-  <FilterHeader {name}>
-    <slot />
-  </FilterHeader>
-  <select bind:value={currentVariant}>
+<FilterWrapper {viewBox} {name}>
+  <slot slot="svgpath" />
+  <select slot="picker" bind:value={currentVariant}>
     <option value={undefined}>Any</option>
     {#each variants as v}
       <option value={v}>{v}</option>
     {/each}
   </select>
-</div>
+</FilterWrapper>

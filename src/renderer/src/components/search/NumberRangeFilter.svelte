@@ -1,10 +1,11 @@
 <script lang="ts">
-  import FilterHeader from "./FilterHeader.svelte";
   import { type Range } from "$backend/imdb/types.js";
+  import FilterWrapper from "./FilterWrapper.svelte";
   let minInput: number | null = null;
   let maxInput: number | null = null;
   export let range: Range | undefined = undefined;
   export let name: string;
+  export let viewBox: string;
   export let minRange = 0;
   export let maxRange: number | undefined = undefined;
 
@@ -45,13 +46,11 @@
   }
 </script>
 
-<div>
-  <FilterHeader {name}>
-    <slot />
-  </FilterHeader>
-  <div class="flex">
+<FilterWrapper {name} {viewBox}>
+  <slot slot="svgpath" />
+  <div slot="picker" class="flex">
     <input
-      class="w-20"
+      class="max-w-20"
       on:change={onChange}
       min={minRange}
       max={maxRange}
@@ -61,7 +60,7 @@
     />
     <span class="pr-1 pl-1"> to </span>
     <input
-      class="w-20"
+      class="max-w-20"
       on:change={onChange}
       min={minRange}
       max={maxRange}
@@ -70,4 +69,4 @@
       bind:value={maxInput}
     />
   </div>
-</div>
+</FilterWrapper>

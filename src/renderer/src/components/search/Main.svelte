@@ -14,7 +14,7 @@
 
 <PageWrapper>
   <div class="opacity-90 flex-col justify-between p-3">
-    <div class="flex justify-between">
+    <div class="flex justify-between flex-wrap">
       <SearchTerm />
       <Genre />
       <MediaType />

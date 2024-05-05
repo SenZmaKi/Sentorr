@@ -1,0 +1,22 @@
+{
+  "include": [
+    "./**/*.ts",
+    "src/**/*.svelte"
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "$backend/*": ["backend/*"],
+      "$frontend/*": ["*"],
+      "@/*": ["*"],
+      "$test/*": ["test/*"]
+    },
+    //"verbatimModuleSyntax": true,
+    "useDefineForClassFields": true,
+    "strict": true,
+    "allowJs": true,
+    "checkJs": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"]
+  },
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

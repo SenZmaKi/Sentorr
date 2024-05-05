@@ -6,7 +6,14 @@ import {
   previewMedia,
 } from "$frontend/src/components/common/store";
 import type { Media } from "$backend/imdb/types";
-import { Page } from "./types";
+import {
+  Page,
+  type CompressorWorkerDTO,
+  type CompressorWorkerResponseDTO,
+  type CompressorWorkerParams,
+} from "./types";
+import ImageCompressorWorker from "./imageCompressorWorker?worker";
+import { CLIENT } from "@/common/constants";
 
 export function prettyFormatNumber(num: number): string {
   if (num >= 1000_000_000) {
@@ -46,16 +53,15 @@ export function createInfiniteScrollStore<T>(
     ]);
   };
   addPlaceholders();
-  const removePlaceholders = () => {
-    accumulatedResults.update((data) =>
-      data.slice(undefined, -placeholderResultsCount),
-    );
+  const addNewResults = (newResults: T[]) => {
+    accumulatedResults.update((oldResults) => {
+      oldResults.splice(-placeholderResultsCount);
+      return [...oldResults, ...newResults];
+    });
   };
-  (async () => {
-    const results = (await pagination).results;
-    removePlaceholders();
-    accumulatedResults.update((data) => [...data, ...results]);
-  })();
+  pagination.then(({ results }) => {
+    addNewResults(results);
+  });
   let fetchingMoreResults = false;
   async function infiniteScroll(event: Event | null) {
     if (!event || fetchingMoreResults) return;
@@ -68,11 +74,10 @@ export function createInfiniteScrollStore<T>(
       fetchingMoreResults = true;
       const awaitedPagination = await pagination;
       if (awaitedPagination.next) {
-        pagination = awaitedPagination.next();
         addPlaceholders();
-        const results = (await pagination).results;
-        removePlaceholders();
-        accumulatedResults.update((data) => [...data, ...results]);
+        pagination = awaitedPagination.next();
+        const newResults = (await pagination).results;
+        addNewResults(newResults);
       }
       fetchingMoreResults = false;
     }
@@ -99,3 +104,37 @@ export function setLoadingTask(task: () => Promise<void>) {
 export function clearLoadingTask(): void {
   loadingTask.set(undefined);
 }
+
+export const getCompressedImageUrl = (() => {
+  let worker: Worker | undefined = undefined;
+  const paramsAndResolveMap: {
+    [key: string]: { resolve: (value: string) => void };
+  } = {};
+
+  return (params: CompressorWorkerParams): Promise<string> => {
+    return new Promise(async (resolve) => {
+      if (!worker) {
+        worker = new ImageCompressorWorker();
+        worker.onmessage = (msg) => {
+          const response = msg.data as CompressorWorkerResponseDTO;
+          const { params, canvasBlob } = response;
+          const paramsStr = JSON.stringify(params);
+          const { resolve } = paramsAndResolveMap[paramsStr];
+          delete paramsAndResolveMap[paramsStr];
+          const url = URL.createObjectURL(canvasBlob);
+          resolve(url);
+        };
+      }
+      const response = await CLIENT.get(params.url);
+      const blob = await response.blob();
+      const bitmap = await createImageBitmap(blob);
+      const dto = {
+        params,
+        bitmap,
+      } as CompressorWorkerDTO;
+      const paramsStr = JSON.stringify(params);
+      paramsAndResolveMap[paramsStr] = { resolve };
+      worker.postMessage(dto, [bitmap]);
+    });
+  };
+})();

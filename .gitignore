@@ -5,6 +5,7 @@ out/
 .figma/
 .vscode/
 .scraps/
+.performance-profiles/
 src/test-results/
 
 bun.lockb

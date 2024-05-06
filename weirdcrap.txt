@@ -1,1 +1,0 @@
-shit ain't rendered if type = "module", delete the line or find a fix or sum shii

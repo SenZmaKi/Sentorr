@@ -108,7 +108,7 @@ export function clearLoadingTask(): void {
 export const getCompressedImageUrl = (() => {
   let worker: Worker | undefined = undefined;
   const paramsAndResolveMap: {
-    [key: string]: { resolve: (value: string) => void };
+    [key: string]: (url: string) => void;
   } = {};
 
   return (params: CompressorWorkerParams): Promise<string> => {
@@ -119,7 +119,7 @@ export const getCompressedImageUrl = (() => {
           const response = msg.data as CompressorWorkerResponseDTO;
           const { params, canvasBlob } = response;
           const paramsStr = JSON.stringify(params);
-          const { resolve } = paramsAndResolveMap[paramsStr];
+          const resolve = paramsAndResolveMap[paramsStr];
           delete paramsAndResolveMap[paramsStr];
           const url = URL.createObjectURL(canvasBlob);
           resolve(url);
@@ -133,7 +133,7 @@ export const getCompressedImageUrl = (() => {
         bitmap,
       } as CompressorWorkerDTO;
       const paramsStr = JSON.stringify(params);
-      paramsAndResolveMap[paramsStr] = { resolve };
+      paramsAndResolveMap[paramsStr] = resolve;
       worker.postMessage(dto, [bitmap]);
     });
   };

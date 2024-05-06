@@ -1,10 +1,12 @@
+
+.figma/
+.vscode/
+.scraps/
+.icons/
 node_modules/
 build/
 dist/
 out/
-.figma/
-.vscode/
-.scraps/
 .performance-profiles/
 src/test-results/
 

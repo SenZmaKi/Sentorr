@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getCompressedImageUrl } from "./functions";
+  import { getCompressedImageUrl, makeActionWhenInViewport } from "./functions";
   export let url: string | undefined = undefined;
   export let width: number;
   export let height: number;
@@ -7,16 +7,26 @@
   export let animate = false;
   export let compress = true;
   let isLoading = true;
-  let compUrl: string | undefined = undefined;
-  if (url && compress) {
-    getCompressedImageUrl({ url, width, height }).then((newUrl) => {
-      compUrl = newUrl;
-      isLoading = false;
-    });
-  }
+  let compressedUrl: string | undefined = undefined;
+
+  // Lazy load the compressed url such that we only get it if
+  // the component is in the viewport i.e., on screen
+  const actionWhenInViewPort = compress
+    ? makeActionWhenInViewport(() => {
+        if (url && compress && !compressedUrl) {
+          getCompressedImageUrl({ url, width, height }).then((newUrl) => {
+            compressedUrl = newUrl;
+          });
+        }
+      })
+    : () => {};
 </script>
 
-<div class="relative" style="width: {width}px; height: {height}px;">
+<div
+  class="relative"
+  style="width: {width}px; height: {height}px;"
+  use:actionWhenInViewPort
+>
   {#if isLoading}
     <div
       class="absolute flex items-center justify-center bg-gray-700 text-gray-600"
@@ -37,13 +47,14 @@
       </svg>
     </div>
   {/if}
-  {#if !compress || !isLoading}
+  {#if !compress || compressedUrl}
     <img
       on:load={() => (isLoading = false)}
       class="absolute"
+      loading="lazy"
       class:rounded
       style="width: {width}px; height: {height}px;"
-      src={compUrl ?? url}
+      src={compressedUrl ?? url}
       alt=""
     />
   {/if}

@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import icon from "../../resources/icon.png";
+import icon from "../renderer/src/assets/icon.png?asset";
 
 // https://github.com/ThaUnknown/miru/blob/master/electron/src/main/util.js#L6
 const flags = [

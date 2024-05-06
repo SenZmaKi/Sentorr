@@ -1,7 +1,7 @@
 {
-  "name": "sentorr",
+  "name": "Sentorr",
   "version": "1.0.0",
-  "description": "Stream Movies and TV Shows from Torrents",
+  "description": "Stream movies and tv shows from torrents",
   "main": "./out/main/index.js",
   "scripts": {
     "format": "prettier --plugin prettier-plugin-svelte --write .",
@@ -27,7 +27,8 @@
     "tv series",
     "tv show",
     "desktop",
-    "app"
+    "app",
+    "desktop app"
   ],
   "author": "Sen ZmaKi",
   "license": "GPL-3.0-only",

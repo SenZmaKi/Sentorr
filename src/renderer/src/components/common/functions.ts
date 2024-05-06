@@ -138,3 +138,22 @@ export const getCompressedImageUrl = (() => {
     });
   };
 })();
+
+/**
+ * Creates a function that triggers a callback when an HTML element enters the viewport.
+ *
+ * @param callback - The function to be called when the element is in the viewport.
+ * @returns - A function that takes an HTML element as an argument and observes it.
+ * When the element enters the viewport, the callback function is triggered.
+ */
+export function makeActionWhenInViewport(callback: () => void) {
+  return (element: HTMLElement) => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        callback();
+      }
+    });
+
+    observer.observe(element);
+  };
+}

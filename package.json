@@ -14,7 +14,6 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "svelte-check": "svelte-check --tsconfig ./tsconfig.json",
     "typecheck": "npm run typecheck:node && npm run svelte-check",
-    "start": "electron-vite preview",
     "tauri": "tauri"
   },
   "keywords": [

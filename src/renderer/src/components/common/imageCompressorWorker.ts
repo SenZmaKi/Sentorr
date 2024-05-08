@@ -1,7 +1,7 @@
 import type { CompressorWorkerDTO, CompressorWorkerResponseDTO } from "./types";
 
 self.onmessage = async (msg: { data: CompressorWorkerDTO }) => {
-  const { bitmap, params } = msg.data;
+  const { id, bitmap, params } = msg.data;
   const { width, height, format, url, quality } = params;
   const canvas = new OffscreenCanvas(width, height);
   const ctx = canvas.getContext("2d") as OffscreenCanvasRenderingContext2D;
@@ -12,8 +12,8 @@ self.onmessage = async (msg: { data: CompressorWorkerDTO }) => {
     quality,
   });
   const response = {
+    id,
     canvasBlob,
-    params,
   } as CompressorWorkerResponseDTO;
   self.postMessage(response);
 };

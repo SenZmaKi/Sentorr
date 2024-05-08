@@ -17,11 +17,12 @@ export type CompressorWorkerParams = {
 };
 
 export type CompressorWorkerDTO = {
-  params: CompressorWorkerParams
+  id: number;
+  params: CompressorWorkerParams;
   bitmap: ImageBitmap;
 };
 
 export type CompressorWorkerResponseDTO = {
+  id: number;
   canvasBlob: Blob;
-  params: CompressorWorkerParams;
 };

@@ -13,7 +13,7 @@
   mediaID={result.id}
 >
   <div class="w-[160px]">
-    <ImageSkeleton url={result.imageUrl} width={160} height={240} />
+    <ImageSkeleton imageUrl={result.imageUrl} width={160} height={240} />
   </div>
   <div class="p-2 opacity-90 justify-between flex flex-col">
     <div>

@@ -2,15 +2,16 @@
   import type { Media } from "$backend/imdb/types";
   import Simple from "../common/mediacard/Simple.svelte";
   import Review from "../common/Review.svelte";
-  import { getReviews } from "$backend/imdb/api";
+  import { getReviews } from "$backend/server/api";
 
   import { createInfiniteScrollStore } from "../common/functions";
   import ReviewSkeleton from "../common/ReviewSkeleton.svelte";
 
   export let media: Media;
 
+  const params = {mediaID: media.id, hideSpoilers: true }
   let [accumulatedReviews, infiniteScroll] = createInfiniteScrollStore(
-    getReviews(media.id, true),
+    getReviews(params),
     true,
     10,
   );

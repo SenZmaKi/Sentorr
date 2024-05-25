@@ -1,32 +1,21 @@
 <script lang="ts">
-  import { getCompressedImageUrl, makeActionWhenInViewport } from "./functions";
-  export let url: string | undefined = undefined;
+  import { ImageUrl } from "$backend/imdb/types";
+
+  export let imageUrl: string | ImageUrl | undefined = undefined;
   export let width: number;
   export let height: number;
   export let rounded = true;
   export let animate = false;
-  export let compress = true;
-  let isLoading = true;
-  let compressedUrl: string | undefined = undefined;
 
-  // Lazy load the compressed url such that we only get it if
-  // the component is in the viewport i.e., on screen
-  const actionWhenInViewPort = compress
-    ? makeActionWhenInViewport(() => {
-        if (url && compress && !compressedUrl) {
-          getCompressedImageUrl({ url, width, height }).then((newUrl) => {
-            compressedUrl = newUrl;
-          });
-        }
-      })
-    : () => {};
+  const url = imageUrl instanceof ImageUrl ? imageUrl.makeUrlForDimensions(width, height) : imageUrl;
+  let isLoading = true;
 </script>
 
 <div
   class="relative"
   style="width: {width}px; height: {height}px;"
-  use:actionWhenInViewPort
 >
+
   {#if isLoading}
     <div
       class="absolute flex items-center justify-center bg-gray-700 text-gray-600"
@@ -47,15 +36,15 @@
       </svg>
     </div>
   {/if}
-  {#if !compress || compressedUrl}
+  {#if url}
     <img
       on:load={() => (isLoading = false)}
       class="absolute"
       loading="lazy"
       class:rounded
       style="width: {width}px; height: {height}px;"
-      src={compressedUrl ?? url}
+      src={url}
       alt=""
     />
   {/if}
-</div>
+  </div>

@@ -5,7 +5,7 @@ export const HOME_URL = "https://imdb.com/";
 export const API_ENTRY_POINT = "https://graphql.imdb.com/?operationName=";
 /** Max is 50
  **/
-export const DEFAULT_RESULTS_LIMIT = 25;
+export const DEFAULT_RESULTS_LIMIT = 50;
 export const DEFAULT_LOCALE = { locale: "en-US" };
 export const DEFAULT_RECOMMENDATIONS_VARIABLES = {
   ...DEFAULT_LOCALE,

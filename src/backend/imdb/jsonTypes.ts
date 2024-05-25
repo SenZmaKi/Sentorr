@@ -1,3 +1,334 @@
+export type AdvancedTitleSearchResultJson = {
+  data: {
+    advancedTitleSearch: {
+      total: number;
+      pageInfo: {
+        hasPreviousPage: boolean;
+        hasNextPage: boolean;
+        startCursor: string;
+        endCursor: string;
+        __typename: string;
+      };
+      edges: Array<{
+        node: {
+          title: BaseNode;
+          __typename: string;
+        };
+        __typename: string;
+      }>;
+      __typename: string;
+    };
+  };
+  extensions: {
+    disclaimer: string;
+    experimentalFields: {
+      search: Array<any>;
+      ratings: Array<any>;
+      metacritic: Array<any>;
+      video: Array<any>;
+      janet: Array<any>;
+      markdown: Array<any>;
+    };
+  };
+};
+
+export type MediaMetadataJson = {
+  "@context": string;
+  "@type": string;
+  url: string;
+  name: string;
+  image: string;
+  description: string;
+  review: {
+    "@type": string;
+    itemReviewed: {
+      "@type": string;
+      url: string;
+    };
+    author: {
+      "@type": string;
+      name: string;
+    };
+    dateCreated: string;
+    inLanguage: string;
+    name: string;
+    reviewBody: string;
+  };
+  aggregateRating: {
+    "@type": string;
+    ratingCount: number;
+    bestRating: number;
+    worstRating: number;
+    ratingValue: number;
+  };
+  contentRating: string;
+  genre: Array<string>;
+  datePublished: string;
+  keywords: string;
+  trailer?: {
+    "@type": string;
+    name: string;
+    embedUrl: string;
+    thumbnail: {
+      "@type": string;
+      contentUrl: string;
+    };
+    thumbnailUrl: string;
+    url: string;
+    description: string;
+    duration: string;
+    uploadDate: string;
+  };
+  actor?: Array<{
+    "@type": string;
+    url: string;
+    name: string;
+  }>;
+  director?: Array<{
+    "@type": string;
+    url: string;
+    name: string;
+  }>;
+  creator?: Array<{
+    "@type": string;
+    url: string;
+    name?: string;
+  }>;
+  duration: string;
+};
+
+export type BaseNode = {
+  id: string;
+  titleText?: {
+    text: string;
+    __typename: string;
+  };
+  titleType: {
+    id: string;
+    text: string;
+    canHaveEpisodes: boolean;
+    displayableProperty: {
+      value: {
+        plainText: string;
+        __typename: string;
+      };
+      __typename: string;
+    };
+    __typename: string;
+  };
+  originalTitleText: {
+    text: string;
+    __typename: string;
+  };
+  primaryImage: {
+    id: string;
+    width: number;
+    height: number;
+    url: string;
+    caption: {
+      plainText: string;
+      __typename: string;
+    };
+    __typename: string;
+  };
+  plot?: {
+    plotText?: {
+      plainText: string;
+    };
+  };
+  releaseYear: {
+    year: number;
+    endYear?: number;
+    __typename: string;
+  };
+  __typename: string;
+  ratingsSummary: {
+    aggregateRating: number;
+    voteCount: number;
+    __typename: string;
+  };
+  runtime?: {
+    seconds: number;
+    __typename: string;
+  };
+  certificate?: {
+    rating: string;
+    __typename: string;
+  };
+  canRate: {
+    isRatable: boolean;
+    __typename: string;
+  };
+  titleGenres?: {
+    genres?: Array<{
+      genre: {
+        text: string;
+        __typename: string;
+      };
+      __typename: string;
+    }>;
+    __typename: string;
+  };
+  canHaveEpisodes: boolean;
+  primaryWatchOption?: {
+    additionalWatchOptionsCount: number;
+    __typename: string;
+  };
+};
+
+export type FanFavoritesResultJson = {
+  data: {
+    fanPicksTitles: {
+      edges: Array<{
+        node: BaseNode;
+        __typename: string;
+      }>;
+      __typename: string;
+    };
+  };
+  extensions: {
+    disclaimer: string;
+    experimentalFields: {
+      watch: Array<any>;
+      ratings: Array<any>;
+      video: Array<any>;
+      janet: Array<any>;
+      markdown: Array<any>;
+    };
+  };
+};
+
+export type PopularTitlesJson = {
+  data: {
+    popularTitles: {
+      titles: Array<BaseNode>;
+      paginationToken: string;
+      __typename: string;
+    };
+  };
+  extensions: {
+    disclaimer: string;
+    experimentalFields: {
+      search: Array<any>;
+      ratings: Array<any>;
+      watch: Array<any>;
+      video: Array<any>;
+      janet: Array<any>;
+      markdown: Array<any>;
+    };
+  };
+};
+
+export type EpisodesResultsJson = {
+  data: {
+    title: {
+      episodes: {
+        episodes: {
+          total: number;
+          pageInfo: {
+            hasNextPage: boolean;
+            endCursor: string;
+            __typename: string;
+          };
+          edges: Array<{
+            node: {
+              id: string;
+              titleText: {
+                text: string;
+                __typename: string;
+              };
+              titleType: {
+                id: string;
+                __typename: string;
+              };
+              plot:
+                | {
+                    plotText: {
+                      plaidHtml: string;
+                      __typename: string;
+                    };
+                    __typename: string;
+                  }
+                | undefined;
+              releaseDate: {
+                month: number;
+                day: number;
+                year: number;
+                __typename: string;
+              };
+              canRate: {
+                isRatable: boolean;
+                __typename: string;
+              };
+              ratingsSummary: {
+                aggregateRating: number;
+                voteCount: number;
+                __typename: string;
+              };
+              series: {
+                displayableEpisodeNumber: {
+                  episodeNumber: {
+                    id: string;
+                    displayableProperty: {
+                      value: {
+                        plainText: string;
+                        __typename: string;
+                      };
+                      __typename: string;
+                    };
+                    __typename: string;
+                  };
+                  displayableSeason: {
+                    id: string;
+                    displayableProperty: {
+                      value: {
+                        plainText: string;
+                        __typename: string;
+                      };
+                      __typename: string;
+                    };
+                    __typename: string;
+                  };
+                  __typename: string;
+                };
+                __typename: string;
+              };
+              primaryImage: {
+                url: string;
+                height: number;
+                width: number;
+                caption: {
+                  plainText: string;
+                  __typename: string;
+                };
+                __typename: string;
+              };
+              imageUploadLink: {
+                url: string;
+                __typename: string;
+              };
+              __typename: string;
+            };
+            __typename: string;
+          }>;
+          __typename: string;
+        };
+        __typename: string;
+      };
+      __typename: string;
+    };
+  };
+  extensions: {
+    disclaimer: string;
+    experimentalFields: {
+      janet: Array<any>;
+      markdown: Array<any>;
+      ratings: Array<any>;
+      kahlo: Array<any>;
+    };
+  };
+};
+
 export type MoreMetadataJson = {
   props: {
     pageProps: {

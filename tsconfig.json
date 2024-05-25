@@ -1,20 +1,23 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.json",
   "include": [
-    "src/**/*.ts",
-    "src/renderer/src/**/*",
-    "src/renderer/src/**/*.svelte"
+    "./src/**/*.ts",
+    "./src/renderer/src/**/*",
   ],
+
+  "tsc-alias": {
+    "resolveFullPaths": true,
+  },
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "$backend/*": ["src/backend/*"],
-      "$frontend/*": ["src/renderer/*"],
-      "$electron/*": ["src/main/*", "src/preload/*"],
-      "@/*": ["src/*"],
-      "$test/*": ["test/*"]
-    },
+    "outDir": "./js",
     "verbatimModuleSyntax": true,
+    "paths": {
+      "$backend/*": ["./src/backend/*"],
+      "$frontend/*": ["./src/renderer/*"],
+      "$electron/*": ["./src/main/*", "./src/preload/*"],
+      "@/*": ["./src/*"],
+      "$test/*": ["./test/*"]
+    },
     "useDefineForClassFields": true,
     "strict": true,
     "allowJs": true,

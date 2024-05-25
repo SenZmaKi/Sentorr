@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 // import icon from "../renderer/src/assets/icon.png?asset";
-const icon = ""
+const icon = "";
 
 // https://github.com/ThaUnknown/miru/blob/master/electron/src/main/util.js#L6
 const flags = [
@@ -32,7 +32,6 @@ const flags = [
   ["force_high_performance_gpu", "disable-renderer-backgroundin"],
 ];
 
-
 for (const [flag, value] of flags) {
   app.commandLine.appendSwitch(flag, value);
 }
@@ -40,11 +39,13 @@ for (const [flag, value] of flags) {
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    show: false,
+    // FIXME: Without this linux doesn't start maximised for some reason
+    show: process.platform === "linux",
+    resizable: true,
     autoHideMenuBar: true,
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, "../preload/index.js"),
+      preload: join(__dirname, "../preload/index.mjs"),
       sandbox: false,
       webviewTag: true,
       nodeIntegration: true,

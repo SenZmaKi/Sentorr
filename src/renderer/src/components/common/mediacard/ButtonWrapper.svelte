@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { getMedia } from "$backend/server/api";
   import { switchToPreviewPage } from "../functions";
-  import { getMedia } from "$backend/imdb/api";
   export let mediaID: string;
   export let class_: string;
 </script>
@@ -9,7 +9,8 @@
   style="text-align: unset;"
   class={class_}
   on:click={() => {
-    switchToPreviewPage(getMedia(mediaID));
+    const media = getMedia(mediaID);
+    switchToPreviewPage(media);
   }}
 >
   <slot />

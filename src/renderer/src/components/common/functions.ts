@@ -8,12 +8,7 @@ import {
 import type { Media } from "$backend/imdb/types";
 import {
   Page,
-  type CompressorWorkerDTO,
-  type CompressorWorkerResponseDTO,
-  type CompressorWorkerParams,
 } from "./types";
-import ImageCompressorWorker from "./imageCompressorWorker?worker";
-import { CLIENT } from "@/common/constants";
 
 export function prettyFormatNumber(num: number): string {
   if (num >= 1000_000_000) {
@@ -105,40 +100,6 @@ export function clearLoadingTask(): void {
   loadingTask.set(undefined);
 }
 
-export const getCompressedImageUrl = (() => {
-  let worker: Worker | undefined = undefined;
-  let id = 0;
-  const idAndResolveMap: {
-    [key: number]: (url: string) => void;
-  } = {};
-
-  return (params: CompressorWorkerParams): Promise<string> => {
-    return new Promise(async (resolve) => {
-      if (!worker) {
-        worker = new ImageCompressorWorker();
-        worker.onmessage = (msg) => {
-          const response = msg.data as CompressorWorkerResponseDTO;
-          const { id,  canvasBlob } = response;
-          const resolve = idAndResolveMap[id];
-          delete idAndResolveMap[id];
-          const url = URL.createObjectURL(canvasBlob);
-          resolve(url);
-        };
-      }
-      const response = await CLIENT.get(params.url);
-      const blob = await response.blob();
-      const bitmap = await createImageBitmap(blob);
-      const dto = {
-        id,
-        params,
-        bitmap,
-      } as CompressorWorkerDTO;
-      idAndResolveMap[id] = resolve;
-      worker.postMessage(dto, [bitmap]);
-      id++;
-    });
-  };
-})();
 
 /**
  * Creates a function that triggers a callback when an HTML element enters the viewport.

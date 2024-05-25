@@ -1,27 +1,30 @@
 import {
-  type AdvancedTitleSearchResultJson,
-  type BaseNode,
-  type BaseResult,
-  type Episode,
-  type EpisodesResultsJson,
-  type FanFavoritesResultJson,
-  type Media,
-  type MediaMetadataJson,
-  type Pagination,
-  type PopularTitlesJson,
-  type Review,
   SortBy,
   SortOrder,
+  MediaType,
+  ScalableImageUrl,
   type SearchFilters,
   type Genre,
-  MediaType,
-} from "./types.js";
-import { DEFAULT_RESULTS_LIMIT, mediaTypeMap } from "./constants.js";
-import { filterMap, getFirst, parseHtml } from "@/common/functions.js";
-import { DEBUG, CLIENT } from "@/common/constants.js";
+  type BaseResult,
+  type Episode,
+  type Media,
+  type Pagination,
+  type Review,
+} from "./types";
+import {
+  type AdvancedTitleSearchResultJson,
+  type BaseNode,
+  type EpisodesResultsJson,
+  type FanFavoritesResultJson,
+  type MediaMetadataJson,
+  type PopularTitlesJson,
+  type MoreMetadataJson,
+} from "./jsonTypes";
+import { DEFAULT_RESULTS_LIMIT, mediaTypeMap } from "./constants";
+import { filterMap, getFirst, parseHtml } from "@/common/functions";
+import { DEBUG, CLIENT } from "@/common/constants";
 import { type CheerioAPI } from "cheerio";
-import { type MoreMetadataJson } from "./moreMetadata.js";
-import { DEFAULT_SORT_BY, DEFAULT_SORT_ORDER } from "./constants.js";
+import { DEFAULT_SORT_BY, DEFAULT_SORT_ORDER } from "./constants";
 import {
   HOME_URL,
   DATE_STR,
@@ -33,16 +36,20 @@ import {
   DEFAULT_RECOMMENDATIONS_VARIABLES,
   DEFAULT_LOCALE,
   DEFAULT_EPISODES_RESULTS_LIMIT,
-} from "./constants.js";
+} from "./constants";
 
-let SESSION_COOKIES: string[] = [];
+export const getSessionCookies = (function () {
+  let session_cookies: string[] | undefined = undefined;
+  return async function () {
+    if (!session_cookies) {
+      const response = await CLIENT.get(HOME_URL);
+      const cookies = response.headers.getSetCookie();
+      session_cookies = cookies;
+    }
+    return session_cookies;
+  };
+})();
 
-export async function setSessionCookies(): Promise<string[]> {
-  const response = await CLIENT.get(HOME_URL);
-  const cookies = response.headers.getSetCookie();
-  SESSION_COOKIES = cookies;
-  return cookies;
-}
 function stringifyAndEncodeJson(json: any): string {
   return encodeURIComponent(JSON.stringify(json));
 }
@@ -83,7 +90,8 @@ function buildBaseResult(node: BaseNode): BaseResult {
   const type =
     node.titleType?.displayableProperty?.value?.plainText ||
     node.titleType?.text;
-  const imageUrl = node.primaryImage?.url;
+  const url = node.primaryImage?.url;
+  const imageUrl = url ? new ScalableImageUrl(url) : undefined;
   const plot = node.plot?.plotText?.plainText;
   const releaseYear = node.releaseYear?.year;
   const endYear = node.releaseYear?.endYear;
@@ -127,14 +135,12 @@ export async function getFanFavorites(): Promise<BaseResult[]> {
     ...DEFAULT_RECOMMENDATIONS_VARIABLES,
     locale: "en-US",
   };
-  if (!SESSION_COOKIES.length) {
-    await setSessionCookies();
-  }
   const url = generateAPIURL("FanFavorites", variables, FAN_FAVORITES_HASH);
+  const sessionCookies = await getSessionCookies();
   const fanFavoritesJson = (await apiGet(
     url,
     undefined,
-    SESSION_COOKIES,
+    sessionCookies,
   )) as FanFavoritesResultJson;
   return fanFavoritesJson.data.fanPicksTitles.edges.map((edge) =>
     buildBaseResult(edge.node),
@@ -287,7 +293,8 @@ function combineMetadata(
   moreMetadata: MoreMetadataJson,
 ): Media {
   const title = metadataJson.name;
-  const imageUrl = metadataJson.image;
+  const url = metadataJson.image;
+  const imageUrl = url ? new ScalableImageUrl(url) : undefined;
   const bannerImageUrl = metadataJson.trailer?.thumbnailUrl;
   const trailerUrl = metadataJson.trailer?.embedUrl;
   const genres = metadataJson.genre as Genre[] | undefined;
@@ -393,11 +400,12 @@ function extractReviews($: CheerioAPI): Review[] {
       };
     });
 }
-export async function getReviews(
-  mediaID: string,
-  hideSpoilers: boolean,
-  pageKey?: string,
-): Promise<Pagination<Review[]>> {
+export async function getReviews(params: {
+  mediaID: string;
+  hideSpoilers: boolean;
+  pageKey?: string;
+}): Promise<Pagination<Review[]>> {
+  const { mediaID, hideSpoilers, pageKey } = params;
   const url = `${HOME_URL}title/${mediaID}/reviews/_ajax?&sort=curated&dir=desc&ratingFilter=0&paginationKey=${pageKey || ""}${hideSpoilers ? "&spoiler=hide" : ""}`;
   const response = await CLIENT.get(url);
   const page = await response.text();
@@ -405,7 +413,7 @@ export async function getReviews(
   const results = extractReviews($);
   const nextPageKey = $("div.load-more-data").attr("data-key");
   const next = nextPageKey
-    ? async () => getReviews(mediaID, hideSpoilers, nextPageKey)
+    ? async () => getReviews({ mediaID, hideSpoilers, pageKey: nextPageKey })
     : undefined;
   return { results, next };
 }

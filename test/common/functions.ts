@@ -1,13 +1,17 @@
 import path from "node:path/posix";
-import fs from "node:fs";
+// @ts-ignore
 import { expect } from "bun:test";
 import { ROOT_DIR } from "./constants.js";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 
 export function saveResults<T>(name: string, results: T) {
   const resultsJson = JSON.stringify(results, null, 2);
   const resultsSaveFolder = path.join(ROOT_DIR, "src", "test-results");
+  if (!existsSync(resultsSaveFolder)) {
+    mkdirSync(resultsSaveFolder, {});
+  }
   const saveFilePath = path.join(resultsSaveFolder, `${name}.json`);
-  fs.writeFileSync(saveFilePath, resultsJson, { mode: 0o755 });
+  writeFileSync(saveFilePath, resultsJson, { mode: 0o755 });
 }
 
 export function emptyArrayTest<T>(name: string, array: T[]) {

@@ -2,20 +2,21 @@ import {
   search,
   getFanFavorites,
   getPopularTitles,
-  setSessionCookies,
+  getSessionCookies,
   getMedia,
   getReviews,
   getTop10Trending,
   getTop10OfAllTime,
   getEpisodes,
-} from "../src/backend/imdb/api.js";
-import { Pagination } from "../src/backend/imdb/types.js";
-import { SHOW_IMDB_ID, MOVIE_TITLE } from "./common/constants.js";
+} from "../src/backend/imdb/api";
+import { Pagination } from "../src/backend/imdb/types";
+import { SHOW_IMDB_ID, MOVIE_TITLE } from "./common/constants";
 import {
   emptyArrayTest,
   emptyArrayTestHandler,
   saveResults,
 } from "./common/functions.js";
+// @ts-ignore
 import { test, expect } from "bun:test";
 
 async function paginationTest(
@@ -25,8 +26,8 @@ async function paginationTest(
   const page = await callback();
   emptyArrayTest(name, page.results);
   expect(page.next).toBeTruthy();
+    // For typescript to not complain about page.next being undefined
   if (page.next) {
-    // for typescript to not complain about page.next being undefined
     const page2 = await page.next();
     emptyArrayTest(`${name}2`, page2.results);
   }
@@ -36,9 +37,10 @@ test("fakeTest", () => {
   console.log("Fake test ran");
 });
 
-test("setSessionCookies", async () => {
-  await emptyArrayTestHandler("setSessionCookies", setSessionCookies);
+test("getSessionCookies", async () => {
+  await emptyArrayTestHandler("setSessionCookies", getSessionCookies);
 });
+
 test("search", async () => {
   const callback = async () => search({ searchTerm: MOVIE_TITLE });
   await paginationTest("search", callback);
@@ -59,7 +61,8 @@ test("getMedia", async () => {
 });
 
 test("getReviews", async () => {
-  const callback = async () => getReviews(SHOW_IMDB_ID, true);
+  const callback = async () =>
+    getReviews({ mediaID: SHOW_IMDB_ID, hideSpoilers: true });
   await paginationTest("getReviews", callback);
 });
 

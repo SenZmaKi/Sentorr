@@ -38,15 +38,15 @@ import {
   DEFAULT_EPISODES_RESULTS_LIMIT,
 } from "./constants";
 
-export const getSessionCookies = (function () {
-  let session_cookies: string[] | undefined = undefined;
+export const getSessionCookies: () => Promise<string[]> = (function () {
+  let sessionCookies: string[] | undefined = undefined;
   return async function () {
-    if (!session_cookies) {
+    if (!sessionCookies) {
       const response = await CLIENT.get(HOME_URL);
-      const cookies = response.headers.getSetCookie();
-      session_cookies = cookies;
+      sessionCookies = response.headers.getSetCookie();
+      return sessionCookies;
     }
-    return session_cookies;
+    return sessionCookies;
   };
 })();
 

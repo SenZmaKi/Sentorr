@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { search } from "$backend/server/api";
+  import { search } from "$backend/imdb/api";
   // import results from "@/test-results/search.json";
   import Complex from "../common/mediacard/Complex.svelte";
   import Simple from "../common/mediacard/Simple.svelte";

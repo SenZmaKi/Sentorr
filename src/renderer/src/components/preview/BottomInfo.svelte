@@ -2,7 +2,7 @@
   import type { Media } from "$backend/imdb/types";
   import Simple from "../common/mediacard/Simple.svelte";
   import Review from "../common/Review.svelte";
-  import { getReviews } from "$backend/server/api";
+  import { getReviews } from "$backend/imdb/api";
 
   import { createInfiniteScrollStore } from "../common/functions";
   import ReviewSkeleton from "../common/ReviewSkeleton.svelte";

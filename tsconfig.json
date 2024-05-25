@@ -5,9 +5,6 @@
     "./src/renderer/src/**/*",
   ],
 
-  "tsc-alias": {
-    "resolveFullPaths": true,
-  },
   "compilerOptions": {
     "outDir": "./js",
     "verbatimModuleSyntax": true,

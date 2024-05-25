@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { ImageUrl } from "$backend/imdb/types";
+  import { ScalableImageUrl } from "$backend/imdb/types";
 
-  export let imageUrl: string | ImageUrl | undefined = undefined;
+  export let imageUrl: string | ScalableImageUrl | undefined = undefined;
   export let width: number;
   export let height: number;
   export let rounded = true;
   export let animate = false;
 
-  const url = imageUrl instanceof ImageUrl ? imageUrl.makeUrlForDimensions(width, height) : imageUrl;
+  const url = imageUrl instanceof ScalableImageUrl ? imageUrl.makeScaledImageUrl(width, height) : imageUrl;
   let isLoading = true;
 </script>
 

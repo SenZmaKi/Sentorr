@@ -8,7 +8,6 @@ build/
 dist/
 out/
 js/
-src/backend/server
 .performance-profiles/
 src/test-results/
 

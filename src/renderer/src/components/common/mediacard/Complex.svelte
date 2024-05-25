@@ -17,7 +17,7 @@
   </div>
   <div class="p-2 opacity-90 justify-between flex flex-col">
     <div>
-    <!--64px is the max limit below which a title with more than 1 line overflows-->
+      <!--64px is the max limit below which a title with more than 1 line overflows-->
       <div class="p-1 text-lg overflow-y-auto max-h-[65px]">
         {#if result.rating}
           <Rating rating={result.rating} />
@@ -45,7 +45,7 @@
           {/if}
         </div>
         {#if result.plot}
-          <div class="pt-4  text-gray-200 h-[100px] overflow-y-auto">
+          <div class="pt-4 text-gray-200 h-[100px] overflow-y-auto">
             {result.plot}
           </div>
         {/if}

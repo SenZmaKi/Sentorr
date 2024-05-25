@@ -25,8 +25,8 @@
     <div class="flex items-baseline pt-3 pb-3 justify-between">
       <AllSelectedVariants />
       <div class="flex pt-2">
-      <MediaCardTypes />
-      <Sort />
+        <MediaCardTypes />
+        <Sort />
       </div>
     </div>
     <ResultsContainer />

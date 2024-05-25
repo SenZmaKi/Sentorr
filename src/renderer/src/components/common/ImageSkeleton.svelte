@@ -7,15 +7,14 @@
   export let rounded = true;
   export let animate = false;
 
-  const url = imageUrl instanceof ScalableImageUrl ? imageUrl.makeScaledImageUrl(width, height) : imageUrl;
+  const url =
+    imageUrl instanceof ScalableImageUrl
+      ? imageUrl.makeScaledImageUrl(width, height)
+      : imageUrl;
   let isLoading = true;
 </script>
 
-<div
-  class="relative"
-  style="width: {width}px; height: {height}px;"
->
-
+<div class="relative" style="width: {width}px; height: {height}px;">
   {#if isLoading}
     <div
       class="absolute flex items-center justify-center bg-gray-700 text-gray-600"
@@ -47,4 +46,4 @@
       alt=""
     />
   {/if}
-  </div>
+</div>

@@ -10,7 +10,7 @@
   import type { Writable } from "svelte/store";
   import type { BaseResult } from "$backend/imdb/types";
   import { mediaCardType } from "../common/store";
-  import {MediaCardType} from "../common/types";
+  import { MediaCardType } from "../common/types";
 
   let accumulatedResults: Writable<(BaseResult | undefined)[]>;
   let infiniteScroll: (event: Event | null) => void;

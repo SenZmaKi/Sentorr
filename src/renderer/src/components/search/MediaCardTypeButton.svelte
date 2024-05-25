@@ -6,9 +6,7 @@
 </script>
 
 <button
-  class="hover:scale-125 {$mediaCardType == cardType
-    ? ''
-    : 'opacity-40'}"
+  class="hover:scale-125 {$mediaCardType == cardType ? '' : 'opacity-40'}"
   on:click={() => ($mediaCardType = cardType)}
 >
   <svg

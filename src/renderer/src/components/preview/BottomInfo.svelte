@@ -9,7 +9,7 @@
 
   export let media: Media;
 
-  const params = {mediaID: media.id, hideSpoilers: true }
+  const params = { mediaID: media.id, hideSpoilers: true };
   let [accumulatedReviews, infiniteScroll] = createInfiniteScrollStore(
     getReviews(params),
     true,

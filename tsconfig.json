@@ -1,9 +1,6 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.json",
-  "include": [
-    "./src/**/*.ts",
-    "./src/renderer/src/**/*",
-  ],
+  "include": ["./src/**/*.ts", "./src/renderer/src/**/*"],
 
   "compilerOptions": {
     "outDir": "./js",

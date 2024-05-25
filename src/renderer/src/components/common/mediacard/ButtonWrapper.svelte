@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getMedia } from "$backend/imdb/api";
+  import { getMedia } from "$backend/imdb/api";
   import { switchToPreviewPage } from "../functions";
   export let mediaID: string;
   export let class_: string;

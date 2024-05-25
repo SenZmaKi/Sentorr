@@ -6,9 +6,7 @@ import {
   previewMedia,
 } from "$frontend/src/components/common/store";
 import type { Media } from "$backend/imdb/types";
-import {
-  Page,
-} from "./types";
+import { Page } from "./types";
 
 export function prettyFormatNumber(num: number): string {
   if (num >= 1000_000_000) {
@@ -99,7 +97,6 @@ export function setLoadingTask(task: () => Promise<void>) {
 export function clearLoadingTask(): void {
   loadingTask.set(undefined);
 }
-
 
 /**
  * Creates a function that triggers a callback when an HTML element enters the viewport.

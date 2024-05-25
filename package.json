@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "format": "prettier --plugin prettier-plugin-svelte --write .",
-    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "svelte-check": "svelte-check --tsconfig ./tsconfig.json",
     "typecheck": "npm run typecheck:node && npm run svelte-check",
@@ -43,8 +42,6 @@
     "htmlparser2": "^9.0.0"
   },
   "devDependencies": {
-    "@electron-toolkit/eslint-config-prettier": "^2.0.0",
-    "@electron-toolkit/eslint-config-ts": "^1.0.1",
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
     "@types/express": "^4.17.21",
@@ -54,9 +51,6 @@
     "electron": "^28.3.1",
     "electron-builder": "^24.9.1",
     "electron-vite": "^2.0.0",
-    "eslint": "^8.56.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-svelte": "^2.35.1",
     "postcss": "^8.4.35",
     "prettier": "^3.2.4",
     "prettier-plugin-svelte": "^3.1.2",

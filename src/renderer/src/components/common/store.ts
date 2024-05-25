@@ -7,4 +7,4 @@ export const previewMedia = writable<Promise<Media> | undefined>(undefined);
 export const loadingTask = writable<(() => Promise<void>) | undefined>(
   undefined,
 );
-export const mediaCardType = writable(MediaCardType.Complex)
+export const mediaCardType = writable(MediaCardType.Complex);

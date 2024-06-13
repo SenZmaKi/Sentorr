@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { ScalableImageUrl } from "$backend/imdb/types";
+  import { type ScalableImageUrl } from "$backend/imdb/types";
+  import {makeScaledImageUrl} from "$backend/imdb/api";
 
   export let imageUrl: string | ScalableImageUrl | undefined = undefined;
   export let width: number;
@@ -8,8 +9,8 @@
   export let animate = false;
 
   const url =
-    imageUrl instanceof ScalableImageUrl
-      ? imageUrl.makeScaledImageUrl(width, height)
+    typeof imageUrl === "object"
+      ? makeScaledImageUrl(width, height, imageUrl)
       : imageUrl;
   let isLoading = true;
 </script>

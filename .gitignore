@@ -16,4 +16,5 @@ bun.lockb
 .prettierrc.yaml
 test.sh
 src-tauri/
+crap.ts
 

@@ -34,7 +34,7 @@ export function secondsToHm(seconds: number): string {
 }
 
 export function createInfiniteScrollStore<T>(
-  pagination: Promise<Pagination<T[]>>,
+  fetcher: (nextPageKey: string | undefined) => Promise<Pagination<T[]>>,
   horizontal: boolean,
   placeholderResultsCount = 25,
 ) {
@@ -52,8 +52,10 @@ export function createInfiniteScrollStore<T>(
       return [...oldResults, ...newResults];
     });
   };
-  pagination.then(({ results }) => {
+  let nextPageKey: string | undefined = undefined;
+  fetcher(undefined).then(({ results, nextPageKey: nPK }) => {
     addNewResults(results);
+    nextPageKey = nPK;
   });
   let fetchingMoreResults = false;
   async function infiniteScroll(event: Event | null) {
@@ -65,11 +67,11 @@ export function createInfiniteScrollStore<T>(
         0.7;
     if (nearingEnd) {
       fetchingMoreResults = true;
-      const awaitedPagination = await pagination;
-      if (awaitedPagination.next) {
+      if (nextPageKey) {
         addPlaceholders();
-        pagination = awaitedPagination.next();
-        const newResults = (await pagination).results;
+        const pagination = await fetcher(nextPageKey);
+        const newResults = pagination.results;
+        nextPageKey = pagination.nextPageKey;
         addNewResults(newResults);
       }
       fetchingMoreResults = false;

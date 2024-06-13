@@ -54,24 +54,10 @@ export type Media = {
   isOngoing: boolean;
 };
 
-export class ScalableImageUrl {
+export type ScalableImageUrl = {
   url: string;
+};
 
-  constructor(url: string) {
-    this.url = url;
-  }
-
-  makeScaledImageUrl(width: number, height: number): string {
-    const split = this.url.split(".");
-    const ext = split.pop();
-    // The original url has high res images and they have really large sizes
-    // if we use them we waste bandwidth and run into image rendering issues
-    // cause browsers especially Chrome suck at rendering many high res large file
-    // size images
-    const scaledUrl = `${split.join(".")}QL75_UX${width}_UY${height}_.${ext}`;
-    return scaledUrl;
-  }
-}
 export type Review = {
   title: string;
   author: string;
@@ -85,7 +71,7 @@ export type Review = {
 
 export type Pagination<T> = {
   results: T;
-  next: (() => Promise<Pagination<T>>) | undefined;
+  nextPageKey?: string;
 };
 
 export type Actor = {
@@ -172,7 +158,6 @@ export type ReleaseDateRange = {
 };
 
 export type SearchFilters = {
-  pageKey?: string;
   searchTerm?: string;
   genres?: Genre[];
   mediaTypes?: MediaType[];

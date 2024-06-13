@@ -21,14 +21,12 @@ import { test, expect } from "bun:test";
 
 async function paginationTest(
   name: string,
-  callback: () => Promise<Pagination<any>>,
+  callback: (nextPageKey: string | undefined) => Promise<Pagination<any>>,
 ) {
-  const page = await callback();
+  const page = await callback(undefined);
   emptyArrayTest(name, page.results);
-  expect(page.next).toBeTruthy();
-  // For typescript to not complain about page.next being undefined
-  if (page.next) {
-    const page2 = await page.next();
+  if (page.nextPageKey) {
+    const page2 = await callback(page.nextPageKey);
     emptyArrayTest(`${name}2`, page2.results);
   }
 }
@@ -42,7 +40,8 @@ test("getSessionCookies", async () => {
 });
 
 test("search", async () => {
-  const callback = async () => search({ searchTerm: MOVIE_TITLE });
+  const callback = async (nextPageKey: string | undefined) =>
+    search({ searchTerm: MOVIE_TITLE }, nextPageKey);
   await paginationTest("search", callback);
 });
 
@@ -61,8 +60,8 @@ test("getMedia", async () => {
 });
 
 test("getReviews", async () => {
-  const callback = async () =>
-    getReviews({ mediaID: SHOW_IMDB_ID, hideSpoilers: true });
+  const callback = async (nextPageKey: string | undefined) =>
+    getReviews(SHOW_IMDB_ID, true, nextPageKey);
   await paginationTest("getReviews", callback);
 });
 
@@ -71,7 +70,8 @@ test("getTop10Trending", async () => {
 });
 
 test("getEpisodes", async () => {
-  const callback = async () => getEpisodes(SHOW_IMDB_ID, 1);
+  const callback = async (nextPageKey: string | undefined) =>
+    getEpisodes(SHOW_IMDB_ID, 1, nextPageKey);
   await paginationTest("getEpisodes", callback);
 });
 

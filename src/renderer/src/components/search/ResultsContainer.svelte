@@ -16,7 +16,7 @@
   let infiniteScroll: (event: Event | null) => void;
   $: {
     [accumulatedResults, infiniteScroll] = createInfiniteScrollStore(
-      search($searchFilters),
+      (nextPageKey: string | undefined) => search($searchFilters, nextPageKey),
       false,
       25,
     );

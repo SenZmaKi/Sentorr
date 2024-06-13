@@ -2,7 +2,6 @@ import {
   SortBy,
   SortOrder,
   MediaType,
-  ScalableImageUrl,
   type SearchFilters,
   type Genre,
   type BaseResult,
@@ -10,6 +9,7 @@ import {
   type Media,
   type Pagination,
   type Review,
+  type ScalableImageUrl,
 } from "./types";
 import {
   type AdvancedTitleSearchResultJson,
@@ -37,6 +37,21 @@ import {
   DEFAULT_LOCALE,
   DEFAULT_EPISODES_RESULTS_LIMIT,
 } from "./constants";
+
+export function makeScaledImageUrl(
+  width: number,
+  height: number,
+  url: ScalableImageUrl,
+): string {
+  const split = url.url.split(".");
+  const ext = split.pop();
+  // The original url has high res images and they have really large sizes
+  // if we use them we waste bandwidth and run into image rendering issues
+  // cause browsers especially Chrome suck at rendering many high res large file
+  // size images
+  const scaledUrl = `${split.join(".")}QL75_UX${width}_UY${height}_.${ext}`;
+  return scaledUrl;
+}
 
 export const getSessionCookies: () => Promise<string[]> = (function () {
   let sessionCookies: string[] | undefined = undefined;
@@ -91,7 +106,7 @@ function buildBaseResult(node: BaseNode): BaseResult {
     node.titleType?.displayableProperty?.value?.plainText ||
     node.titleType?.text;
   const url = node.primaryImage?.url;
-  const imageUrl = url ? new ScalableImageUrl(url) : undefined;
+  const imageUrl = url ? { url } : undefined;
   const plot = node.plot?.plotText?.plainText;
   const releaseYear = node.releaseYear?.year;
   const endYear = node.releaseYear?.endYear;
@@ -114,7 +129,6 @@ function buildBaseResult(node: BaseNode): BaseResult {
 // On IMDB the popularity is more akin to trending cause the popular media frequently change and are usually recently released media
 export async function getTop10Trending(): Promise<BaseResult[]> {
   const page = await search({
-    pageKey: "",
     sortBy: SortBy.POPULARITY,
     sortOrder: SortOrder.ASC,
   });
@@ -122,9 +136,7 @@ export async function getTop10Trending(): Promise<BaseResult[]> {
 }
 
 export async function getTop10OfAllTime(): Promise<BaseResult[]> {
-  const page = await search({
-    pageKey: "",
-  });
+  const page = await search({});
   return page.results.slice(0, 10);
 }
 
@@ -162,9 +174,9 @@ export async function getPopularTitles(): Promise<BaseResult[]> {
 
 export async function search(
   filters: SearchFilters,
+  pageKey?: string,
 ): Promise<Pagination<BaseResult[]>> {
   const {
-    pageKey = "",
     searchTerm = "",
     genres = [],
     mediaTypes = [],
@@ -177,7 +189,7 @@ export async function search(
   } = filters;
   const variables = {
     ...DEFAULT_LOCALE,
-    after: pageKey,
+    after: pageKey || "",
     first: DEFAULT_RESULTS_LIMIT,
     titleTextConstraint: { searchTerm },
     genreConstraint: { allGenreIds: genres },
@@ -213,12 +225,10 @@ export async function search(
     advancedTitleSearchResultJson.data.advancedTitleSearch.edges.map((edge) =>
       buildBaseResult(edge.node.title),
     );
-  const nextPageKey =
-    advancedTitleSearchResultJson.data.advancedTitleSearch.pageInfo.endCursor;
-  const next = nextPageKey
-    ? async () => search({ ...filters, pageKey: nextPageKey })
-    : undefined;
-  return { results, next };
+  const pageInfo =
+    advancedTitleSearchResultJson.data.advancedTitleSearch.pageInfo;
+  const nextPageKey = pageInfo.hasNextPage ? pageInfo.endCursor : undefined;
+  return { results, nextPageKey };
 }
 
 export async function getEpisodes(
@@ -268,12 +278,9 @@ export async function getEpisodes(
       };
     },
   );
-  const nextPageKey =
-    episodesResultsJson.data.title.episodes.episodes.pageInfo.endCursor;
-  const next = nextPageKey
-    ? async () => getEpisodes(mediaID, seasonNumber, nextPageKey)
-    : undefined;
-  return { results, next };
+  const pageInfo = episodesResultsJson.data.title.episodes.episodes.pageInfo;
+  const nextPageKey = pageInfo.hasNextPage ? pageInfo.endCursor : undefined;
+  return { results, nextPageKey };
 }
 
 export async function getMedia(mediaID: string): Promise<Media> {
@@ -294,7 +301,7 @@ function combineMetadata(
 ): Media {
   const title = metadataJson.name;
   const url = metadataJson.image;
-  const imageUrl = url ? new ScalableImageUrl(url) : undefined;
+  const imageUrl = url ? { url } : undefined;
   const bannerImageUrl = metadataJson.trailer?.thumbnailUrl;
   const trailerUrl = metadataJson.trailer?.embedUrl;
   const genres = metadataJson.genre as Genre[] | undefined;
@@ -400,20 +407,16 @@ function extractReviews($: CheerioAPI): Review[] {
       };
     });
 }
-export async function getReviews(params: {
-  mediaID: string;
-  hideSpoilers: boolean;
-  pageKey?: string;
-}): Promise<Pagination<Review[]>> {
-  const { mediaID, hideSpoilers, pageKey } = params;
+export async function getReviews(
+  mediaID: string,
+  hideSpoilers: boolean,
+  pageKey?: string,
+): Promise<Pagination<Review[]>> {
   const url = `${HOME_URL}title/${mediaID}/reviews/_ajax?&sort=curated&dir=desc&ratingFilter=0&paginationKey=${pageKey || ""}${hideSpoilers ? "&spoiler=hide" : ""}`;
   const response = await CLIENT.get(url);
   const page = await response.text();
   const $ = parseHtml(page);
   const results = extractReviews($);
   const nextPageKey = $("div.load-more-data").attr("data-key");
-  const next = nextPageKey
-    ? async () => getReviews({ mediaID, hideSpoilers, pageKey: nextPageKey })
-    : undefined;
-  return { results, next };
+  return { results, nextPageKey };
 }

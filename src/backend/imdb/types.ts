@@ -1,13 +1,13 @@
 export type Episode = {
   id: string;
-  title: string;
+  title?: string;
   number: number;
   seasonNumber: number;
-  imageUrl: string;
+  imageUrl?: ScalableImageUrl;
   plot?: string;
-  releaseDate: string;
-  rating: number;
-  ratingCount: number;
+  releaseDate?: string;
+  rating?: number;
+  ratingCount?: number;
 };
 
 export type BaseResult = {

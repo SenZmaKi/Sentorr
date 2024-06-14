@@ -42,14 +42,17 @@ export function makeScaledImageUrl(
   width: number,
   height: number,
   url: ScalableImageUrl,
+  quality?: number,
 ): string {
   const split = url.url.split(".");
   const ext = split.pop();
+  // Get a larger image for better quality, otherwise the images look ass
+  quality = quality ?? 2;
   // The original url has high res images and they have really large sizes
   // if we use them we waste bandwidth and run into image rendering issues
   // cause browsers especially Chrome suck at rendering many high res large file
   // size images
-  const scaledUrl = `${split.join(".")}QL75_UX${width}_UY${height}_.${ext}`;
+  const scaledUrl = `${split.join(".")}QL75_UX${width * quality}_UY${height * quality}_.${ext}`;
   return scaledUrl;
 }
 
@@ -243,7 +246,7 @@ export async function getEpisodes(
     after: pageKey || "",
     const: mediaID,
     first: DEFAULT_EPISODES_RESULTS_LIMIT,
-    filter: { includeSeasons: [seasonNumber.toLocaleString()] },
+    filter: { includeSeasons: [seasonNumber.toString()] },
   };
   const url = generateAPIURL(
     "TitleEpisodesSubPagePagination",
@@ -260,7 +263,7 @@ export async function getEpisodes(
         ep.series.displayableEpisodeNumber.episodeNumber.displayableProperty
           .value.plainText,
       );
-      const imageUrl = ep.primaryImage.url;
+      const imageUrl = { url: ep.primaryImage.url };
       const plot = ep.plot?.plotText.plaidHtml;
       const releaseDate = `${ep.releaseDate.day}-${ep.releaseDate.month}-${ep.releaseDate.year}`;
       const rating = ep.ratingsSummary.aggregateRating;

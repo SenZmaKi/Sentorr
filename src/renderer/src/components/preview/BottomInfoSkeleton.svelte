@@ -4,10 +4,21 @@
 </script>
 
 <div class="">
-  <div class="rounded-lg bg-gray-700 h-[80px] w-2/3"></div>
-  <div class="flex mb-14">
-    <div class="rounded-lg mt-10 bg-gray-700 h-[30px] w-[300px] mr-4"></div>
-    <div class="rounded-lg mt-10 bg-gray-700 h-[30px] w-[500px]"></div>
+  <div class="xs-dark p-2 rounded w-min">
+    <div class="rounded-lg bg-gray-700 mb-2 h-[10px] w-[800px]"></div>
+    <div class="rounded-lg bg-gray-700 mb-2 h-[10px] w-[755px]"></div>
+    <div class="rounded-lg bg-gray-700 mb-2 h-[10px] w-[700px]"></div>
+    <div class="rounded-lg bg-gray-700 h-[10px] w-[655px]"></div>
+  </div>
+  <div class="flex mb-16">
+    <div class="rounded xs-dark mt-8 p-2 mr-4">
+      <div class="rounded- bg-gray-700 h-[10px] w-[300px]"></div>
+    </div>
+    <div>
+      <div class="rounded xs-dark mt-8 p-2">
+        <div class="rounded bg-gray-700 h-[10px] w-[500px]"></div>
+      </div>
+    </div>
   </div>
   <hr class="h-2 mb-4 border-none bg-gray-700" />
   <div class="flex overflow-y-auto">

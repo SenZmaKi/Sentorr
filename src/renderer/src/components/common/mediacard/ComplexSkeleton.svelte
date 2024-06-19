@@ -8,13 +8,18 @@
   </div>
 
   <div class="animate-pulse p-3">
-    <div class="min-h-[35px] w-[300px] rounded bg-gray-700 mb-2"></div>
-    <div class="min-h-[15px] w-[200px] rounded bg-gray-700 mb-3"></div>
     <div class="mb-5">
-      {#each Array.from({ length: 15 }) as _}
-        <div class="min-h-[5px] w-[300px] rounded bg-gray-700 mb-[2px]"></div>
-      {/each}
+      <div class="min-h-[10px] w-[300px] rounded bg-gray-700 mb-2"></div>
+      <div class="min-h-[10px] w-[200px] rounded bg-gray-700 "></div>
     </div>
-    <div class="min-h-[15px] w-[200px] rounded bg-gray-700 mb-3"></div>
+    <div class="mb-5">
+      <div class="min-h-[8px] w-[300px] rounded bg-gray-700 mb-2"></div>
+      <div class="min-h-[8px] w-[280px] rounded bg-gray-700 mb-2"></div>
+      <div class="min-h-[8px] w-[260px] rounded bg-gray-700 mb-2"></div>
+      <div class="min-h-[8px] w-[230px] rounded bg-gray-700 mb-2"></div>
+      <div class="min-h-[8px] w-[260px] rounded bg-gray-700 mb-2"></div>
+      <div class="min-h-[8px] w-[300px] rounded bg-gray-700 mb-2"></div>
+    </div>
+    <div class="min-h-[10px] w-[200px] rounded bg-gray-700 mb-3"></div>
   </div>
 </div>

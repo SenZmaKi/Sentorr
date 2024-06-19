@@ -1,59 +1,97 @@
 <script lang="ts">
-    import type { Episode } from "$backend/imdb/types";
-    import ImageSkeleton from "../common/ImageSkeleton.svelte";
-    import Rating from "../common/Rating.svelte";
-    export let episode: Episode;
-    function prettyDate(date: string) {
-        const [day, month, year] = date.split("-");
-        const dateObj = new Date(`${year}-${month}-${day}`);
-        const currentDate = new Date();
-        
-        const diffTime = Math.abs(currentDate.getTime() - dateObj.getTime());
-        if (dateObj.getFullYear() === currentDate.getFullYear() &&
-            dateObj.getMonth() === currentDate.getMonth() &&
-            dateObj.getDate() === currentDate.getDate()) {
-            return "Today";
-        }
-                                            // Milliseconds divisor
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        if (diffDays < 2)  return "Yesterday";
-        if (diffDays < 30) return `${diffDays} days ago`;
-        if (diffDays < 365) {
-            const diffMonths = Math.floor(diffDays / 30);
-            return diffMonths > 1 ? `${diffMonths} months ago` : "A month ago";
-        }
-        const diffYears = Math.floor(diffDays / 365);
-        return diffYears > 1 ? `${diffYears} years ago` : "A year ago";
+  import type { IMDBDate, Episode } from "$backend/imdb/types";
+  import ImageSkeleton from "../common/ImageSkeleton.svelte";
+  import Rating from "../common/Rating.svelte";
+
+  export let episode: Episode;
+
+  let [prettyReleaseDate, _hasAired] = episode.releaseDate
+    ? prettyDate(episode.releaseDate)
+    : [undefined, false];
+
+  function prettyDate(date: IMDBDate): [string | undefined, boolean] {
+    const { day, month, year } = date;
+    if (!day || !month || !year) return [undefined, false];
+    const dateObj = new Date(`${year}-${month}-${day}`);
+    const currentDate = new Date();
+
+    const diffTime = Math.abs(currentDate.getTime() - dateObj.getTime());
+    const msToDays = 1000 * 60 * 60 * 24;
+    const diffDays = Math.ceil(diffTime / msToDays);
+
+    if (
+      dateObj.getFullYear() === currentDate.getFullYear() &&
+      dateObj.getMonth() === currentDate.getMonth()
+    ) {
+      if (dateObj.getDate() === currentDate.getDate()) {
+        return ["Today", true];
+      } else if (dateObj.getDate() === currentDate.getDate() + 1) {
+        return ["Tomorrow", false];
+      } else if (dateObj.getDate() === currentDate.getDate() - 1) {
+        return ["Yesterday", true];
+      }
     }
+
+    if (dateObj > currentDate) {
+      // Future dates
+      if (diffDays < 30) return [`In ${diffDays} days`, false];
+      if (diffDays < 365) {
+        const diffMonths = Math.floor(diffDays / 30);
+        return diffMonths > 1
+          ? [`In ${diffMonths} month${diffMonths > 1 ? "s" : ""}`, false]
+          : ["In 1 month", false];
+      }
+      const diffYears = Math.floor(diffDays / 365);
+      return [`In ${diffYears} year${diffYears > 1 ? "s" : ""}`, false];
+    }
+    // Past dates
+    if (diffDays < 30) return [`${diffDays} days ago`, true];
+    if (diffDays < 365) {
+      const diffMonths = Math.floor(diffDays / 30);
+      return [`${diffMonths} month${diffMonths > 1 ? "s" : ""} ago`, true];
+    }
+    const diffYears = Math.floor(diffDays / 365);
+    return [`${diffYears} year${diffYears > 1 ? "s" : ""} ago`, true];
+  }
 </script>
 
-<button 
-  style="text-align: unset;"
-  class="flex xs-dark m-7 h-[100px] duration-300 ease-in-out hover:scale-110 "
->
-  {#if episode.imageUrl}
-    <div>
-    <ImageSkeleton imageUrl={episode.imageUrl} height={100} width={160}/>
-    </div>
-  {/if}
-  <div class="p-2">
-    <div class="flex items-baseline">
-    {#if episode.rating}
-      <div class="pr-2 text-sm">
-        <Rating rating={episode.rating}/>
+<button style="all: unset; width: 100%;">
+  <div
+    class="flex xs-dark m-7 h-[125px] duration-300 cursor-pointer ease-in-out hover:scale-110"
+  >
+    {#if episode.imageUrl}
+      <div>
+        <ImageSkeleton
+          imageUrl={episode.imageUrl}
+          height={125}
+          width={180}
+          rounded={false}
+        />
       </div>
     {/if}
-      <div class="justify-between">
-      <span class="font-semibold text-sm">{episode.number}. {episode.title ? `${ episode.title }` : ""}</span>
+    <div class="p-2 flex flex-col justify-between">
+      <div class="flex flex-col">
+        <div class="flex items-baseline pb-2">
+          {#if episode.rating}
+            <div class="pr-2 text-sm">
+              <Rating rating={episode.rating} />
+            </div>
+          {/if}
+          <div class="justify-between">
+            <span class="font-semibold text-sm"
+              >{episode.number}. {episode.title ? `${episode.title}` : ""}</span
+            >
+          </div>
+        </div>
+        {#if episode.plot}
+          <div class="text-xs overflow-y-auto max-h-[50px] opacity-85">
+            {@html episode.plot}
+          </div>
+        {/if}
       </div>
-    </div>
-    {#if episode.plot}
-      <div class="text-xs overflow-y-auto max-h-[50px]">
-          {episode.plot}
-      </div>
-    {/if}
-      {#if episode.releaseDate}
-        <span class="text-xs opacity-80">{prettyDate(episode.releaseDate)}</span>
+      {#if prettyReleaseDate}
+        <div class="text-xs opacity-80">{prettyReleaseDate}</div>
       {/if}
+    </div>
   </div>
 </button>

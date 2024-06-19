@@ -265,7 +265,7 @@ export async function getEpisodes(
       );
       const imageUrl = { url: ep.primaryImage.url };
       const plot = ep.plot?.plotText.plaidHtml;
-      const releaseDate = `${ep.releaseDate.day}-${ep.releaseDate.month}-${ep.releaseDate.year}`;
+      const releaseDate = ep.releaseDate ? { day: ep.releaseDate.day, month: ep.releaseDate.month, year: ep.releaseDate.year } : undefined;
       const rating = ep.ratingsSummary.aggregateRating;
       const ratingCount = ep.ratingsSummary.voteCount;
       return {

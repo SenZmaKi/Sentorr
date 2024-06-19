@@ -17,6 +17,6 @@
       <TopInfo {media} />
       <BottomInfo {media} />
     </div>
-    <SeasonsContainer {media}/>
+    <SeasonsContainer {media} />
   </div>
 </PageWrapper>

@@ -5,9 +5,15 @@ export type Episode = {
   seasonNumber: number;
   imageUrl?: ScalableImageUrl;
   plot?: string;
-  releaseDate?: string;
+  releaseDate?: IMDBDate;
   rating?: number;
   ratingCount?: number;
+};
+
+export type IMDBDate = {
+  day?: number;
+  month?: number;
+  year?: number;
 };
 
 export type BaseResult = {

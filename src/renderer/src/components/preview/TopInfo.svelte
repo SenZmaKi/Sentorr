@@ -18,7 +18,7 @@
   </div>
   <div class="opacity-90">
     {#if media.title}
-      <!-- NOTE: @html to hande stuff like Deadpool &amp; Wolverine I should probably add it in other text sections but I can't be asked-->
+      <!-- NOTE: @html to handle stuff like Deadpool &amp; Wolverine I should probably add it in other text sections but I can't be asked-->
       <span class="font-bold text-6xl">{@html media.title}</span>
     {/if}
     <div class="">
@@ -204,11 +204,14 @@
           </div>
         {/if}
         {#if media.genres}
+        <div>
+
           {#each media.genres as genre, idx}
             <span class="font-semibold"
               >{genre}{media.genres.length - 1 == idx ? "" : " •"}&nbsp</span
             >
           {/each}
+        </div>
         {/if}
       </div>
       <div class="pt-4">

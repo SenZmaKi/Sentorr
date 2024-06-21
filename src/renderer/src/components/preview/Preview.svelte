@@ -10,13 +10,13 @@
 </script>
 
 <PageWrapper>
-  <div class="flex">
-    <div class="overflow-y-auto w-2/3 h-full p-2">
+  <div class="flex max-h-screen">
+    <div class="overflow-y-auto w-2/3 p-2">
       <!-- TODO: Make this prettier -->
       <button on:click={switchToSearchPage}>Search</button>
       <TopInfo {media} />
       <BottomInfo {media} />
     </div>
-    <SeasonsContainer {media} />
+      <SeasonsContainer {media} />
   </div>
 </PageWrapper>

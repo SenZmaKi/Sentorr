@@ -8,16 +8,15 @@
   let [prettyReleaseDate, _hasAired] = episode.releaseDate
     ? prettyDate(episode.releaseDate)
     : [undefined, false];
-
   function prettyDate(date: IMDBDate): [string | undefined, boolean] {
     const { day, month, year } = date;
     if (!day || !month || !year) return [undefined, false];
     const dateObj = new Date(`${year}-${month}-${day}`);
     const currentDate = new Date();
-
     const diffTime = Math.abs(currentDate.getTime() - dateObj.getTime());
     const msToDays = 1000 * 60 * 60 * 24;
     const diffDays = Math.ceil(diffTime / msToDays);
+    const diffWeeks = Math.floor(diffDays / 7);
 
     if (
       dateObj.getFullYear() === currentDate.getFullYear() &&
@@ -34,7 +33,9 @@
 
     if (dateObj > currentDate) {
       // Future dates
-      if (diffDays < 30) return [`In ${diffDays} days`, false];
+      if (diffDays < 7) return [`In ${diffDays} days`, false];
+      if (diffDays < 30)
+        return [`In ${diffWeeks} week${diffWeeks > 1 ? "s" : ""}`, false];
       if (diffDays < 365) {
         const diffMonths = Math.floor(diffDays / 30);
         return diffMonths > 1
@@ -44,8 +45,11 @@
       const diffYears = Math.floor(diffDays / 365);
       return [`In ${diffYears} year${diffYears > 1 ? "s" : ""}`, false];
     }
+
     // Past dates
-    if (diffDays < 30) return [`${diffDays} days ago`, true];
+    if (diffDays < 7) return [`${diffDays} days ago`, true];
+    if (diffDays < 30)
+      return [`${diffWeeks} week${diffWeeks > 1 ? "s" : ""} ago`, true];
     if (diffDays < 365) {
       const diffMonths = Math.floor(diffDays / 30);
       return [`${diffMonths} month${diffMonths > 1 ? "s" : ""} ago`, true];
@@ -57,7 +61,7 @@
 
 <button style="all: unset; width: 100%;">
   <div
-    class="flex xs-dark m-7 h-[125px] duration-300 cursor-pointer ease-in-out hover:scale-110"
+    class="flex xs-dark m-7 h-[125px] w-[90%] duration-300 cursor-pointer ease-in-out hover:scale-110"
   >
     {#if episode.imageUrl}
       <div>
@@ -71,27 +75,27 @@
     {/if}
     <div class="p-2 flex flex-col justify-between">
       <div class="flex flex-col">
-        <div class="flex items-baseline pb-2">
+        <div class="flex items-baseline overflow-y-auto h-[30px]">
           {#if episode.rating}
             <div class="pr-2 text-sm">
               <Rating rating={episode.rating} />
             </div>
           {/if}
-          <div class="justify-between">
+          <div class="">
             <span class="font-semibold text-sm"
               >{episode.number}. {episode.title ? `${episode.title}` : ""}</span
             >
           </div>
         </div>
         {#if episode.plot}
-          <div class="text-xs overflow-y-auto max-h-[50px] opacity-85">
+          <div class="text-xs overflow-y-auto mb-2 max-h-[50px] opacity-85">
             {@html episode.plot}
           </div>
         {/if}
+        {#if prettyReleaseDate}
+          <div class="text-xs opacity-80">{prettyReleaseDate}</div>
+        {/if}
       </div>
-      {#if prettyReleaseDate}
-        <div class="text-xs opacity-80">{prettyReleaseDate}</div>
-      {/if}
     </div>
-  </div>
-</button>
+  </div></button
+>

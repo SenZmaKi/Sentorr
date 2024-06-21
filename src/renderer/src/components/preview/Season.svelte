@@ -22,11 +22,13 @@
   }
 </script>
 
+<div>
+
 <button on:click={() => (open = !open)}>
   <div
-    class="xxs-dark shadow-lg rounded w-[500px] p-2 mb-4 flex justify-between h-[80px] align-bottom"
+    class="xxs-dark shadow-lg rounded p-2 mb-2 flex justify-between items-center"
   >
-    <span class="font-semibold" style="font-size: 40px;">
+    <span class="font-semibold pr-2" style="font-size: 40px;">
       Season {seasonNumber}
     </span>
     <svg
@@ -43,7 +45,7 @@
 </button>
 {#if open}
   <div
-    class="overflow-y-auto h-[700px] items-center"
+    class="overflow-y-auto h-[700px] w-[98%] items-center"
     on:scroll={infiniteScroll}
   >
     {#each $accumulatedResults as episode}
@@ -55,3 +57,5 @@
     {/each}
   </div>
 {/if}
+
+</div>

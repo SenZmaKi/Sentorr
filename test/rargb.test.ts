@@ -1,24 +1,24 @@
 import {
   getMovieTorrents,
   getSeriesTorrents,
-} from "../src/backend/rargb/api.js";
+} from "../src/backend/rargb/api";
 import {
   MOVIE_TITLE,
   SERIES_EPISODE,
   SERIES_SEASON,
   SERIES_TITLE,
-} from "./common/constants.js";
-import { emptyArrayTest } from "./common/functions.js";
+} from "./common/constants";
+import { emptyArrayTest } from "./common/functions";
 import { test } from "bun:test";
 
 test("getMovieTorrents", async () => {
   emptyArrayTest("getMovieTorrents", await getMovieTorrents(MOVIE_TITLE));
-});
+}, 10000);
 
 test("getSeriesEpisodeTorrents", async () => {
   emptyArrayTest(
     "getSeriesEpisodeTorrents",
-    await getSeriesTorrents("", SERIES_TITLE, SERIES_SEASON, SERIES_EPISODE),
+    await getSeriesTorrents(SERIES_TITLE, SERIES_SEASON, SERIES_EPISODE),
   );
 });
 

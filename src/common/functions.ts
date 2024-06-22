@@ -30,10 +30,6 @@ export function filterMap<A, T>(
   return array.map(callback).filter((elem) => elem !== undefined) as Array<T>;
 }
 
-export function zfill(num: number | string): string {
-  num = num.toString();
-  return num.padStart(num.length + 1, "0");
-}
 
 export function parseHtml(htmlPage: string): CheerioAPI {
   return cheerioLoad(parseDocument(htmlPage));

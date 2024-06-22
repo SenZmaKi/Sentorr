@@ -3,14 +3,16 @@
   import BottomInfoSkeleton from "./BottomInfoSkeleton.svelte";
   import PageWrapper from "../common/PageWrapper.svelte";
   import { switchToSearchPage } from "../common/functions";
+  import SeasonsContainerSkeleton from "./SeasonsContainerSkeleton.svelte";
 </script>
 
 <PageWrapper>
-  <div class="">
-    <div class="overflow-y-auto absolute w-2/3 h-full p-2 animate-pulse">
+  <div class="flex max-h-screen">
+    <div class="overflow-y-auto w-2/3 animate-pulse">
       <button on:click={switchToSearchPage}>Search</button>
       <TopInfoSkeleton />
       <BottomInfoSkeleton />
     </div>
-  </div>
+    <SeasonsContainerSkeleton />
+    </div>
 </PageWrapper>

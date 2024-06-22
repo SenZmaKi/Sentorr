@@ -12,8 +12,8 @@
       <div class="w-[150px] bg-gray-700"></div>
     </div>
     <div class="w-[300px] m-2 mt-4">
-      <div class="w-[300px] h-[5px] bg-gray-700 mb-2"></div>
-      <div class="w-[300px] h-[5px] bg-gray-700 mb-2"></div>
+      <div class="w-[280px] h-[5px] bg-gray-700 mb-2"></div>
+      <div class="w-[280px] h-[5px] bg-gray-700 mb-2"></div>
       <div class="w-[200px] h-[5px] bg-gray-700 mb-2"></div>
       <div class="w-[250px] h-[5px] bg-gray-700 mb-2"></div>
       <div class="w-[240px] h-[5px] bg-gray-700 mb-2"></div>

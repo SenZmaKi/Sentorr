@@ -10,9 +10,10 @@
   import ResultsContainer from "./ResultsContainer.svelte";
   import PageWrapper from "../common/PageWrapper.svelte";
   import MediaCardTypes from "./MediaCardTypes.svelte";
+  export let hidden: boolean;
 </script>
 
-<PageWrapper>
+<PageWrapper {hidden}>
   <div class="opacity-90 flex-col justify-between p-3">
     <div class="flex justify-between flex-wrap">
       <SearchTerm />

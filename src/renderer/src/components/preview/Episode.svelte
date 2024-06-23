@@ -1,9 +1,10 @@
 <script lang="ts">
-  import type { IMDBDate, Episode } from "$backend/imdb/types";
+  import type { IMDBDate, Episode, Media } from "$backend/imdb/types";
   import ImageSkeleton from "../common/ImageSkeleton.svelte";
   import Rating from "../common/Rating.svelte";
 
   export let episode: Episode;
+  export let media: Media;
 
   let [prettyReleaseDate, _hasAired] = episode.releaseDate
     ? prettyDate(episode.releaseDate)

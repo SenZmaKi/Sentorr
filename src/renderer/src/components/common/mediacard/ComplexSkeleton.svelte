@@ -10,7 +10,7 @@
   <div class="animate-pulse p-3">
     <div class="mb-5">
       <div class="min-h-[10px] w-[300px] rounded bg-gray-700 mb-2"></div>
-      <div class="min-h-[10px] w-[200px] rounded bg-gray-700 "></div>
+      <div class="min-h-[10px] w-[200px] rounded bg-gray-700"></div>
     </div>
     <div class="mb-5">
       <div class="min-h-[8px] w-[300px] rounded bg-gray-700 mb-2"></div>

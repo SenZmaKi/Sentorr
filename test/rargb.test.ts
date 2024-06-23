@@ -1,7 +1,4 @@
-import {
-  getMovieTorrents,
-  getSeriesTorrents,
-} from "../src/backend/rargb/api";
+import { getMovieTorrents, getSeriesTorrents } from "../src/backend/rargb/api";
 import {
   MOVIE_TITLE,
   SERIES_EPISODE,

@@ -1,18 +1,30 @@
-<!-- This wrapper component is to ensure the whole Preview component gets rerendered when previewMedia changes -->
-
 <script lang="ts">
-  import { previewMedia } from "../common/store";
-  import Preview from "./Preview.svelte";
+  import TopInfo from "./TopInfo.svelte";
+  import BottomInfo from "./BottomInfo.svelte";
+  import { switchToSearchPage } from "../common/functions";
+  import SeasonsContainer from "./SeasonsContainer.svelte";
+  import { previewMedia, previewResult } from "../common/store";
   import PreviewSkeleton from "./PreviewSkeleton.svelte";
-  // import media from "@/test-results/getMedia.json";
+  import PageWrapper from "../common/PageWrapper.svelte";
+  export let hidden: boolean;
 </script>
 
-{#await $previewMedia}
-  <PreviewSkeleton />
-{:then media}
-  {#key media}
-    {#if media}
-      <Preview {media} />
-    {/if}
-  {/key}
-{/await}
+{#if $previewMedia && $previewResult}
+  <PageWrapper {hidden}>
+    {#await $previewMedia}
+      <PreviewSkeleton isMovie={$previewResult.isMovie} />
+    {:then media}
+      <div class="flex max-h-screen">
+        <div class="overflow-y-auto {!media.isMovie ? 'w-2/3' : ''} p-2">
+          <!-- TODO: Make this prettier -->
+          <button on:click={switchToSearchPage}>Search</button>
+          <TopInfo {media} />
+          <BottomInfo {media} />
+        </div>
+        {#if !media.isMovie}
+          <SeasonsContainer {media} />
+        {/if}
+      </div>
+    {/await}
+  </PageWrapper>
+{/if}

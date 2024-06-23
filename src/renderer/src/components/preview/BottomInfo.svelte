@@ -10,7 +10,8 @@
   export let media: Media;
 
   let [accumulatedReviews, infiniteScroll] = createInfiniteScrollStore(
-    (nextPageKey: string | undefined) => getReviews(media.id, true, nextPageKey),
+    (nextPageKey: string | undefined) =>
+      getReviews(media.id, true, nextPageKey),
     true,
     10,
   );

@@ -204,14 +204,13 @@
           </div>
         {/if}
         {#if media.genres}
-        <div>
-
-          {#each media.genres as genre, idx}
-            <span class="font-semibold"
-              >{genre}{media.genres.length - 1 == idx ? "" : " •"}&nbsp</span
-            >
-          {/each}
-        </div>
+          <div>
+            {#each media.genres as genre, idx}
+              <span class="font-semibold"
+                >{genre}{media.genres.length - 1 == idx ? "" : " •"}&nbsp</span
+              >
+            {/each}
+          </div>
         {/if}
       </div>
       <div class="pt-4">

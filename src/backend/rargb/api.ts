@@ -1,5 +1,5 @@
 import { CLIENT } from "@/common/constants";
-import { parseHtml, } from "@/common/functions";
+import { parseHtml } from "@/common/functions";
 import { type Torrent } from "./types";
 import type { CheerioAPI, Element } from "cheerio";
 import * as vfp from "@ctrl/video-filename-parser";
@@ -39,7 +39,6 @@ async function getTorrents(
       getCompleteSeason,
     ) ?? [undefined, undefined];
     if (newTorrent) await updateTorrentList(torrents, newTorrent, pageResource);
-
   }
   return torrents;
 }
@@ -72,16 +71,17 @@ function parseTorrentElement(
     pageResource &&
     isCompleteSeason === getCompleteSeason &&
     parsed.languages.includes(vfp.Language.English)
-  ) return [
-    {
-      title,
-      resolution,
-      magnetLink: "",
-      seeders,
-      isCompleteSeason,
-    },
-    pageResource,
-  ];
+  )
+    return [
+      {
+        title,
+        resolution,
+        magnetLink: "",
+        seeders,
+        isCompleteSeason,
+      },
+      pageResource,
+    ];
   return undefined;
 }
 
@@ -95,7 +95,8 @@ async function updateTorrentList(
   );
   const pageLink = `${HOME_URL}${pageResource}`;
   if (
-    !newTorrent.seeders || (idx !== -1 && newTorrent.seeders <= torrents[idx].seeders)
+    !newTorrent.seeders ||
+    (idx !== -1 && newTorrent.seeders <= torrents[idx].seeders)
   ) {
     return;
   }

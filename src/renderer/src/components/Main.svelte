@@ -5,8 +5,5 @@
   import { currentPage } from "./common/store";
 </script>
 
-{#if $currentPage === Page.Search}
-  <Search />
-{:else if $currentPage == Page.Preview}
-  <Preview />
-{/if}
+<Search hidden={$currentPage !== Page.Search} />
+<Preview hidden={$currentPage !== Page.Preview} />

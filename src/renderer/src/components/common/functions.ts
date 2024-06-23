@@ -1,9 +1,9 @@
-import type { Pagination } from "$backend/imdb/types";
+import type { BaseResult, Pagination } from "$backend/imdb/types";
 import { writable } from "svelte/store";
 import {
   currentPage,
-  loadingTask,
   previewMedia,
+  previewResult,
 } from "$frontend/src/components/common/store";
 import type { Media } from "$backend/imdb/types";
 import { Page } from "./types";
@@ -81,23 +81,23 @@ export function createInfiniteScrollStore<T>(
   return [accumulatedResults, infiniteScroll] as const;
 }
 
-function clearPreviewMedia() {
+function clearPreviewData(): void {
   previewMedia.set(undefined);
+  previewResult.set(undefined);
 }
-export function switchToPreviewPage(media: Promise<Media>): void {
+
+export function switchToPreviewPage(
+  media: Promise<Media>,
+  result: BaseResult,
+): void {
   previewMedia.set(media);
+  previewResult.set(result);
   currentPage.set(Page.Preview);
 }
 
 export function switchToSearchPage(): void {
   currentPage.set(Page.Search);
-  clearPreviewMedia();
-}
-export function setLoadingTask(task: () => Promise<void>) {
-  loadingTask.update((currTask) => (currTask ? currTask : task));
-}
-export function clearLoadingTask(): void {
-  loadingTask.set(undefined);
+  clearPreviewData();
 }
 
 /**

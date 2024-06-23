@@ -22,14 +22,16 @@ export function isDigit(str: string): boolean {
 
 /**
  * Maps an array by the callback then filters out the `undefined` values yielded from the map
+
  */
+
 export function filterMap<A, T>(
   array: Array<A>,
+
   callback: (elem: A) => T | undefined,
 ): Array<T> {
   return array.map(callback).filter((elem) => elem !== undefined) as Array<T>;
 }
-
 
 export function parseHtml(htmlPage: string): CheerioAPI {
   return cheerioLoad(parseDocument(htmlPage));
@@ -39,6 +41,7 @@ export function capitalise(str: string): string {
   if (!str) {
     return str;
   }
+
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
@@ -46,6 +49,7 @@ export function getLast<T>(array: Array<T>): T | undefined {
   if (array.length === 0) {
     return undefined;
   }
+
   return array[array.length - 1];
 }
 
@@ -61,13 +65,16 @@ export function getFirst<T>(array: Array<T>): T | undefined {
   if (array.length === 0) {
     return undefined;
   }
+
   return array[0];
 }
 
 export function remove<T>(array: Array<T>, element: T): T | undefined {
   const idx = array.indexOf(element);
+
   if (idx === -1) {
     return undefined;
   }
+
   return array.splice(idx, 1)[0];
 }

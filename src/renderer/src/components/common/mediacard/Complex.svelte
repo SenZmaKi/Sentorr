@@ -10,7 +10,7 @@
 
 <ButtonWrapper
   class_="m-2 xxs-dark w-[480px] h-[240px] shadow-lg shadow-black rounded-lg duration-300 ease-in-out hover:scale-110 cursor-pointer flex"
-  mediaID={result.id}
+  {result}
 >
   <div class="w-[160px]">
     <ImageSkeleton imageUrl={result.imageUrl} width={160} height={240} />

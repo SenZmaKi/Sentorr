@@ -1,6 +1,6 @@
 <script lang="ts">
   import FilterWrapper from "./FilterWrapper.svelte";
-  import { searchTerm } from "./store.js";
+  import { searchTerm } from "./store";
   let value = "";
   $: {
     if (value == "") $searchTerm = undefined;

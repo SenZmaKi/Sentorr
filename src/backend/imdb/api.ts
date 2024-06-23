@@ -115,6 +115,7 @@ function buildBaseResult(node: BaseNode): BaseResult {
   const endYear = node.releaseYear?.endYear;
   const runtime = node.runtime?.seconds;
   const genres = node.titleGenres?.genres?.map((g) => g.genre.text);
+  const isMovie = !node.canHaveEpisodes;
   return {
     id,
     title,
@@ -127,6 +128,7 @@ function buildBaseResult(node: BaseNode): BaseResult {
     endYear,
     rating,
     ratingCount,
+    isMovie,
   };
 }
 // On IMDB the popularity is more akin to trending cause the popular media frequently change and are usually recently released media
@@ -265,7 +267,13 @@ export async function getEpisodes(
       );
       const imageUrl = { url: ep.primaryImage.url };
       const plot = ep.plot?.plotText.plaidHtml;
-      const releaseDate = ep.releaseDate ? { day: ep.releaseDate.day, month: ep.releaseDate.month, year: ep.releaseDate.year } : undefined;
+      const releaseDate = ep.releaseDate
+        ? {
+            day: ep.releaseDate.day,
+            month: ep.releaseDate.month,
+            year: ep.releaseDate.year,
+          }
+        : undefined;
       const rating = ep.ratingsSummary.aggregateRating;
       const ratingCount = ep.ratingsSummary.voteCount;
       return {

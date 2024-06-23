@@ -1,7 +1,7 @@
 <script lang="ts">
   import EnumFilter from "./EnumFilter.svelte";
-  import { Genres } from "$backend/imdb/constants.js";
-  import { genres } from "./store.js";
+  import { Genres } from "$backend/imdb/constants";
+  import { genres } from "./store";
 </script>
 
 <EnumFilter

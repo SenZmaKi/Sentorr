@@ -2,10 +2,20 @@
   import FilterWrapper from "./FilterWrapper.svelte";
   import { searchTerm } from "./store";
   let value = "";
-  $: {
-    if (value == "") $searchTerm = undefined;
-    else $searchTerm = value;
+
+  function debounce(callback: () => void, ms: number) {
+    let timeout: NodeJS.Timeout;
+    return () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(callback, ms);
+    };
   }
+
+  const updateSearchTerm = debounce(() => {
+    $searchTerm = value ? value : undefined;
+  }, 400); 
+
+  $: value, updateSearchTerm();
 </script>
 
 <FilterWrapper name="Title" viewBox="0 0 24 24">

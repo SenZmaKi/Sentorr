@@ -12,17 +12,18 @@
     [SortBy.USER_RATING_COUNT]: "Rating count",
   } as const;
 
-  $: updateSortOrder($sortBy);
+  $: $sortBy, updateSortOrder();
 
-  function updateSortOrder(newSortBy: SortBy | undefined) {
-    if (newSortBy && [SortBy.POPULARITY, SortBy.RUNTIME].includes(newSortBy)) {
+  function updateSortOrder() {
+    if (
+      $sortBy &&
+      ($sortBy === SortBy.POPULARITY || $sortBy === SortBy.RUNTIME)
+    ) {
       $sortOrder = SortOrder.ASC;
     } else {
       $sortOrder = SortOrder.DESC;
     }
   }
-
-  $: rotation = $sortOrder === SortOrder.ASC ? "rotate-180" : "";
 </script>
 
 <div class="flex items-center gap-5 pr-3">
@@ -43,7 +44,10 @@
   >
     <svg
       fill="white"
-      class={rotation}
+      style="transform: rotate({$sortOrder === SortOrder.ASC
+        ? '180deg'
+        : '0deg'});
+      transition: transform 0.4s ease;"
       width="15px"
       height="15px"
       viewBox="0 0 16 16"

@@ -6,6 +6,7 @@ import {
   SERIES_TITLE,
 } from "./common/constants";
 import { emptyArrayTest } from "./common/functions";
+// @ts-ignore
 import { test } from "bun:test";
 
 test("getMovieTorrents", async () => {

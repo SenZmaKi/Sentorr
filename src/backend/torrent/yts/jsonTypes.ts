@@ -5,7 +5,7 @@ export type SearchResultsJson = {
     movie_count: number;
     limit: number;
     page_number: number;
-    movies: Array<{
+    movies?: Array<{
       id: number;
       url: string;
       imdb_code: string;
@@ -29,7 +29,7 @@ export type SearchResultsJson = {
       medium_cover_image: string;
       large_cover_image: string;
       state: string;
-      torrents: Array<Torrent>;
+      torrents: Array<TorrentJson>;
       date_uploaded: string;
       date_uploaded_unix: number;
     }>;
@@ -41,7 +41,7 @@ export type SearchResultsJson = {
     execution_time: string;
   };
 };
-export type Torrent = {
+export type TorrentJson = {
   url: string;
   hash: string;
   quality: string;

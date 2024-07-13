@@ -145,7 +145,7 @@ export async function getTop10OfAllTime(): Promise<BaseResult[]> {
   return page.results.slice(0, 10);
 }
 
-// This seems to be the only request that needs the session cookies
+// NOTE: This seems to be the only request that needs the session cookies
 export async function getFanFavorites(): Promise<BaseResult[]> {
   const variables = {
     first: DEFAULT_RESULTS_LIMIT,

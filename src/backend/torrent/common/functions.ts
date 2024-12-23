@@ -1,10 +1,8 @@
 import {
   filenameParse,
-  type Resolution as VfpResolution,
   parseSeason as vfpParseSeason,
   Language,
 } from "@ctrl/video-filename-parser";
-import { Resolution } from "./types";
 import levenshtein from "js-levenshtein";
 
 export function seasonFormatTitle(
@@ -19,23 +17,6 @@ export function seasonFormatTitle(
   return { abbrvSeasonTitle, fullSeasonTitle };
 }
 
-export function parseResolution(vfpResolution: VfpResolution) {
-  switch (vfpResolution) {
-    case "2160P":
-      return Resolution.R2160P;
-    case "1080P":
-      return Resolution.R1080P;
-    case "720P":
-      return Resolution.R720P;
-    case "576P":
-      return Resolution.R576P;
-    case "540P":
-      return Resolution.R540P;
-    case "480P":
-      return Resolution.R480P;
-  }
-  throw new Error(`Unknown resolution: ${vfpResolution}`);
-}
 export function validateTorrent(
   title: string,
   filename: string,

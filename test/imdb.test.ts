@@ -31,10 +31,6 @@ async function paginationTest(
   }
 }
 
-test("fakeTest", () => {
-  console.log("Fake test ran");
-});
-
 test("getSessionCookies", async () => {
   await emptyArrayTestHandler("setSessionCookies", getSessionCookies);
 });

@@ -1,73 +1,73 @@
 import type { TorrentStream, TorrentFile } from "./common/types";
 import type { Episode, Media } from "$backend/imdb/types";
 import { getTorrentsFiles as getMovieTorrents } from "./yts/api";
-import { getSeriesTorrents } from "./rargb/api";
-import { parseSeason } from "./common/functions";
+import { getTorrentFiles as piratebayGetTorrentFiles } from "./piratebay/api";
+// import { getTorrentFiles as rargbGetTorrentFiles } from "./rargb/api";
+// import { getTorrentFiles as solidtorrentsGetTorrentFiles } from "./rargb/api";
+import { parseSeason, seasonFormatTitle } from "./common/functions";
 import { filterMap } from "@/common/functions";
+import type { Language } from "@ctrl/video-filename-parser";
 const VIDEO_EXTS = ['3g2', '3gp', 'asf', 'avi', 'dv', 'flv', 'gxf', 'm2ts', 'm4a', 'm4b', 'm4p', 'm4r', 'm4v', 'mkv', 'mov', 'mp4', 'mpd', 'mpeg', 'mpg', 'mxf', 'nut', 'ogm', 'ogv', 'swf', 'ts', 'vob', 'webm', 'wmv', 'wtv']
 const VIDEO_RX = new RegExp(`.(${VIDEO_EXTS.join('|')})$`, 'i')
 
-export async function getTorrentFiles(media: Media, episode?: Episode) {
+export async function getTorrentFiles({ media, episode, languages }: { media: Media; episode?: Episode; languages: Language[] }): Promise<TorrentFile[]> {
     if (!episode) return getMovieTorrents(media.id);
     if (!media.title) throw new Error("Media title is required");
+    const { abbrvSeasonTitle, fullSeasonTitle } = seasonFormatTitle(media.title, episode.seasonNumber, episode.number)
+    const commonParams = { mediaImdbID: media.id, title: media.title, isTvSeries: true, languages: languages }
     const [seasonFiles, episodeFiles] = await Promise.all([
-        getSeriesTorrents(media.title, episode.seasonNumber, undefined),
-        getSeriesTorrents(media.title, episode.seasonNumber, episode.number)
+        piratebayGetTorrentFiles({ ...commonParams, seasonFormattedTitle: abbrvSeasonTitle, getCompleteSeason: true }),
+        piratebayGetTorrentFiles({ ...commonParams, seasonFormattedTitle: abbrvSeasonTitle, getCompleteSeason: false }),
     ])
     console.log("seasonFiles", seasonFiles)
     return [...seasonFiles, ...episodeFiles];
 }
 
 
-export async function getTorrentsStreams(torrentFile: TorrentFile): Promise<TorrentStream[]> {
+export async function getTorrentStreams(torrentFile: TorrentFile): Promise<TorrentStream[]> {
     return new Promise(async (resolve, reject) => {
         const magnetURI = torrentFile.torrentID;
-        window.electron.ipcRenderer.send("get-torrent-streams", magnetURI);
-        window.electron.ipcRenderer.on("torrent-streams-timeout-error", (_, message: string) => {
-            reject(new Error(message))
-        });
-        window.electron.ipcRenderer.on("torrent-streams", (_, torrentStreams: TorrentStream[]) => {
-            console.log("torrentStreams", torrentStreams)
-            const videoStreams = torrentStreams.filter(({ filename }) =>
-                VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample")
-            );
-            console.log("videoStreams", videoStreams)
-            if (!videoStreams.length) return reject(new Error("No video files found"));
-            if (!torrentFile.isCompleteSeason) {
-                const url = videoStreams[0].url;
-                const filename = videoStreams[0].filename;
-                return resolve([{
-                    filename,
-                    url,
-                }])
-            }
-            return resolve(filterMap(videoStreams, (stream) => {
-                const streamSeason = parseSeason(stream.filename, "torrentStream")
-                const fileSeason = parseSeason(torrentFile.filename as string, "torrentFile")
-                const seasonNumber = streamSeason?.seasonNumber || fileSeason?.seasonNumber;
-                if (!seasonNumber) {
-                    console.warn("Failed to parse season number")
-                    return undefined;
-                }
-                const episodeNumber = streamSeason?.episodeNumber || fileSeason?.episodeNumber;
-                if (!episodeNumber) {
-                    console.warn("Failed to parse episode number")
-                    return undefined;
-                }
-                const url = stream.url
-                const filename = stream.filename;
-                return {
-                    filename,
-                    url,
-                    info: {
-                        seasonNumber,
-                        episodeNumber
-                    }
-
-                }
-            })
-            )
+        const { error, torrentStreams }: { error?: string; torrentStreams: TorrentStream[] } = await window.electron.ipcRenderer.invoke("get-torrent-streams", magnetURI);
+        if (error) reject(new Error(error));
+        console.log("torrentStreams", torrentStreams)
+        const videoStreams = torrentStreams.filter(({ filename }) =>
+            VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample")
+        );
+        console.log("videoStreams", videoStreams)
+        if (!videoStreams.length) return reject(new Error("No video files found"));
+        if (!torrentFile.isCompleteSeason) {
+            const url = videoStreams[0].url;
+            const filename = videoStreams[0].filename;
+            return resolve([{
+                filename,
+                url,
+            }])
         }
+        return resolve(filterMap(videoStreams, (stream) => {
+            const streamSeason = parseSeason(stream.filename, "torrentStream")
+            const fileSeason = parseSeason(torrentFile.filename as string, "torrentFile")
+            const seasonNumber = streamSeason?.seasonNumber || fileSeason?.seasonNumber;
+            if (!seasonNumber) {
+                console.warn("Failed to parse season number")
+                return undefined;
+            }
+            const episodeNumber = streamSeason?.episodeNumber || fileSeason?.episodeNumber;
+            if (!episodeNumber) {
+                console.warn("Failed to parse episode number")
+                return undefined;
+            }
+            const url = stream.url
+            const filename = stream.filename;
+            return {
+                filename,
+                url,
+                info: {
+                    seasonNumber,
+                    episodeNumber
+                }
+
+            }
+        })
         )
     })
 

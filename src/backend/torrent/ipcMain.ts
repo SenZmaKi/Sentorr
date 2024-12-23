@@ -1,16 +1,12 @@
 
 import WebTorrent, { type NodeServer } from "webtorrent";
 import type { TorrentStream } from "./common/types";
-import { TimeoutError } from "./error";
 const Client = new WebTorrent();
 const server = Client.createServer({},) as NodeServer;
 // TODO: Ignore the specific error
 // @ts-ignore
 server.listen(0);
 const PORT = server.address().port;
-
-
-
 
 export async function getTorrentStreams(magnetURI: string): Promise<TorrentStream[]> {
     return new Promise((resolve, reject) => {
@@ -26,9 +22,9 @@ export async function getTorrentStreams(magnetURI: string): Promise<TorrentStrea
         });
 
         setTimeout(() => {
-            if(success) return;
+            if (success) return;
             Client.remove(magnetURI);
-            reject(new TimeoutError());
+            reject(new Error("Timeout, torrent is probably dead"));
         }, 20000);
     });
 

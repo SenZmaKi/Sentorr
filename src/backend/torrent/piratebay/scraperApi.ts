@@ -1,5 +1,5 @@
 import { CLIENT } from "@/common/constants";
-import { filterMap, parseHTML } from "@/common/functions";
+import { filterMap, parseHtml } from "@/common/functions";
 import type { Cheerio, Element } from "cheerio";
 import { validateTorrent } from "../common/functions";
 import type { TorrentFile } from "../common/types";
@@ -20,7 +20,7 @@ export async function getTorrentFiles(
   console.log(`${HOME_URL}/search.php?q=${seasonFormattedTitle}`);
   const htmlPage = await response.text();
   writeFileSync("pirate.html", htmlPage);
-  const $ = parseHTML(htmlPage);
+  const $ = parseHtml(htmlPage);
   return filterMap($("ol.view-single > li.list-entry").toArray(), (elem) =>
     parseTorrentElement(
       $(elem),

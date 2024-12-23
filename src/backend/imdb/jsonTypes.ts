@@ -32,6 +32,59 @@ export type AdvancedTitleSearchResultJson = {
   };
 };
 
+export type ReviewsResultJson = {
+  data: {
+    title: {
+      reviews: {
+        total: number
+        pageInfo: {
+          endCursor: string
+          hasNextPage: boolean
+          hasPreviousPage: boolean
+        }
+        edges: Array<{
+          node: {
+            id: string
+            author: {
+              nickName: string
+              userId: string
+            }
+            summary: {
+              originalText: string
+            }
+            text: {
+              originalText: {
+                plaidHtml: string
+              }
+            }
+            authorRating?: number
+            submissionDate: string
+            helpfulness: {
+              upVotes: number
+              downVotes: number
+            }
+            spoiler: boolean
+            reportingLink: {
+              url: string
+            }
+          }
+        }>
+      }
+    }
+  }
+  extensions: {
+    disclaimer: string
+    experimentalFields: {
+      janet: Array<any>
+      ratings: Array<any>
+      kahlo: Array<any>
+      identity: Array<any>
+      markdown: Array<any>
+    }
+  }
+}
+
+
 export type MediaMetadataJson = {
   "@context": string;
   "@type": string;
@@ -198,7 +251,7 @@ export type FanFavoritesResultJson = {
   };
 };
 
-export type PopularTitlesJson = {
+export type PopularTitlesResultJson = {
   data: {
     popularTitles: {
       titles: Array<BaseNode>;
@@ -219,7 +272,7 @@ export type PopularTitlesJson = {
   };
 };
 
-export type EpisodesResultsJson = {
+export type EpisodesResultJson = {
   data: {
     title: {
       episodes: {
@@ -242,14 +295,14 @@ export type EpisodesResultsJson = {
                 __typename: string;
               };
               plot:
-                | {
-                    plotText: {
-                      plaidHtml: string;
-                      __typename: string;
-                    };
-                    __typename: string;
-                  }
-                | undefined;
+              | {
+                plotText: {
+                  plaidHtml: string;
+                  __typename: string;
+                };
+                __typename: string;
+              }
+              | undefined;
               releaseDate: {
                 month: number;
                 day: number;

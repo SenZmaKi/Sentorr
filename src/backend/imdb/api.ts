@@ -14,16 +14,16 @@ import {
 import {
   type AdvancedTitleSearchResultJson,
   type BaseNode,
-  type EpisodesResultsJson,
+  type EpisodesResultJson,
   type FanFavoritesResultJson,
   type MediaMetadataJson,
-  type PopularTitlesJson,
+  type PopularTitlesResultJson,
   type MoreMetadataJson,
+  type ReviewsResultJson,
 } from "./jsonTypes";
-import { DEFAULT_RESULTS_LIMIT, mediaTypeMap } from "./constants";
+import { DEFAULT_RESULTS_LIMIT, mediaTypeMap, REVIEWS_HASH } from "./constants";
 import { filterMap, getFirst, parseHtml } from "@/common/functions";
 import { DEBUG, CLIENT } from "@/common/constants";
-import { type CheerioAPI } from "cheerio";
 import { DEFAULT_SORT_BY, DEFAULT_SORT_ORDER } from "./constants";
 import {
   HOME_URL,
@@ -159,8 +159,8 @@ export async function getFanFavorites(): Promise<BaseResult[]> {
     undefined,
     sessionCookies,
   )) as FanFavoritesResultJson;
-  return fanFavoritesJson.data.fanPicksTitles.edges.map((edge) =>
-    buildBaseResult(edge.node),
+  return fanFavoritesJson.data.fanPicksTitles.edges.map(({ node }) =>
+    buildBaseResult(node),
   );
 }
 
@@ -171,7 +171,7 @@ export async function getPopularTitles(): Promise<BaseResult[]> {
     queryFilter: { releaseDateRange: { end: DATE_STR } },
   };
   const url = generateAPIURL("PopularTitles", variables, POPULAR_TITLES_HASH);
-  const popularTitleJson = (await apiGet(url)) as PopularTitlesJson;
+  const popularTitleJson = (await apiGet(url)) as PopularTitlesResultJson;
   return popularTitleJson.data.popularTitles.titles.map((node) =>
     buildBaseResult(node),
   );
@@ -227,8 +227,8 @@ export async function search(
     url,
   )) as AdvancedTitleSearchResultJson;
   const results =
-    advancedTitleSearchResultJson.data.advancedTitleSearch.edges.map((edge) =>
-      buildBaseResult(edge.node.title),
+    advancedTitleSearchResultJson.data.advancedTitleSearch.edges.map(({ node }) =>
+      buildBaseResult(node.title),
     );
   const pageInfo =
     advancedTitleSearchResultJson.data.advancedTitleSearch.pageInfo;
@@ -255,10 +255,9 @@ export async function getEpisodes(
     variables,
     EPISODES_HASH,
   );
-  const episodesResultsJson = (await apiGet(url)) as EpisodesResultsJson;
-  const results = episodesResultsJson.data.title.episodes.episodes.edges.map(
-    (edge) => {
-      const ep = edge.node;
+  const episodesJson = (await apiGet(url)) as EpisodesResultJson;
+  const results = episodesJson.data.title.episodes.episodes.edges.map(
+    ({ node: ep }) => {
       const id = ep.id;
       const title = ep.titleText.text;
       const number = parseInt(
@@ -269,10 +268,10 @@ export async function getEpisodes(
       const plot = ep.plot?.plotText.plaidHtml;
       const releaseDate = ep.releaseDate
         ? {
-            day: ep.releaseDate.day,
-            month: ep.releaseDate.month,
-            year: ep.releaseDate.year,
-          }
+          day: ep.releaseDate.day,
+          month: ep.releaseDate.month,
+          year: ep.releaseDate.year,
+        }
         : undefined;
       const rating = ep.ratingsSummary.aggregateRating;
       const ratingCount = ep.ratingsSummary.voteCount;
@@ -289,7 +288,7 @@ export async function getEpisodes(
       };
     },
   );
-  const pageInfo = episodesResultsJson.data.title.episodes.episodes.pageInfo;
+  const pageInfo = episodesJson.data.title.episodes.episodes.pageInfo;
   const nextPageKey = pageInfo.hasNextPage ? pageInfo.endCursor : undefined;
   return { results, nextPageKey };
 }
@@ -336,13 +335,13 @@ function combineMetadata(
   const episodeCount = mainColumnData?.episodes?.totalEpisodes?.total;
   const seasonsCount = mainColumnData?.episodes?.seasons?.length;
   const recommendations = mainColumnData.moreLikeThisTitles.edges.map(
-    (rec) => buildBaseResult(rec.node),
+    ({ node }) => buildBaseResult(node),
     plot,
   );
-  const actors = mainColumnData.cast.edges.map((edge) => {
-    const name = edge.node.name.nameText.text;
-    const imageUrl = edge.node.name.primaryImage?.url;
-    const c = getFirst(edge.node.characters ?? []); // Characters is probably an array cause an actor can play multiple characters e.g., an alter ego from a different universe
+  const actors = mainColumnData.cast.edges.map(({ node: actor }) => {
+    const name = actor.name.nameText.text;
+    const imageUrl = actor.name.primaryImage?.url;
+    const c = getFirst(actor.characters ?? []); // Characters is probably an array cause an actor can play multiple characters e.g., an alter ego from a different universe
     const character = c ? c.name : undefined;
     return { name, imageUrl, character };
   });
@@ -377,57 +376,43 @@ function combineMetadata(
   };
 }
 
-function extractReviews($: CheerioAPI): Review[] {
-  return $("div.review-container > div.lister-item-content")
-    .toArray()
-    .map((el) => {
-      const rD = $(el);
-      const title = rD.find("a.title").text().trim();
-      const ratingStr = rD
-        .find(
-          "div.ipl-ratings-bar > span.rating-other-user-rating > span:first",
-        )
-        .text();
-      let rating: number | undefined = undefined;
-      if (ratingStr) {
-        rating = parseInt(ratingStr);
-      }
-      const authorAndDateDiv = rD.find("div.display-name-date");
-      const author = authorAndDateDiv.find("span.display-name-link > a").text();
-      const date = authorAndDateDiv.find("span.review-date").text();
-      const contentDiv = rD.find("div.content");
-      const content = contentDiv.find("div.text").text();
-      const foundHelpFulStr = contentDiv
-        .find("div.actions")
-        .text()
-        .trim()
-        .replace(/,/g, "");
-      const [likesStr, , , totalStr] = foundHelpFulStr.split(" ");
-      const likes = parseInt(likesStr);
-      const dislikes = parseInt(totalStr) - likes;
-      const hasSpoilers = rD.find("span.spoiler-warning").length > 0;
-      return {
-        title,
-        author,
-        rating,
-        content,
-        date,
-        likes,
-        dislikes,
-        hasSpoilers,
-      };
-    });
-}
 export async function getReviews(
   mediaID: string,
   hideSpoilers: boolean,
   pageKey?: string,
 ): Promise<Pagination<Review[]>> {
-  const url = `${HOME_URL}title/${mediaID}/reviews/_ajax?&sort=curated&dir=desc&ratingFilter=0&paginationKey=${pageKey || ""}${hideSpoilers ? "&spoiler=hide" : ""}`;
-  const response = await CLIENT.get(url);
-  const page = await response.text();
-  const $ = parseHtml(page);
-  const results = extractReviews($);
-  const nextPageKey = $("div.load-more-data").attr("data-key");
+  const variables = {
+    ...DEFAULT_LOCALE,
+    after: pageKey || "",
+    first: DEFAULT_RESULTS_LIMIT,
+
+    const: mediaID,
+    filter: hideSpoilers ? {
+      "spoiler": "EXCLUDE"
+    } : {},
+    sort: {
+      by: "HELPFULNESS_SCORE",
+      order: "DESC"
+    }
+
+  }
+  const url = generateAPIURL("TitleReviewsRefine", variables, REVIEWS_HASH);
+  const reviewsJson: ReviewsResultJson = await apiGet(url);
+  const results: Review[] = reviewsJson.data.title.reviews.edges.map(({ node: review }) => {
+    return {
+      author: review.author.nickName,
+      date: review.submissionDate,
+      content: review.text.originalText.plaidHtml,
+      title: review.summary.originalText,
+      likes: review.helpfulness.upVotes,
+      dislikes: review.helpfulness.upVotes,
+      hasSpoilers: review.spoiler,
+      rating: review.authorRating,
+
+    }
+
+  })
+  const pageInfo = reviewsJson.data.title.reviews.pageInfo;
+  const nextPageKey = pageInfo.hasNextPage ? pageInfo.endCursor : undefined;
   return { results, nextPageKey };
 }

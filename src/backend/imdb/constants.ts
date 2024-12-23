@@ -19,7 +19,9 @@ export const POPULAR_TITLES_HASH =
 export const EPISODES_HASH =
   "e5b755e1254e3bc3a36b34aff729b1d107a63263dec628a8f59935c9e778c70e";
 export const ADVANCED_TITLE_SEARCH_HASH =
-  "42714660b115c035a3c14572bfd2765c622e2659f7b346e2ee7a1f24296f08e7";
+  "60a7b8470b01671336ffa535b21a0a6cdaf50267fa2ab55b3e3772578a8c1f00";
+export const REVIEWS_HASH =
+  "89aff4cd7503e060ff1dd5aba91885d8bac0f7a21aa1e1f781848a786a5bdc19";
 // IMDB API accepts data in ISO format YYYY-MM-DD
 export const DATE_STR = DATE.toISOString().split("T")[0];
 export const MAX_RATING = 10;

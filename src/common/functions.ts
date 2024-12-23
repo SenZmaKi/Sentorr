@@ -21,16 +21,16 @@ export function isDigit(str: string): boolean {
 }
 
 /**
- * Maps an array by the callback then filters out the `undefined` values yielded from the map
+ * Maps an array by the `callbackfn` then filters out the `undefined` values yielded from the map
 
  */
 
-export function filterMap<A, T>(
-  array: Array<A>,
+export function filterMap<E, T>(
+  array: Array<E>,
 
-  callback: (elem: A) => T | undefined,
+  callbackfn: (elem: E) => T | undefined,
 ): Array<T> {
-  return array.map(callback).filter((elem) => elem !== undefined) as Array<T>;
+  return array.map(callbackfn).filter((elem) => elem !== undefined) as Array<T>;
 }
 
 export function parseHtml(htmlPage: string): CheerioAPI {

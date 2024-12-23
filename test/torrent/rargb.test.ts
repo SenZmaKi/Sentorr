@@ -1,6 +1,5 @@
 import { getTorrentFiles } from "../../src/backend/torrent/rargb/api";
 import { emptyArrayTest } from ".././common/functions";
-// @ts-ignore
 import { test } from "bun:test";
 import {
   TORRENT_EPISODE_PARAMS,
@@ -16,7 +15,7 @@ test("getMovieTorrents", async () => {
   );
 });
 
-test("getSeriesEpisodeTorrents", async () => {
+test("getSeriesEpisodeTorrents",  async () => {
   emptyArrayTest(
     "getSeriesEpisodeTorrents",
     await getTorrentFiles(TORRENT_EPISODE_PARAMS),

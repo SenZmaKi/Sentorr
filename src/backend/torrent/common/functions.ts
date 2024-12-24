@@ -2,8 +2,10 @@ import {
   filenameParse,
   parseSeason as vfpParseSeason,
   Language,
+  Resolution as VfpResolution,
 } from "@ctrl/video-filename-parser";
 import levenshtein from "js-levenshtein";
+import { Resolution, RESOLUTIONS, type TorrentFile } from "./types";
 
 export function seasonFormatTitle(
   title: string,
@@ -16,7 +18,37 @@ export function seasonFormatTitle(
   const fullSeasonTitle = `${title} Season ${seasonNumber}`;
   return { abbrvSeasonTitle, fullSeasonTitle };
 }
+export function parseSize(size: string): number | undefined {
+  const units = ["B", "KB", "MB", "GB", "TB", "PB"]; // Ordered list of units
+  const regex = /^([\d.]+)\s*(B|KB|MB|GB|TB|PB)$/i; // Regex to capture the number and unit
 
+  const match = size.trim().match(regex);
+  if (!match) {
+    console.warn(`Failed to parse size from ${size}`)
+    return undefined
+  }
+  const value = parseFloat(match[1]); // Extract numeric part
+  const unit = match[2].toUpperCase(); // Normalize unit to uppercase
+  const unitIndex = units.indexOf(unit);
+  return value * Math.pow(1024, unitIndex); // Convert to bytes
+}
+
+export function parseResolution(vfpResolution: VfpResolution) {
+  switch (vfpResolution) {
+    case VfpResolution.R2160P:
+      return Resolution.R2160P;
+    case VfpResolution.R1080P:
+      return Resolution.R1080P;
+    case VfpResolution.R720P:
+      return Resolution.R720P;
+    case VfpResolution.R576P:
+      return Resolution.R576P;
+    case VfpResolution.R540P:
+      return Resolution.R540P;
+    case VfpResolution.R480P:
+      return Resolution.R480P;
+  }
+}
 export function validateTorrent(
   title: string,
   filename: string,
@@ -33,12 +65,13 @@ export function validateTorrent(
     !parsedFilename.resolution ||
     !parsedFilename.languages.some((lang) => languages.includes(lang)) ||
     !getCompleteSeason ===
-      // @ts-ignore fullSeason isn't defined in d.ts but it's there in the returned object
-      (!!parsedFilename.complete || !!parsedFilename.fullSeason)
+    // @ts-ignore fullSeason isn't defined in d.ts but it's there in the returned object
+    (!!parsedFilename.complete || !!parsedFilename.fullSeason)
   )
     return undefined;
+  const resolution = parseResolution(parsedFilename.resolution);
   return {
-    resolution: parsedFilename.resolution,
+    resolution,
   };
 }
 
@@ -108,4 +141,50 @@ export function parseSeason(
     seasonNumber: parsed.seasons[0],
     episodeNumber: parsed.episodeNumbers[0],
   };
+}
+
+
+export function computeTorrentScores({
+  torrents,
+  preferredResolution,
+  maxSeedersThreshold = Math.min(100, Math.max(...torrents.map((torrent) => torrent.seeders))),
+  maxSizeThreshold = Math.max(...torrents.map((torrent) => torrent.sizeBytes)),
+  seedersWeight = 0.375,
+  resolutionWeight = 0.3,
+  sizeWeight = 0.325,
+  resolutionPardonFactor = 0.6,
+}: {
+  torrents: TorrentFile[];
+  preferredResolution: Resolution;
+  seedersWeight?: number;
+  resolutionWeight?: number;
+  sizeWeight?: number;
+  maxSeedersThreshold?: number;
+  maxSizeThreshold?: number;
+  resolutionPardonFactor?: number;
+}) {
+  return torrents.map((torrent) => {
+
+    const resolutionDifference = Math.abs(torrent.resolution - preferredResolution);
+    const minResolution = Math.min(...RESOLUTIONS);
+    const maxResolutionDifference = Math.max(...RESOLUTIONS) - minResolution;
+    const resolutionScore = 1 - resolutionDifference / maxResolutionDifference; // Normalize resolution score to be between 0 and 1
+
+    const seedersScore = Math.min(torrent.seeders / maxSeedersThreshold, 1); // Normalize seeders to be between 0 and 1
+
+    const sizePenalty = Math.min(torrent.sizeBytes / maxSizeThreshold, 1); // Normalize size to be between 0 and 1
+    const resolutionPardon = (torrent.resolution - minResolution) / maxResolutionDifference;
+    const pardonedSizePenalty = sizePenalty - (resolutionPardon * resolutionPardonFactor);
+
+    const score =
+      (-pardonedSizePenalty * sizeWeight) +
+      (resolutionScore * resolutionWeight) +
+      (seedersScore * seedersWeight);
+
+    // console.log("score", score, "seedersScore", seedersScore, "resolutionScore", resolutionScore, "sizePenalty", sizePenalty, "resolutionPardon", resolutionPardon, "pardonedSizePenalty", pardonedSizePenalty);
+    return {
+      torrent,
+      score
+    }
+  });
 }

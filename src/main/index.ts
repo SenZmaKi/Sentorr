@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import { getTorrentStreams } from "@/backend/torrent/ipcMain";
+import { getTorrentStreams } from "../backend/torrent/ipcMain";
 // import icon from "../renderer/src/assets/icon.png?asset";
 const icon = "";
 
@@ -94,6 +94,7 @@ app.whenReady().then(() => {
       return { torrentStreams };
 
     } catch (error: any) {
+      console.log("torrentStreams error", error)
       return { error: error.message };
 
     }

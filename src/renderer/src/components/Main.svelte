@@ -2,8 +2,10 @@
   import Search from "./search/Main.svelte";
   import Preview from "./preview/Main.svelte";
   import { Page } from "./common/types";
+  import Player from "./player/Main.svelte";
   import { currentPage } from "./common/store";
 </script>
 
 <Search hidden={$currentPage !== Page.Search} />
 <Preview hidden={$currentPage !== Page.Preview} />
+<Player hidden={$currentPage !== Page.Player} />

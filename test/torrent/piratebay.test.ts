@@ -16,7 +16,7 @@ import {
 
 test("getMovieTorrents", async () => {
   emptyArrayTest(
-    "getMovieTorrents",
+    "piratebay:getMovieTorrents",
     await getTorrentFiles({
       ...TORRENT_MOVIE_PARAMS,
       mediaImdbID: MOVIE_IMDB_ID,
@@ -26,7 +26,7 @@ test("getMovieTorrents", async () => {
 
 test("getSeriesEpisodeTorrents", async () => {
   emptyArrayTest(
-    "getSeriesEpisodeTorrents",
+    "piratebay:getSeriesEpisodeTorrents",
     await getTorrentFiles({
       ...TORRENT_EPISODE_PARAMS,
       mediaImdbID: SHOW_IMDB_ID,
@@ -37,7 +37,7 @@ test("getSeriesEpisodeTorrents", async () => {
 
 test("getSeriesAbbrvSeasonTorrents", async () => {
   emptyArrayTest(
-    "getSeriesAbbrvSeasonTorrents",
+    "piratebay:getSeriesAbbrvSeasonTorrents",
     await getTorrentFiles({
       ...TORRENT_SEASON_ABBRV_PARAMS,
       mediaImdbID: SHOW_IMDB_ID,
@@ -48,7 +48,7 @@ test("getSeriesAbbrvSeasonTorrents", async () => {
 
 test("getSeriesFullSeasonTorrents", async () => {
   emptyArrayTest(
-    "getSeriesFullSeasonTorrents",
+    "piratebay:getSeriesFullSeasonTorrents",
     await getTorrentFiles({
       ...TORRENT_SEASON_FULL_PARAMS,
       mediaImdbID: SHOW_IMDB_ID,

@@ -10,28 +10,28 @@ import {
 
 test("getMovieTorrents", async () => {
   emptyArrayTest(
-    "getMovieTorrents",
+    "rargb:getMovieTorrents",
     await getTorrentFiles(TORRENT_MOVIE_PARAMS),
   );
 });
 
 test("getSeriesEpisodeTorrents",  async () => {
   emptyArrayTest(
-    "getSeriesEpisodeTorrents",
+    "rargb:getSeriesEpisodeTorrents",
     await getTorrentFiles(TORRENT_EPISODE_PARAMS),
   );
 });
 
 test("getSeriesFullSeasonTorrents", async () => {
   emptyArrayTest(
-    "getSeriesFullSeasonTorrents",
+    "rargb:getSeriesFullSeasonTorrents",
     await getTorrentFiles(TORRENT_SEASON_FULL_PARAMS),
   );
 });
 
 test("getSeriesAbbrvSeasonTorrents", async () => {
   emptyArrayTest(
-    "getAbbrvSeasonTorrents",
+    "rargb:getAbbrvSeasonTorrents",
     await getTorrentFiles(TORRENT_SEASON_ABBRV_PARAMS),
   );
 });

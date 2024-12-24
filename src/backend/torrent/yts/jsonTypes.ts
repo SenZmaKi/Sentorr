@@ -41,6 +41,7 @@ export type SearchResultsJson = {
     execution_time: string;
   };
 };
+
 export type TorrentJson = {
   url: string;
   hash: string;

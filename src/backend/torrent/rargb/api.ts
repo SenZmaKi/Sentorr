@@ -2,7 +2,7 @@ import { CLIENT } from "@/common/constants";
 import { parseHtml } from "@/common/functions";
 import { type GetTorrentFilesParams, type TorrentFile } from "../common/types";
 import type { CheerioAPI, Element } from "cheerio";
-import { validateTorrent } from "../common/functions";
+import { parseSize, validateTorrent } from "../common/functions";
 import type { Language } from "@ctrl/video-filename-parser";
 
 const HOME_URL = "https://rargb.to";
@@ -84,8 +84,11 @@ function parseTorrentElement(
   const pageResource = torrentPageLinkElement.attr("href") as string;
   const seeders = parseInt(td.eq(5).find("font").text());
   if (!seeders) return undefined;
-  const dateUploaded = td.eq(3).text();
-  const size = td.eq(4).text();
+  const dateUploadedStr = td.eq(3).text();
+  const dateUploadedISO = new Date(dateUploadedStr).toISOString()
+  const size_str = td.eq(4).text();
+  const sizeBytes = parseSize(size_str)
+  if (!sizeBytes) return undefined;
   return {
     torrentFile: {
       filename,
@@ -93,8 +96,8 @@ function parseTorrentElement(
       torrentID: "",
       seeders,
       isCompleteSeason: getCompleteSeason,
-      size,
-      dateUploaded,
+      sizeBytes,
+      dateUploadedISO,
     },
     pageResource,
   };

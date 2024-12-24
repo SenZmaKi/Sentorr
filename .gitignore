@@ -15,6 +15,5 @@ bun.lockb
 .env
 .prettierrc.yaml
 test.sh
-src-tauri/
 crap.ts
 

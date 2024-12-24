@@ -32,45 +32,45 @@ async function paginationTest(
 }
 
 test("getSessionCookies", async () => {
-  await emptyArrayTestHandler("setSessionCookies", getSessionCookies);
+  await emptyArrayTestHandler("imdb:setSessionCookies", getSessionCookies);
 });
 
 test("search", async () => {
   const callback = async (nextPageKey: string | undefined) =>
     search({ searchTerm: MOVIE_TITLE }, nextPageKey);
-  await paginationTest("search", callback);
+  await paginationTest("imdb:search", callback);
 });
 
 test("fanFavorites", async () => {
-  await emptyArrayTestHandler("fanFavorites", getFanFavorites);
+  await emptyArrayTestHandler("imdb:fanFavorites", getFanFavorites);
 });
 
 test("popularTitles", async () => {
-  await emptyArrayTestHandler("popularTitles", getPopularTitles);
+  await emptyArrayTestHandler("imdb:popularTitles", getPopularTitles);
 });
 
 test("getMedia", async () => {
   const media = await getMedia(SHOW_IMDB_ID);
-  saveResults("getMedia", media);
+  saveResults("imdb:getMedia", media);
   expect(media.title).toBeTruthy();
 });
 
 test("getReviews", async () => {
   const callback = async (nextPageKey: string | undefined) =>
     getReviews(SHOW_IMDB_ID, true, nextPageKey);
-  await paginationTest("getReviews", callback);
+  await paginationTest("imdb:getReviews", callback);
 });
 
 test("getTop10Trending", async () => {
-  await emptyArrayTestHandler("getTop10Trending", getTop10Trending);
+  await emptyArrayTestHandler("imdb:getTop10Trending", getTop10Trending);
 });
 
 test("getEpisodes", async () => {
   const callback = async (nextPageKey: string | undefined) =>
     getEpisodes(SHOW_IMDB_ID, 1, nextPageKey);
-  await paginationTest("getEpisodes", callback);
+  await paginationTest("imdb:getEpisodes", callback);
 });
 
 test("getTop10OfAllTime", async () => {
-  await emptyArrayTestHandler("getTop10OfAllTime", getTop10OfAllTime);
+  await emptyArrayTestHandler("imdb:getTop10OfAllTime", getTop10OfAllTime);
 });

@@ -29,12 +29,13 @@ export async function getTorrentFiles({
     // NOTE: The !!torrent.imdb is to handle a speculative edge case where they don't set in their response torrent.imdb
     // so if episodeImdbID is undefined the second condition is true, I am yet to experience it but it could be annoying
     // to debug incase it ever happens
+    const filename = torrent.name;
     const ignoreTitle =
       !!torrent.imdb &&
       (torrent.imdb === episodeImdbID || torrent.imdb === mediaImdbID);
     const result = validateTorrent(
       title,
-      torrent.name,
+      filename,
       isTvSeries,
       getCompleteSeason,
       languages,
@@ -43,25 +44,18 @@ export async function getTorrentFiles({
     if (!result) return undefined;
     const { resolution } = result;
     const sizeBytes = parseInt(torrent.size);
-    const size = prettyFormatBytes(sizeBytes);
     const seeders = parseInt(torrent.seeders);
     if (!seeders) return undefined;
+    const dateUploadedUnix = parseInt(torrent.added);
+    const dateUploadedISO = new Date(dateUploadedUnix * 1000).toISOString()
     return {
-      size,
+      filename,
+      sizeBytes,
       seeders,
-      dateUploaded: torrent.added,
+      dateUploadedISO,
       torrentID: torrent.info_hash,
       resolution,
       isCompleteSeason: getCompleteSeason,
     };
   });
-}
-function prettyFormatBytes(bytes: number) {
-  const bytes_in_kb = 1024;
-  if (bytes < bytes_in_kb) return `${bytes} B`;
-  if (bytes < bytes_in_kb * bytes_in_kb)
-    return `${(bytes / bytes_in_kb).toFixed(2)} KB`;
-  if (bytes < bytes_in_kb * bytes_in_kb * bytes_in_kb)
-    return `${(bytes / (bytes_in_kb * bytes_in_kb)).toFixed(2)} MB`;
-  return `${(bytes / (bytes_in_kb * bytes_in_kb * bytes_in_kb)).toFixed(2)} GB`;
 }

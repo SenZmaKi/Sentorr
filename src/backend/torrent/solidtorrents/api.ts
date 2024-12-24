@@ -1,7 +1,7 @@
 import { CLIENT } from "@/common/constants";
 import { filterMap, parseHtml } from "@/common/functions";
 import type { Cheerio, Element } from "cheerio";
-import { validateTorrent } from "../common/functions";
+import { parseSize, validateTorrent } from "../common/functions";
 import type { GetTorrentFilesParams, TorrentFile } from "../common/types";
 import type { Language } from "@ctrl/video-filename-parser";
 
@@ -51,19 +51,22 @@ function parseTorrentElement(
   const category = bottomInfoDiv.find("a").text();
   if (category === "XXX") return undefined;
   const statsDivs = bottomInfoDiv.find("div > div");
-  const dateUploaded = statsDivs.eq(0).text();
-  const size = statsDivs.eq(1).text();
+  const dateUploadedStr = statsDivs.eq(5).text();
+  const dateUploadedISO = new Date(dateUploadedStr).toISOString()
+  const size_str = statsDivs.eq(2).text();
+  const sizeBytes = parseSize(size_str)
+  if (!sizeBytes) return undefined;
   const fontDivs = statsDivs.find("font");
   const seeders = parseInt(fontDivs.eq(0).text());
   if (!seeders) return undefined;
   const magnetURI = elem.find("div.links > a.dl-magnet").attr("href") as string;
   return {
     filename,
-    size,
+    sizeBytes,
     seeders,
     resolution,
     torrentID: magnetURI,
     isCompleteSeason: getCompleteSeason,
-    dateUploaded,
+    dateUploadedISO,
   };
 }

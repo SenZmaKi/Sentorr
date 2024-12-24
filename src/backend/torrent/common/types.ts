@@ -1,4 +1,4 @@
-import { Language, Resolution } from "@ctrl/video-filename-parser";
+import { Language } from "@ctrl/video-filename-parser";
 
 export type TorrentFile = {
   filename?: string;
@@ -6,8 +6,8 @@ export type TorrentFile = {
   torrentID: string;
   seeders: number;
   isCompleteSeason: boolean;
-  size: string;
-  dateUploaded: string;
+  sizeBytes: number;
+  dateUploadedISO: string;
 };
 
 export type TorrentStream = {
@@ -19,6 +19,18 @@ export type TorrentStream = {
   };
 };
 
+
+export enum Resolution {
+  R2160P = 2160,
+  R1080P = 1080,
+  R720P = 720,
+  R576P = 576,
+  R540P = 540,
+  R480P = 480,
+}
+
+export const RESOLUTIONS = Object.values(Resolution).filter((value) => typeof value === "number");
+
 export type GetTorrentFilesParams = {
   seasonFormattedTitle: string;
   title: string;
@@ -26,4 +38,3 @@ export type GetTorrentFilesParams = {
   isTvSeries: boolean;
   languages: Language[];
 };
-

@@ -1,30 +1,16 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import media from "@/test-results/getMedia.json";
-  import episodes from "@/test-results/getEpisodes.json";
+  import media from "@/test-results/imdb/getMedia.json";
+  import episodes from "@/test-results/imdb/getEpisodes.json";
   import PageWrapper from "../common/PageWrapper.svelte";
   import { getTorrentStreams, getTorrentFiles } from "$backend/torrent/api";
-  import { Language, Resolution } from "@ctrl/video-filename-parser";
+  import { Language } from "@ctrl/video-filename-parser";
+  import { Resolution } from "$backend/torrent/common/types";
+  import { computeTorrentScores } from "$backend/torrent/common/functions";
+
   export let hidden: boolean;
   let videoElement: HTMLVideoElement;
   const episode = episodes[0];
-
-  function resToInt(res: Resolution): number {
-    switch (res) {
-      case Resolution.R2160P:
-        return 2160;
-      case Resolution.R1080P:
-        return 1080;
-      case Resolution.R720P:
-        return 720;
-      case Resolution.R576P:
-        return 576;
-      case Resolution.R540P:
-        return 540;
-      case Resolution.R480P:
-        return 480;
-    }
-  }
 
   onMount(async () => {
     const languages = [Language.English];
@@ -33,17 +19,29 @@
       console.error("No torrent files found");
       return;
     }
-    console.log("torrentFiles:", torrentFiles);
-    const sortedByRes = torrentFiles.sort(
-      (a, b) => resToInt(b.resolution) - resToInt(a.resolution)
+    const seasonFiles = torrentFiles.filter(
+      (torrent) => torrent.isCompleteSeason
     );
-    const preferredResolution: Resolution | undefined = Resolution.R1080P;
-    const torrentFile = preferredResolution
-      ? sortedByRes.find(
-          (torrent) => torrent.resolution <= preferredResolution
-        ) ?? sortedByRes[sortedByRes.length - 1]
-      : torrentFiles.sort((a, b) => b.seeders - a.seeders)[0];
-    console.log("torrentFile:", torrentFile);
+    const episodeFiles = torrentFiles.filter(
+      (torrent) => !torrent.isCompleteSeason
+    );
+    console.log("torrentFiles:", torrentFiles);
+    console.log("seasonFiles", seasonFiles);
+    console.log("episodeFiles", episodeFiles);
+    const preferredResolution = Resolution.R720P;
+    const torrentAndScore = [
+      ...computeTorrentScores({
+        torrents: seasonFiles,
+        preferredResolution,
+      }),
+      ...computeTorrentScores({
+        torrents: episodeFiles,
+        preferredResolution,
+      }),
+    ];
+    const sortedByScore = torrentAndScore.sort((a, b) => b.score - a.score);
+    console.log("sortedByScore:", sortedByScore);
+    const torrentFile = sortedByScore[0].torrent;
     const torrentsStreams = await getTorrentStreams(torrentFile);
     if (!torrentsStreams.length) {
       console.error("No torrent streams found");

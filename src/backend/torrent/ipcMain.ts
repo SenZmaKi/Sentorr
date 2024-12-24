@@ -7,25 +7,35 @@ const server = Client.createServer({},) as NodeServer;
 // @ts-ignore
 server.listen(0);
 const PORT = server.address().port;
+const GET_TORRENT_STREAMS_TIMEOUT_MS = 2 * 10000;
+
+function torrentToTorrentStreams(torrent: WebTorrent.Torrent): TorrentStream[] {
+    return torrent.files.map(file => {
+        const url = `http://localhost:${PORT}${file.streamURL}`;
+        const filename = file.name;
+        return { filename, url };
+    });
+}
+
+
 
 export async function getTorrentStreams(magnetURI: string): Promise<TorrentStream[]> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         let success = false;
+        const existingTorrent = await Client.get(magnetURI);
+        if (existingTorrent) return resolve(torrentToTorrentStreams(existingTorrent));
         Client.add(magnetURI, torrent => {
-            const torrentStreams = torrent.files.map(file => {
-                const url = `http://localhost:${PORT}${file.streamURL}`;
-                const filename = file.name;
-                return { filename, url };
-            });
+            const torrentStreams = torrentToTorrentStreams(torrent);
             success = true;
-            resolve(torrentStreams);
+            return resolve(torrentStreams);
         });
 
-        setTimeout(() => {
-            if (success) return;
+        setTimeout(async () => {
+            if (success || !await Client.get(magnetURI)) return;
+            console.log("getTorrentStreams timed out", magnetURI)
             Client.remove(magnetURI);
-            reject(new Error("Timeout, torrent is probably dead"));
-        }, 20000);
+            return reject(new Error("Timeout, torrent is probably dead"));
+        }, GET_TORRENT_STREAMS_TIMEOUT_MS);
     });
 
 }

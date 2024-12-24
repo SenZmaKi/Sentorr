@@ -12,28 +12,28 @@ import {
 
 test("getMovieTorrents", async () => {
   emptyArrayTest(
-    "getMovieTorrents",
+    "solidtorrents:getMovieTorrents",
     await getTorrentFiles(TORRENT_MOVIE_PARAMS),
   );
 });
 
 test("getSeriesEpisodeTorrents", async () => {
   emptyArrayTest(
-    "getSeriesEpisodeTorrents",
+    "solidtorrents:getSeriesEpisodeTorrents",
     await getTorrentFiles(TORRENT_EPISODE_PARAMS),
   );
 });
 
 test("getSeriesFullSeasonTorrents", async () => {
   emptyArrayTest(
-    "getSeriesFullSeasonTorrents",
+    "solidtorrents:getSeriesFullSeasonTorrents",
     await getTorrentFiles(TORRENT_SEASON_FULL_PARAMS),
   );
 });
 
 test("getSeriesAbbrvSeasonTorrents", async () => {
   emptyArrayTest(
-    "getSeriesAbbrvTorrents",
+    "solidtorrents:getSeriesAbbrvTorrents",
     await getTorrentFiles(TORRENT_SEASON_ABBRV_PARAMS),
   );
 });

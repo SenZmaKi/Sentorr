@@ -15,12 +15,14 @@ export async function getTorrentFiles({ media, episode, languages }: { media: Me
     if (!media.title) throw new Error("Media title is required");
     const { abbrvSeasonTitle, fullSeasonTitle } = seasonFormatTitle(media.title, episode.seasonNumber, episode.number)
     const commonParams = { mediaImdbID: media.id, title: media.title, isTvSeries: true, languages: languages }
-    const [seasonFiles, episodeFiles] = await Promise.all([
+    const torrentFiles = await Promise.all([
         piratebayGetTorrentFiles({ ...commonParams, seasonFormattedTitle: abbrvSeasonTitle, getCompleteSeason: true }),
+        piratebayGetTorrentFiles({ ...commonParams, seasonFormattedTitle: fullSeasonTitle, getCompleteSeason: true }),
         piratebayGetTorrentFiles({ ...commonParams, seasonFormattedTitle: abbrvSeasonTitle, getCompleteSeason: false }),
-    ])
-    console.log("seasonFiles", seasonFiles)
-    return [...seasonFiles, ...episodeFiles];
+        piratebayGetTorrentFiles({ ...commonParams, seasonFormattedTitle: fullSeasonTitle, getCompleteSeason: false })
+
+    ]).then((results) => results.flat());
+    return torrentFiles;
 }
 
 
@@ -28,7 +30,7 @@ export async function getTorrentStreams(torrentFile: TorrentFile): Promise<Torre
     return new Promise(async (resolve, reject) => {
         const magnetURI = torrentFile.torrentID;
         const { error, torrentStreams }: { error?: string; torrentStreams: TorrentStream[] } = await window.electron.ipcRenderer.invoke("get-torrent-streams", magnetURI);
-        if (error) reject(new Error(error));
+        if (error) return reject(new Error(error));
         console.log("torrentStreams", torrentStreams)
         const videoStreams = torrentStreams.filter(({ filename }) =>
             VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample")
@@ -45,7 +47,7 @@ export async function getTorrentStreams(torrentFile: TorrentFile): Promise<Torre
         }
         return resolve(filterMap(videoStreams, (stream) => {
             const streamSeason = parseSeason(stream.filename, "torrentStream")
-            const fileSeason = parseSeason(torrentFile.filename as string, "torrentFile")
+            const fileSeason = torrentFile.filename ? parseSeason(torrentFile.filename as string, "torrentFile") : undefined
             const seasonNumber = streamSeason?.seasonNumber || fileSeason?.seasonNumber;
             if (!seasonNumber) {
                 console.warn("Failed to parse season number")

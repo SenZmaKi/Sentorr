@@ -59,9 +59,9 @@ function parseTorrentElement(
   const seeders = parseInt(seedersStr);
   return {
     filename,
-    dateUploaded,
+    dateUploadedISO: dateUploaded,
     torrentID: magnetURI,
-    size,
+    sizeBytes: size,
     seeders,
     resolution,
     isCompleteSeason: getCompleteSeason,

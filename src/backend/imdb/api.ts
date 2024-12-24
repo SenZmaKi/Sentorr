@@ -405,7 +405,7 @@ export async function getReviews(
       content: review.text.originalText.plaidHtml,
       title: review.summary.originalText,
       likes: review.helpfulness.upVotes,
-      dislikes: review.helpfulness.upVotes,
+      dislikes: review.helpfulness.downVotes,
       hasSpoilers: review.spoiler,
       rating: review.authorRating,
 

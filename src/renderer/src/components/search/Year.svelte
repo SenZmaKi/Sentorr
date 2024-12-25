@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Range, ReleaseDateRange } from "$backend/imdb/types";
+  import type { Range, ReleaseDateRange } from "@/backend/imdb/types";
   import { releaseDateRange } from "./store";
   import NumberRangeFilter from "./NumberRangeFilter.svelte";
   let range: Range | undefined = undefined;

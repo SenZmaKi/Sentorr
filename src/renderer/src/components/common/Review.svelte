@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Review } from "$backend/imdb/types";
+  import type { Review } from "@/backend/imdb/types";
   import Rating from "./Rating.svelte";
   import Like from "./Like.svelte";
   export let review: Review;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Media } from "$backend/imdb/types";
+  import type { Media } from "@/backend/imdb/types";
   import Season from "./Season.svelte";
   export let media: Media;
 </script>

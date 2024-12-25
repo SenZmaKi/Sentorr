@@ -6,11 +6,11 @@ import {
   SortOrder,
   Genre,
   MediaType,
-} from "$backend/imdb/types.js";
+} from "@/backend/imdb/types.js";
 import {
   DEFAULT_SORT_BY,
   DEFAULT_SORT_ORDER,
-} from "$backend/imdb/constants.js";
+} from "@/backend/imdb/constants.js";
 
 // Individual stores for each field in searchFilters
 export const searchTerm = writable<string | undefined>(undefined);

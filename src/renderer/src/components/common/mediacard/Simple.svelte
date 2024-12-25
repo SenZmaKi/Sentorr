@@ -1,6 +1,6 @@
 <script lang="ts">
   import ImageSkeleton from "../ImageSkeleton.svelte";
-  import type { BaseResult } from "$backend/imdb/types";
+  import type { BaseResult } from "@/backend/imdb/types";
   import ButtonWrapper from "./ButtonWrapper.svelte";
   export let result: BaseResult;
 </script>

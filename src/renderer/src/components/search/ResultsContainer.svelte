@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { search } from "$backend/imdb/api";
+  import { search } from "@/backend/imdb/api";
   // import results from "@/test-results/search.json";
   import Complex from "../common/mediacard/Complex.svelte";
   import Simple from "../common/mediacard/Simple.svelte";
@@ -8,7 +8,7 @@
   import { searchFilters } from "./store";
   import { createInfiniteScrollStore } from "../common/functions";
   import type { Writable } from "svelte/store";
-  import type { BaseResult } from "$backend/imdb/types";
+  import type { BaseResult } from "@/backend/imdb/types";
   import { mediaCardType } from "../common/store";
   import { MediaCardType } from "../common/types";
 

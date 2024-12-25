@@ -1,6 +1,6 @@
 <script lang="ts">
   import EnumFilter from "./EnumFilter.svelte";
-  import { Genres } from "$backend/imdb/constants";
+  import { Genres } from "@/backend/imdb/constants";
   import { genres } from "./store";
 </script>
 

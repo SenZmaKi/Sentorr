@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BaseResult } from "$backend/imdb/types";
+  import type { BaseResult } from "@/backend/imdb/types";
   import ImageSkeleton from "../ImageSkeleton.svelte";
   import Rating from "../Rating.svelte";
   import { secondsToHm } from "../functions";

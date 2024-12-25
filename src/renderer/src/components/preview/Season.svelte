@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { getEpisodes } from "$backend/imdb/api";
-  import type { Episode as EpisodeType, Media } from "$backend/imdb/types";
+  import { getEpisodes } from "@/backend/imdb/api";
+  import type { Episode as EpisodeType, Media } from "@/backend/imdb/types";
   import type { Writable } from "svelte/store";
   import { createInfiniteScrollStore } from "../common/functions";
   import Episode from "./Episode.svelte";

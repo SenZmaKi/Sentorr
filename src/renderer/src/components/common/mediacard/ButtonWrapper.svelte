@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { getMedia } from "$backend/imdb/api";
-  import type { BaseResult } from "$backend/imdb/types";
+  import { getMedia } from "@/backend/imdb/api";
+  import type { BaseResult } from "@/backend/imdb/types";
   import { switchToPreviewPage } from "../functions";
   export let class_: string;
   export let result: BaseResult;

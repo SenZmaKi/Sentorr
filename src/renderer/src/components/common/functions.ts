@@ -1,11 +1,11 @@
-import type { BaseResult, Pagination } from "$backend/imdb/types";
+import type { BaseResult, Pagination } from "@/backend/imdb/types";
 import { writable } from "svelte/store";
 import {
   currentPage,
   previewMedia,
   previewResult,
-} from "$frontend/src/components/common/store";
-import type { Media } from "$backend/imdb/types";
+} from "@/renderer/src/components/common/store";
+import type { Media } from "@/backend/imdb/types";
 import { Page } from "./types";
 
 export function prettyFormatNumber(num: number): string {

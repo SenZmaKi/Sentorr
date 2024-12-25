@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Range } from "$backend/imdb/types.js";
+  import { type Range } from "@/backend/imdb/types.js";
   import FilterWrapper from "./FilterWrapper.svelte";
   let minInput: number | null = null;
   let maxInput: number | null = null;

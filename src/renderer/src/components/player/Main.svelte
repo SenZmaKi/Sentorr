@@ -3,10 +3,10 @@
   import media from "@/test-results/imdb/getMedia.json";
   import episodes from "@/test-results/imdb/getEpisodes.json";
   import PageWrapper from "../common/PageWrapper.svelte";
-  import { getTorrentStreams, getTorrentFiles } from "$backend/torrent/api";
+  import { getTorrentStreams, getTorrentFiles } from "@/backend/torrent/api";
   import { Language } from "@ctrl/video-filename-parser";
-  import { Resolution } from "$backend/torrent/common/types";
-  import { computeTorrentScores } from "$backend/torrent/common/functions";
+  import { Resolution } from "@/backend/torrent/common/types";
+  import { computeTorrentScores } from "@/backend/torrent/common/functions";
 
   export let hidden: boolean;
   let videoElement: HTMLVideoElement;

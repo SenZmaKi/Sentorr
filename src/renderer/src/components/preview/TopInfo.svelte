@@ -1,5 +1,5 @@
 <script lang="ts" ii l>
-  import type { Media } from "$backend/imdb/types";
+  import type { Media } from "@/backend/imdb/types";
   import ImageSkeleton from "../common/ImageSkeleton.svelte";
   import Rating from "../common/Rating.svelte";
   import { prettyFormatNumber } from "../common/functions";

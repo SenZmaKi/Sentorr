@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SortOrder, SortBy } from "$backend/imdb/types";
+  import { SortOrder, SortBy } from "@/backend/imdb/types";
   import { sortBy, sortOrder } from "./store";
   const formattedSortBy = {
     [SortBy.POPULARITY]: "Popularity rank",

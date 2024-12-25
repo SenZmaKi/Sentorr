@@ -1,6 +1,6 @@
 <script lang="ts">
   import EnumFilter from "./EnumFilter.svelte";
-  import { MediaTypes } from "$backend/imdb/constants";
+  import { MediaTypes } from "@/backend/imdb/constants";
   import { mediaTypes } from "./store.js";
 </script>
 

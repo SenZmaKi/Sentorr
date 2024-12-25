@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IMDBDate, Episode, Media } from "$backend/imdb/types";
+  import type { IMDBDate, Episode, Media } from "@/backend/imdb/types";
   import ImageSkeleton from "../common/ImageSkeleton.svelte";
   import Rating from "../common/Rating.svelte";
 
@@ -62,7 +62,7 @@
 
 <button style="all: unset; width: 100%;">
   <div
-    class="flex xs-dark m-7 h-[125px] w-[90%] duration-300 cursor-pointer ease-in-out hover:scale-110"
+    class="flex xs-dark m-7 h-[125px] w-[350px] duration-300 cursor-pointer ease-in-out hover:scale-110"
   >
     {#if episode.imageUrl}
       <div>

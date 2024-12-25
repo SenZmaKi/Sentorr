@@ -1,5 +1,5 @@
 import type { TorrentStream, TorrentFile } from "./common/types";
-import type { Episode, Media } from "$backend/imdb/types";
+import type { Episode, Media } from "@/backend/imdb/types";
 import { getTorrentsFiles as getMovieTorrents } from "./yts/api";
 import { getTorrentFiles as piratebayGetTorrentFiles } from "./piratebay/api";
 // import { getTorrentFiles as rargbGetTorrentFiles } from "./rargb/api";

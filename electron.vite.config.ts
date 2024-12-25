@@ -14,18 +14,6 @@ export default defineConfig({
     resolve: {
       alias: [
         {
-          find: "$backend",
-          replacement: fileURLToPath(
-            new URL("./src/backend/", import.meta.url),
-          ),
-        },
-        {
-          find: "$frontend",
-          replacement: fileURLToPath(
-            new URL("./src/renderer/", import.meta.url),
-          ),
-        },
-        {
           find: "@",
           replacement: fileURLToPath(new URL("./src/", import.meta.url)),
         },

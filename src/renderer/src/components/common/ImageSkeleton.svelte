@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { type ScalableImageUrl } from "$backend/imdb/types";
-  import { makeScaledImageUrl } from "$backend/imdb/api";
+  import { type ScalableImageUrl } from "@/backend/imdb/types";
+  import { makeScaledImageUrl } from "@/backend/imdb/api";
 
   export let imageUrl: string | ScalableImageUrl | undefined = undefined;
   export let width: number;

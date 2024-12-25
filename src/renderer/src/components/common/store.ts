@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { type BaseResult, type Media } from "$backend/imdb/types";
+import { type BaseResult, type Media } from "@/backend/imdb/types";
 import { MediaCardType, Page } from "./types";
 
 export const currentPage = writable(Page.Search);

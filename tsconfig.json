@@ -6,10 +6,7 @@
     "outDir": "./js",
     "verbatimModuleSyntax": true,
     "paths": {
-      "$backend/*": ["./src/backend/*"],
-      "$frontend/*": ["./src/renderer/*"],
       "@/*": ["./src/*"],
-      "$test/*": ["./test/*"]
     },
     "useDefineForClassFields": true,
     "strict": true,

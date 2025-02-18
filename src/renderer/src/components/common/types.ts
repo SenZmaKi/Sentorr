@@ -1,7 +1,10 @@
 export enum Page {
+  Home,
   Search,
   Preview,
-  Player 
+  Player ,
+  Settings,
+  About,
 }
 
 export enum MediaCardType {

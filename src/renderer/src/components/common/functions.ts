@@ -1,4 +1,4 @@
-import type { BaseResult, Pagination } from "@/backend/imdb/types";
+import type { BaseResult, Episode, Pagination } from "@/backend/imdb/types";
 import { writable } from "svelte/store";
 import {
   currentPage,
@@ -7,6 +7,7 @@ import {
 } from "@/renderer/src/components/common/store";
 import type { Media } from "@/backend/imdb/types";
 import { Page } from "./types";
+import { playerEpisode, playerMedia } from "../player/store";
 
 export function prettyFormatNumber(num: number): string {
   if (num >= 1000_000_000) {
@@ -64,7 +65,7 @@ export function createInfiniteScrollStore<T>(
     const nearingEnd = horizontal
       ? (element.clientWidth + element.scrollLeft) / element.scrollWidth >= 0.7
       : (element.clientHeight + element.scrollTop) / element.scrollHeight >=
-        0.7;
+      0.7;
     if (nearingEnd) {
       fetchingMoreResults = true;
       if (nextPageKey) {
@@ -81,11 +82,6 @@ export function createInfiniteScrollStore<T>(
   return [accumulatedResults, infiniteScroll] as const;
 }
 
-function clearPreviewData(): void {
-  previewMedia.set(undefined);
-  previewResult.set(undefined);
-}
-
 export function switchToPreviewPage(
   media: Promise<Media>,
   result: BaseResult,
@@ -95,9 +91,10 @@ export function switchToPreviewPage(
   currentPage.set(Page.Preview);
 }
 
-export function switchToSearchPage(): void {
-  currentPage.set(Page.Search);
-  clearPreviewData();
+export function switchToPlayerPage(media: Media, episode?: Episode): void {
+  playerEpisode.set(episode);
+  playerMedia.set(media);
+  currentPage.set(Page.Player);
 }
 
 /**

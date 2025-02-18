@@ -2,7 +2,7 @@ import { CLIENT } from "@/common/constants";
 import type { TorrentJson } from "./jsonTypes";
 import { filterMap } from "@/common/functions";
 import { validateTorrent } from "../common/functions";
-import type { GetTorrentFilesParams, TorrentFile } from "../common/types";
+import type { GetTorrentFilesParams, NormalTorrentFile } from "../common/types";
 
 const API_ENTRYPOINT = "https://apibay.org/q.php?";
 
@@ -21,7 +21,7 @@ export async function getTorrentFiles({
   const url = `${API_ENTRYPOINT}q=${seasonFormattedTitle}`;
   const response = await CLIENT.get(url);
   const torrents: TorrentJson[] = await response.json();
-  return filterMap(torrents, (torrent): TorrentFile | undefined => {
+  return filterMap(torrents, (torrent): NormalTorrentFile | undefined => {
     const category = parseInt(torrent.category);
     // Categories around 500 seem to be mostly p0rn to be specific I only noticed
     // 501, 505, 506, 507 but we just ignore anything over 500 just incase

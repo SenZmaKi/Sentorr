@@ -5,6 +5,8 @@
     "src/main/**/*",
     "src/preload/**/*",
     "src/backend/torrent/ipcMain.ts",
+    "src/backend/torrent/common/types.ts",
+    "src/common/types.ts",
     "src/backend/torrent/common/**/*",
   ],
   "compilerOptions": {

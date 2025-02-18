@@ -4,10 +4,10 @@
   let value = "";
 
   function debounce(callback: () => void, ms: number) {
-    let timeout: NodeJS.Timeout;
+    let timer: NodeJS.Timer;
     return () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(callback, ms);
+      clearTimeout(timer);
+      timer = setTimeout(callback, ms);
     };
   }
 

@@ -7,18 +7,21 @@
   import SimpleSkeleton from "../common/mediacard/SimpleSkeleton.svelte";
   import { searchFilters } from "./store";
   import { createInfiniteScrollStore } from "../common/functions";
-  import type { Writable } from "svelte/store";
+  import { writable } from "svelte/store";
   import type { BaseResult } from "@/backend/imdb/types";
   import { mediaCardType } from "../common/store";
   import { MediaCardType } from "../common/types";
 
-  let accumulatedResults: Writable<(BaseResult | undefined)[]>;
-  let infiniteScroll: (event: Event | null) => void;
-  $: {
+  let accumulatedResults = writable<(BaseResult | undefined)[] | undefined>(
+    undefined
+  );
+  export let hidden: boolean;
+  let infiniteScroll: ((event: Event | null) => void) | undefined = undefined;
+  $: if (!hidden && !$accumulatedResults && !infiniteScroll) {
     [accumulatedResults, infiniteScroll] = createInfiniteScrollStore(
       (nextPageKey: string | undefined) => search($searchFilters, nextPageKey),
       false,
-      25,
+      25
     );
   }
   let resultsDiv: HTMLDivElement;
@@ -28,7 +31,7 @@
   }
 </script>
 
-{#if $accumulatedResults.length}
+{#if $accumulatedResults && $accumulatedResults.length && infiniteScroll}
   <div
     bind:this={resultsDiv}
     on:scroll={infiniteScroll}

@@ -1,37 +1,39 @@
 import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import { getTorrentStreams } from "../backend/torrent/ipcMain";
+import { getTorrentStreams, closeTorrentStreamsServer, clearTorrents, deselectAllTorrentStreams, selectTorrentStream, getCurrentTorrentStreamStats } from "../backend/torrent/ipcMain";
+import { TorrentStream } from "../backend/torrent/common/types";
+import { type IpcResult } from "../common/types";
+
 // import icon from "../renderer/src/assets/icon.png?asset";
 const icon = "";
 
 // https://github.com/ThaUnknown/miru/blob/master/electron/src/main/util.js#L6
 const flags = [
-  []
-  // // not sure if safe?
-  // ["disable-gpu-sandbox"],
-  // ["disable-direct-composition-video-overlays"],
-  // ["double-buffer-compositing"],
-  // ["enable-zero-copy"],
-  // ["ignore-gpu-blocklist"],
-  // // should be safe
-  // ["enable-hardware-overlays", "single-fullscreen,single-on-top,underlay"],
-  // // safe performance stuff
-  // [
-  //   "enable-features",
-  //   "PlatformEncryptedDolbyVision,CanvasOopRasterization,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes,UseSkiaRenderer,WebAssemblyLazyCompilation",
-  // ],
-  // // disabling shit, vulkan rendering, widget layering aka right click context menus [I think] for macOS [I think]
-  // ["disable-features", "Vulkan,WidgetLayering"],
-  // // utility stuff, aka website security that's useless for a native app:
-  // ["autoplay-policy", "no-user-gesture-required"],
-  // ["disable-notifications"],
-  // ["disable-logging"],
-  // ["disable-permissions-api"],
-  // ["no-sandbox"],
-  // ["no-zygote"],
-  // ["bypasscsp-schemes"],
-  // ["force_high_performance_gpu", "disable-renderer-backgroundin"],
+  // not sure if safe?
+  ["disable-gpu-sandbox"],
+  ["disable-direct-composition-video-overlays"],
+  ["double-buffer-compositing"],
+  ["enable-zero-copy"],
+  ["ignore-gpu-blocklist"],
+  // should be safe
+  ["enable-hardware-overlays", "single-fullscreen,single-on-top,underlay"],
+  // safe performance stuff
+  [
+    "enable-features",
+    "PlatformEncryptedDolbyVision,CanvasOopRasterization,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes,UseSkiaRenderer,WebAssemblyLazyCompilation",
+  ],
+  // disabling shit, vulkan rendering, widget layering aka right click context menus [I think] for macOS [I think]
+  ["disable-features", "Vulkan,WidgetLayering"],
+  // utility stuff, aka website security that's useless for a native app:
+  ["autoplay-policy", "no-user-gesture-required"],
+  ["disable-notifications"],
+  ["disable-logging"],
+  ["disable-permissions-api"],
+  ["no-sandbox"],
+  ["no-zygote"],
+  ["bypasscsp-schemes"],
+  ["force_high_performance_gpu", "disable-renderer-backgroundin"],
 ];
 
 for (const [flag, value] of flags) {
@@ -88,17 +90,28 @@ app.whenReady().then(() => {
   });
 
   // IPC 
-  ipcMain.handle("get-torrent-streams", async (_, magnetURI) => {
+
+  async function makeIpcResult<T>(promise: Promise<T>): Promise<IpcResult<T>> {
     try {
-      const torrentStreams = await getTorrentStreams(magnetURI);
-      return { torrentStreams };
-
+      const result = await promise;
+      return { result };
     } catch (error: any) {
-      console.log("torrentStreams error", error)
       return { error: error.message };
-
     }
-  });
+
+  }
+  ipcMain.handle("get-torrent-streams", (_, torrentID: string) => makeIpcResult(getTorrentStreams(torrentID)));
+
+  ipcMain.handle("select-torrent-stream", async (_, torrentStream: TorrentStream) => makeIpcResult(selectTorrentStream(torrentStream)));
+
+  ipcMain.handle("close-torrent-streams-server", async () => makeIpcResult(closeTorrentStreamsServer()));
+
+  ipcMain.handle("clear-torrents", async () => makeIpcResult(clearTorrents()));
+
+  ipcMain.handle("deselect-all-torrent-streams", async () => makeIpcResult(deselectAllTorrentStreams()));
+
+  ipcMain.handle("get-current-torrent-stream-stats", async () => makeIpcResult(getCurrentTorrentStreamStats()));
+
 
   createWindow();
 

@@ -2,6 +2,7 @@
   import type { Media } from "@/backend/imdb/types";
   import Season from "./Season.svelte";
   export let media: Media;
+  console.log(`season count: ${media.seasonsCount}`);
 </script>
 
 <div class="w-1/3 ml-2 overflow-y-auto">

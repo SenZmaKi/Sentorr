@@ -30,6 +30,6 @@
         <Sort />
       </div>
     </div>
-    <ResultsContainer />
+    <ResultsContainer bind:hidden />
   </div>
 </PageWrapper>

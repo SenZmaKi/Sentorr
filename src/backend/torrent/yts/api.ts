@@ -1,13 +1,15 @@
 import { CLIENT } from "@/common/constants.js";
 import type { SearchResultsJson } from "./jsonTypes.js";
-import type { TorrentFile } from "../common/types.js";
+import type { YtsTorrentFile } from "../common/types.js";
 import { parseResolution as vfpParseResolution } from "@ctrl/video-filename-parser";
 import { parseResolution } from "../common/functions.js";
 import { filterMap } from "@/common/functions.js";
 
 const API_ENTRY_POINT = "https://yts.mx/api/v2";
 
-export async function getTorrentsFiles(imdbMovieID: string): Promise<TorrentFile[]> {
+export async function getTorrentsFiles(
+  imdbMovieID: string,
+): Promise<YtsTorrentFile[]> {
   const url = `${API_ENTRY_POINT}/list_movies.json?query_term=${imdbMovieID}&limit=50`; // 50 is the max results limit
   const response = await CLIENT.get(url);
   const json = (await response.json()) as SearchResultsJson;
@@ -19,9 +21,10 @@ export async function getTorrentsFiles(imdbMovieID: string): Promise<TorrentFile
     const { resolution: vfpResolution } = vfpParseResolution(torrent.quality);
     if (!vfpResolution) return undefined;
     const resolution = parseResolution(vfpResolution);
-    const sizeBytes = torrent.size_bytes
+    const sizeBytes = torrent.size_bytes;
     const dateUploadedISO = new Date(torrent.date_uploaded).toISOString();
     return {
+      filename: undefined,
       resolution,
       seeders: torrent.seeds,
       torrentID: torrent.url,

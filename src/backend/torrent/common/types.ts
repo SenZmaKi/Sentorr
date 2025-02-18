@@ -1,7 +1,6 @@
 import { Language } from "@ctrl/video-filename-parser";
 
-export type TorrentFile = {
-  filename?: string;
+export type CommonTorrentFile = {
   resolution: Resolution;
   torrentID: string;
   seeders: number;
@@ -10,11 +9,21 @@ export type TorrentFile = {
   dateUploadedISO: string;
 };
 
-export type TorrentStream = {
+export type YtsTorrentFile = CommonTorrentFile & {
+  filename: undefined;
+};
+export type NormalTorrentFile = CommonTorrentFile & {
   filename: string;
+};
+export type TorrentFile = YtsTorrentFile | NormalTorrentFile;
+
+export type TorrentStream = {
+  filepath: string;
+  filename: string;
+  magnetURI: string;
   url: string;
   info?: {
-    seasonNumber?: number;
+    seasonNumber: number;
     episodeNumber: number;
   };
 };
@@ -29,7 +38,9 @@ export enum Resolution {
   R480P = 480,
 }
 
-export const RESOLUTIONS = Object.values(Resolution).filter((value) => typeof value === "number");
+export const RESOLUTIONS = Object.values(Resolution).filter(
+  (value) => typeof value === "number",
+);
 
 export type GetTorrentFilesParams = {
   seasonFormattedTitle: string;
@@ -38,3 +49,17 @@ export type GetTorrentFilesParams = {
   isTvSeries: boolean;
   languages: Language[];
 };
+
+export enum TorrentStreamsError {
+  TorrentTimeout = "Torrent timeout",
+  NoVideoFiles = "No video files",
+  NoMatchingFiles = "No matching files",
+  TorrentWasRemoved = "Torrent was removed",
+}
+
+export type TorrentStreamStats = {
+  downloadSpeed: number;
+  uploadSpeed: number;
+  numPeers: number;
+
+}

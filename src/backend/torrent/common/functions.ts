@@ -24,8 +24,8 @@ export function parseSize(size: string): number | undefined {
 
   const match = size.trim().match(regex);
   if (!match) {
-    console.warn(`Failed to parse size from ${size}`)
-    return undefined
+    console.warn(`Failed to parse size from ${size}`);
+    return undefined;
   }
   const value = parseFloat(match[1]); // Extract numeric part
   const unit = match[2].toUpperCase(); // Normalize unit to uppercase
@@ -65,8 +65,8 @@ export function validateTorrent(
     !parsedFilename.resolution ||
     !parsedFilename.languages.some((lang) => languages.includes(lang)) ||
     !getCompleteSeason ===
-    // @ts-ignore fullSeason isn't defined in d.ts but it's there in the returned object
-    (!!parsedFilename.complete || !!parsedFilename.fullSeason)
+      // @ts-ignore fullSeason isn't defined in d.ts but it's there in the returned object
+      (!!parsedFilename.complete || !!parsedFilename.fullSeason)
   )
     return undefined;
   const resolution = parseResolution(parsedFilename.resolution);
@@ -75,7 +75,11 @@ export function validateTorrent(
   };
 }
 
-function isSameTitle(title: string, filename: string, isTvSeries: boolean) {
+export function isSameTitle(
+  title: string,
+  filename: string,
+  isTvSeries: boolean,
+) {
   let parsedFilename = filenameParse(filename, isTvSeries);
   let similarity = calculateSimilarityPercentage(
     title,
@@ -96,7 +100,7 @@ function isSameTitle(title: string, filename: string, isTvSeries: boolean) {
   const isSame = similarity >= 80;
   if (!isSame)
     console.log(
-      `Not same: ${similarity}% "${title}" vs "${parsedFilename.title}"\n"${filename}"`,
+      `Not same title: ${similarity}% "${title}" vs "${parsedFilename.title}"\n"${filename}"`,
     );
   return { isSame, parsedFilename };
 }
@@ -121,33 +125,40 @@ export function calculateSimilarityPercentage(
 }
 
 export function parseSeason(
-  season: string,
+  title: string,
   type: "torrentFile" | "torrentStream",
+  parseEpisode: boolean,
 ) {
-  const parsed = vfpParseSeason(season);
+  const parsed = vfpParseSeason(title);
   if (!parsed) {
-    console.warn(`Failed to parse ${type} season info: ${season}`);
+    console.warn(`Failed to parse ${type} season info: ${title}`);
     return undefined;
   }
-  if (parsed.seasons.length !== 1) {
-    console.warn(`Failed to parse ${type} season number: ${season}`);
+  if (!parsed.seasons.length) {
+    console.warn(
+      `Failed to parse ${type} season number: ${title} parsed: ${JSON.stringify(parsed)}`,
+    );
     return undefined;
   }
-  if (parsed.episodeNumbers.length !== 1) {
-    console.warn(`Failed to parse ${type} episode number: ${season}`);
+  if (parseEpisode && !parsed.episodeNumbers.length) {
+    console.warn(
+      `Failed to parse ${type} episode number: ${title} parsed: ${JSON.stringify(parsed)}`,
+    );
     return undefined;
   }
   return {
-    seasonNumber: parsed.seasons[0],
-    episodeNumber: parsed.episodeNumbers[0],
+    seasonNumbers: parsed.seasons,
+    episodeNumbers: parsed.episodeNumbers,
   };
 }
-
 
 export function computeTorrentScores({
   torrents,
   preferredResolution,
-  maxSeedersThreshold = Math.min(100, Math.max(...torrents.map((torrent) => torrent.seeders))),
+  maxSeedersThreshold = Math.min(
+    100,
+    Math.max(...torrents.map((torrent) => torrent.seeders)),
+  ),
   maxSizeThreshold = Math.max(...torrents.map((torrent) => torrent.sizeBytes)),
   seedersWeight = 0.375,
   resolutionWeight = 0.3,
@@ -163,28 +174,44 @@ export function computeTorrentScores({
   maxSizeThreshold?: number;
   resolutionPardonFactor?: number;
 }) {
+  const minResolution = Math.min(...RESOLUTIONS);
+  const maxResolutionDifference = Math.max(...RESOLUTIONS) - minResolution;
   return torrents.map((torrent) => {
+    const resolutionDifference = Math.abs(
+      torrent.resolution - preferredResolution,
+    );
+    const resolutionScore = 1 - resolutionDifference / maxResolutionDifference;
 
-    const resolutionDifference = Math.abs(torrent.resolution - preferredResolution);
-    const minResolution = Math.min(...RESOLUTIONS);
-    const maxResolutionDifference = Math.max(...RESOLUTIONS) - minResolution;
-    const resolutionScore = 1 - resolutionDifference / maxResolutionDifference; // Normalize resolution score to be between 0 and 1
+    const seedersScore = Math.min(torrent.seeders / maxSeedersThreshold, 1);
+    let sizeBytes = torrent.sizeBytes;
+    let seasonsCount = 0;
 
-    const seedersScore = Math.min(torrent.seeders / maxSeedersThreshold, 1); // Normalize seeders to be between 0 and 1
-
-    const sizePenalty = Math.min(torrent.sizeBytes / maxSizeThreshold, 1); // Normalize size to be between 0 and 1
-    const resolutionPardon = (torrent.resolution - minResolution) / maxResolutionDifference;
-    const pardonedSizePenalty = sizePenalty - (resolutionPardon * resolutionPardonFactor);
+    if (torrent.filename && torrent.isCompleteSeason) {
+      const parsedSeason = parseSeason(torrent.filename, "torrentFile", false);
+      if (parsedSeason) {
+        seasonsCount = parsedSeason.seasonNumbers.length;
+        sizeBytes = sizeBytes / seasonsCount;
+      }
+    }
+    if (seasonsCount <= 1) return {
+      score: 0,
+      torrent
+    };
+    let sizePenalty = Math.min(sizeBytes / maxSizeThreshold, 1);
+    const resolutionPardon =
+      (torrent.resolution - minResolution) / maxResolutionDifference;
+    const pardonedSizePenalty =
+      sizePenalty - resolutionPardon * resolutionPardonFactor;
 
     const score =
-      (-pardonedSizePenalty * sizeWeight) +
-      (resolutionScore * resolutionWeight) +
-      (seedersScore * seedersWeight);
+      -pardonedSizePenalty * sizeWeight +
+      resolutionScore * resolutionWeight +
+      seedersScore * seedersWeight;
 
-    // console.log("score", score, "seedersScore", seedersScore, "resolutionScore", resolutionScore, "sizePenalty", sizePenalty, "resolutionPardon", resolutionPardon, "pardonedSizePenalty", pardonedSizePenalty);
+    // console.log("filename", torrent.filename, "score", score, "seedersScore", seedersScore, "resolutionScore", resolutionScore, "sizePenalty", sizePenalty, "resolutionPardon", resolutionPardon, "pardonedSizePenalty", pardonedSizePenalty);
     return {
       torrent,
-      score
-    }
+      score,
+    };
   });
 }

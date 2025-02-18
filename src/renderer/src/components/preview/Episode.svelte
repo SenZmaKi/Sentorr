@@ -2,6 +2,7 @@
   import type { IMDBDate, Episode, Media } from "@/backend/imdb/types";
   import ImageSkeleton from "../common/ImageSkeleton.svelte";
   import Rating from "../common/Rating.svelte";
+  import { switchToPlayerPage } from "../common/functions";
 
   export let episode: Episode;
   export let media: Media;
@@ -60,9 +61,15 @@
   }
 </script>
 
-<button style="all: unset; width: 100%;">
+<button
+  style="all: unset; width: 100%;"
+  on:click={() => {
+    console.log("episode", episode);
+    switchToPlayerPage(media, episode);
+  }}
+>
   <div
-    class="flex xs-dark m-7 h-[125px] w-[350px] duration-300 cursor-pointer ease-in-out hover:scale-110"
+    class="rounded flex xs-dark m-7 h-[125px] min-w-[350px] w-[90%] duration-300 cursor-pointer ease-in-out hover:scale-110"
   >
     {#if episode.imageUrl}
       <div>
@@ -70,7 +77,7 @@
           imageUrl={episode.imageUrl}
           height={125}
           width={180}
-          rounded={false}
+          rounded={true}
         />
       </div>
     {/if}

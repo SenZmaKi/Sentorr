@@ -46,3 +46,7 @@ export class Client {
     return fetch(url, { method: "POST", headers, body });
   }
 }
+
+export type IpcResult<T> =
+  | { result: T; error?: undefined  }
+  | { result?: undefined; error: string };

@@ -10,10 +10,12 @@ out/
 js/
 .performance-profiles/
 src/test-results/
+Miru/
+electron-dists/
+
 
 bun.lockb
 .env
-.prettierrc.yaml
 test.sh
 crap.ts
 

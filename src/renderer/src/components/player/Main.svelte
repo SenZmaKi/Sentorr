@@ -91,6 +91,7 @@
       );
     } catch (error: any) {
       handleTorrentStreamsError(error, torrentFile);
+      return;
     }
 
     if (!torrentsStreams.length) {

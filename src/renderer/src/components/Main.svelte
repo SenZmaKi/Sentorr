@@ -16,7 +16,7 @@
       position="top-right"
       theme="dark"
       richColors
-      duration={6000}
+      duration={10_000}
       closeButton
     />
 

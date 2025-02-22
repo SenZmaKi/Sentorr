@@ -1,6 +1,6 @@
 
 import WebTorrent, { type TorrentFile as WTTorrentFile } from "webtorrent";
-import { type TorrentStream, TorrentStreamsError, TorrentStreamStats } from "./common/types";
+import { type TorrentStream, type TorrentStreamsError, type TorrentStreamStats } from "./common/types";
 import path from "path";
 import fs from "fs/promises";
 import readline from "readline";
@@ -187,4 +187,4 @@ async function test() {
 
 }
 
-// await test();
+await test();

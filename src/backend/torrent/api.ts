@@ -11,7 +11,6 @@ import {
 } from "./common/functions";
 import { filterMap, invokeIpc } from "@/common/functions";
 import type { Language } from "@ctrl/video-filename-parser";
-import type { IpcResult } from "@/common/types";
 // prettier-ignore
 const VIDEO_EXTS = ['3g2', '3gp', 'asf', 'avi', 'dv', 'flv', 'gxf', 'm2ts', 'm4a', 'm4b', 'm4p', 'm4r', 'm4v', 'mkv', 'mov', 'mp4', 'mpd', 'mpeg', 'mpg', 'mxf', 'nut', 'ogm', 'ogv', 'swf', 'ts', 'vob', 'webm', 'wmv', 'wtv']
 const VIDEO_RX = new RegExp(`.(${VIDEO_EXTS.join("|")})$`, "i");
@@ -101,60 +100,55 @@ export async function getTorrentStreams(
   torrentFile: TorrentFile,
   isTvSeries: boolean,
 ): Promise<TorrentStream[]> {
-  return new Promise(async (resolve, reject) => {
-    const torrentID = torrentFile.torrentID;
-    const allStreams = await invokeIpc<TorrentStream[]>("get-torrent-streams", torrentID);
-    console.log("allStreams", allStreams);
-    const videoStreams = allStreams.filter(
-      ({ filename }) =>
-        VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample"),
-    );
-    console.log("videoStreams", videoStreams);
-    if (!videoStreams.length) return reject(new Error(TorrentStreamsError.NoVideoFiles));
-    const torrentStreams = filterMap(videoStreams, (stream) => {
-      if (!isSameTitle(title, stream.filename, isTvSeries).isSame) {
-        console.warn(
-          `Torrent stream did not match title "${title}"  "${stream.filename}"`,
-        );
-        return undefined;
-      }
-      if (!isTvSeries)
-        return {
-          ...stream,
-          info: undefined,
-        };
-      const streamSeason = parseSeason(
-        stream.filename,
-        "torrentStream",
-        !torrentFile.isCompleteSeason,
+  const torrentID = torrentFile.torrentID;
+  const allStreams = await invokeIpc<TorrentStream[]>("get-torrent-streams", torrentID);
+  console.log("allStreams", allStreams);
+  const videoStreams = allStreams.filter(
+    ({ filename }) =>
+      VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample"),
+  );
+  console.log("videoStreams", videoStreams);
+  if (!videoStreams.length) throw new Error(TorrentStreamsError.NoVideoFiles);
+  const torrentStreams = filterMap(videoStreams, (stream) => {
+    if (!isSameTitle(title, stream.filename, isTvSeries).isSame) {
+      console.warn(
+        `Torrent stream did not match title "${title}"  "${stream.filename}"`,
       );
-      if (!streamSeason) {
-        return undefined;
-      }
-      const seasonNumber = streamSeason.seasonNumbers[0];
-      if (!seasonNumber) {
-        console.warn("Failed to parse season number", stream.filename);
-        return undefined;
-      }
-      const episodeNumber = streamSeason.episodeNumbers[0];
-      if (!episodeNumber) {
-        console.warn("Failed to parse episode number", stream.filename);
-        return undefined;
-      }
+      return undefined;
+    }
+    if (!isTvSeries)
       return {
         ...stream,
-        info: {
-          seasonNumber,
-          episodeNumber,
-        },
+        info: undefined,
       };
-    });
-    if (!torrentStreams.length) return reject(new Error(TorrentStreamsError.NoMatchingFiles));
-
-    return resolve(
-      torrentStreams
+    const streamSeason = parseSeason(
+      stream.filename,
+      "torrentStream",
+      !torrentFile.isCompleteSeason,
     );
+    if (!streamSeason) {
+      return undefined;
+    }
+    const seasonNumber = streamSeason.seasonNumbers[0];
+    if (!seasonNumber) {
+      console.warn("Failed to parse season number", stream.filename);
+      return undefined;
+    }
+    const episodeNumber = streamSeason.episodeNumbers[0];
+    if (!episodeNumber) {
+      console.warn("Failed to parse episode number", stream.filename);
+      return undefined;
+    }
+    return {
+      ...stream,
+      info: {
+        seasonNumber,
+        episodeNumber,
+      },
+    };
   });
+  if (!torrentStreams.length) throw new Error(TorrentStreamsError.NoMatchingFiles);
+  return torrentStreams;
 }
 
 export async function selectTorrentStream(torrentStream: TorrentStream) {

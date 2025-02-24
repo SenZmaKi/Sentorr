@@ -19,12 +19,12 @@ export async function getTorrentFiles({
   media,
   episode,
   languages,
-  excludeTorrents,
+  blacklistedTorrents,
 }: {
   media: Media;
   episode?: Episode;
   languages: Language[];
-  excludeTorrents: TorrentFile[];
+  blacklistedTorrents: TorrentFile[];
 }): Promise<TorrentFile[]> {
   if (!episode) return getMovieTorrents(media.id);
   if (!media.title) throw new Error("Media title is required");
@@ -54,7 +54,7 @@ export async function getTorrentFiles({
     .then((results) => results.flat())
     .then((results) =>
       results.filter((torrent) => {
-        if (excludeTorrents.includes(torrent)) return false;
+        if (blacklistedTorrents.find(et => et.torrentID === torrent.torrentID)) return false;
         const parsedSeason = parseSeason(
           torrent.filename,
           "torrentFile",
@@ -79,7 +79,7 @@ export async function getTorrentFiles({
     .then((results) => results.flat())
     .then((results) =>
       results.filter((torrent) => {
-        if (excludeTorrents.includes(torrent)) return false;
+        if (blacklistedTorrents.find(et => et.torrentID === torrent.torrentID)) return false;
         const parsedSeason = parseSeason(torrent.filename, "torrentFile", true);
         return (
           parsedSeason?.seasonNumbers.includes(episode.seasonNumber) &&

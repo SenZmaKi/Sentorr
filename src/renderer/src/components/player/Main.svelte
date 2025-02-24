@@ -24,8 +24,10 @@
   import { selectTorrentStream } from "@/backend/torrent/api";
 
   export let hidden: boolean;
-  let invalidTorrentFIles: TorrentFile[] = [];
+  let blacklistedTorrents: TorrentFile[] = [];
   let torrentStreamStats: TorrentStreamStats | undefined = undefined;
+
+  let video: HTMLMediaElement;
 
   async function load() {
     let media = $playerMedia;
@@ -50,7 +52,7 @@
       media,
       episode,
       languages,
-      excludeTorrents: invalidTorrentFIles,
+      blacklistedTorrents: blacklistedTorrents,
     });
     if (!torrentFiles.length) {
       console.error("No torrent files found");
@@ -132,7 +134,7 @@
   }
 
   function handleTorrentStreamsError(error: Error, torrentFile: TorrentFile) {
-    invalidTorrentFIles.push(torrentFile);
+    blacklistedTorrents.push(torrentFile);
     switch (error.message) {
       case TorrentStreamsError.TorrentTimeout:
         console.error(TorrentStreamsError.TorrentTimeout, torrentFile);
@@ -162,15 +164,13 @@
     }
   }
 
-  function handlePlaybackError(event: Event) {
-    if (!event.target) return;
-    const target: HTMLVideoElement = event.target as HTMLVideoElement;
-    const error = target.error;
+  function handlePlaybackError() {
+    const error = video.error;
     if (!error) return;
     if (!$playerTorrentFile || !$playerTorrentStream) return;
     switch (error.code) {
       case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-        invalidTorrentFIles.push($playerTorrentFile);
+        blacklistedTorrents.push($playerTorrentFile);
         console.error(
           `Media codec error: Media at ${$playerTorrentStream.url} codec not supported (${JSON.stringify(error)}) `
         );
@@ -192,6 +192,7 @@
         break;
 
       case error.MEDIA_ERR_DECODE:
+        blacklistedTorrents.push($playerTorrentFile);
         console.error(
           `Media decode error: Media at ${$playerTorrentStream.url} decode error (${JSON.stringify(error)}) `
         );
@@ -208,19 +209,59 @@
   $: if ($playerMedia && $playerEpisode) {
     load();
   }
+  function handleLoadedMetadata() {
+    // @ts-ignore tracks are available when you run electron with following set
+    // webPreferences.enableBlinkFeatures = "FontAccess, AudioVideoTracks"
+    if (!video.videoTracks || !video.audioTracks || !$playerTorrentFile) return;
+
+    // @ts-ignore
+    if (!video.videoTracks.length && !video.audioTracks.length) {
+      blacklistedTorrents.push($playerTorrentFile);
+      console.error("Media codec error: No video and audio tracks found");
+      toast.error("Media codec error", {
+        description:
+          "The media codec is unsupported. Dismiss this message to fetch a new torrent.",
+        onDismiss: load,
+      });
+    }
+    // @ts-ignore
+    if (!video.videoTracks.length) {
+      blacklistedTorrents.push($playerTorrentFile);
+      console.error(`Video codec error: Video track not found`);
+      toast.error("Video codec error", {
+        description:
+          "The video codec is unsupported. Dismiss this message to fetch a new torrent.",
+        onDismiss: load,
+      });
+      return;
+    }
+    // @ts-ignore
+    if (!video.audioTracks.length) {
+      blacklistedTorrents.push($playerTorrentFile);
+      console.error(`Audio codec error: Audio track not found`);
+      toast.error("Audio codec error", {
+        description:
+          "The audio codec is unsupported. Dismiss this message to fetch a new torrent.",
+        onDismiss: load,
+      });
+      return;
+    }
+  }
   setInterval(async () => {
     if (!$playerMedia || !$playerTorrentStream || !$playerTorrentFile) return;
     torrentStreamStats = await getCurrentTorrentStreamStats();
-    console.log(`torrentStreamStats: ${JSON.stringify(torrentStreamStats)}`);
+    // console.log(`torrentStreamStats: ${JSON.stringify(torrentStreamStats)}`);
   }, 1_000);
 </script>
 
 <PageWrapper {hidden}>
   <video
     class="w-full h-full"
+    bind:this={video}
     controls
     on:error={handlePlaybackError}
     src={$playerTorrentStream?.url}
+    on:loadedmetadata={handleLoadedMetadata}
   >
   </video>
 </PageWrapper>

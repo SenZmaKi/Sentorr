@@ -53,6 +53,7 @@ function createWindow(): void {
       contextIsolation: false,
       nodeIntegration: true,
       webSecurity: false,
+      enableBlinkFeatures: 'FontAccess, AudioVideoTracks',
     },
   });
 

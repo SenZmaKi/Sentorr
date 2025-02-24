@@ -53,7 +53,7 @@
     "@types/webtorrent": "^0.110.0",
     "autoprefixer": "^10.4.17",
     "bun": "^1.1.42",
-    "electron": "^28.3.1",
+    "electron": "29.1.4",
     "electron-builder": "^24.9.1",
     "electron-vite": "^2.0.0",
     "postcss": "^8.4.35",

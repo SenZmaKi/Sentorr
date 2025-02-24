@@ -12,6 +12,11 @@ js/
 src/test-results/
 Miru/
 electron-dists/
+logs/
+scripts/
+target/
+test.mkv
+torrents/
 
 
 bun.lockb

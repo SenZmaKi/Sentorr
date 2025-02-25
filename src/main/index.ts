@@ -1,7 +1,14 @@
 import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import { getTorrentStreams, closeTorrentStreamsServer, clearTorrents, deselectAllTorrentStreams, selectTorrentStream, getCurrentTorrentStreamStats } from "@/backend/torrent/server";
+import {
+  getTorrentStreams,
+  closeTorrentStreamsServer,
+  clearTorrents,
+  deselectAllTorrentStreams,
+  selectTorrentStream,
+  getCurrentTorrentStreamStats,
+} from "@/backend/torrent/server";
 import { TorrentStream } from "@/backend/torrent/common/types";
 import { type IpcResult } from "@/common/types";
 
@@ -52,7 +59,7 @@ function createWindow(): void {
       preload: join(__dirname, "../preload/index.mjs"),
       nodeIntegration: true,
       webSecurity: false,
-      enableBlinkFeatures: 'FontAccess, AudioVideoTracks',
+      enableBlinkFeatures: "FontAccess, AudioVideoTracks",
     },
   });
 
@@ -89,7 +96,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  // IPC 
+  // IPC
 
   async function makeIpcResult<T>(promise: Promise<T>): Promise<IpcResult<T>> {
     try {
@@ -98,20 +105,30 @@ app.whenReady().then(() => {
     } catch (error: any) {
       return { error: error.message };
     }
-
   }
-  ipcMain.handle("get-torrent-streams", (_, torrentID: string) => makeIpcResult(getTorrentStreams(torrentID)));
+  ipcMain.handle("get-torrent-streams", (_, torrentID: string) =>
+    makeIpcResult(getTorrentStreams(torrentID)),
+  );
 
-  ipcMain.handle("select-torrent-stream", async (_, torrentStream: TorrentStream) => makeIpcResult(selectTorrentStream(torrentStream)));
+  ipcMain.handle(
+    "select-torrent-stream",
+    async (_, torrentStream: TorrentStream) =>
+      makeIpcResult(selectTorrentStream(torrentStream)),
+  );
 
-  ipcMain.handle("close-torrent-streams-server", async () => makeIpcResult(closeTorrentStreamsServer()));
+  ipcMain.handle("close-torrent-streams-server", async () =>
+    makeIpcResult(closeTorrentStreamsServer()),
+  );
 
   ipcMain.handle("clear-torrents", async () => makeIpcResult(clearTorrents()));
 
-  ipcMain.handle("deselect-all-torrent-streams", async () => makeIpcResult(deselectAllTorrentStreams()));
+  ipcMain.handle("deselect-all-torrent-streams", async () =>
+    makeIpcResult(deselectAllTorrentStreams()),
+  );
 
-  ipcMain.handle("get-current-torrent-stream-stats", async () => makeIpcResult(getCurrentTorrentStreamStats()));
-
+  ipcMain.handle("get-current-torrent-stream-stats", async () =>
+    makeIpcResult(getCurrentTorrentStreamStats()),
+  );
 
   createWindow();
 

@@ -15,7 +15,7 @@ test("getMovieTorrents", async () => {
   );
 });
 
-test("getSeriesEpisodeTorrents",  async () => {
+test("getSeriesEpisodeTorrents", async () => {
   await failIfEmpty(
     "torrent/rargb/getSeriesEpisodeTorrents",
     await getTorrentFiles(TORRENT_EPISODE_PARAMS),

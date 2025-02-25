@@ -10,5 +10,5 @@ export interface TorrentJson {
   added: string;
   status: string;
   category: string;
-  imdb: string;// We'd use this but sometimes it's usually an empty string
+  imdb: string; // We'd use this but sometimes it's usually an empty string
 }

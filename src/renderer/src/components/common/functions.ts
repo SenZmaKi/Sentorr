@@ -65,7 +65,7 @@ export function createInfiniteScrollStore<T>(
     const nearingEnd = horizontal
       ? (element.clientWidth + element.scrollLeft) / element.scrollWidth >= 0.7
       : (element.clientHeight + element.scrollTop) / element.scrollHeight >=
-      0.7;
+        0.7;
     if (nearingEnd) {
       fetchingMoreResults = true;
       if (nextPageKey) {

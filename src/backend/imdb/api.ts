@@ -21,7 +21,11 @@ import {
   type MoreMetadataJson,
   type ReviewsResultJson,
 } from "./jsonTypes";
-import { DEFAULT_RESULTS_LIMIT, MEDIA_TYPE_MAP, REVIEWS_HASH } from "./constants";
+import {
+  DEFAULT_RESULTS_LIMIT,
+  MEDIA_TYPE_MAP,
+  REVIEWS_HASH,
+} from "./constants";
 import { filterMap, getFirst, parseHtml } from "@/common/functions";
 import { DEBUG, CLIENT } from "@/common/constants";
 import { DEFAULT_SORT_BY, DEFAULT_SORT_ORDER } from "./constants";
@@ -227,8 +231,8 @@ export async function search(
     url,
   )) as AdvancedTitleSearchResultJson;
   const results =
-    advancedTitleSearchResultJson.data.advancedTitleSearch.edges.map(({ node }) =>
-      buildBaseResult(node.title),
+    advancedTitleSearchResultJson.data.advancedTitleSearch.edges.map(
+      ({ node }) => buildBaseResult(node.title),
     );
   const pageInfo =
     advancedTitleSearchResultJson.data.advancedTitleSearch.pageInfo;
@@ -268,10 +272,10 @@ export async function getEpisodes(
       const plot = ep.plot?.plotText.plaidHtml;
       const releaseDate = ep.releaseDate
         ? {
-          day: ep.releaseDate.day,
-          month: ep.releaseDate.month,
-          year: ep.releaseDate.year,
-        }
+            day: ep.releaseDate.day,
+            month: ep.releaseDate.month,
+            year: ep.releaseDate.year,
+          }
         : undefined;
       const rating = ep.ratingsSummary.aggregateRating;
       const ratingCount = ep.ratingsSummary.voteCount;
@@ -387,31 +391,32 @@ export async function getReviews(
     first: DEFAULT_RESULTS_LIMIT,
 
     const: mediaID,
-    filter: hideSpoilers ? {
-      "spoiler": "EXCLUDE"
-    } : {},
+    filter: hideSpoilers
+      ? {
+          spoiler: "EXCLUDE",
+        }
+      : {},
     sort: {
       by: "HELPFULNESS_SCORE",
-      order: "DESC"
-    }
-
-  }
+      order: "DESC",
+    },
+  };
   const url = generateAPIURL("TitleReviewsRefine", variables, REVIEWS_HASH);
   const reviewsJson: ReviewsResultJson = await apiGet(url);
-  const results: Review[] = reviewsJson.data.title.reviews.edges.map(({ node: review }) => {
-    return {
-      author: review.author.nickName,
-      date: review.submissionDate,
-      content: review.text.originalText.plaidHtml,
-      title: review.summary.originalText,
-      likes: review.helpfulness.upVotes,
-      dislikes: review.helpfulness.downVotes,
-      hasSpoilers: review.spoiler,
-      rating: review.authorRating,
-
-    }
-
-  })
+  const results: Review[] = reviewsJson.data.title.reviews.edges.map(
+    ({ node: review }) => {
+      return {
+        author: review.author.nickName,
+        date: review.submissionDate,
+        content: review.text.originalText.plaidHtml,
+        title: review.summary.originalText,
+        likes: review.helpfulness.upVotes,
+        dislikes: review.helpfulness.downVotes,
+        hasSpoilers: review.spoiler,
+        rating: review.authorRating,
+      };
+    },
+  );
   const pageInfo = reviewsJson.data.title.reviews.pageInfo;
   const nextPageKey = pageInfo.hasNextPage ? pageInfo.endCursor : undefined;
   return { results, nextPageKey };

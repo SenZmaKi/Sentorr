@@ -28,7 +28,6 @@ export type TorrentStream = {
   };
 };
 
-
 export enum Resolution {
   R2160P = 2160,
   R1080P = 1080,
@@ -38,7 +37,7 @@ export enum Resolution {
   R480P = 480,
 }
 
-export const RESOLUTIONS= Object.values(Resolution).filter(
+export const RESOLUTIONS = Object.values(Resolution).filter(
   (value) => typeof value === "number",
 );
 
@@ -61,5 +60,4 @@ export type TorrentStreamStats = {
   downloadSpeed: number;
   uploadSpeed: number;
   numPeers: number;
-
-}
+};

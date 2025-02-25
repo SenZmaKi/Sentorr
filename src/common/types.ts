@@ -48,5 +48,5 @@ export class Client {
 }
 
 export type IpcResult<T> =
-  | { result: T; error?: undefined  }
+  | { result: T; error?: undefined }
   | { result?: undefined; error: string };

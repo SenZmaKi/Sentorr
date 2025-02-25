@@ -8,7 +8,7 @@
 
 <div class="p-2 pb-4">
   <button
-    class="p-[1px] rounded hover:scale-150 ease-in-out duration-500 cursor-pointer "
+    class="p-[1px] rounded hover:scale-150 ease-in-out duration-500 cursor-pointer"
     on:click={() => ($currentPage = page)}
     class:bg-white={$currentPage === page}
   >

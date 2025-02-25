@@ -59,21 +59,22 @@ export function validateTorrent(
   languages: Language[],
   ignoreTitle?: boolean,
 ) {
-  const { isSame, parsedFilename } = (ignoreTitle
-    ? { isSame: true, parsedFilename: filenameParse(filename) }
-    : isSameTitle(title, filename, isTvSeries)) as {
-      isSame: boolean;
-      parsedFilename: typeof isTvSeries extends true ? ParsedShow : ParsedMovie
-    };
+  const { isSame, parsedFilename } = (
+    ignoreTitle
+      ? { isSame: true, parsedFilename: filenameParse(filename) }
+      : isSameTitle(title, filename, isTvSeries)
+  ) as {
+    isSame: boolean;
+    parsedFilename: typeof isTvSeries extends true ? ParsedShow : ParsedMovie;
+  };
   if (
     !isSame ||
     !parsedFilename.resolution ||
     !parsedFilename.languages.some((lang) => languages.includes(lang)) ||
-    (
-      isTvSeries &&
+    (isTvSeries &&
       !getCompleteSeason ===
-      (!!parsedFilename.complete || !!(parsedFilename as ParsedShow).fullSeason)
-    )
+        (!!parsedFilename.complete ||
+          !!(parsedFilename as ParsedShow).fullSeason))
   )
     return undefined;
   const resolution = parseResolution(parsedFilename.resolution);

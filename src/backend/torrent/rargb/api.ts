@@ -85,9 +85,9 @@ function parseTorrentElement(
   const seeders = parseInt(td.eq(5).find("font").text());
   if (!seeders) return undefined;
   const dateUploadedStr = td.eq(3).text();
-  const dateUploadedISO = new Date(dateUploadedStr).toISOString()
+  const dateUploadedISO = new Date(dateUploadedStr).toISOString();
   const size_str = td.eq(4).text();
-  const sizeBytes = parseSize(size_str)
+  const sizeBytes = parseSize(size_str);
   if (!sizeBytes) return undefined;
   return {
     torrentFile: {

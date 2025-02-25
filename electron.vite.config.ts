@@ -10,25 +10,19 @@ export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
     resolve: {
-      alias: [
-        pathAlias
-      ],
+      alias: [pathAlias],
     },
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
     resolve: {
-      alias: [
-        pathAlias
-      ],
+      alias: [pathAlias],
     },
   },
   renderer: {
     plugins: [svelte()],
     resolve: {
-      alias: [
-        pathAlias
-      ],
+      alias: [pathAlias],
     },
   },
 });

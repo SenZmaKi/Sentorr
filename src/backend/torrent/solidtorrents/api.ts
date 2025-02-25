@@ -52,9 +52,9 @@ function parseTorrentElement(
   if (category === "XXX") return undefined;
   const statsDivs = bottomInfoDiv.find("div > div");
   const dateUploadedStr = statsDivs.eq(5).text();
-  const dateUploadedISO = new Date(dateUploadedStr).toISOString()
+  const dateUploadedISO = new Date(dateUploadedStr).toISOString();
   const size_str = statsDivs.eq(2).text();
-  const sizeBytes = parseSize(size_str)
+  const sizeBytes = parseSize(size_str);
   if (!sizeBytes) return undefined;
   const fontDivs = statsDivs.find("font");
   const seeders = parseInt(fontDivs.eq(0).text());

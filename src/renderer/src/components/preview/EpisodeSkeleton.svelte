@@ -11,7 +11,7 @@
       <div class="rounded w-[40px] mr-2 bg-gray-700"></div>
       <div class="rounded w-[110px] bg-gray-700"></div>
     </div>
-    <div class="m-2 mt-4 ">
+    <div class="m-2 mt-4">
       <div class="rounded w-[90%] h-[5px] bg-gray-700 mb-2"></div>
       <div class="rounded w-[90%] h-[5px] bg-gray-700 mb-2"></div>
       <div class="rounded w-[90%] h-[5px] bg-gray-700 mb-2"></div>

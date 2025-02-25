@@ -36,54 +36,53 @@ export type ReviewsResultJson = {
   data: {
     title: {
       reviews: {
-        total: number
+        total: number;
         pageInfo: {
-          endCursor: string
-          hasNextPage: boolean
-          hasPreviousPage: boolean
-        }
+          endCursor: string;
+          hasNextPage: boolean;
+          hasPreviousPage: boolean;
+        };
         edges: Array<{
           node: {
-            id: string
+            id: string;
             author: {
-              nickName: string
-              userId: string
-            }
+              nickName: string;
+              userId: string;
+            };
             summary: {
-              originalText: string
-            }
+              originalText: string;
+            };
             text: {
               originalText: {
-                plaidHtml: string
-              }
-            }
-            authorRating?: number
-            submissionDate: string
+                plaidHtml: string;
+              };
+            };
+            authorRating?: number;
+            submissionDate: string;
             helpfulness: {
-              upVotes: number
-              downVotes: number
-            }
-            spoiler: boolean
+              upVotes: number;
+              downVotes: number;
+            };
+            spoiler: boolean;
             reportingLink: {
-              url: string
-            }
-          }
-        }>
-      }
-    }
-  }
+              url: string;
+            };
+          };
+        }>;
+      };
+    };
+  };
   extensions: {
-    disclaimer: string
+    disclaimer: string;
     experimentalFields: {
-      janet: Array<any>
-      ratings: Array<any>
-      kahlo: Array<any>
-      identity: Array<any>
-      markdown: Array<any>
-    }
-  }
-}
-
+      janet: Array<any>;
+      ratings: Array<any>;
+      kahlo: Array<any>;
+      identity: Array<any>;
+      markdown: Array<any>;
+    };
+  };
+};
 
 export type MediaMetadataJson = {
   "@context": string;
@@ -295,14 +294,14 @@ export type EpisodesResultJson = {
                 __typename: string;
               };
               plot:
-              | {
-                plotText: {
-                  plaidHtml: string;
-                  __typename: string;
-                };
-                __typename: string;
-              }
-              | undefined;
+                | {
+                    plotText: {
+                      plaidHtml: string;
+                      __typename: string;
+                    };
+                    __typename: string;
+                  }
+                | undefined;
               releaseDate: {
                 month: number;
                 day: number;

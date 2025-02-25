@@ -47,7 +47,7 @@ export async function getTorrentFiles({
     const seeders = parseInt(torrent.seeders);
     if (!seeders) return undefined;
     const dateUploadedUnix = parseInt(torrent.added);
-    const dateUploadedISO = new Date(dateUploadedUnix * 1000).toISOString()
+    const dateUploadedISO = new Date(dateUploadedUnix * 1000).toISOString();
     return {
       filename,
       sizeBytes,

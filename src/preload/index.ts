@@ -4,13 +4,16 @@ import type { IpcResult } from "@/common/types";
 import { electronAPI } from "@electron-toolkit/preload";
 
 export async function invokeIpc<T>(channel: string, ...args: any): Promise<T> {
-  const { error, result }: IpcResult<T> = await electronAPI.ipcRenderer.invoke(channel, ...args);
+  const { error, result }: IpcResult<T> = await electronAPI.ipcRenderer.invoke(
+    channel,
+    ...args,
+  );
   if (error !== undefined) throw new Error(error);
   return result;
 }
 // Custom APIs for renderer
 const api = {
-  torrent
+  torrent,
 };
 
 // Use `contextBridge` APIs to expose APIs to

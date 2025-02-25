@@ -1,4 +1,9 @@
-import { type TorrentStream, type TorrentFile, TorrentStreamsError, type TorrentStreamStats } from "./common/types";
+import {
+  type TorrentStream,
+  type TorrentFile,
+  TorrentStreamsError,
+  type TorrentStreamStats,
+} from "./common/types";
 import type { Episode, Media } from "@/backend/imdb/types";
 import { getTorrentsFiles as getMovieTorrents } from "./yts/api";
 import { getTorrentFiles as piratebayGetTorrentFiles } from "./piratebay/api";
@@ -55,7 +60,10 @@ async function getTorrentFiles({
     .then((results) => results.flat())
     .then((results) =>
       results.filter((torrent) => {
-        if (blacklistedTorrents.find(et => et.torrentID === torrent.torrentID)) return false;
+        if (
+          blacklistedTorrents.find((et) => et.torrentID === torrent.torrentID)
+        )
+          return false;
         const parsedSeason = parseSeason(
           torrent.filename,
           "torrentFile",
@@ -80,7 +88,10 @@ async function getTorrentFiles({
     .then((results) => results.flat())
     .then((results) =>
       results.filter((torrent) => {
-        if (blacklistedTorrents.find(et => et.torrentID === torrent.torrentID)) return false;
+        if (
+          blacklistedTorrents.find((et) => et.torrentID === torrent.torrentID)
+        )
+          return false;
         const parsedSeason = parseSeason(torrent.filename, "torrentFile", true);
         return (
           parsedSeason?.seasonNumbers.includes(episode.seasonNumber) &&
@@ -102,7 +113,10 @@ async function getTorrentStreams(
   isTvSeries: boolean,
 ): Promise<TorrentStream[]> {
   const torrentID = torrentFile.torrentID;
-  const allStreams = await invokeIpc<TorrentStream[]>("get-torrent-streams", torrentID);
+  const allStreams = await invokeIpc<TorrentStream[]>(
+    "get-torrent-streams",
+    torrentID,
+  );
   console.log("allStreams", allStreams);
   const videoStreams = allStreams.filter(
     ({ filename }) =>
@@ -148,17 +162,19 @@ async function getTorrentStreams(
       },
     };
   });
-  if (!torrentStreams.length) throw new Error(TorrentStreamsError.NoMatchingFiles);
+  if (!torrentStreams.length)
+    throw new Error(TorrentStreamsError.NoMatchingFiles);
   return torrentStreams;
 }
 
 async function selectTorrentStream(torrentStream: TorrentStream) {
-  return invokeIpc<void>("select-torrent-stream", torrentStream)
-
+  return invokeIpc<void>("select-torrent-stream", torrentStream);
 }
 
 async function getCurrentTorrentStreamStats() {
-  return invokeIpc<TorrentStreamStats | undefined>("get-current-torrent-stream-stats")
+  return invokeIpc<TorrentStreamStats | undefined>(
+    "get-current-torrent-stream-stats",
+  );
 }
 
 // const magnetLink = "magnet:?xt=urn:btih:ACCD778E8EF86005A9B3E8B9407675862E306A90&dn=Mr+Robot+Season+2+Complete+720p+WEB-DL+EN-SUB+x264-%5BMULVAcoded%5D+S02&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A80&tr=udp%3A%2F%2Ftracker.zer0day.to%3A1337%2Fannounce&tr=http%3A%2F%2Fpow7.com%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2F9.rarbg.com%3A2710%2Fannounce&tr=udp%3A%2F%2Finferno.demonoid.pw%3A3393%2Fannounce&tr=udp%3A%2F%2Ftracker.ex.ua%3A80%2Fannounce&tr=udp%3A%2F%2F9.rarbg.me%3A2710%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2710%2Fannounce&tr=udp%3A%2F%2Ftracker.ilibr.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.ilibr.org%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.zer0day.to%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fcoppersurfer.tk%3A6969%2Fannounce"
@@ -169,13 +185,12 @@ async function getCurrentTorrentStreamStats() {
 //     })
 // })
 
-
- const TORRENT_API = {
+const TORRENT_API = {
   getTorrentFiles,
   getTorrentStreams,
   selectTorrentStream,
-  getCurrentTorrentStreamStats
-}
+  getCurrentTorrentStreamStats,
+};
 
 export type TorrentApi = typeof TORRENT_API;
 

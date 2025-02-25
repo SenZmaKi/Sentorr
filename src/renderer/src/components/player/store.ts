@@ -1,6 +1,9 @@
 import { writable } from "svelte/store";
 import type { Media, Episode } from "@/backend/imdb/types";
-import type { TorrentFile, TorrentStream } from "@/backend/torrent/common/types";
+import type {
+  TorrentFile,
+  TorrentStream,
+} from "@/backend/torrent/common/types";
 
 import sampleMedia from "@/test-results/imdb/getMedia.json";
 import sampleEpisodes from "@/test-results/imdb/getEpisodes.json";

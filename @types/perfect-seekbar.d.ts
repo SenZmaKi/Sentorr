@@ -1,8 +1,6 @@
-
 import { SvelteComponent } from "svelte";
 
 declare module "perfect-seekbar" {
-
   export interface SeekbarProps {
     progress?: number;
     buffer?: number;
@@ -21,5 +19,5 @@ declare module "perfect-seekbar" {
   export default class Seekbar extends SvelteComponent<
     SeekbarProps,
     SeekbarEvents
-  > { }
+  > {}
 }

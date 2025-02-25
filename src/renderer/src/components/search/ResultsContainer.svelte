@@ -13,7 +13,7 @@
   import { MediaCardType } from "../common/types";
 
   let accumulatedResults = writable<(BaseResult | undefined)[] | undefined>(
-    undefined
+    undefined,
   );
   export let hidden: boolean;
   let infiniteScroll: ((event: Event | null) => void) | undefined = undefined;
@@ -21,7 +21,7 @@
     [accumulatedResults, infiniteScroll] = createInfiniteScrollStore(
       (nextPageKey: string | undefined) => search($searchFilters, nextPageKey),
       false,
-      25
+      25,
     );
   }
   let resultsDiv: HTMLDivElement;

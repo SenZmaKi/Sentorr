@@ -13,7 +13,7 @@
 
   const updateSearchTerm = debounce(() => {
     $searchTerm = value ? value : undefined;
-  }, 400); 
+  }, 400);
 
   $: value, updateSearchTerm();
 </script>

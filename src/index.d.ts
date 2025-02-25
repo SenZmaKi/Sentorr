@@ -1,8 +1,12 @@
-import { ElectronAPI } from "@electron-toolkit/preload";
+import { type TorrentApi } from "@/backend/torrent/api.ts";
 
 declare global {
+
+    export interface HTMLVideoElement {
+        videoTracks: unknown[];
+        audioTracks: unknown[];
+    }
   interface Window {
-    electron: ElectronAPI;
-    api: unknown;
+    api: { torrent: TorrentApi };
   }
 }

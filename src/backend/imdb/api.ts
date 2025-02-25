@@ -21,7 +21,7 @@ import {
   type MoreMetadataJson,
   type ReviewsResultJson,
 } from "./jsonTypes";
-import { DEFAULT_RESULTS_LIMIT, mediaTypeMap, REVIEWS_HASH } from "./constants";
+import { DEFAULT_RESULTS_LIMIT, MEDIA_TYPE_MAP, REVIEWS_HASH } from "./constants";
 import { filterMap, getFirst, parseHtml } from "@/common/functions";
 import { DEBUG, CLIENT } from "@/common/constants";
 import { DEFAULT_SORT_BY, DEFAULT_SORT_ORDER } from "./constants";
@@ -95,7 +95,7 @@ async function apiGet(
     // console.log(
     //   `Url: ${url}\nStatus Code: ${response.status}\nJson:\n${JSON.stringify(resp_json, undefined, 4)}`,
     // );
-    console.log("IMDB api call made");
+    console.log(`IMDB Api Call Made: ${url}`);
   }
   return resp_json;
 }
@@ -203,7 +203,7 @@ export async function search(
     sortBy,
     sortOrder,
     titleTypeConstraint: {
-      anyTitleTypeIds: mediaTypes.map((mediaType) => mediaTypeMap[mediaType]),
+      anyTitleTypeIds: mediaTypes.map((mediaType) => MEDIA_TYPE_MAP[mediaType]),
       excludeTitleTypeIds: [
         "tvEpisode",
         "musicVideo",

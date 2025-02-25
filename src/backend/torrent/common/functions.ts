@@ -3,6 +3,8 @@ import {
   parseSeason as vfpParseSeason,
   Language,
   Resolution as VfpResolution,
+  ParsedShow,
+  ParsedMovie,
 } from "@ctrl/video-filename-parser";
 import levenshtein from "js-levenshtein";
 import { Resolution, RESOLUTIONS, type TorrentFile } from "./types";
@@ -57,16 +59,21 @@ export function validateTorrent(
   languages: Language[],
   ignoreTitle?: boolean,
 ) {
-  const { isSame, parsedFilename } = ignoreTitle
+  const { isSame, parsedFilename } = (ignoreTitle
     ? { isSame: true, parsedFilename: filenameParse(filename) }
-    : isSameTitle(title, filename, isTvSeries);
+    : isSameTitle(title, filename, isTvSeries)) as {
+      isSame: boolean;
+      parsedFilename: typeof isTvSeries extends true ? ParsedShow : ParsedMovie
+    };
   if (
     !isSame ||
     !parsedFilename.resolution ||
     !parsedFilename.languages.some((lang) => languages.includes(lang)) ||
-    !getCompleteSeason ===
-      // @ts-ignore fullSeason isn't defined in d.ts but it's there in the returned object
-      (!!parsedFilename.complete || !!parsedFilename.fullSeason)
+    (
+      isTvSeries &&
+      !getCompleteSeason ===
+      (!!parsedFilename.complete || !!(parsedFilename as ParsedShow).fullSeason)
+    )
   )
     return undefined;
   const resolution = parseResolution(parsedFilename.resolution);
@@ -193,10 +200,6 @@ export function computeTorrentScores({
         sizeBytes = sizeBytes / seasonsCount;
       }
     }
-    if (seasonsCount <= 1) return {
-      score: 0,
-      torrent
-    };
     let sizePenalty = Math.min(sizeBytes / maxSizeThreshold, 1);
     const resolutionPardon =
       (torrent.resolution - minResolution) / maxResolutionDifference;

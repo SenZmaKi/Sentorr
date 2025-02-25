@@ -1,7 +1,8 @@
-import { computeTorrentScores } from "../../src/backend/torrent/common/functions";
+import { computeTorrentScores } from "@/backend/torrent/common/functions";
 import { test } from "bun:test";
-import torrents from "../../src/test-results/piratebay/getSeriesFullSeasonTorrents.json";
-import { emptyArrayTest } from "../common/functions";
+import torrents from "@/test/results/torrent/piratebay/getMovieTorrents.json" ;
+import { failIfEmpty } from "@/test/common/functions";
+import { Resolution } from "@/backend/torrent/common/types";
 
 function prettyFormatBytes(bytes: number) {
     const bytes_in_kb = 1024;
@@ -17,7 +18,7 @@ function prettyFormatBytes(bytes: number) {
 test("computeTorrentScores", async () => {
     const scores = computeTorrentScores({
         torrents,
-        preferredResolution: 720,
+        preferredResolution: Resolution.R720P,
     });
     const sortedScores = scores.sort((a, b) => b.score - a.score);
     const prettyScores = sortedScores.map((score) => ({
@@ -25,5 +26,5 @@ test("computeTorrentScores", async () => {
         size: prettyFormatBytes(score.torrent.sizeBytes),
     }));
 
-    emptyArrayTest("torrent:computeTorrentScores", prettyScores);
+    await failIfEmpty("torrent/computeTorrentScores", prettyScores);
 })

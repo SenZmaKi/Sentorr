@@ -9,13 +9,14 @@ import {
   parseSeason,
   seasonFormatTitle,
 } from "./common/functions";
-import { filterMap, invokeIpc } from "@/common/functions";
+import { filterMap } from "@/common/functions";
+import { invokeIpc } from "@/preload";
 import type { Language } from "@ctrl/video-filename-parser";
 // prettier-ignore
 const VIDEO_EXTS = ['3g2', '3gp', 'asf', 'avi', 'dv', 'flv', 'gxf', 'm2ts', 'm4a', 'm4b', 'm4p', 'm4r', 'm4v', 'mkv', 'mov', 'mp4', 'mpd', 'mpeg', 'mpg', 'mxf', 'nut', 'ogm', 'ogv', 'swf', 'ts', 'vob', 'webm', 'wmv', 'wtv']
 const VIDEO_RX = new RegExp(`.(${VIDEO_EXTS.join("|")})$`, "i");
 
-export async function getTorrentFiles({
+async function getTorrentFiles({
   media,
   episode,
   languages,
@@ -95,7 +96,7 @@ export async function getTorrentFiles({
   return torrentFiles;
 }
 
-export async function getTorrentStreams(
+async function getTorrentStreams(
   title: string,
   torrentFile: TorrentFile,
   isTvSeries: boolean,
@@ -151,12 +152,12 @@ export async function getTorrentStreams(
   return torrentStreams;
 }
 
-export async function selectTorrentStream(torrentStream: TorrentStream) {
+async function selectTorrentStream(torrentStream: TorrentStream) {
   return invokeIpc<void>("select-torrent-stream", torrentStream)
 
 }
 
-export async function getCurrentTorrentStreamStats() {
+async function getCurrentTorrentStreamStats() {
   return invokeIpc<TorrentStreamStats | undefined>("get-current-torrent-stream-stats")
 }
 
@@ -167,3 +168,15 @@ export async function getCurrentTorrentStreamStats() {
 //         console.log("stream url", file.streamURL)
 //     })
 // })
+
+
+ const TORRENT_API = {
+  getTorrentFiles,
+  getTorrentStreams,
+  selectTorrentStream,
+  getCurrentTorrentStreamStats
+}
+
+export type TorrentApi = typeof TORRENT_API;
+
+export default TORRENT_API;

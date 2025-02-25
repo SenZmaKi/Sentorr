@@ -1,6 +1,5 @@
 import { parseDocument as parseDocument } from "htmlparser2"; // htmlparser2 is faster at loading string to document than cheerio
 import { load as cheerioLoad, type CheerioAPI } from "cheerio";
-import type { IpcResult } from "@/common/types";
 
 export function printRunTimeLater(task: string = ""): () => void {
   const currentTime = new Date().getTime();
@@ -70,7 +69,7 @@ export function getFirst<T>(array: Array<T>): T | undefined {
   return array[0];
 }
 
-export function remove<T>(array: Array<T>, element: T): T | undefined {
+export function take<T>(array: Array<T>, element: T): T | undefined {
   const idx = array.indexOf(element);
 
   if (idx === -1) {
@@ -78,10 +77,4 @@ export function remove<T>(array: Array<T>, element: T): T | undefined {
   }
 
   return array.splice(idx, 1)[0];
-}
-
-export async function invokeIpc<T>(channel: string, ...args: any): Promise<T> {
-  const { error, result }: IpcResult<T> = await window.electron.ipcRenderer.invoke(channel, ...args);
-  if (error !== undefined) throw new Error(error);
-  return result;
 }

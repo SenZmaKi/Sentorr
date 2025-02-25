@@ -1,6 +1,5 @@
-import { getTorrentFiles } from "../../src/backend/torrent/piratebay///api";
-import { emptyArrayTest } from ".././common/functions";
-// @ts-ignore
+import { getTorrentFiles } from "@/backend/torrent/piratebay/api";
+import { failIfEmpty } from "@/test/common/functions";
 import { test } from "bun:test";
 import {
   TORRENT_EPISODE_PARAMS,
@@ -12,11 +11,11 @@ import {
   MOVIE_IMDB_ID,
   SHOW_IMDB_ID,
   EPISODE_IMDB_ID,
-} from ".././common/constants";
+} from "@/test/common/constants";
 
 test("getMovieTorrents", async () => {
-  emptyArrayTest(
-    "piratebay:getMovieTorrents",
+  await failIfEmpty(
+    "torrent/piratebay/getMovieTorrents",
     await getTorrentFiles({
       ...TORRENT_MOVIE_PARAMS,
       mediaImdbID: MOVIE_IMDB_ID,
@@ -25,8 +24,8 @@ test("getMovieTorrents", async () => {
 });
 
 test("getSeriesEpisodeTorrents", async () => {
-  emptyArrayTest(
-    "piratebay:getSeriesEpisodeTorrents",
+  await failIfEmpty(
+    "torrent/piratebay/getSeriesEpisodeTorrents",
     await getTorrentFiles({
       ...TORRENT_EPISODE_PARAMS,
       mediaImdbID: SHOW_IMDB_ID,
@@ -36,8 +35,8 @@ test("getSeriesEpisodeTorrents", async () => {
 });
 
 test("getSeriesAbbrvSeasonTorrents", async () => {
-  emptyArrayTest(
-    "piratebay:getSeriesAbbrvSeasonTorrents",
+  await failIfEmpty(
+    "torrent/piratebay/getSeriesAbbrvSeasonTorrents",
     await getTorrentFiles({
       ...TORRENT_SEASON_ABBRV_PARAMS,
       mediaImdbID: SHOW_IMDB_ID,
@@ -47,8 +46,8 @@ test("getSeriesAbbrvSeasonTorrents", async () => {
 });
 
 test("getSeriesFullSeasonTorrents", async () => {
-  emptyArrayTest(
-    "piratebay:getSeriesFullSeasonTorrents",
+  await failIfEmpty(
+    "torrent/piratebay/getSeriesFullSeasonTorrents",
     await getTorrentFiles({
       ...TORRENT_SEASON_FULL_PARAMS,
       mediaImdbID: SHOW_IMDB_ID,

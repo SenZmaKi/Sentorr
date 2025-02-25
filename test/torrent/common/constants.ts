@@ -1,12 +1,12 @@
-import { seasonFormatTitle } from "../../../src/backend/torrent/common/functions";
-import { GetTorrentFilesParams } from "../../../src/backend/torrent/common/types";
+import { seasonFormatTitle } from "@/backend/torrent/common/functions";
+import { GetTorrentFilesParams } from "@/backend/torrent/common/types";
 import {
   LANGUAGES,
   MOVIE_TITLE,
   SERIES_EPISODE,
   SERIES_SEASON,
   SERIES_TITLE,
-} from "../../common/constants";
+} from "@/test/common/constants";
 
 const commonSeriesParams = {
   languages: LANGUAGES,

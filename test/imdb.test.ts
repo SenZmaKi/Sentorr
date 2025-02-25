@@ -8,15 +8,14 @@ import {
   getTop10Trending,
   getTop10OfAllTime,
   getEpisodes,
-} from "../src/backend/imdb/api";
-import { Pagination } from "../src/backend/imdb/types";
+} from "@/backend/imdb/api";
+import { Pagination } from "@/backend/imdb/types";
 import { SHOW_IMDB_ID, MOVIE_TITLE } from "./common/constants";
 import {
-  emptyArrayTest,
-  emptyArrayTestHandler,
+  failIfEmpty,
+  failIfEmptyHandler,
   saveResults,
-} from "./common/functions.js";
-// @ts-ignore
+} from "./common/functions";
 import { test, expect } from "bun:test";
 
 async function paginationTest(
@@ -24,53 +23,53 @@ async function paginationTest(
   callback: (nextPageKey: string | undefined) => Promise<Pagination<any>>,
 ) {
   const page = await callback(undefined);
-  emptyArrayTest(name, page.results);
+  failIfEmpty(name, page.results);
   if (page.nextPageKey) {
     const page2 = await callback(page.nextPageKey);
-    emptyArrayTest(`${name}2`, page2.results);
+    failIfEmpty(`${name}2`, page2.results);
   }
 }
 
 test("getSessionCookies", async () => {
-  await emptyArrayTestHandler("imdb:setSessionCookies", getSessionCookies);
+  await failIfEmptyHandler("imdb/setSessionCookies", getSessionCookies);
 });
 
 test("search", async () => {
   const callback = async (nextPageKey: string | undefined) =>
     search({ searchTerm: MOVIE_TITLE }, nextPageKey);
-  await paginationTest("imdb:search", callback);
+  await paginationTest("imdb/search", callback);
 });
 
 test("fanFavorites", async () => {
-  await emptyArrayTestHandler("imdb:fanFavorites", getFanFavorites);
+  await failIfEmptyHandler("imdb/fanFavorites", getFanFavorites);
 });
 
 test("popularTitles", async () => {
-  await emptyArrayTestHandler("imdb:popularTitles", getPopularTitles);
+  await failIfEmptyHandler("imdb/popularTitles", getPopularTitles);
 });
 
 test("getMedia", async () => {
   const media = await getMedia(SHOW_IMDB_ID);
-  saveResults("imdb:getMedia", media);
+  saveResults("imdb/getMedia", media);
   expect(media.title).toBeTruthy();
 });
 
 test("getReviews", async () => {
   const callback = async (nextPageKey: string | undefined) =>
     getReviews(SHOW_IMDB_ID, true, nextPageKey);
-  await paginationTest("imdb:getReviews", callback);
+  await paginationTest("imdb/getReviews", callback);
 });
 
 test("getTop10Trending", async () => {
-  await emptyArrayTestHandler("imdb:getTop10Trending", getTop10Trending);
+  await failIfEmptyHandler("imdb/getTop10Trending", getTop10Trending);
 });
 
 test("getEpisodes", async () => {
   const callback = async (nextPageKey: string | undefined) =>
     getEpisodes(SHOW_IMDB_ID, 1, nextPageKey);
-  await paginationTest("imdb:getEpisodes", callback);
+  await paginationTest("imdb/getEpisodes", callback);
 });
 
 test("getTop10OfAllTime", async () => {
-  await emptyArrayTestHandler("imdb:getTop10OfAllTime", getTop10OfAllTime);
+  await failIfEmptyHandler("imdb/getTop10OfAllTime", getTop10OfAllTime);
 });

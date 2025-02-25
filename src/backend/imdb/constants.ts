@@ -32,7 +32,7 @@ export const SortBys = Object.values(SortBy);
 export const Genres = Object.values(Genre);
 export const MediaTypes = Object.values(MediaType);
 
-export const mediaTypeMap = {
+export const MEDIA_TYPE_MAP = {
   [MediaType.Movie]: ApiMediaType.Movie,
   [MediaType.TVSeries]: ApiMediaType.TVSeries,
   [MediaType.Short]: ApiMediaType.Short,

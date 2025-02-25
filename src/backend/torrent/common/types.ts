@@ -38,7 +38,7 @@ export enum Resolution {
   R480P = 480,
 }
 
-export const RESOLUTIONS = Object.values(Resolution).filter(
+export const RESOLUTIONS= Object.values(Resolution).filter(
   (value) => typeof value === "number",
 );
 

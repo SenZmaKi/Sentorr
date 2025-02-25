@@ -1,4 +1,3 @@
-
 .figma/
 .vscode/
 .scraps/
@@ -9,12 +8,10 @@ dist/
 out/
 js/
 .performance-profiles/
-src/test-results/
-Miru/
 electron-dists/
+test/results
 
 
-bun.lockb
 .env
 test.sh
 crap.ts

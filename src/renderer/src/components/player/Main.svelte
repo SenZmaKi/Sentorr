@@ -1,10 +1,5 @@
 <script lang="ts">
   import PageWrapper from "../common/PageWrapper.svelte";
-  import {
-    getTorrentStreams,
-    getTorrentFiles,
-    getCurrentTorrentStreamStats,
-  } from "@/backend/torrent/api";
   import { Language } from "@ctrl/video-filename-parser";
   import {
     Resolution,
@@ -21,15 +16,17 @@
     playerTorrentFile,
     playerTorrentStream,
   } from "./store";
-  import { selectTorrentStream } from "@/backend/torrent/api";
+  import SeekBar from "perfect-seekbar";
 
   export let hidden: boolean;
   let blacklistedTorrents: TorrentFile[] = [];
   let torrentStreamStats: TorrentStreamStats | undefined = undefined;
-
-  let video: HTMLMediaElement;
+  let video: HTMLVideoElement;
 
   async function load() {
+    // DEBUG
+    if ($playerTorrentStream) return;
+
     let media = $playerMedia;
     let episode = $playerEpisode;
     if (!media) {
@@ -48,7 +45,7 @@
       return;
     }
     const languages = [Language.English];
-    const torrentFiles = await getTorrentFiles({
+    const torrentFiles = await window.api.torrent.getTorrentFiles({
       media,
       episode,
       languages,
@@ -86,7 +83,7 @@
     const torrentFile = sortedByScore[0].torrent;
     let torrentsStreams: TorrentStream[] = [];
     try {
-      torrentsStreams = await getTorrentStreams(
+      torrentsStreams = await window.api.torrent.getTorrentStreams(
         media.title,
         torrentFile,
         !media.isMovie
@@ -122,14 +119,14 @@
       };
     console.log("torrentStream:", torrentStream);
     console.log("streamURL:", torrentStream.url);
-    selectTorrentStream(torrentStream);
+    window.api.torrent.selectTorrentStream(torrentStream);
     $playerTorrentStream = torrentStream;
     $playerTorrentFile = torrentFile;
   }
 
   async function reload() {
     if (!$playerTorrentStream) return;
-    selectTorrentStream($playerTorrentStream);
+    window.api.torrent.selectTorrentStream($playerTorrentStream);
     $playerTorrentStream = $playerTorrentStream;
   }
 
@@ -210,8 +207,6 @@
     load();
   }
   function handleLoadedMetadata() {
-    // @ts-ignore tracks are available when you run electron with following set
-    // webPreferences.enableBlinkFeatures = "FontAccess, AudioVideoTracks"
     if (!video.videoTracks || !video.audioTracks || !$playerTorrentFile) return;
 
     // @ts-ignore
@@ -249,22 +244,22 @@
   }
   setInterval(async () => {
     if (!$playerMedia || !$playerTorrentStream || !$playerTorrentFile) return;
-    torrentStreamStats = await getCurrentTorrentStreamStats();
+    torrentStreamStats =
+      await window.api.torrent.getCurrentTorrentStreamStats();
     // console.log(`torrentStreamStats: ${JSON.stringify(torrentStreamStats)}`);
   }, 1_000);
+
 </script>
 
 <PageWrapper {hidden}>
   <video
     class="w-full h-full"
     bind:this={video}
-    controls
     on:error={handlePlaybackError}
     src={$playerTorrentStream?.url}
     on:loadedmetadata={handleLoadedMetadata}
   >
+    <track kind="captions" />
+    <SeekBar></SeekBar>
   </video>
 </PageWrapper>
-
-<style>
-</style>

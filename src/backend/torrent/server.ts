@@ -3,16 +3,13 @@ import WebTorrent, { type TorrentFile as WTTorrentFile } from "webtorrent";
 import { type TorrentStream, TorrentStreamsError, type TorrentStreamStats } from "./common/types";
 import path from "path";
 import fs from "fs/promises";
-import readline from "readline";
-import { exit } from "process";
 
 
 const Client = new WebTorrent();
 const Server = Client.createServer({});
-// @ts-ignore
 Server.listen(5000);
 const PORT = Server.address().port;
-const GET_TORRENT_STREAMS_TIMEOUT_MS = 2 * 10000;
+const GET_TORRENT_STREAMS_TIMEOUT_MS = 2 * 10_000;
 const MAX_QUEUE_SIZE = 5;
 let fileTorrentStreamQueue: {
     file: WTTorrentFile;
@@ -65,7 +62,6 @@ export async function getTorrentStreams(torrentID: string): Promise<TorrentStrea
             return resolve(torrentToTorrentStreams(existingTorrent))
         };
         Client.add(torrentID, {
-            // @ts-ignore: Bad typings
             deselect: true,
             destroyStoreOnDestroy: true,
         }, torrent => {
@@ -161,29 +157,3 @@ export async function getCurrentTorrentStreamStats(): Promise<TorrentStreamStats
     }
 
 }
-
-async function test() {
-    const magnetURI = "magnet:?xt=urn:btih:711EA7C37AEAA53B4B8511EC14C6B2DA477AF37B&dn=Mr.Robot.Season.1-4.S01-04.COMPLETE.1080p.BluRay.WEB.10bit.DD5.1&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.bittor.pw%3A1337%2Fannounce&tr=udp%3A%2F%2Fpublic.popcorn-tracker.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fexodus.desync.com%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce"
-    const torrentStreams = await getTorrentStreams(magnetURI);
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-    const waitForInput = () => new Promise(resolve => rl.question("Press enter  to continue", resolve));
-    await waitForInput()
-    const first = torrentStreams[0];
-    console.log("first", first.url)
-    await selectTorrentStream(first);
-    await waitForInput()
-    const second = torrentStreams[1];
-    console.log("second", second.url)
-    await selectTorrentStream(second);
-    await waitForInput()
-    await deselectAllTorrentStreams();
-    await waitForInput();
-    await closeTorrentStreamsServer();
-    await waitForInput();
-    exit(0);
-
-}
-

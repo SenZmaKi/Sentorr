@@ -2,22 +2,23 @@
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
   "include": [
     "electron.vite.config.*",
-    "src/main/**/*",
-    "src/preload/**/*",
-    "src/backend/torrent/ipcMain.ts",
-    "src/backend/torrent/common/types.ts",
-    "src/common/types.ts",
-    "src/backend/torrent/common/**/*",
+    "src/**/*",
+    "test/**/*",
+    "@types/**/*",
   ],
   "compilerOptions": {
     "composite": true,
     "types": [
-      "electron-vite/node"
+      "electron-vite/node",
+      "bun"
     ],
     "paths": {
       "@/*": [
-        "./src/*"
+        "./src/*",
       ],
+      "@/test/*": [
+        "./test/*"
+      ]
     }
   }
 }

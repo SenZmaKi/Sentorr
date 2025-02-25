@@ -1,9 +1,9 @@
 import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import { getTorrentStreams, closeTorrentStreamsServer, clearTorrents, deselectAllTorrentStreams, selectTorrentStream, getCurrentTorrentStreamStats } from "../backend/torrent/ipcMain";
-import { TorrentStream } from "../backend/torrent/common/types";
-import { type IpcResult } from "../common/types";
+import { getTorrentStreams, closeTorrentStreamsServer, clearTorrents, deselectAllTorrentStreams, selectTorrentStream, getCurrentTorrentStreamStats } from "@/backend/torrent/server";
+import { TorrentStream } from "@/backend/torrent/common/types";
+import { type IpcResult } from "@/common/types";
 
 // import icon from "../renderer/src/assets/icon.png?asset";
 const icon = "";
@@ -50,7 +50,6 @@ function createWindow(): void {
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, "../preload/index.mjs"),
-      contextIsolation: false,
       nodeIntegration: true,
       webSecurity: false,
       enableBlinkFeatures: 'FontAccess, AudioVideoTracks',

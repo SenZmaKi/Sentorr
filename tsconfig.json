@@ -1,18 +1,26 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.json",
-  "include": ["@/types/**/*"],
+  "include": [
+    "src/renderer/**/*",
+  ],
   "compilerOptions": {
     "outDir": "./js",
     "verbatimModuleSyntax": true,
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/test/*": ["./test/*"]
+      "@/*": [
+        "src/*"
+      ],
     },
     "useDefineForClassFields": true,
     "strict": true,
     "allowJs": true,
     "checkJs": true,
-    "lib": ["ESNext", "DOM", "DOM.Iterable"]
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ]
   },
   "references": [
     {

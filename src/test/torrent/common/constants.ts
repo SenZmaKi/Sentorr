@@ -1,5 +1,5 @@
 import { seasonFormatTitle } from "@/backend/torrent/common/functions";
-import { GetTorrentFilesParams } from "@/backend/torrent/common/types";
+import { type GetTorrentFilesParams } from "@/backend/torrent/common/types";
 import {
   LANGUAGES,
   MOVIE_TITLE,

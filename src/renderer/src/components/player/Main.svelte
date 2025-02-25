@@ -45,7 +45,7 @@
       return;
     }
     const languages = [Language.English];
-    const torrentFiles = await window.api.torrent.getTorrentFiles({
+    const torrentFiles = await window.ipc.torrent.getTorrentFiles({
       media,
       episode,
       languages,
@@ -59,10 +59,10 @@
       return;
     }
     const seasonFiles = torrentFiles.filter(
-      (torrent) => torrent.isCompleteSeason,
+      (torrent) => torrent.isCompleteSeason
     );
     const episodeFiles = torrentFiles.filter(
-      (torrent) => !torrent.isCompleteSeason,
+      (torrent) => !torrent.isCompleteSeason
     );
     console.log("torrentFiles:", torrentFiles);
     console.log("seasonFiles", seasonFiles);
@@ -83,10 +83,10 @@
     const torrentFile = sortedByScore[0].torrent;
     let torrentsStreams: TorrentStream[] = [];
     try {
-      torrentsStreams = await window.api.torrent.getTorrentStreams(
+      torrentsStreams = await window.ipc.torrent.getTorrentStreams(
         media.title,
         torrentFile,
-        !media.isMovie,
+        !media.isMovie
       );
     } catch (error: any) {
       handleTorrentStreamsError(error, torrentFile);
@@ -105,7 +105,7 @@
             torrStream.info &&
             episode &&
             torrStream.info.episodeNumber === episode.number &&
-            torrStream.info.seasonNumber === episode.seasonNumber,
+            torrStream.info.seasonNumber === episode.seasonNumber
         );
     if (!torrentStream) {
       console.error("No matching torrent stream found");
@@ -119,14 +119,14 @@
       };
     console.log("torrentStream:", torrentStream);
     console.log("streamURL:", torrentStream.url);
-    window.api.torrent.selectTorrentStream(torrentStream);
+    window.ipc.torrent.selectTorrentStream(torrentStream);
     $playerTorrentStream = torrentStream;
     $playerTorrentFile = torrentFile;
   }
 
   async function reload() {
     if (!$playerTorrentStream) return;
-    window.api.torrent.selectTorrentStream($playerTorrentStream);
+    window.ipc.torrent.selectTorrentStream($playerTorrentStream);
     $playerTorrentStream = $playerTorrentStream;
   }
 
@@ -169,7 +169,7 @@
       case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
         blacklistedTorrents.push($playerTorrentFile);
         console.error(
-          `Media codec error: Media at ${$playerTorrentStream.url} codec not supported (${JSON.stringify(error)}) `,
+          `Media codec error: Media at ${$playerTorrentStream.url} codec not supported (${JSON.stringify(error)}) `
         );
         toast.error("Unsupported media codec", {
           description:
@@ -179,7 +179,7 @@
         break;
       case error.MEDIA_ERR_NETWORK:
         console.error(
-          `Network error: Failed to fetch media at ${$playerTorrentStream.url}`,
+          `Network error: Failed to fetch media at ${$playerTorrentStream.url}`
         );
         toast.error("Network error", {
           description:
@@ -191,7 +191,7 @@
       case error.MEDIA_ERR_DECODE:
         blacklistedTorrents.push($playerTorrentFile);
         console.error(
-          `Media decode error: Media at ${$playerTorrentStream.url} decode error (${JSON.stringify(error)}) `,
+          `Media decode error: Media at ${$playerTorrentStream.url} decode error (${JSON.stringify(error)}) `
         );
         toast.error("Media decoding error", {
           description:
@@ -209,7 +209,6 @@
   function handleLoadedMetadata() {
     if (!video.videoTracks || !video.audioTracks || !$playerTorrentFile) return;
 
-    // @ts-ignore
     if (!video.videoTracks.length && !video.audioTracks.length) {
       blacklistedTorrents.push($playerTorrentFile);
       console.error("Media codec error: No video and audio tracks found");
@@ -219,7 +218,6 @@
         onDismiss: load,
       });
     }
-    // @ts-ignore
     if (!video.videoTracks.length) {
       blacklistedTorrents.push($playerTorrentFile);
       console.error(`Video codec error: Video track not found`);
@@ -230,7 +228,6 @@
       });
       return;
     }
-    // @ts-ignore
     if (!video.audioTracks.length) {
       blacklistedTorrents.push($playerTorrentFile);
       console.error(`Audio codec error: Audio track not found`);
@@ -245,7 +242,7 @@
   setInterval(async () => {
     if (!$playerMedia || !$playerTorrentStream || !$playerTorrentFile) return;
     torrentStreamStats =
-      await window.api.torrent.getCurrentTorrentStreamStats();
+      await window.ipc.torrent.getCurrentTorrentStreamStats();
     // console.log(`torrentStreamStats: ${JSON.stringify(torrentStreamStats)}`);
   }, 1_000);
 </script>

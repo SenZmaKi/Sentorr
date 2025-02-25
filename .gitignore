@@ -9,7 +9,7 @@ out/
 js/
 .performance-profiles/
 electron-dists/
-test/results
+src/test/results
 
 
 .env

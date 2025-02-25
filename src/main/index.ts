@@ -9,7 +9,7 @@ import {
   selectTorrentStream,
   getCurrentTorrentStreamStats,
 } from "@/backend/torrent/server";
-import { TorrentStream } from "@/backend/torrent/common/types";
+import { type TorrentStream } from "@/backend/torrent/common/types";
 import { type IpcResult } from "@/common/types";
 
 // import icon from "../renderer/src/assets/icon.png?asset";

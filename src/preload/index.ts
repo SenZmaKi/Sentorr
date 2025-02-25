@@ -11,20 +11,12 @@ export async function invokeIpc<T>(channel: string, ...args: any): Promise<T> {
   if (error !== undefined) throw new Error(error);
   return result;
 }
-// Custom APIs for renderer
-const api = {
+const ipc = {
   torrent,
 };
 
-// Use `contextBridge` APIs to expose APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
-if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld("api", api);
-  } catch (error) {
-    console.error(error);
-  }
-} else {
-  window.api = api;
+try {
+  contextBridge.exposeInMainWorld("ipc", ipc);
+} catch (error) {
+  console.error(error);
 }

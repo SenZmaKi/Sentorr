@@ -1,12 +1,26 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
-  "include": ["electron.vite.config.*", "src/**/*", "test/**/*", "@types/**/*"],
+  "include": [
+    "electron.vite.config.*",
+    "src/main/**/*",
+    "src/preload/**/*",
+    "src/backend/**/*",
+    "src/common/**/*",
+    "src/test/**/*",
+    "src/@types/**/*",
+  ],
   "compilerOptions": {
+    "baseUrl": ".",
+    "verbatimModuleSyntax": true,
     "composite": true,
-    "types": ["electron-vite/node", "bun"],
+    "types": [
+      "electron-vite/node",
+      "bun"
+    ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@/test/*": ["./test/*"]
+      "@/*": [
+        "src/*"
+      ],
     }
   }
 }

@@ -1,5 +1,6 @@
 {
   "name": "Sentorr",
+  "private": true,
   "version": "1.0.0",
   "description": "Stream movies and tv shows from torrents",
   "main": "./out/main/index.js",

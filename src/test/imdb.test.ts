@@ -9,7 +9,7 @@ import {
   getTop10OfAllTime,
   getEpisodes,
 } from "@/backend/imdb/api";
-import { Pagination } from "@/backend/imdb/types";
+import { type Pagination } from "@/backend/imdb/types";
 import { SHOW_IMDB_ID, MOVIE_TITLE } from "./common/constants";
 import {
   failIfEmpty,

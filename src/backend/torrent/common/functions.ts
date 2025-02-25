@@ -3,8 +3,8 @@ import {
   parseSeason as vfpParseSeason,
   Language,
   Resolution as VfpResolution,
-  ParsedShow,
-  ParsedMovie,
+  type ParsedShow,
+  type ParsedMovie,
 } from "@ctrl/video-filename-parser";
 import levenshtein from "js-levenshtein";
 import { Resolution, RESOLUTIONS, type TorrentFile } from "./types";

@@ -10,7 +10,7 @@ import {
   getCurrentTorrentStreamStats,
 } from "@/backend/torrent/server";
 import { type TorrentStream } from "@/backend/torrent/common/types";
-import { type IpcResult } from "@/common/types";
+import type { TypedIpcMain } from "@/common/types";
 
 // import icon from "../renderer/src/assets/icon.png?asset";
 const icon = "";
@@ -98,36 +98,28 @@ app.whenReady().then(() => {
 
   // IPC
 
-  async function makeIpcResult<T>(promise: Promise<T>): Promise<IpcResult<T>> {
-    try {
-      const result = await promise;
-      return { result };
-    } catch (error: any) {
-      return { error: error.message };
-    }
-  }
-  ipcMain.handle("get-torrent-streams", (_, torrentID: string) =>
-    makeIpcResult(getTorrentStreams(torrentID)),
+  const typedIpcMain = ipcMain as TypedIpcMain;
+  typedIpcMain.handle("getTorrentStreams", (_, torrentID) =>
+    getTorrentStreams(torrentID)
   );
 
-  ipcMain.handle(
-    "select-torrent-stream",
-    async (_, torrentStream: TorrentStream) =>
-      makeIpcResult(selectTorrentStream(torrentStream)),
+  typedIpcMain.handle(
+    "selectTorrentStream",
+    (_, torrentStream: TorrentStream) => selectTorrentStream(torrentStream)
   );
 
-  ipcMain.handle("close-torrent-streams-server", async () =>
-    makeIpcResult(closeTorrentStreamsServer()),
+  typedIpcMain.handle("closeTorrentStreamsServer", () =>
+    closeTorrentStreamsServer()
   );
 
-  ipcMain.handle("clear-torrents", async () => makeIpcResult(clearTorrents()));
+  typedIpcMain.handle("clearTorrents", async () => clearTorrents());
 
-  ipcMain.handle("deselect-all-torrent-streams", async () =>
-    makeIpcResult(deselectAllTorrentStreams()),
+  typedIpcMain.handle("deselectAllTorrentStreams", async () =>
+    deselectAllTorrentStreams()
   );
 
-  ipcMain.handle("get-current-torrent-stream-stats", async () =>
-    makeIpcResult(getCurrentTorrentStreamStats()),
+  typedIpcMain.handle("getCurrentTorrentStreamStats", async () =>
+    getCurrentTorrentStreamStats()
   );
 
   createWindow();

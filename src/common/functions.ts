@@ -28,7 +28,7 @@ export function isDigit(str: string): boolean {
 export function filterMap<E, T>(
   array: Array<E>,
 
-  callbackfn: (elem: E) => T | undefined,
+  callbackfn: (elem: E) => T | undefined
 ): Array<T> {
   return array.map(callbackfn).filter((elem) => elem !== undefined) as Array<T>;
 }

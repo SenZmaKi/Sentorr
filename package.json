@@ -35,18 +35,16 @@
   "author": "Sen ZmaKi",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "@ctrl/video-filename-parser": "^5.1.0",
-    "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "@ctrl/video-filename-parser": "^5.1.0",
     "cheerio": "^1.0.0-rc.12",
-    "electron-updater": "^6.1.7",
-    "fs": "^0.0.1-security",
-    "htmlparser2": "^9.0.0",
     "js-levenshtein": "^1.1.6",
-    "svelte-sonner": "^0.3.28",
-    "webtorrent": "^2.5.19"
+    "electron-updater": "^6.1.7",
+    "webtorrent": "^2.5.19",
+    "htmlparser2": "^9.0.0"
   },
   "devDependencies": {
+    "svelte-sonner": "^0.3.28",
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
     "@types/bun": "latest",

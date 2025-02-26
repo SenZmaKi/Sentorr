@@ -1,3 +1,6 @@
+import type { TorrentServerApi } from "@/backend/torrent/server";
+import type { IpcMain, IpcRenderer, IpcMainInvokeEvent } from "electron";
+
 export class Client {
   private headers: HeadersInit;
   private static userAgents = [
@@ -15,7 +18,7 @@ export class Client {
 
   makeHeaders(
     headers: HeadersInit | undefined = undefined,
-    cookies: string[] | undefined = undefined,
+    cookies: string[] | undefined = undefined
   ) {
     const finalHeaders = {
       ...headers,
@@ -27,7 +30,7 @@ export class Client {
   public async get(
     url: string,
     headers: HeadersInit | undefined = undefined,
-    cookies: string[] | undefined = undefined,
+    cookies: string[] | undefined = undefined
   ): Promise<Response> {
     headers = this.makeHeaders(headers, cookies);
     return fetch(url, { method: "GET", headers: headers });
@@ -37,7 +40,7 @@ export class Client {
     url: string,
     data: any,
     headers: HeadersInit | undefined = undefined,
-    cookies: string[] | undefined = undefined,
+    cookies: string[] | undefined = undefined
   ): Promise<Response> {
     headers = headers ?? {};
     headers["Content-Type"] = "application/json";
@@ -47,6 +50,21 @@ export class Client {
   }
 }
 
-export type IpcResult<T> =
-  | { result: T; error?: undefined }
-  | { result?: undefined; error: string };
+type IpcRendererEvent = TorrentServerApi;
+
+export interface TypedIpcMain extends IpcMain {
+  handle<Channel extends keyof IpcRendererEvent>(
+    channel: Channel,
+    listener: (
+      event: IpcMainInvokeEvent,
+      ...args: Parameters<IpcRendererEvent[Channel]>
+    ) => ReturnType<IpcRendererEvent[Channel]>
+  ): void;
+}
+
+export interface TypedIpcRenderer extends IpcRenderer {
+  invoke<Channel extends keyof IpcRendererEvent>(
+    channel: Channel,
+    ...args: Parameters<IpcRendererEvent[Channel]>
+  ): ReturnType<IpcRendererEvent[Channel]>;
+}

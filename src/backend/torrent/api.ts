@@ -2,7 +2,6 @@ import {
   type TorrentStream,
   type TorrentFile,
   TorrentStreamsError,
-  type TorrentStreamStats,
 } from "./common/types";
 import type { Episode, Media } from "@/backend/imdb/types";
 import { getTorrentsFiles as getMovieTorrents } from "./yts/api";
@@ -15,11 +14,14 @@ import {
   seasonFormatTitle,
 } from "./common/functions";
 import { filterMap } from "@/common/functions";
-import { invokeIpc } from "@/preload";
 import type { Language } from "@ctrl/video-filename-parser";
+import { ipcRenderer } from "electron";
+import type { TypedIpcRenderer } from "@/common/types";
+
 // prettier-ignore
 const VIDEO_EXTS = ['3g2', '3gp', 'asf', 'avi', 'dv', 'flv', 'gxf', 'm2ts', 'm4a', 'm4b', 'm4p', 'm4r', 'm4v', 'mkv', 'mov', 'mp4', 'mpd', 'mpeg', 'mpg', 'mxf', 'nut', 'ogm', 'ogv', 'swf', 'ts', 'vob', 'webm', 'wmv', 'wtv']
 const VIDEO_RX = new RegExp(`.(${VIDEO_EXTS.join("|")})$`, "i");
+const typesafeIpcRenderer = ipcRenderer as TypedIpcRenderer;
 
 async function getTorrentFiles({
   media,
@@ -37,7 +39,7 @@ async function getTorrentFiles({
   const { abbrvSeasonTitle, fullSeasonTitle } = seasonFormatTitle(
     media.title,
     episode.seasonNumber,
-    episode.number,
+    episode.number
   );
   const commonParams = {
     mediaImdbID: media.id,
@@ -67,10 +69,10 @@ async function getTorrentFiles({
         const parsedSeason = parseSeason(
           torrent.filename,
           "torrentFile",
-          false,
+          false
         );
         return parsedSeason?.seasonNumbers.includes(episode.seasonNumber);
-      }),
+      })
     );
 
   const episodeTorrentFilesPromise = Promise.all([
@@ -97,7 +99,7 @@ async function getTorrentFiles({
           parsedSeason?.seasonNumbers.includes(episode.seasonNumber) &&
           parsedSeason?.episodeNumbers.includes(episode.number)
         );
-      }),
+      })
     );
 
   const torrentFiles = [
@@ -110,24 +112,24 @@ async function getTorrentFiles({
 async function getTorrentStreams(
   title: string,
   torrentFile: TorrentFile,
-  isTvSeries: boolean,
+  isTvSeries: boolean
 ): Promise<TorrentStream[]> {
   const torrentID = torrentFile.torrentID;
-  const allStreams = await invokeIpc<TorrentStream[]>(
-    "get-torrent-streams",
-    torrentID,
+  const allStreams = await typesafeIpcRenderer.invoke(
+    "getTorrentStreams",
+    torrentID
   );
   console.log("allStreams", allStreams);
   const videoStreams = allStreams.filter(
     ({ filename }) =>
-      VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample"),
+      VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample")
   );
   console.log("videoStreams", videoStreams);
   if (!videoStreams.length) throw new Error(TorrentStreamsError.NoVideoFiles);
   const torrentStreams = filterMap(videoStreams, (stream) => {
     if (!isSameTitle(title, stream.filename, isTvSeries).isSame) {
       console.warn(
-        `Torrent stream did not match title "${title}"  "${stream.filename}"`,
+        `Torrent stream did not match title "${title}"  "${stream.filename}"`
       );
       return undefined;
     }
@@ -139,7 +141,7 @@ async function getTorrentStreams(
     const streamSeason = parseSeason(
       stream.filename,
       "torrentStream",
-      !torrentFile.isCompleteSeason,
+      !torrentFile.isCompleteSeason
     );
     if (!streamSeason) {
       return undefined;
@@ -168,22 +170,16 @@ async function getTorrentStreams(
 }
 
 async function selectTorrentStream(torrentStream: TorrentStream) {
-  return invokeIpc<void>("select-torrent-stream", torrentStream);
+  return typesafeIpcRenderer.invoke("selectTorrentStream", torrentStream);
 }
 
 async function getCurrentTorrentStreamStats() {
-  return invokeIpc<TorrentStreamStats | undefined>(
-    "get-current-torrent-stream-stats",
-  );
+  return typesafeIpcRenderer.invoke("getCurrentTorrentStreamStats");
 }
 
-const TORRENT_API = {
+export default {
   getTorrentFiles,
   getTorrentStreams,
   selectTorrentStream,
   getCurrentTorrentStreamStats,
 };
-
-export type TorrentApi = typeof TORRENT_API;
-
-export default TORRENT_API;

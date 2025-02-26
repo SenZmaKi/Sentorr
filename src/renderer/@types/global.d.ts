@@ -1,8 +1,7 @@
-
+/// <reference types="typescript/lib/lib.dom" />
 import { type TorrentApi } from "@/backend/torrent/api";
 
 declare global {
-
   interface MediaTrack {
     id: string;
     kind: string;
@@ -14,7 +13,7 @@ declare global {
     selected: boolean;
   }
 
-  interface AudioTrack extends MediaTrack { }
+  interface AudioTrack extends MediaTrack {}
 
   interface MediaTrackList<T extends MediaTrack> extends EventTarget {
     /** The number of tracks in the list (read-only). */
@@ -51,7 +50,7 @@ declare global {
   /**
    * https://developer.mozilla.org/en-US/docs/Web/API/AudioTrackList
    */
-  interface AudioTrackList extends MediaTrackList<AudioTrack> { }
+  interface AudioTrackList extends MediaTrackList<AudioTrack> {}
 
   interface HTMLVideoElement {
     /**

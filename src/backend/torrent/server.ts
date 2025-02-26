@@ -22,7 +22,7 @@ function getCurrentTorrent() {
   if (!fileTorrentStreamQueue.length) return undefined;
   const currentFile = fileTorrentStreamQueue[0].file;
   const currentTorrent = Client.torrents.find((t) =>
-    t.files.includes(currentFile),
+    t.files.includes(currentFile)
   );
   return currentTorrent;
 }
@@ -53,7 +53,7 @@ async function removeTorrent(torrentID: string) {
 }
 
 export async function getTorrentStreams(
-  torrentID: string,
+  torrentID: string
 ): Promise<TorrentStream[]> {
   return new Promise(async (resolve, reject) => {
     let success = false;
@@ -72,7 +72,7 @@ export async function getTorrentStreams(
         success = true;
         const torrentStreams = torrentToTorrentStreams(torrent);
         return resolve(torrentStreams);
-      },
+      }
     );
 
     setTimeout(async () => {
@@ -89,24 +89,24 @@ export async function selectTorrentStream(torrentStream: TorrentStream) {
     const queuedIndex = fileTorrentStreamQueue.findIndex(
       (f) =>
         f.torrentStream.filepath === torrentStream.filepath &&
-        f.torrentStream.magnetURI === torrentStream.magnetURI,
+        f.torrentStream.magnetURI === torrentStream.magnetURI
     );
     if (queuedIndex !== -1) {
       console.log(
-        `Torrent stream ${torrentStream.filepath} was already queued, removing it`,
+        `Torrent stream ${torrentStream.filepath} was already queued, removing it`
       );
       fileTorrentStreamQueue.splice(queuedIndex, 1);
     }
     const torrent = Client.torrents.find(
-      (torrent) => torrent.magnetURI === torrentStream.magnetURI,
+      (torrent) => torrent.magnetURI === torrentStream.magnetURI
     );
     if (!torrent) return reject(TorrentStreamsError.TorrentWasRemoved);
     const file = torrent.files.find((f) => f.path === torrentStream.filepath);
     if (!file)
       return reject(
         new Error(
-          `Invalid state: File  "${torrentStream.filepath}" not found in torrent "${torrentStream.magnetURI}"`,
-        ),
+          `Invalid state: File  "${torrentStream.filepath}" not found in torrent "${torrentStream.magnetURI}"`
+        )
       );
     await deselectAllTorrentStreams();
     console.log(`Selecting torrent stream ${torrentStream.filepath}`);
@@ -127,11 +127,11 @@ export async function selectTorrentStream(torrentStream: TorrentStream) {
       if (
         !fileTorrentStreamQueue.find(
           ({ torrentStream }) =>
-            torrentStream.magnetURI === first.torrentStream.magnetURI,
+            torrentStream.magnetURI === first.torrentStream.magnetURI
         )
       ) {
         console.log(
-          `Torrent ${first.torrentStream.magnetURI} has no files in queue referencing it, removing it`,
+          `Torrent ${first.torrentStream.magnetURI} has no files in queue referencing it, removing it`
         );
         await removeTorrent(first.torrentStream.magnetURI);
       }
@@ -178,3 +178,15 @@ export async function getCurrentTorrentStreamStats(): Promise<
     numPeers,
   };
 }
+
+const TorrentServer = {
+  getTorrentStreams,
+  selectTorrentStream,
+  closeTorrentStreamsServer,
+  clearTorrents,
+  deselectAllTorrentStreams,
+  getCurrentTorrentStreamStats,
+};
+
+export type TorrentServerApi = typeof TorrentServer;
+export default TorrentServer;

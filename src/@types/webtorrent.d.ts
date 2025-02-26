@@ -1,11 +1,12 @@
-import "webtorrent";
+/// <reference types="webtorrent" />
 
-declare module "webtorrent" {
-  export interface TorrentOptions {
+import "webtorrent";
+module "webtorrent" {
+  interface TorrentOptions {
     deselect?: boolean;
   }
 
-  export interface ServerBase {
-    listen: HttpServer["listen"];
+  interface ServerBase {
+    listen: (...args) => unknown;
   }
 }

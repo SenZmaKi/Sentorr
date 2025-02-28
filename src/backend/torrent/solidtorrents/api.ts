@@ -1,4 +1,4 @@
-import { CLIENT } from "@/common/constants";
+import { Client } from "@/common/constants";
 import { filterMap, parseHtml } from "@/common/functions";
 import type { Cheerio, Element } from "cheerio";
 import { parseSize, validateTorrent } from "../common/functions";
@@ -15,7 +15,7 @@ export async function getTorrentFiles({
   languages,
 }: GetTorrentFilesParams) {
   const url = `${HOME_URL}/search?q=${seasonFormattedTitle}&sort=seeders`;
-  const response = await CLIENT.get(url);
+  const response = await Client.get(url);
   const htmlPage = await response.text();
   const $ = parseHtml(htmlPage);
   return filterMap($("li.search-result").toArray(), (elem) =>
@@ -24,8 +24,8 @@ export async function getTorrentFiles({
       title,
       isTvSeries,
       getCompleteSeason,
-      languages,
-    ),
+      languages
+    )
   );
 }
 
@@ -34,7 +34,7 @@ function parseTorrentElement(
   title: string,
   isTvSeries: boolean,
   getCompleteSeason: boolean,
-  languages: Language[],
+  languages: Language[]
 ): TorrentFile | undefined {
   const infoDiv = elem.find("div.info > div");
   const filename = infoDiv.find("h5 > a").text();
@@ -43,7 +43,7 @@ function parseTorrentElement(
     filename,
     isTvSeries,
     getCompleteSeason,
-    languages,
+    languages
   );
   if (!result) return undefined;
   const { resolution } = result;

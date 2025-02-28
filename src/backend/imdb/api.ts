@@ -27,7 +27,7 @@ import {
   REVIEWS_HASH,
 } from "./constants";
 import { filterMap, getFirst, parseHtml } from "@/common/functions";
-import { DEBUG, CLIENT } from "@/common/constants";
+import { DEBUG, Client } from "@/common/constants";
 import { DEFAULT_SORT_BY, DEFAULT_SORT_ORDER } from "./constants";
 import {
   HOME_URL,
@@ -46,7 +46,7 @@ export function makeScaledImageUrl(
   width: number,
   height: number,
   url: ScalableImageUrl,
-  quality?: number,
+  quality?: number
 ): string {
   const split = url.url.split(".");
   const ext = split.pop();
@@ -64,7 +64,7 @@ export const getSessionCookies: () => Promise<string[]> = (function () {
   let sessionCookies: string[] | undefined = undefined;
   return async function () {
     if (!sessionCookies) {
-      const response = await CLIENT.get(HOME_URL);
+      const response = await Client.get(HOME_URL);
       sessionCookies = response.headers.getSetCookie();
       return sessionCookies;
     }
@@ -78,11 +78,11 @@ function stringifyAndEncodeJson(json: any): string {
 function generateAPIURL(
   operationName: string,
   variables: any,
-  sha256Hash: string,
+  sha256Hash: string
 ): string {
   const extensions = { persistedQuery: { sha256Hash, version: 1 } };
   const url = `${API_ENTRY_POINT}${operationName}&variables=${stringifyAndEncodeJson(
-    variables,
+    variables
   )}&extensions=${stringifyAndEncodeJson(extensions)}`;
   return url;
 }
@@ -90,10 +90,10 @@ function generateAPIURL(
 async function apiGet(
   url: string,
   headers: HeadersInit | undefined = undefined,
-  cookies: string[] = [],
+  cookies: string[] = []
 ): Promise<any> {
   headers = { ...headers, ...{ "Content-Type": "application/json" } };
-  const response = await CLIENT.get(url, headers, cookies);
+  const response = await Client.get(url, headers, cookies);
   const resp_json = await response.json();
   if (DEBUG) {
     // console.log(
@@ -161,10 +161,10 @@ export async function getFanFavorites(): Promise<BaseResult[]> {
   const fanFavoritesJson = (await apiGet(
     url,
     undefined,
-    sessionCookies,
+    sessionCookies
   )) as FanFavoritesResultJson;
   return fanFavoritesJson.data.fanPicksTitles.edges.map(({ node }) =>
-    buildBaseResult(node),
+    buildBaseResult(node)
   );
 }
 
@@ -177,13 +177,13 @@ export async function getPopularTitles(): Promise<BaseResult[]> {
   const url = generateAPIURL("PopularTitles", variables, POPULAR_TITLES_HASH);
   const popularTitleJson = (await apiGet(url)) as PopularTitlesResultJson;
   return popularTitleJson.data.popularTitles.titles.map((node) =>
-    buildBaseResult(node),
+    buildBaseResult(node)
   );
 }
 
 export async function search(
   filters: SearchFilters,
-  pageKey?: string,
+  pageKey?: string
 ): Promise<Pagination<BaseResult[]>> {
   const {
     searchTerm = "",
@@ -225,14 +225,14 @@ export async function search(
   const url = generateAPIURL(
     "AdvancedTitleSearch",
     variables,
-    ADVANCED_TITLE_SEARCH_HASH,
+    ADVANCED_TITLE_SEARCH_HASH
   );
   const advancedTitleSearchResultJson = (await apiGet(
-    url,
+    url
   )) as AdvancedTitleSearchResultJson;
   const results =
     advancedTitleSearchResultJson.data.advancedTitleSearch.edges.map(
-      ({ node }) => buildBaseResult(node.title),
+      ({ node }) => buildBaseResult(node.title)
     );
   const pageInfo =
     advancedTitleSearchResultJson.data.advancedTitleSearch.pageInfo;
@@ -243,7 +243,7 @@ export async function search(
 export async function getEpisodes(
   mediaID: string,
   seasonNumber: number,
-  pageKey?: string,
+  pageKey?: string
 ): Promise<Pagination<Episode[]>> {
   const variables = {
     ...DEFAULT_LOCALE,
@@ -257,7 +257,7 @@ export async function getEpisodes(
   const url = generateAPIURL(
     "TitleEpisodesSubPagePagination",
     variables,
-    EPISODES_HASH,
+    EPISODES_HASH
   );
   const episodesJson = (await apiGet(url)) as EpisodesResultJson;
   const results = episodesJson.data.title.episodes.episodes.edges.map(
@@ -266,7 +266,7 @@ export async function getEpisodes(
       const title = ep.titleText.text;
       const number = parseInt(
         ep.series.displayableEpisodeNumber.episodeNumber.displayableProperty
-          .value.plainText,
+          .value.plainText
       );
       const imageUrl = { url: ep.primaryImage.url };
       const plot = ep.plot?.plotText.plaidHtml;
@@ -290,7 +290,7 @@ export async function getEpisodes(
         rating,
         ratingCount,
       };
-    },
+    }
   );
   const pageInfo = episodesJson.data.title.episodes.episodes.pageInfo;
   const nextPageKey = pageInfo.hasNextPage ? pageInfo.endCursor : undefined;
@@ -299,7 +299,7 @@ export async function getEpisodes(
 
 export async function getMedia(mediaID: string): Promise<Media> {
   const url = `${HOME_URL}title/${mediaID}`;
-  const response = await CLIENT.get(url);
+  const response = await Client.get(url);
   const page = await response.text();
   const $ = parseHtml(page);
   const ldJsonStr = $('script[type="application/ld+json"]').text();
@@ -311,7 +311,7 @@ export async function getMedia(mediaID: string): Promise<Media> {
 
 function combineMetadata(
   metadataJson: MediaMetadataJson,
-  moreMetadata: MoreMetadataJson,
+  moreMetadata: MoreMetadataJson
 ): Media {
   const title = metadataJson.name;
   const url = metadataJson.image;
@@ -340,7 +340,7 @@ function combineMetadata(
   const seasonsCount = mainColumnData?.episodes?.seasons?.length;
   const recommendations = mainColumnData.moreLikeThisTitles.edges.map(
     ({ node }) => buildBaseResult(node),
-    plot,
+    plot
   );
   const actors = mainColumnData.cast.edges.map(({ node: actor }) => {
     const name = actor.name.nameText.text;
@@ -383,7 +383,7 @@ function combineMetadata(
 export async function getReviews(
   mediaID: string,
   hideSpoilers: boolean,
-  pageKey?: string,
+  pageKey?: string
 ): Promise<Pagination<Review[]>> {
   const variables = {
     ...DEFAULT_LOCALE,
@@ -415,7 +415,7 @@ export async function getReviews(
         hasSpoilers: review.spoiler,
         rating: review.authorRating,
       };
-    },
+    }
   );
   const pageInfo = reviewsJson.data.title.reviews.pageInfo;
   const nextPageKey = pageInfo.hasNextPage ? pageInfo.endCursor : undefined;

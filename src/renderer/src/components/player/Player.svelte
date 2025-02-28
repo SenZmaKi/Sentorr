@@ -16,17 +16,16 @@
     playerTorrentFile,
     playerTorrentStream,
   } from "./store";
-  import SeekBar from "perfect-seekbar";
+  import Controls from "./controls/Controls.svelte";
+  import { safePlay } from "./common/functions";
 
   export let hidden: boolean;
   let blacklistedTorrents: TorrentFile[] = [];
   let torrentStreamStats: TorrentStreamStats | undefined = undefined;
-  let video: HTMLVideoElement;
+  let video: HTMLVideoElement | undefined = undefined;
+  let isLoadedMetadata = false;
 
   async function load() {
-    // DEBUG
-    if ($playerTorrentStream) return;
-
     let media = $playerMedia;
     let episode = $playerEpisode;
     if (!media) {
@@ -89,7 +88,7 @@
         !media.isMovie
       );
     } catch (error: any) {
-      handleTorrentStreamsError(error, torrentFile);
+      onTorrentStreamsError(error, torrentFile);
       return;
     }
 
@@ -130,7 +129,7 @@
     $playerTorrentStream = $playerTorrentStream;
   }
 
-  function handleTorrentStreamsError(error: Error, torrentFile: TorrentFile) {
+  function onTorrentStreamsError(error: Error, torrentFile: TorrentFile) {
     blacklistedTorrents.push(torrentFile);
     switch (error.message) {
       case TorrentStreamsError.TorrentTimeout:
@@ -161,7 +160,8 @@
     }
   }
 
-  function handlePlaybackError() {
+  function onPlaybackError() {
+    if (!video) return;
     const error = video.error;
     if (!error) return;
     if (!$playerTorrentFile || !$playerTorrentStream) return;
@@ -171,9 +171,9 @@
         console.error(
           `Media codec error: Media at ${$playerTorrentStream.url} codec not supported (${JSON.stringify(error)}) `
         );
-        toast.error("Unsupported media codec", {
+        toast.error("Media codec error", {
           description:
-            "The media codec is unsupported. Dismiss this message to fetch a new torrent.",
+            "The video or audio codec is unsupported. Dismiss this message to fetch a new torrent.",
           onDismiss: load,
         });
         break;
@@ -204,17 +204,20 @@
     }
   }
   $: if ($playerMedia && $playerEpisode) {
+    // DEBUG
     load();
   }
-  function handleLoadedMetadata() {
-    if (!video.videoTracks || !video.audioTracks || !$playerTorrentFile) return;
-
+  function isValidCodecs() {
+    if (!video) return false;
+    // We it's valid assume cause we don't have any information
+    if (!video.videoTracks || !video.audioTracks || !$playerTorrentFile)
+      return true;
     if (!video.videoTracks.length && !video.audioTracks.length) {
       blacklistedTorrents.push($playerTorrentFile);
       console.error("Media codec error: No video and audio tracks found");
       toast.error("Media codec error", {
         description:
-          "The media codec is unsupported. Dismiss this message to fetch a new torrent.",
+          "The video and audio codec is unsupported. Dismiss this message to fetch a new torrent.",
         onDismiss: load,
       });
     }
@@ -226,7 +229,7 @@
           "The video codec is unsupported. Dismiss this message to fetch a new torrent.",
         onDismiss: load,
       });
-      return;
+      return false;
     }
     if (!video.audioTracks.length) {
       blacklistedTorrents.push($playerTorrentFile);
@@ -236,8 +239,9 @@
           "The audio codec is unsupported. Dismiss this message to fetch a new torrent.",
         onDismiss: load,
       });
-      return;
+      return false;
     }
+    return true;
   }
   setInterval(async () => {
     if (!$playerMedia || !$playerTorrentStream || !$playerTorrentFile) return;
@@ -245,17 +249,32 @@
       await window.ipc.torrent.getCurrentTorrentStreamStats();
     // console.log(`torrentStreamStats: ${JSON.stringify(torrentStreamStats)}`);
   }, 1_000);
+  const webtorrentDir = "file:C:\\Users\\Sen\\AppData\\Local\\Temp\\webtorrent";
+  // const videoUrl = `${webtorrentDir}\\Mr.Robot.Season.1-4.S01-04.COMPLETE.1080p.BluRay.WEB.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01.1080p.BluRay.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01E01.1080p.BluRay.10bit.DD5.1.x265-POIASD.mkv`;
+  // const videorl = `${webtorrentDir}\\Mr.Robot.SEASON.01.S01.COMPLETE.1080p.10bit.BluRay.6CH.x265.HEVC-PSA\\Mr.Robot.S01E01.eps1.0_hellofriend.mov.1080p.10bit.BluRay.6CH.x265.HEVC-PSA.mkv`;
+  // const videoUrl = `${webtorrentDir}\\[SubsPlease] Solo Leveling - 14 (1080p) [2FD84CD9].mkv`;
+  const videoUrl =
+    "https://github.com/user-attachments/assets/06fae060-0bc9-43b0-8153-04f4cf430e22";
 </script>
 
 <PageWrapper {hidden}>
-  <video
-    class="w-full h-full"
-    bind:this={video}
-    on:error={handlePlaybackError}
-    src={$playerTorrentStream?.url}
-    on:loadedmetadata={handleLoadedMetadata}
-  >
-    <track kind="captions" />
-    <SeekBar></SeekBar>
-  </video>
+  <div class="relative flex flex-col items-center">
+    <!-- svelte-ignore a11y-media-has-caption -->
+    <video
+      muted={true}
+      bind:this={video}
+      on:error={onPlaybackError}
+      on:loadedmetadata={() => {
+        if (isValidCodecs() && video) safePlay(video);
+        isLoadedMetadata = true;
+      }}
+      src={videoUrl}
+    >
+    </video>
+    {#if video && isLoadedMetadata && $playerTorrentStream}
+      <div class="absolute bottom-[0%] w-[97%]">
+        <Controls {video} />
+      </div>
+    {/if}
+  </div>
 </PageWrapper>

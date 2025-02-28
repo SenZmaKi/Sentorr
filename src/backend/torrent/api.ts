@@ -177,9 +177,12 @@ async function getCurrentTorrentStreamStats() {
   return typesafeIpcRenderer.invoke("getCurrentTorrentStreamStats");
 }
 
-export default {
+const Torrent = {
   getTorrentFiles,
   getTorrentStreams,
   selectTorrentStream,
   getCurrentTorrentStreamStats,
 };
+
+export type TorrentApi = typeof Torrent;
+export default Torrent;

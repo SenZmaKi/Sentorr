@@ -18,5 +18,5 @@ declare module "perfect-seekbar" {
   export default class Seekbar extends SvelteComponent<
     SeekbarProps,
     SeekbarEvents
-  > { }
+  > {}
 }

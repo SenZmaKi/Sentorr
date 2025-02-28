@@ -1,4 +1,4 @@
-import { CLIENT } from "@/common/constants";
+import { Client } from "@/common/constants";
 import { parseHtml } from "@/common/functions";
 import { type GetTorrentFilesParams, type TorrentFile } from "../common/types";
 import type { CheerioAPI, Element } from "cheerio";
@@ -13,7 +13,7 @@ const get = (() => {
   let mutex = Promise.resolve();
   return async (url: string) => {
     await mutex;
-    const response = await CLIENT.get(url);
+    const response = await Client.get(url);
     if (response.status !== 429) return response;
     const retryAfter = response.headers.get("Retry-After");
     const seconds = retryAfter ? parseInt(retryAfter) : 10; // They usually return 10 seconds so we use it as default
@@ -43,7 +43,7 @@ export async function getTorrentFiles({
       title,
       isTvSeries,
       getCompleteSeason,
-      languages,
+      languages
     );
     if (!result) continue;
     const { torrentFile: newTorrentFile, pageResource } = result;
@@ -58,7 +58,7 @@ function parseTorrentElement(
   title: string,
   isTvSeries: boolean,
   getCompleteSeason: boolean,
-  languages: Language[],
+  languages: Language[]
 ): { torrentFile: TorrentFile; pageResource: string } | undefined {
   const cheerioEl = $(elem);
   const td = cheerioEl.find("td");
@@ -76,7 +76,7 @@ function parseTorrentElement(
     filename,
     isTvSeries,
     getCompleteSeason,
-    languages,
+    languages
   );
 
   if (!result) return undefined;
@@ -106,10 +106,10 @@ function parseTorrentElement(
 async function updateTorrentFilesArray(
   torrentFiles: TorrentFile[],
   newTorrentFile: TorrentFile,
-  pageResource: string,
+  pageResource: string
 ): Promise<void> {
   const idx = torrentFiles.findIndex(
-    (torr) => torr.resolution === newTorrentFile.resolution,
+    (torr) => torr.resolution === newTorrentFile.resolution
   );
   const pageLink = `${HOME_URL}${pageResource}`;
   if (

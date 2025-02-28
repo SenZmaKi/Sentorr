@@ -62,6 +62,12 @@ declare global {
      */
     audioTracks: AudioTrackList;
   }
+  interface TextTrackList {
+    [Symbol.iterator](): Iterator<TextTrack>;
+  }
+  interface TextTrackCueList {
+    [Symbol.iterator](): Iterator<TextTrackCue>;
+  }
   interface Window {
     /**
      * Invoke a procedure in the main process.

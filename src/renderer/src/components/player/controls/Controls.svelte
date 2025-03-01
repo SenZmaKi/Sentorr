@@ -5,6 +5,7 @@
   import { isHovering } from "./common/store";
   import { createThumbnailGenerator } from "./common/thumbnail";
   import Next from "./Next.svelte";
+    import Volume from "./volume/Volume.svelte";
 
   export let video: HTMLVideoElement;
   let progress = 0;
@@ -59,8 +60,10 @@
       />
       <div class="pt-5 pl-3 flex">
         <PlayPause {video} />
-        <div class="pr-6"></div>
+        <div class="w-6"></div>
         <Next />
+        <div class="w-6"></div>
+        <Volume {video} />
       </div>
     </div>
   </div>

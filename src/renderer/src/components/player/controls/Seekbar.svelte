@@ -10,15 +10,15 @@
   export let seek = 0;
   export let length = 0;
   export let thumbnailGenerator: ThumbnailGenerator | undefined = undefined;
+  export let accentColor = "#f00";
+  export let onSeeking: ((percent: number) => void) | undefined = undefined;
+  export let onSeeked: (() => void) | undefined = undefined;
   const {
     getThumbnail,
     disposeThumbnail,
     width: thumbnailWidth,
     height: thumbnailHeight,
   } = thumbnailGenerator ?? { getThumbnail: undefined, height: 0, width: 0 };
-  export let accentColor = "#f00";
-  export let onSeeking: ((percent: number) => void) | undefined = undefined;
-  export let onSeeked: (() => void) | undefined = undefined;
   const { onPointerEnter, onPointerLeave } = hoverManager();
 
   function clamp(value: number): number {
@@ -46,7 +46,7 @@
     const percent = clamp(
       ((pageX - currentTarget.getBoundingClientRect().left) /
         currentTarget.clientWidth) *
-        100
+        100,
     );
     if (seeking) {
       onSeeking && onSeeking(percent);
@@ -90,17 +90,18 @@
     sum += size;
     return cloned;
   });
+  let seekbarHeight = processedChapters.length ? 25 : 13;
 
   function checkThumbActive(progress: number, seek: number): boolean {
     return processedChapters.some(
       ({ offset, size }) =>
-        offset + size > progress && offset + size > seek && offset < seek
+        offset + size > progress && offset + size > seek && offset < seek,
     );
   }
 
   function getCurrentChapterTitle(seek: number): string {
     const chapter = processedChapters.find(
-      ({ offset, size }) => offset + size > seek && offset <= seek
+      ({ offset, size }) => offset + size > seek && offset <= seek,
     );
     return chapter ? chapter.text : "";
   }
@@ -127,7 +128,7 @@
   on:pointerenter={onPointerEnter}
   on:pointerleave={endHover}
   on:pointermove={calculatePositionProgress}
-  style="--accent: {accentColor};"
+  style="height: {seekbarHeight}px;--accent: {accentColor};"
 >
   {#each processedChapters as { size, offset, scale }}
     {@const seekPercent = clamp((seek - offset) * scale)}
@@ -160,7 +161,7 @@
   {/each}
 
   <div class="thumb-container center" style="left: {progress}%;">
-    <div class="thumb" class:active={checkThumbActive(progress, seek)} />
+      <div class="thumb" class:active={checkThumbActive(progress, seek)} />
   </div>
 
   <div
@@ -199,7 +200,6 @@
     align-items: center;
   }
   .seekbar {
-    height: 25px;
     display: flex;
     flex-direction: row;
     cursor: pointer;
@@ -267,11 +267,11 @@
     bottom: 4.5px;
   }
   .thumb {
-    width: 13px;
-    height: 13px;
     background: var(--accent);
     position: absolute;
     border-radius: 50%;
+    box-sizing: border-box;
+
     transition:
       width 0.1s cubic-bezier(0.4, 0, 1, 1),
       height 0.1s cubic-bezier(0.4, 0, 1, 1),

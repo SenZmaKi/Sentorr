@@ -100,26 +100,26 @@ app.whenReady().then(() => {
 
   const typedIpcMain = ipcMain as TypedIpcMain;
   typedIpcMain.handle("getTorrentStreams", (_, torrentID) =>
-    getTorrentStreams(torrentID)
+    getTorrentStreams(torrentID),
   );
 
   typedIpcMain.handle(
     "selectTorrentStream",
-    (_, torrentStream: TorrentStream) => selectTorrentStream(torrentStream)
+    (_, torrentStream: TorrentStream) => selectTorrentStream(torrentStream),
   );
 
   typedIpcMain.handle("closeTorrentStreamsServer", () =>
-    closeTorrentStreamsServer()
+    closeTorrentStreamsServer(),
   );
 
   typedIpcMain.handle("clearTorrents", async () => clearTorrents());
 
   typedIpcMain.handle("deselectAllTorrentStreams", async () =>
-    deselectAllTorrentStreams()
+    deselectAllTorrentStreams(),
   );
 
   typedIpcMain.handle("getCurrentTorrentStreamStats", async () =>
-    getCurrentTorrentStreamStats()
+    getCurrentTorrentStreamStats(),
   );
 
   createWindow();

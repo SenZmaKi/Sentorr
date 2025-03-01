@@ -262,6 +262,7 @@
   >
     <!-- svelte-ignore a11y-media-has-caption -->
     <video
+      crossorigin="anonymous"
       muted={true}
       bind:this={video}
       on:error={onPlaybackError}

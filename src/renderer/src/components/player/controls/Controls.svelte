@@ -5,14 +5,16 @@
   import { isHovering } from "./common/store";
   import { createThumbnailGenerator } from "./common/thumbnail";
   import Next from "./Next.svelte";
-    import Volume from "./volume/Volume.svelte";
+  import Volume from "./volume/Volume.svelte";
+  import Time from "./Time.svelte";
 
   export let video: HTMLVideoElement;
   let progress = 0;
   let buffer = 0;
   let show = false;
-  let length = video.duration;
+  let duration = video.duration;
   let hidetimer: Timer | undefined = undefined;
+  let currentTime = video.currentTime;
   const thumbnailGenerator = createThumbnailGenerator(video);
 
   function showWithTimeout() {
@@ -37,14 +39,15 @@
     }
   };
   video.ontimeupdate = () => {
-    progress = (video.currentTime / video.duration) * 100;
+    currentTime = video.currentTime;
+    progress = (currentTime / video.duration) * 100;
   };
   video.onmousemove = () => {
     showWithTimeout();
   };
 </script>
 
-{#if true || video.paused || $isHovering}
+{#if isHovering || video.paused || $isHovering}
   <div
     transition:fade
     style="background: radial-gradient(oval, rgba(0,0,0,0.8) 0%, transparent 70%);"
@@ -54,16 +57,15 @@
       <Seekbar
         bind:progress
         {buffer}
-        {length}
+        length={duration}
         {onSeeking}
         {thumbnailGenerator}
       />
-      <div class="pt-5 pl-3 flex">
+      <div class="pt-5 pl-3 flex items-center gap-x-6">
         <PlayPause {video} />
-        <div class="w-6"></div>
         <Next />
-        <div class="w-6"></div>
         <Volume {video} />
+        <Time {currentTime} {duration} />
       </div>
     </div>
   </div>

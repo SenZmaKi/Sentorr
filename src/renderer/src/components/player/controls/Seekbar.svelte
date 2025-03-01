@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { hoverManager } from "./common/functions";
+  import { hoverManager,timeStamp } from "./common/functions";
   import type { Chapter } from "./common/types";
   import type { ThumbnailGenerator } from "./common/thumbnail";
 
@@ -25,16 +25,6 @@
     return Math.min(Math.max(value, 0), 100);
   }
 
-  function timeStamp(sec: number): string {
-    const hours = Math.floor(sec / 3600);
-    let minutes: string | number = Math.floor(sec / 60) - hours * 60;
-    let seconds: string | number = Math.floor(sec % 60);
-    if (minutes < 10 && hours > 0) minutes = "0" + minutes;
-    if (seconds < 10) seconds = "0" + seconds;
-    return hours > 0
-      ? `${hours}:${minutes}:${seconds}`
-      : `${minutes}:${seconds}`;
-  }
 
   let seekbar: HTMLDivElement | null = null;
   let seeking = false;
@@ -206,7 +196,7 @@
     user-select: none;
     touch-action: none;
     position: relative;
-    font-family: Roboto, Bahnschrift, Arial, Helvetica, sans-serif;
+    font-family: Bahnschrift;
     font-weight: 500;
     font-size: 14px;
     color: #eee;

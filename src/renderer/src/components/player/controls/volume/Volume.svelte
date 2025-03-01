@@ -21,10 +21,9 @@
     isHovering = false;
     onPointerLeave();
   }}
-  class="flex items-center justify-center"
+  class="flex items-center justify-center cursor-pointer gap-x-4"
 >
   <Icon {video} {volume} />
-  <div class="w-[20px]"></div>
   {#if isHovering}
     <div transition:slide={{ axis: "x" }} class="w-[100px]">
       <div>

@@ -2,7 +2,9 @@
   import { hoverManager } from "./common/functions";
   export let style = "";
   export let onClick: () => void;
-  export let isHovering = false
+  export let isHovering = false;
+  export let hoverScale = true;
+  export let setSize = true;
   const { onPointerEnter, onPointerLeave } = hoverManager();
 </script>
 
@@ -16,8 +18,8 @@
     isHovering = false;
     onPointerLeave();
   }}
-  class="hover:scale-150 ease-in-out duration-300"
-  style="{style}; width: 15px; height: 15px;"
+  class="{hoverScale ? 'hover:scale-150' : ''} ease-in-out duration-300"
+  style="{setSize ? 'min-width: 15px; min-height: 15px;': ''};{style}"
 >
   <slot />
 </button>

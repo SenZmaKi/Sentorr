@@ -10,6 +10,7 @@
 </script>
 
 <Button
+  style="width: 20px; height: 20px;"
   {onClick}
 >
   {#if volume <= 0 || muted}

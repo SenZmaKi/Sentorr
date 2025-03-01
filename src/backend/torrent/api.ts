@@ -119,12 +119,10 @@ async function getTorrentStreams(
     "getTorrentStreams",
     torrentID
   );
-  console.log("allStreams", allStreams);
   const videoStreams = allStreams.filter(
     ({ filename }) =>
       VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample")
   );
-  console.log("videoStreams", videoStreams);
   if (!videoStreams.length) throw new Error(TorrentStreamsError.NoVideoFiles);
   const torrentStreams = filterMap(videoStreams, (stream) => {
     if (!isSameTitle(title, stream.filename, isTvSeries).isSame) {

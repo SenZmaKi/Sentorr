@@ -26,7 +26,7 @@ import {
   MEDIA_TYPE_MAP,
   REVIEWS_HASH,
 } from "./constants";
-import { filterMap, getFirst, parseHtml } from "@/common/functions";
+import { filterMap, parseHtml } from "@/common/functions";
 import { DEBUG, Client } from "@/common/constants";
 import { DEFAULT_SORT_BY, DEFAULT_SORT_ORDER } from "./constants";
 import {
@@ -345,7 +345,8 @@ function combineMetadata(
   const actors = mainColumnData.cast.edges.map(({ node: actor }) => {
     const name = actor.name.nameText.text;
     const imageUrl = actor.name.primaryImage?.url;
-    const c = getFirst(actor.characters ?? []); // Characters is probably an array cause an actor can play multiple characters e.g., an alter ego from a different universe
+    // Characters is probably an array cause an actor can play multiple characters e.g., an alter ego from a different universe
+    const c = actor.characters?.[0];
     const character = c ? c.name : undefined;
     return { name, imageUrl, character };
   });

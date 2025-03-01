@@ -23,7 +23,12 @@
   let blacklistedTorrents: TorrentFile[] = [];
   let torrentStreamStats: TorrentStreamStats | undefined = undefined;
   let video: HTMLVideoElement | undefined = undefined;
-  let isLoadedMetadata = false;
+  let isLoadedMetadata: boolean;
+  $: {
+    $playerMedia;
+    $playerEpisode;
+    isLoadedMetadata = false;
+  }
 
   async function load() {
     let media = $playerMedia;
@@ -63,9 +68,6 @@
     const episodeFiles = torrentFiles.filter(
       (torrent) => !torrent.isCompleteSeason
     );
-    console.log("torrentFiles:", torrentFiles);
-    console.log("seasonFiles", seasonFiles);
-    console.log("episodeFiles", episodeFiles);
     const preferredResolution = Resolution.R720P;
     const torrentAndScore = [
       ...computeTorrentScores({
@@ -78,7 +80,6 @@
       }),
     ];
     const sortedByScore = torrentAndScore.sort((a, b) => b.score - a.score);
-    console.log("sortedByScore:", sortedByScore);
     const torrentFile = sortedByScore[0].torrent;
     let torrentsStreams: TorrentStream[] = [];
     try {
@@ -96,7 +97,6 @@
       console.error("No torrent streams found");
       return;
     }
-    console.log("torrentsStreams:", torrentsStreams);
     const torrentStream = !torrentFile.isCompleteSeason
       ? torrentsStreams[0]
       : torrentsStreams.find(
@@ -116,9 +116,8 @@
         episodeNumber: episode.number,
         seasonNumber: episode.seasonNumber,
       };
-    console.log("torrentStream:", torrentStream);
     console.log("streamURL:", torrentStream.url);
-    window.ipc.torrent.selectTorrentStream(torrentStream);
+    await window.ipc.torrent.selectTorrentStream(torrentStream);
     $playerTorrentStream = torrentStream;
     $playerTorrentFile = torrentFile;
   }
@@ -249,16 +248,18 @@
       await window.ipc.torrent.getCurrentTorrentStreamStats();
     // console.log(`torrentStreamStats: ${JSON.stringify(torrentStreamStats)}`);
   }, 1_000);
-  const webtorrentDir = "file:C:\\Users\\Sen\\AppData\\Local\\Temp\\webtorrent";
-  // const videoUrl = `${webtorrentDir}\\Mr.Robot.Season.1-4.S01-04.COMPLETE.1080p.BluRay.WEB.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01.1080p.BluRay.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01E01.1080p.BluRay.10bit.DD5.1.x265-POIASD.mkv`;
-  // const videorl = `${webtorrentDir}\\Mr.Robot.SEASON.01.S01.COMPLETE.1080p.10bit.BluRay.6CH.x265.HEVC-PSA\\Mr.Robot.S01E01.eps1.0_hellofriend.mov.1080p.10bit.BluRay.6CH.x265.HEVC-PSA.mkv`;
-  // const videoUrl = `${webtorrentDir}\\[SubsPlease] Solo Leveling - 14 (1080p) [2FD84CD9].mkv`;
-  const videoUrl =
-    "https://github.com/user-attachments/assets/06fae060-0bc9-43b0-8153-04f4cf430e22";
+  // const webtorrentDir = "file:C:\\Users\\Sen\\AppData\\Local\\Temp\\webtorrent";
+  // let videoUrl = `${webtorrentDir}\\Mr.Robot.Season.1-4.S01-04.COMPLETE.1080p.BluRay.WEB.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01.1080p.BluRay.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01E01.1080p.BluRay.10bit.DD5.1.x265-POIASD.mkv`;
+  // let videorl = `${webtorrentDir}\\Mr.Robot.SEASON.01.S01.COMPLETE.1080p.10bit.BluRay.6CH.x265.HEVC-PSA\\Mr.Robot.S01E01.eps1.0_hellofriend.mov.1080p.10bit.BluRay.6CH.x265.HEVC-PSA.mkv`;
+  // let  e x  = `${webtorrentDir}\\[SubsPlease] Solo Leveling - 14 (1080p) [2FD84CD9].mkv`;
+  // let videoUrl =
+  //   "https://github.com/user-attachments/assets/06fae060-0bc9-43b0-8153-04f4cf430e22";
 </script>
 
 <PageWrapper {hidden}>
-  <div class="relative flex flex-col items-center">
+  <div
+    class="relative flex flex-col items-center justify-center bg-black w-full h-screen"
+  >
     <!-- svelte-ignore a11y-media-has-caption -->
     <video
       muted={true}
@@ -268,11 +269,11 @@
         if (isValidCodecs() && video) safePlay(video);
         isLoadedMetadata = true;
       }}
-      src={videoUrl}
+      src={$playerTorrentStream?.url}
     >
     </video>
     {#if video && isLoadedMetadata && $playerTorrentStream}
-      <div class="absolute bottom-[0%] w-[97%]">
+      <div class="absolute bottom-[5%] w-full">
         <Controls {video} />
       </div>
     {/if}

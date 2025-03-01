@@ -39,7 +39,7 @@ export function createThumbnailGenerator(video: HTMLVideoElement, width = 180) {
             if (!blob)
               return reject(
                 new InvalidStateError(
-                  "Invalid state: Failed to create blob from thumbnailCanvas"
+                  "Failed to create blob from thumbnailCanvas"
                 )
               );
             resolve(URL.createObjectURL(blob));

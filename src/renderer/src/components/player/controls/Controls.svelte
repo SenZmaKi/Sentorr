@@ -4,12 +4,13 @@
   import { fade } from "svelte/transition";
   import { isHovering } from "./common/store";
   import { createThumbnailGenerator } from "./common/thumbnail";
+  import Next from "./Next.svelte";
 
   export let video: HTMLVideoElement;
   let progress = 0;
   let buffer = 0;
   let show = false;
-  let length = 0;
+  let length = video.duration;
   let hidetimer: Timer | undefined = undefined;
   const thumbnailGenerator = createThumbnailGenerator(video);
 
@@ -42,15 +43,25 @@
   };
 </script>
 
-{#if show || video.paused || $isHovering}
+{#if true || video.paused || $isHovering}
   <div
     transition:fade
     style="background: radial-gradient(oval, rgba(0,0,0,0.8) 0%, transparent 70%);"
-    class="flex flex-col items-center p-2"
+    class="flex flex-col items-center justify-center w-full"
   >
-    <Seekbar bind:progress {buffer} {length} {onSeeking} {thumbnailGenerator} />
-    <div class="pt-3 flex w-[97%]">
-      <PlayPause {video} />
+    <div class="w-[98%]">
+      <Seekbar
+        bind:progress
+        {buffer}
+        {length}
+        {onSeeking}
+        {thumbnailGenerator}
+      />
+      <div class="pt-5 pl-3 flex">
+        <PlayPause {video} />
+        <div class="pr-6"></div>
+        <Next />
+      </div>
     </div>
   </div>
 {/if}

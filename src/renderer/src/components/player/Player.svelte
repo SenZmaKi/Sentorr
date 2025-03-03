@@ -63,10 +63,10 @@
       return;
     }
     const seasonFiles = torrentFiles.filter(
-      (torrent) => torrent.isCompleteSeason
+      (torrent) => torrent.isCompleteSeason,
     );
     const episodeFiles = torrentFiles.filter(
-      (torrent) => !torrent.isCompleteSeason
+      (torrent) => !torrent.isCompleteSeason,
     );
     const preferredResolution = Resolution.R720P;
     const torrentAndScore = [
@@ -86,7 +86,7 @@
       torrentsStreams = await window.ipc.torrent.getTorrentStreams(
         media.title,
         torrentFile,
-        !media.isMovie
+        !media.isMovie,
       );
     } catch (error: any) {
       onTorrentStreamsError(error, torrentFile);
@@ -104,7 +104,7 @@
             torrStream.info &&
             episode &&
             torrStream.info.episodeNumber === episode.number &&
-            torrStream.info.seasonNumber === episode.seasonNumber
+            torrStream.info.seasonNumber === episode.seasonNumber,
         );
     if (!torrentStream) {
       console.error("No matching torrent stream found");
@@ -168,7 +168,7 @@
       case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
         blacklistedTorrents.push($playerTorrentFile);
         console.error(
-          `Media codec error: Media at ${$playerTorrentStream.url} codec not supported (${JSON.stringify(error)}) `
+          `Media codec error: Media at ${$playerTorrentStream.url} codec not supported (${JSON.stringify(error)}) `,
         );
         toast.error("Media codec error", {
           description:
@@ -178,7 +178,7 @@
         break;
       case error.MEDIA_ERR_NETWORK:
         console.error(
-          `Network error: Failed to fetch media at ${$playerTorrentStream.url}`
+          `Network error: Failed to fetch media at ${$playerTorrentStream.url}`,
         );
         toast.error("Network error", {
           description:
@@ -190,7 +190,7 @@
       case error.MEDIA_ERR_DECODE:
         blacklistedTorrents.push($playerTorrentFile);
         console.error(
-          `Media decode error: Media at ${$playerTorrentStream.url} decode error (${JSON.stringify(error)}) `
+          `Media decode error: Media at ${$playerTorrentStream.url} decode error (${JSON.stringify(error)}) `,
         );
         toast.error("Media decoding error", {
           description:
@@ -248,10 +248,11 @@
       await window.ipc.torrent.getCurrentTorrentStreamStats();
     // console.log(`torrentStreamStats: ${JSON.stringify(torrentStreamStats)}`);
   }, 1_000);
-  // const webtorrentDir = "file:C:\\Users\\Sen\\AppData\\Local\\Temp\\webtorrent";
-  // let videoUrl = `${webtorrentDir}\\Mr.Robot.Season.1-4.S01-04.COMPLETE.1080p.BluRay.WEB.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01.1080p.BluRay.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01E01.1080p.BluRay.10bit.DD5.1.x265-POIASD.mkv`;
+  const webtorrentDir = "file:C:\\Users\\Sen\\AppData\\Local\\Temp\\webtorrent";
+   let videoUrl = `${webtorrentDir}\\Mr.Robot.Season.1-4.S01-04.COMPLETE.1080p.BluRay.WEB.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01.1080p.BluRay.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01E01.1080p.BluRay.10bit.DD5.1.x265-POIASD.mkv`;
   // let videorl = `${webtorrentDir}\\Mr.Robot.SEASON.01.S01.COMPLETE.1080p.10bit.BluRay.6CH.x265.HEVC-PSA\\Mr.Robot.S01E01.eps1.0_hellofriend.mov.1080p.10bit.BluRay.6CH.x265.HEVC-PSA.mkv`;
-  // let  e x  = `${webtorrentDir}\\[SubsPlease] Solo Leveling - 14 (1080p) [2FD84CD9].mkv`;
+  // let videoUrl = `${webtorrentDir}\\Invincible (2021) Season 1 S01 (1080p WEB-DL x265 HEVC 10bit EAC3 5.1 SAMPA)\\Invincible (2021) - S01E01 - It's About Time (1080p WEB-DL x265 SAMPA).mkv`;
+  // let  videoUrl = `${webtorrentDir}\\[SubsPlease] Solo Leveling - 14 (1080p) [2FD84CD9].mkv`;
   // let videoUrl =
   //   "https://github.com/user-attachments/assets/06fae060-0bc9-43b0-8153-04f4cf430e22";
 </script>
@@ -270,7 +271,7 @@
         if (isValidCodecs() && video) safePlay(video);
         isLoadedMetadata = true;
       }}
-      src={$playerTorrentStream?.url}
+      src={videoUrl}
     >
     </video>
     {#if video && isLoadedMetadata && $playerTorrentStream}

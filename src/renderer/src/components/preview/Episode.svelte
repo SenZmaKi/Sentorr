@@ -64,7 +64,6 @@
 <button
   style="all: unset; width: 100%;"
   on:click={() => {
-    console.log("episode", episode);
     switchToPlayerPage(media, episode);
   }}
 >

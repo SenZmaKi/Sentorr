@@ -19,7 +19,7 @@
       <span>{review.title}</span>
     </div>
     <div class="text-xs overflow-y-auto pt-1 h-[55%] opacity-80">
-      {review.content}
+      {@html review.content}
     </div>
     <div class="flex mt-2 mb-2 opacity-90">
       <Like IsDislike={false} count={review.likes} />

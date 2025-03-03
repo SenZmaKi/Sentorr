@@ -13,9 +13,9 @@
   }
 </script>
 
-<Button style="" hoverScale={false} setSize={false} {onClick}>
+<Button style=""  setHoverScale={false} setSize={false} {onClick}>
   <div class="relative">
-    <div class="flex items-center font-bold font-['Bahnschrift'] gap-x-2">
+    <div class="flex items-center font-bold gap-x-2">
       <div
         class="relative"
         style="width: {currentTimeWidth}px; height: {currentTimeHeight}px;"

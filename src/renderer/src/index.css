@@ -6,6 +6,10 @@
   color-scheme: dark;
 }
 
+html * {
+  font-family: "Bahnschrift", sans-serif !important;
+}
+
 input {
   padding-left: 0.5rem;
   outline: none;

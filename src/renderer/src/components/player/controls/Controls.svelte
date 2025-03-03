@@ -7,6 +7,8 @@
   import Next from "./Next.svelte";
   import Volume from "./volume/Volume.svelte";
   import Time from "./Time.svelte";
+  import SettingIcon from "./settings/Icon.svelte";
+  import SettingModal from "./settings/modal/Modal.svelte";
 
   export let video: HTMLVideoElement;
   let progress = 0;
@@ -54,6 +56,9 @@
     class="flex flex-col items-center justify-center w-full"
   >
     <div class="w-[98%]">
+      <div class="flex justify-end">
+        <SettingModal {video}/>
+      </div>
       <Seekbar
         bind:progress
         {buffer}
@@ -61,11 +66,16 @@
         {onSeeking}
         {thumbnailGenerator}
       />
-      <div class="pt-5 pl-3 flex items-center gap-x-6">
-        <PlayPause {video} />
-        <Next />
-        <Volume {video} />
-        <Time {currentTime} {duration} />
+      <div class="flex justify-between p-5 pb-0">
+        <div class="flex items-center gap-x-6">
+          <PlayPause {video} />
+          <Next />
+          <Volume {video} />
+          <Time {currentTime} {duration} />
+        </div>
+        <div class="flex">
+          <SettingIcon />
+        </div>
       </div>
     </div>
   </div>

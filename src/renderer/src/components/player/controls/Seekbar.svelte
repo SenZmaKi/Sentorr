@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { hoverManager,timeStamp } from "./common/functions";
+  import { hoverManager, timeStamp } from "./common/functions";
   import type { Chapter } from "./common/types";
   import type { ThumbnailGenerator } from "./common/thumbnail";
 
@@ -13,6 +13,7 @@
   export let accentColor = "#f00";
   export let onSeeking: ((percent: number) => void) | undefined = undefined;
   export let onSeeked: (() => void) | undefined = undefined;
+  export let alwaysShowThumb = false;
   const {
     getThumbnail,
     disposeThumbnail,
@@ -24,7 +25,6 @@
   function clamp(value: number): number {
     return Math.min(Math.max(value, 0), 100);
   }
-
 
   let seekbar: HTMLDivElement | null = null;
   let seeking = false;
@@ -151,7 +151,11 @@
   {/each}
 
   <div class="thumb-container center" style="left: {progress}%;">
-      <div class="thumb" class:active={checkThumbActive(progress, seek)} />
+    <div
+      style={alwaysShowThumb ? "width: 13px; height: 13px;" : ""}
+      class="thumb"
+      class:active={checkThumbActive(progress, seek)}
+    />
   </div>
 
   <div
@@ -196,7 +200,6 @@
     user-select: none;
     touch-action: none;
     position: relative;
-    font-family: Bahnschrift;
     font-weight: 500;
     font-size: 14px;
     color: #eee;

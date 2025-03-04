@@ -2,8 +2,8 @@
   import { scale } from "svelte/transition";
   import Button from "./Button.svelte";
   import { timeStamp } from "./common/functions";
+  import { currentTime } from "./common/store";
 
-  export let currentTime: number;
   export let duration: number;
   export let useElapsedTime = false;
   let currentTimeWidth: number;
@@ -13,7 +13,7 @@
   }
 </script>
 
-<Button style=""  setHoverScale={false} setSize={false} {onClick}>
+<Button style="" setHoverScale={false} setSize={false} {onClick}>
   <div class="relative">
     <div class="flex items-center font-bold gap-x-2">
       <div
@@ -29,8 +29,8 @@
             transition:scale
           >
             {useElapsedTime
-              ? `-${timeStamp(duration - currentTime)}`
-              : timeStamp(currentTime)}
+              ? `-${timeStamp(duration - $currentTime)}`
+              : timeStamp($currentTime)}
           </div>
         {/key}
       </div>

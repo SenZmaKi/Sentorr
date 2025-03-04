@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { currentFieldModal } from "./store";
+  import { currentFieldModal } from "./store";
 
   import { iconHeight, iconWidth } from "./constants";
   type T = $$Generic;
@@ -15,10 +15,12 @@
     <button
       class="p-2 hover:bg-gray-700 hover:bg-opacity-80 rounded-xl flex gap-2 items-center justify-center"
       on:click={() => {
-        currentVariant = variant;
-        onVariantChange && onVariantChange(variant);
+        if (onVariantChange) {
+          onVariantChange(variant);
+        } else {
+          currentVariant = variant;
+        }
         $currentFieldModal = undefined;
-
       }}
     >
       {#if variant === currentVariant}
@@ -29,7 +31,7 @@
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           stroke="#ffffff"
-          ><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g
+          ><g stroke-width="0"></g><g
             stroke-linecap="round"
             stroke-linejoin="round"
           ></g><g>
@@ -44,8 +46,6 @@
       {/if}
 
       <div
-        class="transition duration-300 ease-in-out"
-        class:scale-125={currentVariant === variant}
         class:font-bold={currentVariant === variant}
       >
         {variantToString ? variantToString(variant) : variant}

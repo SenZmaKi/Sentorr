@@ -5,6 +5,12 @@
 
   export let video: HTMLVideoElement;
   let isPaused = video.paused;
+  video.onpause = () => {
+    isPaused = video.paused
+  };
+  video.onplay = () => {
+    isPaused = video.paused;
+  };
   async function onClick() {
     video.paused ? await safePlay(video) : video.pause();
     isPaused = video.paused;

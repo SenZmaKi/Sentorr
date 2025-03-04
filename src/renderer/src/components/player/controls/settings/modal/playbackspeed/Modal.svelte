@@ -29,7 +29,7 @@
     </div>
     <Radio
       variants={[0.25, 0.5, 0.75, 1, 1.25, 1.75, 2.05]}
-      bind:currentVariant={$playbackSpeed}
+      currentVariant={$playbackSpeed}
       onVariantChange={(variant) => {
         progress = computeProgress(variant);
       }}

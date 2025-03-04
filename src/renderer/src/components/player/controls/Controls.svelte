@@ -2,21 +2,23 @@
   import Seekbar from "./Seekbar.svelte";
   import PlayPause from "./PlayPause.svelte";
   import { fade } from "svelte/transition";
-  import { isHovering } from "./common/store";
+  import { currentTime, isHovering } from "./common/store";
   import { createThumbnailGenerator } from "./common/thumbnail";
   import Next from "./Next.svelte";
   import Volume from "./volume/Volume.svelte";
   import Time from "./Time.svelte";
   import SettingIcon from "./settings/Icon.svelte";
   import SettingModal from "./settings/modal/Modal.svelte";
+  import {video as videoStore} from "./common/store";
 
   export let video: HTMLVideoElement;
+  $videoStore = video;
   let progress = 0;
   let buffer = 0;
   let show = false;
   let duration = video.duration;
   let hidetimer: Timer | undefined = undefined;
-  let currentTime = video.currentTime;
+  $currentTime = video.currentTime;
   const thumbnailGenerator = createThumbnailGenerator(video);
 
   function showWithTimeout() {
@@ -41,8 +43,8 @@
     }
   };
   video.ontimeupdate = () => {
-    currentTime = video.currentTime;
-    progress = (currentTime / video.duration) * 100;
+    $currentTime = video.currentTime;
+    progress = ($currentTime / video.duration) * 100;
   };
   video.onmousemove = () => {
     showWithTimeout();
@@ -71,7 +73,7 @@
           <PlayPause {video} />
           <Next />
           <Volume {video} />
-          <Time {currentTime} {duration} />
+          <Time {duration} />
         </div>
         <div class="flex">
           <SettingIcon />

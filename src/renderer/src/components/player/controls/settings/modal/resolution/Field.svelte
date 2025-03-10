@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Field as FieldEnum } from "../common/types";
   import Field from "../common/Field.svelte";
-  import { resolution } from "@/renderer/src/components/player/store";
+  import { resolution } from "../../../../common/store";
   import Icon from "./Icon.svelte";
 </script>
 

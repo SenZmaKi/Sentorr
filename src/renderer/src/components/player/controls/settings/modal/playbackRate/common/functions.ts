@@ -1,7 +1,7 @@
 // https://stackoverflow.com/a/32320020/17193072
-const maxPlaybackSpeed = 16;
-const minPlaybackSpeed = 0.0625;
-const diffPlaybackSpeed = maxPlaybackSpeed - minPlaybackSpeed;
+const maxPlaybackRate = 16;
+const minPlaybackRate = 0.0625;
+const diffPlaybackRate = maxPlaybackRate - minPlaybackRate;
 const decimalPlaces = 2;
 
 function roundUpTo5Or10(num: number, decimalPlaces: number): number {
@@ -19,19 +19,19 @@ function roundUpTo5Or10(num: number, decimalPlaces: number): number {
   return rounded;
 }
 
-function clampSpeed(speed: number) {
-  return Math.min(maxPlaybackSpeed, Math.max(minPlaybackSpeed, speed));
+function clampRate(rate: number) {
+  return Math.min(maxPlaybackRate, Math.max(minPlaybackRate, rate));
 }
 
-export function computeProgress(playbackSpeed: number) {
+export function computeProgress(playbackRate: number) {
   const progress =
-    ((playbackSpeed - minPlaybackSpeed) / diffPlaybackSpeed) * 100;
+    ((playbackRate - minPlaybackRate) / diffPlaybackRate) * 100;
   return progress;
 }
 
-export function computePlaybackSpeed(progress: number) {
-  const rawSpeed = minPlaybackSpeed + (diffPlaybackSpeed * progress) / 100;
-  const roundedSpeed = roundUpTo5Or10(rawSpeed, decimalPlaces);
-  const speed = clampSpeed(roundedSpeed);
-  return speed;
+export function computePlaybackRate(progress: number) {
+  const rawRate = minPlaybackRate + (diffPlaybackRate * progress) / 100;
+  const roundedRate = roundUpTo5Or10(rawRate, decimalPlaces);
+  const rate = clampRate(roundedRate);
+  return rate;
 }

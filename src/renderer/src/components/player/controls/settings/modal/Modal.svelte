@@ -4,14 +4,13 @@
   import Button from "../../Button.svelte";
   import ResolutionField from "./resolution/Field.svelte";
   import SleepTimerField from "./sleeptimer/Field.svelte";
-  import PlaybackSpeedField from "./playbackspeed/Field.svelte";
+  import PlaybackRateField from "./playbackRate/Field.svelte";
   import ResolutionModal from "./resolution/Modal.svelte";
-  import PlaybackSpeedModal from "./playbackspeed/Modal.svelte";
+  import PlaybackRateModal from "./playbackRate/Modal.svelte";
   import SleepTimerModal from "./sleeptimer/Modal.svelte";
   import { currentFieldModal } from "./common/store";
   import { Field } from "./common/types";
 
-  export let video: HTMLVideoElement;
   let isHovering = false;
   $: updateIsHoveringWithTimer(isHovering);
   $: if (!$isHoveringWithTimer) {
@@ -27,14 +26,14 @@
           <div class="rounded-xl flex-col flex">
             <div class="flex flex-col gap-4 pt-2 pb-2">
               <ResolutionField />
-              <PlaybackSpeedField />
+              <PlaybackRateField />
               <SleepTimerField />
             </div>
           </div>
         {:else if $currentFieldModal === Field.Resolution}
           <ResolutionModal />
-        {:else if $currentFieldModal === Field.PlaybackSpeed}
-          <PlaybackSpeedModal {video} />
+        {:else if $currentFieldModal === Field.PlaybackRate}
+          <PlaybackRateModal  />
         {:else if $currentFieldModal === Field.SleepTimer}
           <SleepTimerModal  />
         {/if}

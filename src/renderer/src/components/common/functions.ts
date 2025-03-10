@@ -7,7 +7,7 @@ import {
 } from "@/renderer/src/components/common/store";
 import type { Media } from "@/backend/imdb/types";
 import { Page } from "./types";
-import { playerEpisode, playerMedia } from "../player/store";
+import { playerEpisode, playerMedia } from "../player/common/store";
 
 export function prettyFormatNumber(num: number): string {
   if (num >= 1000_000_000) {

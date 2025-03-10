@@ -2,9 +2,8 @@
   import { scale } from "svelte/transition";
   import Button from "./Button.svelte";
   import { timeStamp } from "./common/functions";
-  import { currentTime } from "./common/store";
+  import { currentTime, duration } from "../common/store";
 
-  export let duration: number;
   export let useElapsedTime = false;
   let currentTimeWidth: number;
   let currentTimeHeight: number;
@@ -29,13 +28,13 @@
             transition:scale
           >
             {useElapsedTime
-              ? `-${timeStamp(duration - $currentTime)}`
+              ? `-${timeStamp($duration - $currentTime)}`
               : timeStamp($currentTime)}
           </div>
         {/key}
       </div>
       <div>/</div>
-      <div>{timeStamp(duration)}</div>
+      <div>{timeStamp($duration)}</div>
     </div>
   </div>
 </Button>

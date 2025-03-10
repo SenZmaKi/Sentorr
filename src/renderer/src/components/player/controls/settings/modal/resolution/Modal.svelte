@@ -1,6 +1,6 @@
 <script lang="ts">
   import { RESOLUTIONS } from "@/backend/torrent/common/types";
-  import { resolution } from "@/renderer/src/components/player/store";
+  import { resolution } from "../../../../common/store";
   import FieldModal from "../common/FieldModal.svelte";
   import { Field } from "../common/types";
   import Icon from "./Icon.svelte";

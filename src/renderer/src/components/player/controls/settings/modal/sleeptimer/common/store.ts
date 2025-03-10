@@ -1,6 +1,6 @@
 import { derived, get, writable } from "svelte/store";
 import { timeStamp } from "../../../../common/functions";
-import { video as videoStore, currentTime } from "../../../../common/store";
+import { video as videoStore, currentTime } from "../../../../../common/store";
 import ToastIcon from "../ToastIcon.svelte";
 import { toast } from "svelte-sonner";
 
@@ -13,9 +13,6 @@ export let remainingTimestamp = derived(
 );
 
 export let sleepTimerMins = writable<number | undefined>(undefined);
-setTimeout(() => {
-  sleepTimerMins.set(0.1);
-}, 5000);
 let sleepTimer: Timer | undefined = undefined;
 sleepTimerMins.subscribe(scheduleSleepTimer);
 

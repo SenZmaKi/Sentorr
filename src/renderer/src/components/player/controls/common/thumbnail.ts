@@ -2,19 +2,25 @@ import { InvalidStateError } from "@/common/types";
 
 export type ThumbnailGenerator = ReturnType<typeof createThumbnailGenerator>;
 
-export function createThumbnailGenerator(video: HTMLVideoElement, width = 180) {
+export function createThumbnailGenerator(
+  videoSrc: string,
+  videoHeight: number,
+  videoWidth: number,
+  thumbnailWidth = 180,
+) {
   const thumbnailVideo = document.createElement("video");
-  thumbnailVideo.src = video.src;
+  thumbnailVideo.src = videoSrc;
   thumbnailVideo.crossOrigin = "anonymous";
   const thumbnailCanvas = document.createElement("canvas");
-  thumbnailCanvas.width = width;
-  thumbnailCanvas.height =
-    thumbnailCanvas.width * (video.videoHeight / video.videoWidth) || 100;
+  thumbnailCanvas.width = thumbnailWidth;
+  thumbnailCanvas.height = thumbnailCanvas.width * (videoHeight / videoWidth);
   const thumbnailCtx = thumbnailCanvas.getContext("2d");
   if (!thumbnailCtx)
     throw new InvalidStateError("Failed to get thumbnailCanvas 2d context");
   const loadingMetadata = new Promise<void>((resolve) => {
-    thumbnailVideo.onloadedmetadata = () => resolve();
+    thumbnailVideo.addEventListener("loadedmetadata", () => {
+      resolve();
+    });
   });
 
   async function getThumbnail(seekPercent: number): Promise<string> {
@@ -32,15 +38,15 @@ export function createThumbnailGenerator(video: HTMLVideoElement, width = 180) {
           0,
           0,
           thumbnailCanvas.width,
-          thumbnailCanvas.height
+          thumbnailCanvas.height,
         );
         const url = await new Promise<string>((resolve, reject) => {
           thumbnailCanvas.toBlob((blob: Blob | null) => {
             if (!blob)
               return reject(
                 new InvalidStateError(
-                  "Failed to create blob from thumbnailCanvas"
-                )
+                  "Failed to create blob from thumbnailCanvas",
+                ),
               );
             resolve(URL.createObjectURL(blob));
           });

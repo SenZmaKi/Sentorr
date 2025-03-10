@@ -1,6 +1,6 @@
 
 export enum Field {
-  PlaybackSpeed = "Playback speed",
+  PlaybackRate = "Playback rate",
   Resolution = "Resolution",
   SleepTimer = "Sleep timer",
 }

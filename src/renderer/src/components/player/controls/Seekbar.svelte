@@ -1,9 +1,8 @@
 <script lang="ts">
+  // https://github.com/ThaUnknown/perfect-seekbar
   import { hoverManager, timeStamp } from "./common/functions";
   import type { Chapter } from "./common/types";
   import type { ThumbnailGenerator } from "./common/thumbnail";
-
-  // https://github.com/ThaUnknown/perfect-seekbar
 
   export let progress = 0;
   export let buffer = 0;
@@ -14,12 +13,6 @@
   export let onSeeking: ((percent: number) => void) | undefined = undefined;
   export let onSeeked: (() => void) | undefined = undefined;
   export let alwaysShowThumb = false;
-  const {
-    getThumbnail,
-    disposeThumbnail,
-    width: thumbnailWidth,
-    height: thumbnailHeight,
-  } = thumbnailGenerator ?? { getThumbnail: undefined, height: 0, width: 0 };
   const { onPointerEnter, onPointerLeave } = hoverManager();
 
   function clamp(value: number): number {
@@ -99,13 +92,13 @@
   let thumbnail: string = "";
 
   async function updateThumbnail(seek: number) {
-    if (!getThumbnail) return;
+    if (!thumbnailGenerator) return;
     const initialTime = seek;
-    const newThumbnail = await getThumbnail(seek);
+    const newThumbnail = await thumbnailGenerator.getThumbnail(seek);
     if (initialTime === seek) {
       thumbnail = newThumbnail;
     } else {
-      disposeThumbnail(newThumbnail);
+      thumbnailGenerator.disposeThumbnail(newThumbnail);
     }
   }
 </script>
@@ -160,7 +153,9 @@
 
   <div
     class="center hover-container"
-    style="--progress: {seek}%; --padding: {getThumbnail ? '75px' : '15px'};"
+    style="--progress: {seek}%; --padding: {thumbnailGenerator
+      ? '75px'
+      : '15px'};"
   >
     <div class="center">
       <div>{getCurrentChapterTitle(seek) || ""}</div>
@@ -169,9 +164,10 @@
           on:load={() => {
             // Since the thumbnail has been loaded on the browser we can dispose the url version
             // Almost like deleting an image on the backend after the client has loaded it
-            disposeThumbnail && disposeThumbnail(thumbnail);
+            thumbnailGenerator &&
+              thumbnailGenerator.disposeThumbnail(thumbnail);
           }}
-          style="min-width: {thumbnailWidth}px; min-height: {thumbnailHeight}px;"
+          style="min-width: {thumbnailGenerator?.width}px; min-height: {thumbnailGenerator?.height}px;"
           alt="thumbnail"
           class="thumbnail"
           src={thumbnail}

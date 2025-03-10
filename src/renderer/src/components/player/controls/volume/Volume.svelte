@@ -3,13 +3,12 @@
   import Seekbar from "../Seekbar.svelte";
   import Icon from "./Icon.svelte";
   import { hoverManager } from "../common/functions";
+  import { volume } from "../../common//store";
 
-  export let video: HTMLVideoElement;
   let isHovering = false;
-  let progress = video.volume;
-  $: volume = progress / 100;
-  $: video.volume = volume;
   const { onPointerEnter, onPointerLeave } = hoverManager();
+  let progress = $volume * 100;
+  $: $volume = progress / 100;
 </script>
 
 <div
@@ -23,7 +22,7 @@
   }}
   class="flex items-center justify-center cursor-pointer gap-x-4"
 >
-  <Icon {video} {volume} />
+  <Icon />
   {#if isHovering}
     <div transition:slide={{ axis: "x" }} class="w-[100px]">
       <div>

@@ -1,16 +1,14 @@
 <script lang="ts">
   import Button from "../Button.svelte";
-  export let video: HTMLVideoElement;
-  export let volume: number;
-  let muted = video.muted;
+  import { muted, volume } from "../../common/store";
+
   function onClick() {
-    video.muted = !video.muted;
-    muted = video.muted;
+    $muted = !$muted;
   }
 </script>
 
 <Button style="width: 20px; height: 20px;" {onClick}>
-  {#if muted}
+  {#if $muted}
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
       ><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"
       ></g><g>
@@ -36,7 +34,7 @@
         ></path>
       </g></svg
     >
-  {:else if volume <= 0.1}
+  {:else if $volume <= 0.1}
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
       ><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"
       ></g><g>
@@ -46,7 +44,7 @@
         ></path>
       </g></svg
     >
-  {:else if volume <= 0.5}
+  {:else if $volume <= 0.5}
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
       ><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"
       ></g><g>

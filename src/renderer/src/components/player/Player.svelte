@@ -2,11 +2,9 @@
   import PageWrapper from "../common/PageWrapper.svelte";
   import { Language } from "@ctrl/video-filename-parser";
   import {
-    Resolution,
     TorrentStreamsError,
     type TorrentFile,
     type TorrentStream,
-    type TorrentStreamStats,
   } from "@/backend/torrent/common/types";
   import { computeTorrentScores } from "@/backend/torrent/common/functions";
   import { toast } from "svelte-sonner";
@@ -15,19 +13,25 @@
     playerEpisode,
     playerTorrentFile,
     playerTorrentStream,
-  } from "./store";
+    muted,
+    volume,
+    playbackRate,
+    video,
+    currentTime,
+    buffered,
+    paused,
+    duration,
+    resolution,
+    videoHeight,
+    videoWidth
+  } from "./common/store";
   import Controls from "./controls/Controls.svelte";
-  import { safePlay } from "./common/functions";
 
   export let hidden: boolean;
   let blacklistedTorrents: TorrentFile[] = [];
-  let torrentStreamStats: TorrentStreamStats | undefined = undefined;
-  let video: HTMLVideoElement | undefined = undefined;
-  let isLoadedMetadata: boolean;
   $: {
     $playerMedia;
     $playerEpisode;
-    isLoadedMetadata = false;
   }
 
   async function load() {
@@ -68,15 +72,14 @@
     const episodeFiles = torrentFiles.filter(
       (torrent) => !torrent.isCompleteSeason,
     );
-    const preferredResolution = Resolution.R720P;
     const torrentAndScore = [
       ...computeTorrentScores({
         torrents: seasonFiles,
-        preferredResolution,
+        preferredResolution: $resolution,
       }),
       ...computeTorrentScores({
         torrents: episodeFiles,
-        preferredResolution,
+        preferredResolution: $resolution,
       }),
     ];
     const sortedByScore = torrentAndScore.sort((a, b) => b.score - a.score);
@@ -160,8 +163,8 @@
   }
 
   function onPlaybackError() {
-    if (!video) return;
-    const error = video.error;
+    if (!$video) return;
+    const error = $video.error;
     if (!error) return;
     if (!$playerTorrentFile || !$playerTorrentStream) return;
     switch (error.code) {
@@ -207,11 +210,11 @@
     load();
   }
   function isValidCodecs() {
-    if (!video) return false;
+    if (!$video) return false;
     // We it's valid assume cause we don't have any information
-    if (!video.videoTracks || !video.audioTracks || !$playerTorrentFile)
+    if (!$video.videoTracks || !$video.audioTracks || !$playerTorrentFile)
       return true;
-    if (!video.videoTracks.length && !video.audioTracks.length) {
+    if (!$video.videoTracks.length && !$video.audioTracks.length) {
       blacklistedTorrents.push($playerTorrentFile);
       console.error("Media codec error: No video and audio tracks found");
       toast.error("Media codec error", {
@@ -220,7 +223,7 @@
         onDismiss: load,
       });
     }
-    if (!video.videoTracks.length) {
+    if (!$video.videoTracks.length) {
       blacklistedTorrents.push($playerTorrentFile);
       console.error(`Video codec error: Video track not found`);
       toast.error("Video codec error", {
@@ -230,7 +233,7 @@
       });
       return false;
     }
-    if (!video.audioTracks.length) {
+    if (!$video.audioTracks.length) {
       blacklistedTorrents.push($playerTorrentFile);
       console.error(`Audio codec error: Audio track not found`);
       toast.error("Audio codec error", {
@@ -242,14 +245,14 @@
     }
     return true;
   }
-  setInterval(async () => {
-    if (!$playerMedia || !$playerTorrentStream || !$playerTorrentFile) return;
-    torrentStreamStats =
-      await window.ipc.torrent.getCurrentTorrentStreamStats();
-    // console.log(`torrentStreamStats: ${JSON.stringify(torrentStreamStats)}`);
-  }, 1_000);
+  // setInterval(async () => {
+  //   if (!$playerMedia || !$playerTorrentStream || !$playerTorrentFile) return;
+  //   const torrentStreamStats =
+  //     await window.ipc.torrent.getCurrentTorrentStreamStats();
+  //   // console.log(`torrentStreamStats: ${JSON.stringify(torrentStreamStats)}`);
+  // }, 1_000);
   // const webtorrentDir = "file:C:\\Users\\Sen\\AppData\\Local\\Temp\\webtorrent";
-   // let videoUrl = `${webtorrentDir}\\Mr.Robot.Season.1-4.S01-04.COMPLETE.1080p.BluRay.WEB.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01.1080p.BluRay.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01E01.1080p.BluRay.10bit.DD5.1.x265-POIASD.mkv`;
+  // let videoUrl = `${webtorrentDir}\\Mr.Robot.Season.1-4.S01-04.COMPLETE.1080p.BluRay.WEB.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01.1080p.BluRay.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01E01.1080p.BluRay.10bit.DD5.1.x265-POIASD.mkv`;
   // let videorl = `${webtorrentDir}\\Mr.Robot.SEASON.01.S01.COMPLETE.1080p.10bit.BluRay.6CH.x265.HEVC-PSA\\Mr.Robot.S01E01.eps1.0_hellofriend.mov.1080p.10bit.BluRay.6CH.x265.HEVC-PSA.mkv`;
   // let videoUrl = `${webtorrentDir}\\Invincible (2021) Season 1 S01 (1080p WEB-DL x265 HEVC 10bit EAC3 5.1 SAMPA)\\Invincible (2021) - S01E01 - It's About Time (1080p WEB-DL x265 SAMPA).mkv`;
   // let  videoUrl = `${webtorrentDir}\\[SubsPlease] Solo Leveling - 14 (1080p) [2FD84CD9].mkv`;
@@ -264,20 +267,25 @@
     <!-- svelte-ignore a11y-media-has-caption -->
     <video
       crossorigin="anonymous"
-      muted={true}
-      bind:this={video}
+      bind:muted={$muted}
+      bind:volume={$volume}
+      bind:playbackRate={$playbackRate}
+      bind:currentTime={$currentTime}
+      bind:buffered={$buffered}
+      bind:paused={$paused}
+      bind:duration={$duration}
+      bind:this={$video}
       on:error={onPlaybackError}
+      bind:videoWidth={$videoWidth}
+      bind:videoHeight={$videoHeight}
       on:loadedmetadata={() => {
-        if (isValidCodecs() && video) safePlay(video);
-        isLoadedMetadata = true;
+        if ($video && isValidCodecs()) $paused = false;
       }}
       src={$playerTorrentStream?.url}
     >
     </video>
-    {#if video && isLoadedMetadata && $playerTorrentStream}
-      <div class="absolute bottom-[5%] w-full">
-        <Controls {video} />
-      </div>
-    {/if}
+    <div class="absolute bottom-[5%] w-full">
+      <Controls />
+    </div>
   </div>
 </PageWrapper>

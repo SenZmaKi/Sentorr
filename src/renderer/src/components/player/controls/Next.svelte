@@ -2,7 +2,7 @@
   import { type Episode, type Media } from "@/backend/imdb/types";
   import Button from "./Button.svelte";
   import { randomNumber } from "@/common/functions";
-  import { playerMedia, playerEpisode } from "../store";
+  import { playerMedia, playerEpisode } from "../common/store";
   import { getEpisodes, getFanFavorites, getMedia } from "@/backend/imdb/api";
   import { toast } from "svelte-sonner";
 

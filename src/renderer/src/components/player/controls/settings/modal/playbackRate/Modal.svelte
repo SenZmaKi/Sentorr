@@ -2,34 +2,31 @@
   import Seekbar from "../../../Seekbar.svelte";
   import FieldModal from "../common/FieldModal.svelte";
   import { Field } from "../common/types";
-  import { computePlaybackSpeed, computeProgress } from "./common/functions";
+  import { computePlaybackRate, computeProgress } from "./common/functions";
   import Icon from "./Icon.svelte";
-  import { playbackSpeed } from "@/renderer/src/components/player/store";
+  import { playbackRate } from "../../../.../../../common/store";
   import Radio from "../common/Radio.svelte";
 
-  export let video: HTMLVideoElement;
-
-  let progress = computeProgress($playbackSpeed);
+  let progress = computeProgress($playbackRate);
 
   $: {
-    $playbackSpeed = computePlaybackSpeed(progress);
-    video.playbackRate = $playbackSpeed;
+    $playbackRate = computePlaybackRate(progress);
   }
 </script>
 
-<FieldModal field={Field.PlaybackSpeed}>
+<FieldModal field={Field.PlaybackRate}>
   <Icon slot="icon" />
   <div
     class="flex flex-col items-center justify-center gap-y-4 w-full"
     slot="contents"
   >
     <div class="flex flex-col gap-2 items-center justify-center w-full">
-      <div>{$playbackSpeed}x</div>
+      <div>{$playbackRate}x</div>
       <Seekbar bind:progress alwaysShowThumb={true} />
     </div>
     <Radio
       variants={[0.25, 0.5, 0.75, 1, 1.25, 1.75, 2.05]}
-      currentVariant={$playbackSpeed}
+      currentVariant={$playbackRate}
       onVariantChange={(variant) => {
         progress = computeProgress(variant);
       }}

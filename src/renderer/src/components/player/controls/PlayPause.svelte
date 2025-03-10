@@ -1,25 +1,19 @@
 <script lang="ts">
   import { scale } from "svelte/transition";
-  import { safePlay } from "../common/functions";
   import Button from "./Button.svelte";
+  import { paused, video } from "../common/store";
 
-  export let video: HTMLVideoElement;
-  let isPaused = video.paused;
-  video.onpause = () => {
-    isPaused = video.paused
-  };
-  video.onplay = () => {
-    isPaused = video.paused;
-  };
   async function onClick() {
-    video.paused ? await safePlay(video) : video.pause();
-    isPaused = video.paused;
+    if (!$video) return;
+    $paused = !$paused;
   }
-  video.onclick = onClick;
+  $: if ($video) {
+    $video.addEventListener("click", onClick);
+  }
 </script>
 
 <Button style="position: relative;" {onClick}>
-  {#if isPaused}
+  {#if $paused}
     <svg
       transition:scale
       class="absolute top-0 left-0"

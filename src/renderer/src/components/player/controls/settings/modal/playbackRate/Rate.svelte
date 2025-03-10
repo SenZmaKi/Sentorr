@@ -1,15 +1,15 @@
 <script lang="ts">
     import {  computeProgress } from "./common/functions";
 
-  export let speed: number;
+  export let rate: number;
   export let progress: number;
 </script>
 
 <button
   on:click={() => {
-    progress = computeProgress(speed);
+    progress = computeProgress(rate);
   }}
   class="rounded-xl w-full p-2 hover:bg-gray-700 hover:bg-opacity-80"
 >
-  {speed == 1 ? "Normal" : speed}
+  {rate == 1 ? "Normal" : rate}
 </button>

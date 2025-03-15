@@ -20,8 +20,7 @@
   import SettingIcon from "./settings/Icon.svelte";
   import SettingModal from "./settings/modal/Modal.svelte";
 
-  $: progress =
-    $currentTime && $duration ? ($currentTime / $duration) * 100 : 0;
+  let progress = 0;
   $: buffer =
     $buffered && $buffered.length > 0
       ? ($buffered[$buffered.length - 1].end / $duration) * 100
@@ -36,6 +35,16 @@
       $videoWidth,
     );
 
+  $: if ($video) {
+    $video.addEventListener("timeupdate", () => {
+      progress = computeProgress($currentTime);
+    });
+  }
+
+  function computeProgress(time: number) {
+    return time && $duration ? (time / $duration) * 100 : 0;
+  }
+
   function showWithTimeout() {
     if ($paused || $isHovering) return;
     if (hidetimer) clearTimeout(hidetimer);
@@ -44,8 +53,9 @@
       show = false;
     }, 3_000);
   }
-  function onSeeking(progress: number) {
-    $currentTime = (progress / 100) * $duration;
+
+  function onSeeking(percent: number) {
+    $currentTime = (percent / 100) * $duration;
   }
   if ($paused) {
     clearTimeout(hidetimer);

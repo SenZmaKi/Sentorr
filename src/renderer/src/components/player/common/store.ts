@@ -23,6 +23,10 @@ export let playerTorrentStream = playerState<TorrentStream | undefined>(
   undefined,
 );
 export let duration = playerState(0);
+/**
+ * WARN: If the user seeks, this will hold the pre-seek time until the seek request completes (e.g., if the target seek time's video data is still loading).
+ * It awkwardly forwards to the the user's seek time, then immediately resets back to the pre-seek time until the seek request completes.
+ */
 export let currentTime = playerState(0);
 export let buffered = playerState<SvelteMediaTimeRange[] | undefined>(
   undefined,

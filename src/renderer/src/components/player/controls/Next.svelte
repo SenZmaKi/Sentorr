@@ -1,7 +1,9 @@
 <script lang="ts">
   import { type Episode, type Media } from "@/backend/imdb/types";
   import Button from "./Button.svelte";
-  import { randomNumber } from "@/common/functions";
+  import { randomNumber, zfill } from "@/common/functions";
+  import { tippy } from "@/renderer/src/components/common/constants";
+
   import {
     playerMedia,
     playerEpisode,
@@ -120,27 +122,49 @@
   $: if ($video) {
     $video.addEventListener("ended", next);
   }
+  let nextStr = "Loading...";
+  async function setNextStr(
+    nextMediaPromise: Promise<Media | undefined>,
+    nextEpisodePromise: Promise<Episode | undefined>,
+  ): Promise<void> {
+    const nextMedia = await nextMediaPromise;
+    const nextEpisode = await nextEpisodePromise;
+    if ($playerEpisode) {
+      nextStr = nextEpisode
+        ? `S${zfill(nextEpisode.seasonNumber)}:E${zfill(nextEpisode.number)}${nextEpisode.title ? ` ${nextEpisode.title}` : ""}`
+        : "No more episodes available";
+    } else {
+      nextStr = nextMedia
+        ? nextMedia.title ?? "No media title"
+        : "No recommendations found";
+    }
+  }
+  $: nextMediaPromise &&
+    nextEpisodePromise &&
+    setNextStr(nextMediaPromise, nextEpisodePromise);
 </script>
 
 <Button onClick={next}>
-  <svg
-    fill="#ffffff"
-    version="1.1"
-    id="Capa_1"
-    xmlns="http://www.w3.org/2000/svg"
-    xmlns:xlink="http://www.w3.org/1999/xlink"
-    viewBox="0 0 51.531 51.531"
-    xml:space="preserve"
-    ><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g
-      id="SVGRepo_tracerCarrier"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    ></g><g id="SVGRepo_iconCarrier">
-      <g>
-        <path
-          d="M44.9,1.963c-3.662,0-6.631,2.969-6.631,6.631V23.81c-0.285-0.324-0.617-0.609-1-0.831L6,4.926 c-1.238-0.715-2.762-0.715-4,0C0.763,5.64,0,6.961,0,8.39v36.104c0,1.43,0.763,2.75,2,3.465c0.619,0.356,1.311,0.535,2,0.535 c0.691,0,1.381-0.179,2-0.535l31.269-18.053c0.383-0.223,0.715-0.508,1-0.832v13.863c0,3.662,2.969,6.631,6.631,6.631 s6.631-2.969,6.631-6.631V8.594C51.531,4.932,48.562,1.963,44.9,1.963z"
-        ></path>
-      </g>
-    </g></svg
-  >
+  <div use:tippy={{ content: nextStr }}>
+    <svg
+      fill="#ffffff"
+      version="1.1"
+      id="Capa_1"
+      xmlns="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      viewBox="0 0 51.531 51.531"
+      xml:space="preserve"
+      ><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g
+        id="SVGRepo_tracerCarrier"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      ></g><g id="SVGRepo_iconCarrier">
+        <g>
+          <path
+            d="M44.9,1.963c-3.662,0-6.631,2.969-6.631,6.631V23.81c-0.285-0.324-0.617-0.609-1-0.831L6,4.926 c-1.238-0.715-2.762-0.715-4,0C0.763,5.64,0,6.961,0,8.39v36.104c0,1.43,0.763,2.75,2,3.465c0.619,0.356,1.311,0.535,2,0.535 c0.691,0,1.381-0.179,2-0.535l31.269-18.053c0.383-0.223,0.715-0.508,1-0.832v13.863c0,3.662,2.969,6.631,6.631,6.631 s6.631-2.969,6.631-6.631V8.594C51.531,4.932,48.562,1.963,44.9,1.963z"
+          ></path>
+        </g>
+      </g></svg
+    >
+  </div>
 </Button>

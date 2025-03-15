@@ -1,4 +1,4 @@
-import { Language } from "@ctrl/video-filename-parser";
+import { type Language } from "@ctrl/video-filename-parser";
 
 export type CommonTorrentFile = {
   resolution: Resolution;

@@ -25,7 +25,7 @@ export function randomNumber({
 export function filterMap<E, T>(
   array: Array<E>,
 
-  callbackfn: (elem: E) => T | undefined
+  callbackfn: (elem: E) => T | undefined,
 ): Array<T> {
   return array.map(callbackfn).filter((elem) => elem !== undefined);
 }
@@ -33,4 +33,8 @@ export function filterMap<E, T>(
 export function parseHtml(htmlPage: string): CheerioAPI {
   const doc = parseDocument(htmlPage);
   return cheerioLoad(doc);
+}
+
+export function zfill(num: number): string {
+  return num.toString().padStart(2, "0");
 }

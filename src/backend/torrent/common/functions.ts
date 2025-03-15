@@ -8,13 +8,13 @@ import {
 } from "@ctrl/video-filename-parser";
 import levenshtein from "js-levenshtein";
 import { Resolution, RESOLUTIONS, type TorrentFile } from "./types";
+import { zfill } from "@/common/functions";
 
 export function seasonFormatTitle(
   title: string,
   seasonNumber: number,
   episodeNumber?: number,
 ) {
-  const zfill = (num: number) => num.toString().padStart(2, "0");
   const epsStr = episodeNumber ? `E${zfill(episodeNumber)}` : "";
   const abbrvSeasonTitle = `${title} S${zfill(seasonNumber)}${epsStr}`;
   const fullSeasonTitle = `${title} Season ${seasonNumber}`;

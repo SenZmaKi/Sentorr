@@ -9,6 +9,7 @@ import {
 import sampleMedia from "@/test/results/imdb/getMedia.json";
 import sampleEpisodes from "@/test/results/imdb/getEpisodes.json";
 import type { SvelteMediaTimeRange } from "svelte/elements";
+import { Language } from "@ctrl/video-filename-parser";
 
 export let playerMedia = writable<Media | undefined>(sampleMedia as Media);
 export let playerEpisode = writable<Episode | undefined>(sampleEpisodes[0]);
@@ -34,9 +35,15 @@ export let buffered = playerState<SvelteMediaTimeRange[] | undefined>(
 export let paused = playerState(true);
 export let videoHeight = playerState(0);
 export let videoWidth = playerState(0);
+/**
+ * Video watch progress, from 0 to 100.
+ */
+export let progress = playerState(0);
 
 export let volume = writable(1);
 export let muted = writable(false);
 export let resolution = writable(Resolution.R1080P);
 export let playbackRate = writable(1);
 export let video = writable<HTMLVideoElement | undefined>(undefined);
+export let blacklistedTorrents = writable<TorrentFile[]>([]);
+export let languages = writable([Language.English]);

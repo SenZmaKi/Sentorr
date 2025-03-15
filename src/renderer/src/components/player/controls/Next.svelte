@@ -2,10 +2,38 @@
   import { type Episode, type Media } from "@/backend/imdb/types";
   import Button from "./Button.svelte";
   import { randomNumber } from "@/common/functions";
-  import { playerMedia, playerEpisode, video } from "../common/store";
+  import {
+    playerMedia,
+    playerEpisode,
+    playerTorrentStream,
+    video,
+    progress,
+    languages,
+    blacklistedTorrents,
+  } from "../common/store";
   import { getEpisodes, getFanFavorites, getMedia } from "@/backend/imdb/api";
   import { toast } from "svelte-sonner";
 
+  async function prefetchNextTorrentFiles() {
+    hasPrefetched = true;
+    console.log("prefetchNextTorrentFiles()");
+    const nextEpisode = await nextEpisodePromise;
+    const nextMedia = await nextMediaPromise;
+    const media = nextEpisode ? $playerMedia : nextMedia;
+    if (!nextEpisode || !media) return;
+    // Relies on the caching at the net client level
+    // TODO: Remove double work since getTorrentFiles will reprocess the torrent files at Player.svelte:load()
+    // TODO: Use a better way to prefetch torrent files as oppossed to relying on the caching at the net client level
+    await window.ipc.torrent.getTorrentFiles({
+      media,
+      episode: nextEpisode,
+      languages: $languages,
+      blacklistedTorrents: $blacklistedTorrents,
+    });
+  }
+  let hasPrefetched = false;
+  $: if ($playerTorrentStream) hasPrefetched = false;
+  $: if (!hasPrefetched && $progress >= 80) prefetchNextTorrentFiles();
 
   async function getNextEpisode(episode: Episode, media: Media) {
     let nextPageKey: string | undefined = undefined;
@@ -29,6 +57,11 @@
         break;
       }
     }
+    if (nextEpisode)
+      console.log(
+        `Next episode: ${media.title} S${nextEpisode.seasonNumber}E${nextEpisode.number}`,
+        nextEpisode,
+      );
     return nextEpisode;
   }
 
@@ -43,6 +76,7 @@
     });
     const randomRecommendation = recommendations[randomIdx];
     const nextMedia = await getMedia(randomRecommendation.id);
+    if (nextMedia) console.log(`Next media: ${nextMedia.title}`, nextMedia);
     return nextMedia;
   }
 
@@ -67,14 +101,10 @@
     console.log("next()");
     if (!$playerEpisode) {
       const nextMedia = await nextMediaPromise;
-      console.log("Next media:", nextMedia?.title);
       setNextMedia(nextMedia);
     } else {
       const nextEpisode = await nextEpisodePromise;
       if (nextEpisode) {
-        console.log(
-          `Next episode: S${nextEpisode?.seasonNumber} E${nextEpisode?.number}`,
-        );
         $playerEpisode = nextEpisode;
       } else {
         toast.info("No more episodes available", {
@@ -89,7 +119,6 @@
 
   $: if ($video) {
     $video.addEventListener("ended", next);
-
   }
 </script>
 

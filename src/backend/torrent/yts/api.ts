@@ -1,4 +1,4 @@
-import { Client } from "@/common/constants.js";
+import { netClient } from "@/common/constants.js";
 import type { SearchResultsJson } from "./jsonTypes.js";
 import type { YtsTorrentFile } from "../common/types.js";
 import { parseResolution as vfpParseResolution } from "@ctrl/video-filename-parser";
@@ -8,10 +8,10 @@ import { filterMap } from "@/common/functions.js";
 const API_ENTRY_POINT = "https://yts.mx/api/v2";
 
 export async function getTorrentsFiles(
-  imdbMovieID: string
+  imdbMovieID: string,
 ): Promise<YtsTorrentFile[]> {
   const url = `${API_ENTRY_POINT}/list_movies.json?query_term=${imdbMovieID}&limit=50`; // 50 is the max results limit
-  const response = await Client.get(url);
+  const response = await netClient.get(url);
   const json = (await response.json()) as SearchResultsJson;
   const movies = json.data.movies;
   if (!movies) return [];

@@ -1,8 +1,7 @@
 // import { env } from "process";
 
-import { createClient } from "./client";
+import { createNetClient } from "./net";
 
-export const DATE = new Date();
 // export const DEBUG = env.DEBUG === "true";
 export const DEBUG = true;
-export const Client = createClient();
+export const netClient = createNetClient();

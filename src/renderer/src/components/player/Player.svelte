@@ -1,6 +1,5 @@
 <script lang="ts">
   import PageWrapper from "../common/PageWrapper.svelte";
-  import { Language } from "@ctrl/video-filename-parser";
   import {
     TorrentStreamsError,
     type TorrentFile,
@@ -23,12 +22,13 @@
     duration,
     resolution,
     videoHeight,
-    videoWidth
+    videoWidth,
+    blacklistedTorrents,
+    languages,
   } from "./common/store";
   import Controls from "./controls/Controls.svelte";
 
   export let hidden: boolean;
-  let blacklistedTorrents: TorrentFile[] = [];
   $: {
     $playerMedia;
     $playerEpisode;
@@ -52,12 +52,11 @@
       });
       return;
     }
-    const languages = [Language.English];
     const torrentFiles = await window.ipc.torrent.getTorrentFiles({
       media,
       episode,
-      languages,
-      blacklistedTorrents: blacklistedTorrents,
+      languages: $languages,
+      blacklistedTorrents: $blacklistedTorrents,
     });
     if (!torrentFiles.length) {
       console.error("No torrent files found");
@@ -132,7 +131,7 @@
   }
 
   function onTorrentStreamsError(error: Error, torrentFile: TorrentFile) {
-    blacklistedTorrents.push(torrentFile);
+    $blacklistedTorrents = [...$blacklistedTorrents, torrentFile];
     switch (error.message) {
       case TorrentStreamsError.TorrentTimeout:
         console.error(TorrentStreamsError.TorrentTimeout, torrentFile);
@@ -169,7 +168,7 @@
     if (!$playerTorrentFile || !$playerTorrentStream) return;
     switch (error.code) {
       case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-        blacklistedTorrents.push($playerTorrentFile);
+        $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
         console.error(
           `Media codec error: Media at ${$playerTorrentStream.url} codec not supported (${JSON.stringify(error)}) `,
         );
@@ -191,7 +190,7 @@
         break;
 
       case error.MEDIA_ERR_DECODE:
-        blacklistedTorrents.push($playerTorrentFile);
+        $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
         console.error(
           `Media decode error: Media at ${$playerTorrentStream.url} decode error (${JSON.stringify(error)}) `,
         );
@@ -215,7 +214,7 @@
     if (!$video.videoTracks || !$video.audioTracks || !$playerTorrentFile)
       return true;
     if (!$video.videoTracks.length && !$video.audioTracks.length) {
-      blacklistedTorrents.push($playerTorrentFile);
+      $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
       console.error("Media codec error: No video and audio tracks found");
       toast.error("Media codec error", {
         description:
@@ -224,7 +223,7 @@
       });
     }
     if (!$video.videoTracks.length) {
-      blacklistedTorrents.push($playerTorrentFile);
+      $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
       console.error(`Video codec error: Video track not found`);
       toast.error("Video codec error", {
         description:
@@ -234,7 +233,7 @@
       return false;
     }
     if (!$video.audioTracks.length) {
-      blacklistedTorrents.push($playerTorrentFile);
+      $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
       console.error(`Audio codec error: Audio track not found`);
       toast.error("Audio codec error", {
         description:

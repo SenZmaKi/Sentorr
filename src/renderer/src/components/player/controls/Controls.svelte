@@ -12,6 +12,7 @@
     playerTorrentStream,
     videoHeight,
     videoWidth,
+    progress,
   } from "../common/store";
   import { createThumbnailGenerator } from "./common/thumbnail";
   import Next from "./Next.svelte";
@@ -20,7 +21,6 @@
   import SettingIcon from "./settings/Icon.svelte";
   import SettingModal from "./settings/modal/Modal.svelte";
 
-  let progress = 0;
   $: buffer =
     $buffered && $buffered.length > 0
       ? ($buffered[$buffered.length - 1].end / $duration) * 100
@@ -37,7 +37,7 @@
 
   $: if ($video) {
     $video.addEventListener("timeupdate", () => {
-      progress = computeProgress($currentTime);
+      $progress = computeProgress($currentTime);
     });
   }
 
@@ -77,7 +77,7 @@
         <SettingModal />
       </div>
       <Seekbar
-        bind:progress
+        bind:progress={$progress}
         {buffer}
         length={$duration}
         {onSeeking}

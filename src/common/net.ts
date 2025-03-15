@@ -1,6 +1,6 @@
-export type Client = ReturnType<typeof createClient>;
+export type NetClient = ReturnType<typeof createNetClient>;
 
-export function createClient() {
+export function createNetClient() {
   const hrsToMs = 60 * 60 * 1000;
   const maxCacheAgeMs = 2 * hrsToMs;
   let isFirstFetch = true;
@@ -90,7 +90,7 @@ export function createClient() {
 
   async function post(
     url: string,
-    data: any,
+    data: unknown,
     extraHeaders?: HeadersInit,
     cookies?: string[],
   ) {

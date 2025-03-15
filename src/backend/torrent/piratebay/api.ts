@@ -1,4 +1,4 @@
-import { Client } from "@/common/constants";
+import { netClient } from "@/common/constants";
 import type { TorrentJson } from "./jsonTypes";
 import { filterMap } from "@/common/functions";
 import { validateTorrent } from "../common/functions";
@@ -19,7 +19,7 @@ export async function getTorrentFiles({
   episodeImdbID?: string;
 }) {
   const url = `${API_ENTRYPOINT}q=${seasonFormattedTitle}`;
-  const response = await Client.get(url);
+  const response = await netClient.get(url);
   const torrents: TorrentJson[] = await response.json();
   return filterMap(torrents, (torrent): NormalTorrentFile | undefined => {
     const category = parseInt(torrent.category);
@@ -39,7 +39,7 @@ export async function getTorrentFiles({
       isTvSeries,
       getCompleteSeason,
       languages,
-      ignoreTitle
+      ignoreTitle,
     );
     if (!result) return undefined;
     const { resolution } = result;

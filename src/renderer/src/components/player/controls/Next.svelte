@@ -2,35 +2,28 @@
   import { type Episode, type Media } from "@/backend/imdb/types";
   import Button from "./Button.svelte";
   import { randomNumber } from "@/common/functions";
-  import { playerMedia, playerEpisode } from "../common/store";
+  import { playerMedia, playerEpisode, video } from "../common/store";
   import { getEpisodes, getFanFavorites, getMedia } from "@/backend/imdb/api";
   import { toast } from "svelte-sonner";
 
-  async function getNextEpisode() {
-    if (!$playerEpisode || !$playerMedia) return;
 
+  async function getNextEpisode(episode: Episode, media: Media) {
     let nextPageKey: string | undefined = undefined;
     let nextEpisode: Episode | undefined = undefined;
     while (true) {
-      const pagination = await getEpisodes(
-        $playerMedia.id,
-        $playerEpisode.seasonNumber
-      );
+      const pagination = await getEpisodes(media.id, episode.seasonNumber);
       nextEpisode = pagination.results.find(
         (episode) =>
-          $playerEpisode && $playerEpisode.number + 1 === episode.number
+          $playerEpisode && $playerEpisode.number + 1 === episode.number,
       );
       if (nextEpisode) break;
       nextPageKey = pagination.nextPageKey;
       if (!nextPageKey) {
-        if (
-          $playerMedia.seasonsCount &&
-          $playerMedia.seasonsCount < $playerEpisode.seasonNumber + 1
-        )
+        if (media.seasonsCount && media.seasonsCount < episode.seasonNumber + 1)
           break;
         const pagination = await getEpisodes(
-          $playerMedia.id,
-          $playerEpisode.seasonNumber + 1
+          media.id,
+          episode.seasonNumber + 1,
         );
         nextEpisode = pagination.results[0];
         break;
@@ -39,11 +32,9 @@
     return nextEpisode;
   }
 
-  async function getNextMedia() {
-    if (!$playerMedia) return;
-
-    const recommendations = $playerMedia.recommendations?.length
-      ? $playerMedia.recommendations
+  async function getNextMedia(media: Media) {
+    const recommendations = media.recommendations?.length
+      ? media.recommendations
       : await getFanFavorites();
 
     if (!recommendations.length) return undefined;
@@ -66,33 +57,43 @@
       });
     }
   }
+  $: nextMediaPromise = $playerMedia && getNextMedia($playerMedia);
+  $: nextEpisodePromise =
+    $playerEpisode &&
+    $playerMedia &&
+    getNextEpisode($playerEpisode, $playerMedia);
 
-  async function onClick() {
-    console.log("Next clicked");
+  async function next() {
+    console.log("next()");
     if (!$playerEpisode) {
-      const nextMedia = await getNextMedia();
+      const nextMedia = await nextMediaPromise;
       console.log("Next media:", nextMedia?.title);
       setNextMedia(nextMedia);
     } else {
-      const nextEpisode = await getNextEpisode();
-      console.log(
-        `Next episode: S${nextEpisode?.seasonNumber} E${nextEpisode?.number}`
-      );
+      const nextEpisode = await nextEpisodePromise;
       if (nextEpisode) {
+        console.log(
+          `Next episode: S${nextEpisode?.seasonNumber} E${nextEpisode?.number}`,
+        );
         $playerEpisode = nextEpisode;
       } else {
         toast.info("No more episodes available", {
           description:
             "Already at the latest episode, picking a recommendation instead",
         });
-        const nextMedia = await getNextMedia();
+        const nextMedia = await nextMediaPromise;
         setNextMedia(nextMedia);
       }
     }
   }
+
+  $: if ($video) {
+    $video.addEventListener("ended", next);
+
+  }
 </script>
 
-<Button {onClick}>
+<Button onClick={next}>
   <svg
     fill="#ffffff"
     version="1.1"
@@ -114,4 +115,3 @@
     </g></svg
   >
 </Button>
-

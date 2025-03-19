@@ -78,7 +78,6 @@
   $: showWithPaused($paused);
   $: $video && addVideoListeners($video);
   $: $showControls = show || $paused || $isHovering;
-  $: console.log("showControls:", $showControls);
 </script>
 
   <div

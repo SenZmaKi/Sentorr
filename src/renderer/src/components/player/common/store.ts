@@ -47,7 +47,7 @@ export let videoWidth = playerState(0);
 export let progress = playerState(0);
 export let showControls = playerState(true);
 
-export let volume = writable(1);
+export let volume = writable(0.8);
 export let muted = writable(false);
 export let resolution = writable(Resolution.R1080P);
 export let playbackRate = writable(1);

@@ -8,7 +8,7 @@
       ? document.exitFullscreen()
       : $videoContainer.requestFullscreen();
 
-    isFullscreen = document.fullscreenElement === $videoContainer;
+    isFullscreen = !isFullscreen;
   }
 </script>
 

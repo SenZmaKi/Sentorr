@@ -5,7 +5,7 @@
 
   async function onClick() {
     if (!$video) return;
-    $paused = !$paused;
+    $paused ? await $video.play() : $video.pause();
   }
   $: if ($video) {
     $video.addEventListener("click", onClick);

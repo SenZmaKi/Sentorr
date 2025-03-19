@@ -8,27 +8,28 @@
   import { searchFilters } from "./store";
   import { createInfiniteScrollStore } from "../common/functions";
   import { writable } from "svelte/store";
-  import type { BaseResult } from "@/backend/imdb/types";
+  import type { SearchFilters } from "@/backend/imdb/types";
   import { mediaCardType } from "../common/store";
   import { MediaCardType } from "../common/types";
 
-  let accumulatedResults = writable<(BaseResult | undefined)[] | undefined>(
-    undefined,
-  );
   export let hidden: boolean;
-  let infiniteScroll: ((event: Event | null) => void) | undefined = undefined;
-  $: if (!hidden && !$accumulatedResults && !infiniteScroll) {
-    [accumulatedResults, infiniteScroll] = createInfiniteScrollStore(
-      (nextPageKey: string | undefined) => search($searchFilters, nextPageKey),
+
+  let resultsDiv: HTMLDivElement | undefined = undefined;
+  function getResultsState(hidden: boolean, searchFilters: SearchFilters) {
+    console.log("getResultsState()");
+    console.log($searchFilters)
+    if (hidden) return [writable(undefined), undefined] as const;
+    if (resultsDiv) resultsDiv.scrollTo(0, 0);
+    return createInfiniteScrollStore(
+      (nextPageKey: string | undefined) => search(searchFilters, nextPageKey),
       false,
       25,
     );
   }
-  let resultsDiv: HTMLDivElement;
-  $: {
-    $searchFilters;
-    if (resultsDiv) resultsDiv.scrollTo(0, 0);
-  }
+  $: [accumulatedResults, infiniteScroll] = getResultsState(
+    hidden,
+    $searchFilters,
+  );
 </script>
 
 {#if $accumulatedResults && $accumulatedResults.length && infiniteScroll}

@@ -2,13 +2,12 @@
   import { type Episode, type Media } from "@/backend/imdb/types";
   import Button from "./Button.svelte";
   import { randomNumber, zfill } from "@/common/functions";
-  import { tippy } from "@/renderer/src/components/common/constants";
 
   import {
     playerMedia,
     playerEpisode,
     playerTorrentStream,
-    video,
+    ended,
     progress,
     languages,
     blacklistedTorrents,
@@ -33,9 +32,6 @@
       blacklistedTorrents: $blacklistedTorrents,
     });
   }
-  let hasPrefetched = false;
-  $: if ($playerTorrentStream) hasPrefetched = false;
-  $: if (!hasPrefetched && $progress >= 80) prefetchNextTorrentFiles();
 
   async function getNextEpisode(episode: Episode, media: Media) {
     let nextPageKey: string | undefined = undefined;
@@ -93,11 +89,6 @@
       });
     }
   }
-  $: nextMediaPromise = $playerMedia && getNextMedia($playerMedia);
-  $: nextEpisodePromise =
-    $playerEpisode &&
-    $playerMedia &&
-    getNextEpisode($playerEpisode, $playerMedia);
 
   async function next() {
     console.log("next()");
@@ -119,9 +110,6 @@
     }
   }
 
-  $: if ($video) {
-    $video.addEventListener("ended", next);
-  }
   let nextStr = "Loading...";
   async function setNextStr(
     nextMediaPromise: Promise<Media | undefined>,
@@ -139,13 +127,27 @@
         : "No recommendations found";
     }
   }
+
+  let hasPrefetched = false;
+  $: if ($playerTorrentStream) hasPrefetched = false;
+  $: if (!hasPrefetched && $progress >= 80) prefetchNextTorrentFiles();
+
+  $: nextMediaPromise = $playerMedia && getNextMedia($playerMedia);
+  $: nextEpisodePromise =
+    $playerEpisode &&
+    $playerMedia &&
+    getNextEpisode($playerEpisode, $playerMedia);
+
+  $: if ($ended) {
+    next();
+  }
   $: nextMediaPromise &&
     nextEpisodePromise &&
     setNextStr(nextMediaPromise, nextEpisodePromise);
 </script>
 
 <Button onClick={next}>
-  <div use:tippy={{ content: nextStr }}>
+  <div>
     <svg
       fill="#ffffff"
       version="1.1"

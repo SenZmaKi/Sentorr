@@ -14,8 +14,10 @@
     playerTorrentStream,
     muted,
     volume,
+    ended,
     playbackRate,
     video,
+    videoContainer,
     currentTime,
     buffered,
     paused,
@@ -25,6 +27,7 @@
     videoWidth,
     blacklistedTorrents,
     languages,
+    showControls,
   } from "./common/store";
   import Controls from "./controls/Controls.svelte";
 
@@ -257,10 +260,13 @@
   // let  videoUrl = `${webtorrentDir}\\[SubsPlease] Solo Leveling - 14 (1080p) [2FD84CD9].mkv`;
   // let videoUrl =
   //   "https://github.com/user-attachments/assets/06fae060-0bc9-43b0-8153-04f4cf430e22";
+  $: videoUrl = $playerTorrentStream?.url;
 </script>
 
 <PageWrapper {hidden}>
   <div
+    bind:this={$videoContainer}
+    class:cursor-none={!$showControls}
     class="relative flex flex-col items-center justify-center bg-black w-full h-screen"
   >
     <!-- svelte-ignore a11y-media-has-caption -->
@@ -269,6 +275,7 @@
       bind:muted={$muted}
       bind:volume={$volume}
       bind:playbackRate={$playbackRate}
+      bind:ended={$ended}
       bind:currentTime={$currentTime}
       bind:buffered={$buffered}
       bind:paused={$paused}
@@ -280,7 +287,7 @@
       on:loadedmetadata={() => {
         if ($video && isValidCodecs()) $paused = false;
       }}
-      src={$playerTorrentStream?.url}
+      src={videoUrl}
     >
     </video>
     <div class="absolute bottom-[5%] w-full">

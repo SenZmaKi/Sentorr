@@ -4,15 +4,15 @@
   let value = "";
 
   function debounce(callback: () => void, ms: number) {
-    let timer: NodeJS.Timer;
+    let timer: NodeJS.Timer | undefined = undefined;
     return () => {
-      clearTimeout(timer);
+      timer && clearTimeout(timer);
       timer = setTimeout(callback, ms);
     };
   }
 
   const updateSearchTerm = debounce(() => {
-    $searchTerm = value ? value : undefined;
+    $searchTerm = value || undefined;
   }, 400);
 
   $: value, updateSearchTerm();

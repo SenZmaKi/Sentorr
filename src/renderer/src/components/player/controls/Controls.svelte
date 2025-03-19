@@ -13,33 +13,15 @@
     videoHeight,
     videoWidth,
     progress,
+    showControls,
   } from "../common/store";
   import { createThumbnailGenerator } from "./common/thumbnail";
   import Next from "./Next.svelte";
   import Volume from "./volume/Volume.svelte";
   import Time from "./Time.svelte";
-  import SettingIcon from "./settings/Icon.svelte";
-  import SettingModal from "./settings/modal/Modal.svelte";
-
-  $: buffer =
-    $buffered && $buffered.length > 0
-      ? ($buffered[$buffered.length - 1].end / $duration) * 100
-      : 0;
-  let show = false;
-  let hidetimer: Timer | undefined = undefined;
-  $: thumbnailGenerator =
-    $playerTorrentStream &&
-    createThumbnailGenerator(
-      $playerTorrentStream.url,
-      $videoHeight,
-      $videoWidth,
-    );
-
-  $: if ($video) {
-    $video.addEventListener("timeupdate", () => {
-      $progress = computeProgress($currentTime);
-    });
-  }
+  import SettingsIcon from "./settings/Icon.svelte";
+  import SettingsModal from "./settings/modal/Modal.svelte";
+  import Fullscreen from "./Fullscreen.svelte";
 
   function computeProgress(time: number) {
     return time && $duration ? (time / $duration) * 100 : 0;
@@ -47,9 +29,12 @@
 
   function showWithTimeout() {
     if ($paused || $isHovering) return;
-    if (hidetimer) clearTimeout(hidetimer);
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = undefined;
+    }
     show = true;
-    hidetimer = setTimeout(() => {
+    hideTimer = setTimeout(() => {
       show = false;
     }, 3_000);
   }
@@ -57,24 +42,54 @@
   function onSeeking(percent: number) {
     $currentTime = (percent / 100) * $duration;
   }
-  if ($paused) {
-    clearTimeout(hidetimer);
-    show = false;
+
+  function showWithPaused(paused: boolean) {
+    if (paused) {
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = undefined;
+      }
+      show = false;
+    } else {
+      showWithTimeout();
+    }
   }
-  $: if ($video) {
-    $video.addEventListener("mousemove", showWithTimeout);
+  function addVideoListeners(video: HTMLVideoElement) {
+    video.addEventListener("mousemove", showWithTimeout);
+    video.addEventListener("timeupdate", () => {
+      $progress = computeProgress($currentTime);
+    });
   }
+
+  let show = false;
+  let hideTimer: Timer | undefined = undefined;
+
+  $: buffer =
+    $buffered && $buffered.length > 0
+      ? ($buffered[$buffered.length - 1].end / $duration) * 100
+      : 0;
+  $: thumbnailGenerator =
+    $playerTorrentStream &&
+    createThumbnailGenerator(
+      $playerTorrentStream.url,
+      $videoHeight,
+      $videoWidth,
+    );
+  $: showWithPaused($paused);
+  $: $video && addVideoListeners($video);
+  $: $showControls = show || $paused || $isHovering;
+  $: console.log("showControls:", $showControls);
 </script>
 
-{#if isHovering || $paused || $isHovering}
   <div
+    class:hidden={!$showControls}
     transition:fade
     style="background: radial-gradient(oval, rgba(0,0,0,0.8) 0%, transparent 70%);"
     class="flex flex-col items-center justify-center w-full"
   >
     <div class="w-[98%]">
       <div class="flex justify-end">
-        <SettingModal />
+        <SettingsModal />
       </div>
       <Seekbar
         bind:progress={$progress}
@@ -90,10 +105,10 @@
           <Volume />
           <Time />
         </div>
-        <div class="flex">
-          <SettingIcon />
+        <div class="flex items-center gap-x-6">
+          <SettingsIcon />
+          <Fullscreen />
         </div>
       </div>
     </div>
   </div>
-{/if}

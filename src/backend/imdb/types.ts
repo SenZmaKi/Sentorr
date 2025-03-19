@@ -61,9 +61,7 @@ export type Media = {
   isOngoing: boolean;
 };
 
-export type ScalableImageUrl = {
-  url: string;
-};
+export type ScalableImageUrl = string & { __brand: "ScalableImageUrl" };
 
 export type Review = {
   title: string;

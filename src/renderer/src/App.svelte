@@ -10,7 +10,7 @@
 
 <body>
   <div class="flex items-center">
-    <Navbar />
+    <!-- <Navbar /> -->
     <div class="flex-1 w-[90%] h-screen">
       <Toaster
         visibleToasts={6}

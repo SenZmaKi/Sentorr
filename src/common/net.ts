@@ -54,6 +54,10 @@ export function createNetClient() {
   }
 
   async function cachedFetch(url: string, init?: RequestInit) {
+
+const isBrowser =
+  typeof window !== "undefined" && typeof window.document !== "undefined";
+    if (!isBrowser) return fetch(url, init);
     const cache = await caches.open("sentorr-cache");
     if (isFirstFetch) {
       isFirstFetch = false;

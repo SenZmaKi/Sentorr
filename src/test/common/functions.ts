@@ -6,7 +6,7 @@ export async function saveResults<T>(name: string, results: T) {
   const resultsJson = JSON.stringify(results, null, 2);
   const split = name.split("/");
   const filename = split.pop();
-  const resultsSaveFolder = path.join("test", "results", ...split);
+  const resultsSaveFolder = path.join("src", "test", "results", ...split);
   if (!(await exists(resultsSaveFolder)))
     await mkdir(resultsSaveFolder, { recursive: true });
   const saveFilePath = path.join(resultsSaveFolder, `${filename}.json`);

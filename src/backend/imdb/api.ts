@@ -48,7 +48,7 @@ export function makeScaledImageUrl(
   url: ScalableImageUrl,
   quality?: number,
 ): string {
-  const split = url.url.split(".");
+  const split = url.split(".");
   const ext = split.pop();
   // Get a larger image for better quality, otherwise the images look ass
   quality = quality ?? 2;
@@ -60,7 +60,7 @@ export function makeScaledImageUrl(
   return scaledUrl;
 }
 
-export const getSessionCookies: () => Promise<string[]> = (function () {
+export const getSessionCookies = (function () {
   let sessionCookies: string[] | undefined = undefined;
   return async function () {
     if (!sessionCookies) {
@@ -113,7 +113,7 @@ function buildBaseResult(node: BaseNode): BaseResult {
     node.titleType?.displayableProperty?.value?.plainText ||
     node.titleType?.text;
   const url = node.primaryImage?.url;
-  const imageUrl = url ? { url } : undefined;
+  const imageUrl = (url as ScalableImageUrl) || undefined;
   const plot = node.plot?.plotText?.plainText;
   const releaseYear = node.releaseYear?.year;
   const endYear = node.releaseYear?.endYear;
@@ -268,7 +268,7 @@ export async function getEpisodes(
         ep.series.displayableEpisodeNumber.episodeNumber.displayableProperty
           .value.plainText,
       );
-      const imageUrl = { url: ep.primaryImage.url };
+      const imageUrl = (ep.primaryImage.url as ScalableImageUrl) || undefined;
       const plot = ep.plot?.plotText.plaidHtml;
       const releaseDate = ep.releaseDate
         ? {
@@ -315,7 +315,7 @@ function combineMetadata(
 ): Media {
   const title = metadataJson.name;
   const url = metadataJson.image;
-  const imageUrl = url ? { url } : undefined;
+  const imageUrl = (url as ScalableImageUrl) || undefined;
   const bannerImageUrl = metadataJson.trailer?.thumbnailUrl;
   const trailerUrl = metadataJson.trailer?.embedUrl;
   const genres = metadataJson.genre as Genre[] | undefined;
@@ -344,10 +344,10 @@ function combineMetadata(
   );
   const actors = mainColumnData.cast.edges.map(({ node: actor }) => {
     const name = actor.name.nameText.text;
-    const imageUrl = actor.name.primaryImage?.url;
+    const imageUrl = actor.name.primaryImage?.url || undefined;
     // Characters is probably an array cause an actor can play multiple characters e.g., an alter ego from a different universe
     const c = actor.characters?.[0];
-    const character = c ? c.name : undefined;
+    const character = c?.name || undefined;
     return { name, imageUrl, character };
   });
 

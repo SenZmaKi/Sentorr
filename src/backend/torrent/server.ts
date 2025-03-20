@@ -6,6 +6,7 @@ import {
 } from "./common/types";
 import path from "path";
 import fs from "fs/promises";
+import { tryCatchAsync } from "@/common/functions";
 
 const Client = new WebTorrent();
 const Server = Client.createServer({});
@@ -117,11 +118,9 @@ async function selectTorrentStream(torrentStream: TorrentStream) {
       console.log("Queue size exceeded");
       const absoluteFilePath = path.join(torrent.path, first.file.path);
       console.log(`Deleting ${absoluteFilePath}`);
-      try {
-        await fs.rm(absoluteFilePath);
-      } catch (error: any) {
-        console.error(`Failed to delete file ${absoluteFilePath}`, error);
-      }
+      const [, rmError] = await tryCatchAsync(fs.rm(absoluteFilePath));
+      if (rmError)
+        console.error(`Failed to delete file ${absoluteFilePath}`, rmError);
       if (
         !fileTorrentStreamQueue.find(
           ({ torrentStream }) =>

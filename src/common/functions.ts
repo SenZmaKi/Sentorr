@@ -38,3 +38,27 @@ export function parseHtml(htmlPage: string): CheerioAPI {
 export function zfill(num: number): string {
   return num.toString().padStart(2, "0");
 }
+type Success<T> = [data: T, error: undefined];
+
+type Failure<E> = [data: undefined, error: E];
+
+type Result<T, E = Error> = Success<T> | Failure<E>;
+
+export async function tryCatchAsync<T, E = Error>(
+  promise: Promise<T>,
+): Promise<Result<T, E>> {
+  try {
+    const data = await promise;
+    return [data, undefined];
+  } catch (error) {
+    return [undefined, error as E];
+  }
+}
+export function tryCatch<T, E = Error>(fn: () => T): Result<T, E> {
+  try {
+    const data = fn();
+    return [data, undefined];
+  } catch (error) {
+    return [undefined, error as E];
+  }
+}

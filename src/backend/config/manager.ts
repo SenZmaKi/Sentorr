@@ -2,6 +2,7 @@ import { app } from "electron/main";
 import { writeFile, readFile, stat } from "fs/promises";
 import path from "path";
 import { type Config } from "./types";
+import { tryCatch, tryCatchAsync } from "@/common/functions";
 // import { rm } from "fs/promises";
 
 export async function createConfigManager() {
@@ -10,26 +11,17 @@ export async function createConfigManager() {
   // await rm(configFilePath);
 
   async function loadConfig() {
-    try {
-      const statResult = await stat(configFilePath);
-      if (!statResult.isFile()) {
-        return undefined;
-      }
+    const [statResult, statError] = await tryCatchAsync(stat(configFilePath));
+    if (statError) return undefined;
+    if (!statResult.isFile()) return undefined;
 
-      const configString = await readFile(configFilePath, "utf8");
-      try {
-        return JSON.parse(configString) as Config;
-      } catch (parseError) {
-        console.error(`Failed to parse config file: ${parseError}`);
-        return undefined;
-      }
-    } catch (error: any) {
-      if (error.code === "ENOENT") {
-        return undefined;
-      } else {
-        throw error;
-      }
+    const configString = await readFile(configFilePath, "utf8");
+    const [parseResult, parseError] = tryCatch(() => JSON.parse(configString));
+    if (parseError) {
+      console.error(`Failed to parse config file: ${parseError}`);
+      return undefined;
     }
+    return parseResult;
   }
 
   async function saveConfig() {

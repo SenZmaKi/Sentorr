@@ -3,7 +3,6 @@
   import {
     TorrentStreamsError,
     type TorrentFile,
-    type TorrentStream,
   } from "@/backend/torrent/common/types";
   import { computeTorrentScores } from "@/backend/torrent/common/functions";
   import { toast } from "svelte-sonner";
@@ -31,6 +30,7 @@
   } from "./common/store";
   import Controls from "./controls/Controls.svelte";
   import { getCurrentMediaProgress } from "../common/store";
+  import { tryCatchAsync } from "@/common/functions";
 
   export let hidden: boolean;
   $: {
@@ -87,18 +87,17 @@
     ];
     const sortedByScore = torrentAndScore.sort((a, b) => b.score - a.score);
     const torrentFile = sortedByScore[0].torrent;
-    let torrentsStreams: TorrentStream[] = [];
-    try {
-      torrentsStreams = await window.ipc.torrent.getTorrentStreams(
+    const [torrentsStreams, torrentStreamsError] = await tryCatchAsync(
+      window.ipc.torrent.getTorrentStreams(
         media.title,
         torrentFile,
         !media.isMovie,
-      );
-    } catch (error: any) {
-      onTorrentStreamsError(error, torrentFile);
+      ),
+    );
+    if (torrentStreamsError) {
+      onTorrentStreamsError(torrentStreamsError, torrentFile);
       return;
     }
-
     if (!torrentsStreams.length) {
       console.error("No torrent streams found");
       return;

@@ -1,16 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain } from "electron";
+import { app, shell, BrowserWindow } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import {
-  getTorrentStreams,
-  closeTorrentStreamsServer,
-  clearTorrents,
-  deselectAllTorrentStreams,
-  selectTorrentStream,
-  getCurrentTorrentStreamStats,
-} from "@/backend/torrent/server";
+import configManager from "@/backend/config/manager";
+import torrentServer from "@/backend/torrent/server";
 import { type TorrentStream } from "@/backend/torrent/common/types";
-import type { TypedIpcMain } from "@/common/types";
+import { typedIpcMain } from "@/common/ipc";
 
 // import icon from "../renderer/src/assets/icon.png?asset";
 const icon = "";
@@ -98,28 +92,35 @@ app.whenReady().then(() => {
 
   // IPC
 
-  const typedIpcMain = ipcMain as TypedIpcMain;
   typedIpcMain.handle("getTorrentStreams", (_, torrentID) =>
-    getTorrentStreams(torrentID),
+    torrentServer.getTorrentStreams(torrentID),
   );
 
   typedIpcMain.handle(
     "selectTorrentStream",
-    (_, torrentStream: TorrentStream) => selectTorrentStream(torrentStream),
+    (_, torrentStream: TorrentStream) =>
+      torrentServer.selectTorrentStream(torrentStream),
   );
 
-  typedIpcMain.handle("closeTorrentStreamsServer", () =>
-    closeTorrentStreamsServer(),
+  typedIpcMain.handle(
+    "closeTorrentStreamsServer",
+    torrentServer.closeTorrentStreamsServer,
   );
 
-  typedIpcMain.handle("clearTorrents", async () => clearTorrents());
+  typedIpcMain.handle("clearTorrents", torrentServer.clearTorrents);
 
-  typedIpcMain.handle("deselectAllTorrentStreams", async () =>
-    deselectAllTorrentStreams(),
+  typedIpcMain.handle(
+    "deselectAllTorrentStreams",
+    torrentServer.deselectAllTorrentStreams,
   );
 
-  typedIpcMain.handle("getCurrentTorrentStreamStats", async () =>
-    getCurrentTorrentStreamStats(),
+  typedIpcMain.handle(
+    "getCurrentTorrentStreamStats",
+    torrentServer.getCurrentTorrentStreamStats,
+  );
+  typedIpcMain.handle("getConfig", configManager.getConfig);
+  typedIpcMain.handle("setConfig", async (_, newConfig) =>
+    configManager.setConfig(newConfig),
   );
 
   createWindow();

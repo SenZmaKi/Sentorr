@@ -4,13 +4,14 @@ import {
   getPopularTitles,
   getSessionCookies,
   getMedia,
+  getEpisode,
   getReviews,
   getTop10Trending,
   getTop10OfAllTime,
   getEpisodes,
 } from "@/backend/imdb/api";
 import { type Pagination } from "@/backend/imdb/types";
-import { SHOW_IMDB_ID, MOVIE_TITLE } from "./common/constants";
+import { SHOW_IMDB_ID, MOVIE_TITLE, EPISODE_IMDB_ID } from "./common/constants";
 import {
   failIfEmpty,
   failIfEmptyHandler,
@@ -51,7 +52,13 @@ test("popularTitles", async () => {
 test("getMedia", async () => {
   const media = await getMedia(SHOW_IMDB_ID);
   saveResults("imdb/getMedia", media);
-  expect(media.title).toBeTruthy();
+  expect(media.id).toBeTruthy();
+});
+
+test("getEpisode", async () => {
+  const episode = await getEpisode(EPISODE_IMDB_ID);
+  saveResults("imdb/getEpisode", episode);
+  expect(episode.id).toBeTruthy();
 });
 
 test("getReviews", async () => {

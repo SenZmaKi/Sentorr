@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy } from "svelte";
   import { videoContainer } from "../common/store";
   import Button from "./Button.svelte";
   let isFullscreen = document.fullscreenElement === $videoContainer;
@@ -16,10 +16,9 @@
   }
 
   document.addEventListener("fullscreenchange", invertFullscreen);
-  onMount(() => {
-    return () =>
-      document.removeEventListener("fullscreenchange", invertFullscreen);
-  });
+  onDestroy(() =>
+    document.removeEventListener("fullscreenchange", invertFullscreen),
+  );
 </script>
 
 <Button {onClick}>

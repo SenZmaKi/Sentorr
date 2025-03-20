@@ -1,23 +1,54 @@
-export type Episode = {
-  id: string;
+export type BaseMedia = {
   title?: string;
-  number: number;
-  seasonNumber: number;
   imageUrl?: ScalableImageUrl;
   plot?: string;
-  releaseDate?: IMDBDate;
   rating?: number;
   ratingCount?: number;
 };
+export type Episode = BaseMedia & {
+  id: EpisodeId;
+  seasonEpisode: SeasonEpisode;
+  releaseDate?: ImdbDate;
+};
 
-export type IMDBDate = {
+export type SeasonEpisode = {
+  seasonNumber: number;
+  episodeNumber: number;
+};
+export type ImdbDate = {
   day?: number;
   month?: number;
   year?: number;
 };
 
+export type Media = BaseMedia & {
+  id: MediaId;
+  type?: MediaType;
+  bannerImageUrl?: string;
+  trailerUrl?: string;
+  genres?: Genre[];
+  releaseYear?: number;
+  endYear?: number;
+  popularityScore?: number;
+  contentRating?: string;
+  actors?: Actor[];
+  directors?: string[];
+  creators?: string[];
+  runtime?: string;
+  episodeCount?: number;
+  seasonsCount?: number;
+  productionStatus?: string;
+  recommendations?: BaseResult[];
+  isMovie: boolean;
+  isOngoing: boolean;
+};
+
+export type MediaId = string & { __brand: "MediaImdbId" };
+export type EpisodeId = string & { __brand: "EpisodeImdbId" };
+export type ScalableImageUrl = string & { __brand: "ScalableImageUrl" };
+
 export type BaseResult = {
-  id: string;
+  id: MediaId;
   title?: string;
   type?: string;
   imageUrl?: ScalableImageUrl;
@@ -33,36 +64,6 @@ export type BaseResult = {
    */
   runtime?: number;
 };
-
-export type Media = {
-  id: string;
-  title?: string;
-  type?: MediaType;
-  imageUrl?: ScalableImageUrl;
-  bannerImageUrl?: string;
-  trailerUrl?: string;
-  plot?: string;
-  genres?: Genre[];
-  releaseYear?: number;
-  endYear?: number;
-  rating?: number;
-  ratingCount?: number;
-  popularityScore?: number;
-  contentRating?: string;
-  actors?: Actor[];
-  directors?: string[];
-  creators?: string[];
-  runtime?: string;
-  episodeCount?: number;
-  seasonsCount?: number;
-  productionStatus?: string;
-  recommendations?: BaseResult[];
-  isMovie: boolean;
-  isOngoing: boolean;
-};
-
-export type ScalableImageUrl = string & { __brand: "ScalableImageUrl" };
-
 export type Review = {
   title: string;
   author: string;

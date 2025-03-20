@@ -2,6 +2,7 @@
   import { scale } from "svelte/transition";
   import Button from "./Button.svelte";
   import { paused, video } from "../common/store";
+  import { onDestroy } from "svelte";
 
   async function onClick() {
     if (!$video) return;
@@ -10,6 +11,7 @@
   $: if ($video) {
     $video.addEventListener("click", onClick);
   }
+  onDestroy(() => $video && $video.removeEventListener("click", onClick));
 </script>
 
 <Button style="position: relative;" {onClick}>

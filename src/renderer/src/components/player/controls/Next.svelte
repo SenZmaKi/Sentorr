@@ -37,19 +37,27 @@
     let nextPageKey: string | undefined = undefined;
     let nextEpisode: Episode | undefined = undefined;
     while (true) {
-      const pagination = await getEpisodes(media.id, episode.seasonNumber);
+      const pagination = await getEpisodes(
+        media.id,
+        episode.seasonEpisode.seasonNumber,
+      );
       nextEpisode = pagination.results.find(
         (episode) =>
-          $playerEpisode && $playerEpisode.number + 1 === episode.number,
+          $playerEpisode &&
+          $playerEpisode.seasonEpisode.episodeNumber + 1 ===
+            episode.seasonEpisode.episodeNumber,
       );
       if (nextEpisode) break;
       nextPageKey = pagination.nextPageKey;
       if (!nextPageKey) {
-        if (media.seasonsCount && media.seasonsCount < episode.seasonNumber + 1)
+        if (
+          media.seasonsCount &&
+          media.seasonsCount < episode.seasonEpisode.seasonNumber + 1
+        )
           break;
         const pagination = await getEpisodes(
           media.id,
-          episode.seasonNumber + 1,
+          episode.seasonEpisode.seasonNumber + 1,
         );
         nextEpisode = pagination.results[0];
         break;
@@ -57,7 +65,7 @@
     }
     if (nextEpisode)
       console.log(
-        `Next episode: ${media.title} S${nextEpisode.seasonNumber}E${nextEpisode.number}`,
+        `Next episode: ${media.title} S${nextEpisode.seasonEpisode.seasonNumber}E${nextEpisode.seasonEpisode.episodeNumber}`,
         nextEpisode,
       );
     return nextEpisode;
@@ -119,7 +127,7 @@
     const nextEpisode = await nextEpisodePromise;
     if ($playerEpisode) {
       nextStr = nextEpisode
-        ? `S${zfill(nextEpisode.seasonNumber)}:E${zfill(nextEpisode.number)}${nextEpisode.title ? ` ${nextEpisode.title}` : ""}`
+        ? `S${zfill(nextEpisode.seasonEpisode.seasonNumber)}:E${zfill(nextEpisode.seasonEpisode.episodeNumber)}${nextEpisode.title ? ` ${nextEpisode.title}` : ""}`
         : "No more episodes available";
     } else {
       nextStr = nextMedia

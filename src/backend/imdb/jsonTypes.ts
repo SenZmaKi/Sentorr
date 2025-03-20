@@ -441,7 +441,44 @@ export type MoreMetadataJson = {
           __typename: string;
         };
         canHaveEpisodes: boolean;
-        series: any;
+        series: {
+          episodeNumber: {
+            episodeNumber: number;
+            seasonNumber: number;
+            __typename: string;
+          };
+          nextEpisode: {
+            id: string;
+            __typename: string;
+          };
+          previousEpisode: {
+            id: string;
+            __typename: string;
+          };
+          series: {
+            id: string;
+            titleText: {
+              text: string;
+              __typename: string;
+            };
+            originalTitleText: {
+              text: string;
+              __typename: string;
+            };
+            titleType: {
+              id: string;
+              __typename: string;
+              canHaveEpisodes: boolean;
+            };
+            releaseYear: {
+              year: number;
+              endYear: number;
+              __typename: string;
+            };
+            __typename: string;
+          };
+          __typename: string;
+        };
         titleText: {
           text: string;
           __typename: string;

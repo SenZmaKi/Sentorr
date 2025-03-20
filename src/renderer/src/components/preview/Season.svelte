@@ -5,9 +5,14 @@
   import { createInfiniteScrollStore } from "../common/functions";
   import Episode from "./Episode.svelte";
   import EpisodeSkeleton from "./EpisodeSkeleton.svelte";
+  import { getCurrentMediaProgress } from "../common/store";
   export let seasonNumber: number;
   export let media: Media;
-  let open = seasonNumber === 1;
+
+  const currentMediaProgress = getCurrentMediaProgress();
+  let open =
+    seasonNumber ===
+    (currentMediaProgress?.episode?.seasonEpisode.seasonNumber ?? 1);
   let accumulatedResults: Writable<(EpisodeType | undefined)[]>;
   let infiniteScroll: (event: Event | null) => Promise<void>;
   let wasOpened = false;

@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import type { Media, Episode } from "@/backend/imdb/types";
 import {
   Resolution,
@@ -10,11 +10,18 @@ import {
 // import sampleEpisodes from "@/test/results/imdb/getEpisodes.json";
 import type { SvelteMediaTimeRange } from "svelte/elements";
 import { Language } from "@ctrl/video-filename-parser";
+import { getCurrentMediaProgress } from "../../common/store";
+import { getMedia, getEpisode } from "@/backend/imdb/api";
 
 // export let playerMedia = writable<Media | undefined>(sampleMedia as Media);
 // export let playerEpisode = writable<Episode | undefined>(sampleEpisodes[0]);
-export let playerMedia = writable<Media | undefined>(undefined);
-export let playerEpisode = writable<Episode | undefined>(undefined);
+const mediaProgress = getCurrentMediaProgress();
+export let playerMedia = writable<Media | undefined>(
+  mediaProgress && (await getMedia(mediaProgress.id)),
+);
+export let playerEpisode = writable<Episode | undefined>(
+  mediaProgress?.episode && (await getEpisode(mediaProgress.episode.id)),
+);
 /**
  * State that is set to `defaultValue` when the currently playing content changes i.e., `playerMedia` or `playerEpisode` changes.
  */

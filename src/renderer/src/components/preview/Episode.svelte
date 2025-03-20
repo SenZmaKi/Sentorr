@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IMDBDate, Episode, Media } from "@/backend/imdb/types";
+  import type { ImdbDate, Episode, Media } from "@/backend/imdb/types";
   import ImageSkeleton from "../common/ImageSkeleton.svelte";
   import Rating from "../common/Rating.svelte";
   import { switchToPlayerPage } from "../common/functions";
@@ -10,7 +10,7 @@
   let [prettyReleaseDate, _hasAired] = episode.releaseDate
     ? prettyDate(episode.releaseDate)
     : [undefined, false];
-  function prettyDate(date: IMDBDate): [string | undefined, boolean] {
+  function prettyDate(date: ImdbDate): [string | undefined, boolean] {
     const { day, month, year } = date;
     if (!day || !month || !year) return [undefined, false];
     const dateObj = new Date(`${year}-${month}-${day}`);
@@ -90,7 +90,9 @@
           {/if}
           <div class="">
             <span class="font-semibold text-sm"
-              >{episode.number}. {episode.title ? `${episode.title}` : ""}</span
+              >{episode.seasonEpisode.episodeNumber}. {episode.title
+                ? `${episode.title}`
+                : ""}</span
             >
           </div>
         </div>

@@ -1,7 +1,9 @@
 import { contextBridge } from "electron";
-import torrent from "@/backend/torrent/api";
+import torrent from "@/backend/torrent/ipc";
+import config from "@/backend/config/ipc";
 
-const ipc = { torrent };
+const ipc = { torrent, config };
+export type Ipc = typeof ipc;
 
 try {
   contextBridge.exposeInMainWorld("ipc", ipc);

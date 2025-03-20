@@ -1,5 +1,5 @@
 /// <reference types="typescript/lib/lib.dom" />
-import { type TorrentApi } from "@/backend/torrent/api";
+import {type Ipc} from "@/preload/index"
 
 declare global {
   interface MediaTrack {
@@ -72,6 +72,6 @@ declare global {
     /**
      * Invoke a procedure in the main process.
      */
-    ipc: { torrent: TorrentApi };
+    ipc: Ipc;
   }
 }

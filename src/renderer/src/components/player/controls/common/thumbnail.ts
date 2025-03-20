@@ -18,9 +18,13 @@ export function createThumbnailGenerator(
   if (!thumbnailCtx)
     throw new InvalidStateError("Failed to get thumbnailCanvas 2d context");
   const loadingMetadata = new Promise<void>((resolve) => {
-    thumbnailVideo.addEventListener("loadedmetadata", () => {
-      resolve();
-    });
+    thumbnailVideo.addEventListener(
+      "loadedmetadata",
+      () => {
+        resolve();
+      },
+      { once: true },
+    );
   });
 
   async function getThumbnail(seekPercent: number): Promise<string> {
@@ -31,8 +35,6 @@ export function createThumbnailGenerator(
       thumbnailVideo.currentTime = seekTime;
 
       const onSeeked = async () => {
-        thumbnailVideo.removeEventListener("seeked", onSeeked);
-
         thumbnailCtx.drawImage(
           thumbnailVideo,
           0,
@@ -54,7 +56,7 @@ export function createThumbnailGenerator(
         resolve(url);
       };
 
-      thumbnailVideo.addEventListener("seeked", onSeeked);
+      thumbnailVideo.addEventListener("seeked", onSeeked, { once: true });
     });
   }
 

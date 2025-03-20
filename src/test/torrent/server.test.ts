@@ -1,7 +1,4 @@
-import {
-  getTorrentStreams,
-  selectTorrentStream,
-} from "@/backend/torrent/server";
+import torrentServer from "@/backend/torrent/server";
 import { expect, test } from "bun:test";
 import { failIfEmptyHandler } from "@/test/common/functions";
 
@@ -10,12 +7,12 @@ const MAGNET_URI =
 
 test("getTorrentStreams", async () => {
   await failIfEmptyHandler("torrent/server/getTorrentStreams", async () => {
-    return await getTorrentStreams(MAGNET_URI);
+    return await torrentServer.getTorrentStreams(MAGNET_URI);
   });
 });
 
 test("selectTorrentStream", async () => {
-  const streams = await getTorrentStreams(MAGNET_URI);
+  const streams = await torrentServer.getTorrentStreams(MAGNET_URI);
   expect(streams.length).toBeTruthy();
-  await selectTorrentStream(streams[0]);
+  await torrentServer.selectTorrentStream(streams[0]);
 });

@@ -15,13 +15,11 @@ import {
 } from "./common/functions";
 import { filterMap } from "@/common/functions";
 import type { Language } from "@ctrl/video-filename-parser";
-import { ipcRenderer } from "electron";
-import type { TypedIpcRenderer } from "@/common/types";
+import { typedIpcRenderer } from "@/common/ipc";
 
 // prettier-ignore
 const VIDEO_EXTS = ['3g2', '3gp', 'asf', 'avi', 'dv', 'flv', 'gxf', 'm2ts', 'm4a', 'm4b', 'm4p', 'm4r', 'm4v', 'mkv', 'mov', 'mp4', 'mpd', 'mpeg', 'mpg', 'mxf', 'nut', 'ogm', 'ogv', 'swf', 'ts', 'vob', 'webm', 'wmv', 'wtv']
 const VIDEO_RX = new RegExp(`.(${VIDEO_EXTS.join("|")})$`, "i");
-const typesafeIpcRenderer = ipcRenderer as TypedIpcRenderer;
 
 async function getTorrentFiles({
   media,
@@ -38,8 +36,8 @@ async function getTorrentFiles({
   if (!media.title) throw new Error("Media title is required");
   const { abbrvSeasonTitle, fullSeasonTitle } = seasonFormatTitle(
     media.title,
-    episode.seasonNumber,
-    episode.number
+    episode.seasonEpisode.seasonNumber,
+    episode.seasonEpisode.episodeNumber,
   );
   const commonParams = {
     mediaImdbID: media.id,
@@ -69,10 +67,12 @@ async function getTorrentFiles({
         const parsedSeason = parseSeason(
           torrent.filename,
           "torrentFile",
-          false
+          false,
         );
-        return parsedSeason?.seasonNumbers.includes(episode.seasonNumber);
-      })
+        return parsedSeason?.seasonNumbers.includes(
+          episode.seasonEpisode.seasonNumber,
+        );
+      }),
     );
 
   const episodeTorrentFilesPromise = Promise.all([
@@ -96,10 +96,14 @@ async function getTorrentFiles({
           return false;
         const parsedSeason = parseSeason(torrent.filename, "torrentFile", true);
         return (
-          parsedSeason?.seasonNumbers.includes(episode.seasonNumber) &&
-          parsedSeason?.episodeNumbers.includes(episode.number)
+          parsedSeason?.seasonNumbers.includes(
+            episode.seasonEpisode.seasonNumber,
+          ) &&
+          parsedSeason?.episodeNumbers.includes(
+            episode.seasonEpisode.episodeNumber,
+          )
         );
-      })
+      }),
     );
 
   const torrentFiles = [
@@ -112,22 +116,22 @@ async function getTorrentFiles({
 async function getTorrentStreams(
   title: string,
   torrentFile: TorrentFile,
-  isTvSeries: boolean
+  isTvSeries: boolean,
 ): Promise<TorrentStream[]> {
   const torrentID = torrentFile.torrentID;
-  const allStreams = await typesafeIpcRenderer.invoke(
+  const allStreams = await typedIpcRenderer.invoke(
     "getTorrentStreams",
-    torrentID
+    torrentID,
   );
   const videoStreams = allStreams.filter(
     ({ filename }) =>
-      VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample")
+      VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample"),
   );
   if (!videoStreams.length) throw new Error(TorrentStreamsError.NoVideoFiles);
   const torrentStreams = filterMap(videoStreams, (stream) => {
     if (!isSameTitle(title, stream.filename, isTvSeries).isSame) {
       console.warn(
-        `Torrent stream did not match title "${title}"  "${stream.filename}"`
+        `Torrent stream did not match title "${title}"  "${stream.filename}"`,
       );
       return undefined;
     }
@@ -139,7 +143,7 @@ async function getTorrentStreams(
     const streamSeason = parseSeason(
       stream.filename,
       "torrentStream",
-      !torrentFile.isCompleteSeason
+      !torrentFile.isCompleteSeason,
     );
     if (!streamSeason) {
       return undefined;
@@ -168,19 +172,19 @@ async function getTorrentStreams(
 }
 
 async function selectTorrentStream(torrentStream: TorrentStream) {
-  return typesafeIpcRenderer.invoke("selectTorrentStream", torrentStream);
+  return typedIpcRenderer.invoke("selectTorrentStream", torrentStream);
 }
 
 async function getCurrentTorrentStreamStats() {
-  return typesafeIpcRenderer.invoke("getCurrentTorrentStreamStats");
+  return typedIpcRenderer.invoke("getCurrentTorrentStreamStats");
 }
 
-const Torrent = {
+const torrentIpc = {
   getTorrentFiles,
   getTorrentStreams,
   selectTorrentStream,
   getCurrentTorrentStreamStats,
 };
 
-export type TorrentApi = typeof Torrent;
-export default Torrent;
+export type TorrentIpc = typeof torrentIpc;
+export default torrentIpc;

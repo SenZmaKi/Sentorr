@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy } from "svelte";
   import { video } from "../common/store";
   import Button from "./Button.svelte";
   let isPip = document.pictureInPictureElement === $video;
@@ -15,13 +15,10 @@
       : await $video.requestPictureInPicture();
   }
 
-  onMount(() => {
-    return () => {
-      if ($video) {
-        $video.removeEventListener("leavepictureinpicture", invertPip);
-        $video.removeEventListener("enterpictureinpicture", invertPip);
-      }
-    };
+  onDestroy(() => {
+    if (!$video) return;
+    $video.removeEventListener("leavepictureinpicture", invertPip);
+    $video.removeEventListener("enterpictureinpicture", invertPip);
   });
   $: if ($video) {
     $video.addEventListener("leavepictureinpicture", invertPip);

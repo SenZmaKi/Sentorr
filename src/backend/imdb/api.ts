@@ -10,6 +10,9 @@ import {
   type Pagination,
   type Review,
   type ScalableImageUrl,
+  type MediaId,
+  type EpisodeId,
+  type BaseMedia,
 } from "./types";
 import {
   type AdvancedTitleSearchResultJson,
@@ -105,7 +108,7 @@ async function apiGet(
 }
 
 function buildBaseResult(node: BaseNode): BaseResult {
-  const id = node.id;
+  const id = node.id as MediaId;
   const title = node.titleText?.text;
   const rating = node.ratingsSummary?.aggregateRating;
   const ratingCount = node.ratingsSummary?.voteCount;
@@ -262,27 +265,29 @@ export async function getEpisodes(
   const episodesJson = (await apiGet(url)) as EpisodesResultJson;
   const results = episodesJson.data.title.episodes.episodes.edges.map(
     ({ node: ep }) => {
-      const id = ep.id;
+      const id = ep.id as EpisodeId;
       const title = ep.titleText.text;
-      const number = parseInt(
+      const episodeNumber = parseInt(
         ep.series.displayableEpisodeNumber.episodeNumber.displayableProperty
           .value.plainText,
       );
+      const seasonEpisode = {
+        seasonNumber,
+        episodeNumber,
+      };
       const imageUrl = (ep.primaryImage.url as ScalableImageUrl) || undefined;
       const plot = ep.plot?.plotText.plaidHtml;
-      const releaseDate = ep.releaseDate
-        ? {
-            day: ep.releaseDate.day,
-            month: ep.releaseDate.month,
-            year: ep.releaseDate.year,
-          }
-        : undefined;
+      const releaseDate = ep.releaseDate && {
+        day: ep.releaseDate.day,
+        month: ep.releaseDate.month,
+        year: ep.releaseDate.year,
+      };
       const rating = ep.ratingsSummary.aggregateRating;
       const ratingCount = ep.ratingsSummary.voteCount;
       return {
         id,
         title,
-        number,
+        seasonEpisode,
         seasonNumber,
         imageUrl,
         plot,
@@ -296,9 +301,27 @@ export async function getEpisodes(
   const nextPageKey = pageInfo.hasNextPage ? pageInfo.endCursor : undefined;
   return { results, nextPageKey };
 }
+export async function getMedia(mediaID: MediaId) {
+  return getMediaOrEpisode(mediaID, false);
+}
 
-export async function getMedia(mediaID: string): Promise<Media> {
-  const url = `${HOME_URL}title/${mediaID}`;
+export async function getEpisode(episodeID: EpisodeId) {
+  return getMediaOrEpisode(episodeID, true);
+}
+
+async function getMediaOrEpisode(
+  id: MediaId,
+  isEpisode: boolean,
+): Promise<Media>;
+async function getMediaOrEpisode(
+  id: EpisodeId,
+  isEpisode: boolean,
+): Promise<Episode>;
+async function getMediaOrEpisode(
+  id: MediaId | EpisodeId,
+  isEpisode: boolean,
+): Promise<Media | Episode> {
+  const url = `${HOME_URL}title/${id}`;
   const response = await netClient.get(url);
   const page = await response.text();
   const $ = parseHtml(page);
@@ -306,78 +329,92 @@ export async function getMedia(mediaID: string): Promise<Media> {
   const metadataJson = JSON.parse(ldJsonStr) as MediaMetadataJson;
   const moreldJsonStr = $("script#\\__NEXT_DATA__").text();
   const moreMetadataJson = JSON.parse(moreldJsonStr) as MoreMetadataJson;
-  return combineMetadata(metadataJson, moreMetadataJson);
+
+  return isEpisode
+    ? combineEpisodeMetadata(metadataJson, moreMetadataJson)
+    : combineMediaMetadata(metadataJson, moreMetadataJson);
 }
 
-function combineMetadata(
+function extractBaseMedia(metadataJson: MediaMetadataJson): BaseMedia {
+  return {
+    title: metadataJson.name,
+    imageUrl: (metadataJson.image as ScalableImageUrl) || undefined,
+    plot: metadataJson.description,
+    rating: metadataJson.aggregateRating?.ratingValue,
+    ratingCount: metadataJson.aggregateRating?.ratingCount,
+  };
+}
+
+function combineMediaMetadata(
   metadataJson: MediaMetadataJson,
   moreMetadata: MoreMetadataJson,
 ): Media {
-  const title = metadataJson.name;
-  const url = metadataJson.image;
-  const imageUrl = (url as ScalableImageUrl) || undefined;
-  const bannerImageUrl = metadataJson.trailer?.thumbnailUrl;
-  const trailerUrl = metadataJson.trailer?.embedUrl;
-  const genres = metadataJson.genre as Genre[] | undefined;
-  const rating = metadataJson.aggregateRating?.ratingValue;
-  const ratingCount = metadataJson.aggregateRating?.ratingCount;
-  const directors = metadataJson.director?.map((d) => d.name);
-  const creators = filterMap(metadataJson.creator ?? [], (cr) => cr.name);
-  const contentRating = metadataJson.contentRating;
+  const base = extractBaseMedia(metadataJson);
   const aboveTheFoldData = moreMetadata.props.pageProps.aboveTheFoldData;
-  const id = aboveTheFoldData.id;
-  const endYear = aboveTheFoldData.releaseYear?.endYear;
-  const releaseYear = aboveTheFoldData.releaseYear?.year;
-  const popularityScore = aboveTheFoldData.meterRanking?.currentRank;
-  const plot = aboveTheFoldData.plot?.plotText?.plainText;
-  const runtime =
-    aboveTheFoldData.runtime?.displayableProperty?.value?.plainText;
-  const productionStatus =
-    aboveTheFoldData.productionStatus?.currentProductionStage?.text;
-  const type = aboveTheFoldData.titleType?.text as MediaType | undefined;
   const mainColumnData = moreMetadata.props.pageProps.mainColumnData;
-  const episodeCount = mainColumnData?.episodes?.totalEpisodes?.total;
-  const seasonsCount = mainColumnData?.episodes?.seasons?.length;
-  const recommendations = mainColumnData.moreLikeThisTitles.edges.map(
-    ({ node }) => buildBaseResult(node),
-    plot,
-  );
-  const actors = mainColumnData.cast.edges.map(({ node: actor }) => {
-    const name = actor.name.nameText.text;
-    const imageUrl = actor.name.primaryImage?.url || undefined;
-    // Characters is probably an array cause an actor can play multiple characters e.g., an alter ego from a different universe
-    const c = actor.characters?.[0];
-    const character = c?.name || undefined;
-    return { name, imageUrl, character };
-  });
 
-  const isMovie = type == MediaType.TVMovie || type == MediaType.Movie;
-  const isOngoing = !isMovie && !!releaseYear && !endYear;
   return {
-    id,
-    title,
-    type,
-    imageUrl,
-    bannerImageUrl,
-    trailerUrl,
-    plot,
-    genres,
-    releaseYear,
-    rating,
-    ratingCount,
-    popularityScore,
-    contentRating,
-    actors,
-    directors,
-    runtime,
-    recommendations,
-    productionStatus,
-    creators,
-    seasonsCount,
-    episodeCount,
-    endYear,
-    isMovie,
-    isOngoing,
+    ...base,
+    id: aboveTheFoldData.id as MediaId,
+    type: aboveTheFoldData.titleType?.text as MediaType | undefined,
+    bannerImageUrl: metadataJson.trailer?.thumbnailUrl,
+    trailerUrl: metadataJson.trailer?.embedUrl,
+    genres: metadataJson.genre as Genre[] | undefined,
+    releaseYear: aboveTheFoldData.releaseYear?.year,
+    endYear: aboveTheFoldData.releaseYear?.endYear,
+    popularityScore: aboveTheFoldData.meterRanking?.currentRank,
+    contentRating: metadataJson.contentRating,
+    actors: mainColumnData.cast.edges.map(({ node: actor }) => ({
+      name: actor.name.nameText.text,
+      imageUrl: actor.name.primaryImage?.url || undefined,
+      character: actor.characters?.[0]?.name || undefined,
+    })),
+    directors: metadataJson.director?.map((d) => d.name),
+    creators: filterMap(metadataJson.creator ?? [], (cr) => cr.name),
+    runtime: aboveTheFoldData.runtime?.displayableProperty?.value?.plainText,
+    episodeCount: mainColumnData?.episodes?.totalEpisodes?.total,
+    seasonsCount: mainColumnData?.episodes?.seasons?.length,
+    productionStatus:
+      aboveTheFoldData.productionStatus?.currentProductionStage?.text,
+    recommendations: mainColumnData.moreLikeThisTitles.edges.map(({ node }) =>
+      buildBaseResult(node),
+    ),
+    isMovie:
+      aboveTheFoldData.titleType?.text == MediaType.TVMovie ||
+      aboveTheFoldData.titleType?.text == MediaType.Movie,
+    isOngoing:
+      aboveTheFoldData.titleType?.text !== MediaType.Movie &&
+      !!aboveTheFoldData.releaseYear?.year &&
+      !aboveTheFoldData.releaseYear?.endYear,
+  };
+}
+
+function combineEpisodeMetadata(
+  metadataJson: MediaMetadataJson,
+  moreMetadata: MoreMetadataJson,
+): Episode {
+  const base = extractBaseMedia(metadataJson);
+  const aboveTheFoldData = moreMetadata.props.pageProps.aboveTheFoldData;
+  const episodeNumber = aboveTheFoldData.series?.episodeNumber;
+
+  if (!episodeNumber) {
+    throw new Error("Missing episode number information");
+  }
+
+  return {
+    ...base,
+    id: aboveTheFoldData.id as EpisodeId,
+    seasonEpisode: {
+      episodeNumber: episodeNumber.episodeNumber,
+      seasonNumber: episodeNumber.seasonNumber,
+    },
+    releaseDate: aboveTheFoldData.releaseDate
+      ? {
+          day: aboveTheFoldData.releaseDate.day,
+          month: aboveTheFoldData.releaseDate.month,
+          year: aboveTheFoldData.releaseDate.year,
+        }
+      : undefined,
   };
 }
 

@@ -30,6 +30,7 @@
     showControls,
   } from "./common/store";
   import Controls from "./controls/Controls.svelte";
+  import { getCurrentMediaProgress } from "../common/store";
 
   export let hidden: boolean;
   $: {
@@ -108,8 +109,9 @@
           (torrStream) =>
             torrStream.info &&
             episode &&
-            torrStream.info.episodeNumber === episode.number &&
-            torrStream.info.seasonNumber === episode.seasonNumber,
+            torrStream.info.episodeNumber ===
+              episode.seasonEpisode.episodeNumber &&
+            torrStream.info.seasonNumber === episode.seasonEpisode.seasonNumber,
         );
     if (!torrentStream) {
       console.error("No matching torrent stream found");
@@ -118,8 +120,8 @@
     // We assume the episode and season are the one's we wanted
     if (!torrentFile.isCompleteSeason && episode)
       torrentStream.info = {
-        episodeNumber: episode.number,
-        seasonNumber: episode.seasonNumber,
+        episodeNumber: episode.seasonEpisode.episodeNumber,
+        seasonNumber: episode.seasonEpisode.seasonNumber,
       };
     console.log("streamURL:", torrentStream.url);
     await window.ipc.torrent.selectTorrentStream(torrentStream);
@@ -284,8 +286,13 @@
       on:error={onPlaybackError}
       bind:videoWidth={$videoWidth}
       bind:videoHeight={$videoHeight}
-      on:loadedmetadata={() => {
-        if ($video && isValidCodecs()) $paused = false;
+      on:loadedmetadata={async () => {
+        if (!$video || !isValidCodecs()) return;
+        const currentMediaProgress = getCurrentMediaProgress();
+        if (currentMediaProgress) {
+          $currentTime = currentMediaProgress.time;
+        }
+        await $video.play();
       }}
       src={videoUrl}
     >

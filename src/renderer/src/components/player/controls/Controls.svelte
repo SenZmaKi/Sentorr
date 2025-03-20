@@ -14,6 +14,8 @@
     videoWidth,
     progress,
     showControls,
+    playerMedia,
+    playerEpisode,
   } from "../common/store";
   import { createThumbnailGenerator } from "./common/thumbnail";
   import Next from "./Next.svelte";
@@ -23,6 +25,8 @@
   import SettingsModal from "./settings/modal/Modal.svelte";
   import Fullscreen from "./Fullscreen.svelte";
   import Pip from "./Pip.svelte";
+  import { onDestroy } from "svelte";
+  import { config } from "../../common/store";
 
   function computeProgress(time: number) {
     return time && $duration ? (time / $duration) * 100 : 0;
@@ -55,12 +59,35 @@
       showWithTimeout();
     }
   }
+  function updateProgress() {
+    $progress = computeProgress($currentTime);
+
+    if (!$playerMedia) return;
+    const { allMediaProgress } = $config;
+    allMediaProgress.current = $playerMedia.id;
+    const episode = $playerEpisode && {
+      id: $playerEpisode.id,
+      title: $playerEpisode.title,
+      seasonEpisode: $playerEpisode.seasonEpisode,
+    };
+    allMediaProgress.mediaProgress[allMediaProgress.current] = {
+      id: $playerMedia.id,
+      title: $playerMedia.title,
+      time: $currentTime,
+      episode,
+    };
+    $config = { ...$config, allMediaProgress: allMediaProgress };
+  }
   function addVideoListeners(video: HTMLVideoElement) {
     video.addEventListener("mousemove", showWithTimeout);
-    video.addEventListener("timeupdate", () => {
-      $progress = computeProgress($currentTime);
-    });
+    video.addEventListener("timeupdate", updateProgress);
   }
+
+  onDestroy(() => {
+    if (!$video) return;
+    $video.removeEventListener("mousemove", showWithTimeout);
+    $video.removeEventListener("timeupdate", updateProgress);
+  });
 
   let show = false;
   let hideTimer: Timer | undefined = undefined;

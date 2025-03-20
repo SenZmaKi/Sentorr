@@ -22,6 +22,7 @@
   import SettingsIcon from "./settings/Icon.svelte";
   import SettingsModal from "./settings/modal/Modal.svelte";
   import Fullscreen from "./Fullscreen.svelte";
+  import Pip from "./Pip.svelte";
 
   function computeProgress(time: number) {
     return time && $duration ? (time / $duration) * 100 : 0;
@@ -80,34 +81,35 @@
   $: $showControls = show || $paused || $isHovering;
 </script>
 
-  <div
-    class:hidden={!$showControls}
-    transition:fade
-    style="background: radial-gradient(oval, rgba(0,0,0,0.8) 0%, transparent 70%);"
-    class="flex flex-col items-center justify-center w-full"
-  >
-    <div class="w-[98%]">
-      <div class="flex justify-end">
-        <SettingsModal />
+<div
+  class:hidden={!$showControls}
+  transition:fade
+  style="background: radial-gradient(oval, rgba(0,0,0,0.8) 0%, transparent 70%);"
+  class="flex flex-col items-center justify-center w-full"
+>
+  <div class="w-[98%]">
+    <div class="flex justify-end">
+      <SettingsModal />
+    </div>
+    <Seekbar
+      bind:progress={$progress}
+      {buffer}
+      length={$duration}
+      {onSeeking}
+      {thumbnailGenerator}
+    />
+    <div class="flex justify-between p-5 pb-0">
+      <div class="flex items-center gap-x-6">
+        <PlayPause />
+        <Next />
+        <Volume />
+        <Time />
       </div>
-      <Seekbar
-        bind:progress={$progress}
-        {buffer}
-        length={$duration}
-        {onSeeking}
-        {thumbnailGenerator}
-      />
-      <div class="flex justify-between p-5 pb-0">
-        <div class="flex items-center gap-x-6">
-          <PlayPause />
-          <Next />
-          <Volume />
-          <Time />
-        </div>
-        <div class="flex items-center gap-x-6">
-          <SettingsIcon />
-          <Fullscreen />
-        </div>
+      <div class="flex items-center gap-x-6">
+        <SettingsIcon />
+        <Fullscreen />
+        <Pip />
       </div>
     </div>
   </div>
+</div>

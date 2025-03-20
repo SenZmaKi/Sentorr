@@ -1,15 +1,25 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { videoContainer } from "../common/store";
   import Button from "./Button.svelte";
   let isFullscreen = document.fullscreenElement === $videoContainer;
-  function onClick() {
+  function invertFullscreen() {
+    console.log("invertFullscreen()");
+    isFullscreen = document.fullscreenElement === $videoContainer;
+    console.log("isFullscreen", isFullscreen);
+  }
+  async function onClick() {
     if (!$videoContainer) return;
     isFullscreen
-      ? document.exitFullscreen()
-      : $videoContainer.requestFullscreen();
-
-    isFullscreen = !isFullscreen;
+      ? await document.exitFullscreen()
+      : await $videoContainer.requestFullscreen();
   }
+
+  document.addEventListener("fullscreenchange", invertFullscreen);
+  onMount(() => {
+    return () =>
+      document.removeEventListener("fullscreenchange", invertFullscreen);
+  });
 </script>
 
 <Button {onClick}>

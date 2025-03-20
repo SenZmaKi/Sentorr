@@ -32,7 +32,7 @@
       <svg
         class="w-[40px] h-[40px]"
         style="transform: rotate({open ? '180deg' : '0deg'});
-        transition: transform 0.4s ease;"
+        transition: transform 0.3s ease;"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 448 512"
       >

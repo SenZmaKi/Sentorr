@@ -19,7 +19,6 @@
     playbackRate,
     video,
     videoContainer,
-    currentTime,
     buffered,
     paused,
     duration,
@@ -312,7 +311,6 @@
       bind:volume={$volume}
       bind:playbackRate={$playbackRate}
       bind:ended={$ended}
-      bind:currentTime={$currentTime}
       bind:buffered={$buffered}
       bind:paused={$paused}
       bind:duration={$duration}
@@ -324,7 +322,7 @@
         if (!$video || !isValidCodecs()) return;
         const currentMediaProgress = getCurrentMediaProgress();
         if (currentMediaProgress) {
-          $currentTime = currentMediaProgress.time;
+          $video.currentTime = currentMediaProgress.time;
         }
         await $video.play();
       }}

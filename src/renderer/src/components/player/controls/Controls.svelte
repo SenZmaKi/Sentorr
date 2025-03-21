@@ -46,7 +46,7 @@
   }
 
   function onSeeking(percent: number) {
-    $currentTime = (percent / 100) * $duration;
+    if ($video) $video.currentTime = (percent / 100) * $duration;
   }
 
   function showWithPaused(paused: boolean) {
@@ -61,6 +61,8 @@
     }
   }
   function updateProgress() {
+    if (!$video) return;
+    $currentTime = $video.currentTime;
     $progress = computeProgress($currentTime);
 
     if (!$playerMedia) return;
@@ -133,7 +135,7 @@
         <Volume />
         <Time />
       </div>
-      <div class="flex items-center gap-x-6 ">
+      <div class="flex items-center gap-x-6">
         <SettingsIcon />
         <Fullscreen />
         <Pip />

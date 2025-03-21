@@ -51,8 +51,9 @@ export let playerTorrentStream = playerState<TorrentStream | undefined>(
 );
 export let duration = playerState(0);
 /**
- * WARN: If the user seeks, this will hold the pre-seek time until the seek request completes (e.g., if the target seek time's video data is still loading).
- * It awkwardly forwards to the the user's seek time, then immediately resets back to the pre-seek time until the seek request completes.
+ * WARN: DON'T bind this to `video.currentTime`, weird playback things happen.
+ * For instance on pause, the video pauses then moves forward by one frame and then really pauses at that.
+ * Might be because of floating point precision errors
  */
 export let currentTime = playerState(0);
 export let ended = playerState(false);

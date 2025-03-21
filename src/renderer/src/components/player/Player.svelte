@@ -66,10 +66,10 @@
     // load() was called later and it resolved faster than the current call
     if ($playerTorrentStream && $playerTorrentFile) return;
     const resTorrentFiles = strictResolution
-      ? torrentFiles.filter((torrent) => torrent.resolution === $resolution)
+      ? torrentFiles.filter((torrent) => torrent.resolution === resolution)
       : torrentFiles;
     if (!resTorrentFiles.length) {
-      console.error("No torrent files found");
+      console.error("No torrent files found: ", media);
       toast.error("No torrents found", {
         description: torrentFiles.length
           ? `No ${resolution}p torrents found. Try disabling "strict resolution".`

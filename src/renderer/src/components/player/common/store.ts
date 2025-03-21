@@ -1,4 +1,4 @@
-import { get, writable } from "svelte/store";
+import { writable } from "svelte/store";
 import type { Media, Episode } from "@/backend/imdb/types";
 import {
   Resolution,
@@ -13,15 +13,29 @@ import { Language } from "@ctrl/video-filename-parser";
 import { getCurrentMediaProgress } from "../../common/store";
 import { getMedia, getEpisode } from "@/backend/imdb/api";
 
+async function setProgress() {
+  const mediaProgress = getCurrentMediaProgress();
+  if (!mediaProgress) return;
+  const episodePromise =
+    mediaProgress.episode && getEpisode(mediaProgress.episode.id);
+  const mediaPromise = getMedia(mediaProgress.id);
+  if (episodePromise) playerEpisode.set(await episodePromise);
+  playerMedia.set(await mediaPromise);
+}
 // export let playerMedia = writable<Media | undefined>(sampleMedia as Media);
 // export let playerEpisode = writable<Episode | undefined>(sampleEpisodes[0]);
-const mediaProgress = getCurrentMediaProgress();
-export let playerMedia = writable<Media | undefined>(
-  mediaProgress && (await getMedia(mediaProgress.id)),
-);
-export let playerEpisode = writable<Episode | undefined>(
-  mediaProgress?.episode && (await getEpisode(mediaProgress.episode.id)),
-);
+/**
+ *WARN: Whenever updating `playerMedia` and `playerEpisode`, update `playerEpisode` first.
+ * This is because truthy `playerMedia` and `undefined`` `playerEpisode` triggers Player.load() i.e., when Media.Type is  Movie.
+ */
+export let playerMedia = writable<Media | undefined>(undefined);
+/**
+ *WARN: Whenever updating `playerMedia` and `playerEpisode`, update `playerEpisode` first.
+ * This is because truthy `playerMedia` and `undefined` `playerEpisode` triggers Player.load() i.e., when Media.Type is  Movie.
+ */
+export let playerEpisode = writable<Episode | undefined>(undefined);
+setProgress();
+
 /**
  * State that is set to `defaultValue` when the currently playing content changes i.e., `playerMedia` or `playerEpisode` changes.
  */

@@ -22,7 +22,7 @@ export async function createConfigManager() {
       console.error(`Failed to parse config file: ${parseError}`);
       return undefined;
     }
-    return parseResult;
+    return parseResult as Config;
   }
 
   async function saveConfig() {

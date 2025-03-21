@@ -2,6 +2,7 @@
   "extends": "@electron-toolkit/tsconfig/tsconfig.json",
   "include": [
     "src/renderer/**/*",
+    "src/@types/**/*",
   ],
   "compilerOptions": {
     "outDir": "./js",

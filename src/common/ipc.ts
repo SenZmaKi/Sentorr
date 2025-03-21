@@ -9,7 +9,7 @@ export function handle<Channel extends keyof IpcRendererEvent>(
   channel: Channel,
   listener: (
     ...args: Parameters<IpcRendererEvent[Channel]>
-  ) => ReturnType<IpcRendererEvent[Channel]>,
+  ) => Promise<Awaited<ReturnType<IpcRendererEvent[Channel]>>>,
 ): void {
   ipcMain.handle(
     channel,
@@ -23,7 +23,7 @@ export async function invoke<Channel extends keyof IpcRendererEvent>(
   channel: Channel,
   ...args: Parameters<IpcRendererEvent[Channel]>
 ) {
-  console.log(`Invoking ipc: ${channel}() ${args}`);
+  console.log(`Invoking ipc: ${channel}()`, args);
   const [result, invokeError]: Result<ReturnType<IpcRendererEvent[Channel]>> =
     await ipcRenderer.invoke(channel, ...args);
   if (invokeError) {

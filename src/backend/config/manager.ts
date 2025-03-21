@@ -16,6 +16,7 @@ export async function createConfigManager() {
     if (!statResult.isFile()) return undefined;
 
     const configString = await readFile(configFilePath, "utf8");
+    console.log("configString:", configString);
     const [parseResult, parseError] = tryCatch(() => JSON.parse(configString));
     if (parseError) {
       console.error(`Failed to parse config file: ${parseError}`);

@@ -2,7 +2,6 @@
   import { type Episode, type Media } from "@/backend/imdb/types";
   import Button from "./Button.svelte";
   import { randomNumber, zfill } from "@/common/functions";
-
   import {
     playerMedia,
     playerEpisode,
@@ -16,8 +15,8 @@
   import { toast } from "svelte-sonner";
 
   async function prefetchNextTorrentFiles() {
-    hasPrefetched = true;
     console.log("prefetchNextTorrentFiles()");
+    hasPrefetched = true;
     const nextEpisode = await nextEpisodePromise;
     const nextMedia = await nextMediaPromise;
     const media = nextEpisode ? $playerMedia : nextMedia;
@@ -34,6 +33,7 @@
   }
 
   async function getNextEpisode(episode: Episode, media: Media) {
+    console.log("getNextEpisode()");
     let nextPageKey: string | undefined = undefined;
     let nextEpisode: Episode | undefined = undefined;
     while (true) {
@@ -72,6 +72,7 @@
   }
 
   async function getNextMedia(media: Media) {
+    console.log("getNextMedia()");
     const recommendations = media.recommendations?.length
       ? media.recommendations
       : await getFanFavorites();
@@ -137,6 +138,7 @@
   }
 
   let hasPrefetched = false;
+
   $: if ($playerTorrentStream) hasPrefetched = false;
   $: if (!hasPrefetched && $progress >= 80) prefetchNextTorrentFiles();
 
@@ -146,11 +148,9 @@
     $playerMedia &&
     getNextEpisode($playerEpisode, $playerMedia);
 
-  $: if ($ended) {
-    next();
-  }
-  $: nextMediaPromise &&
-    nextEpisodePromise &&
+  $: if ($ended) next();
+
+  $: if (nextMediaPromise && nextEpisodePromise)
     setNextStr(nextMediaPromise, nextEpisodePromise);
 </script>
 

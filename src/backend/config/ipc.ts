@@ -1,12 +1,12 @@
-import { typedIpcRenderer } from "@/common/ipc";
+import { invoke } from "@/common/ipc";
 import type { Config } from "./types";
 
 async function getConfig() {
-  return typedIpcRenderer.invoke("getConfig");
+  return await invoke("getConfig");
 }
 
 async function setConfig(newConfig: Config) {
-  return typedIpcRenderer.invoke("setConfig", newConfig);
+  return await invoke("setConfig", newConfig);
 }
 
 const configManagerIpc = {

@@ -272,7 +272,7 @@ export type PopularTitlesResultJson = {
 };
 
 export type EpisodesResultJson = {
-  data: {
+  data?: {
     title: {
       episodes: {
         episodes: {

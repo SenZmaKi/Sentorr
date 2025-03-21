@@ -1,17 +1,24 @@
 import WebTorrent, { type TorrentFile as WTTorrentFile } from "webtorrent";
 import {
   type TorrentStream,
-  TorrentStreamsError,
+  GetTorrentStreamsError,
   type TorrentStreamStats,
+  SelectTorrentStreamError,
 } from "./common/types";
 import path from "path";
 import fs from "fs/promises";
-import { tryCatchAsync } from "@/common/functions";
+import { tryCatchAsync, tryCatch } from "@/common/functions";
 
 const Client = new WebTorrent();
 const Server = Client.createServer({});
-Server.listen(5000);
-const PORT = Server.address().port;
+const PORT = 5000;
+const [, listenError] = tryCatch(() => Server.listen(5000));
+if (listenError) {
+  console.error(
+    `Failed to listen on port ${PORT}, retrying on any available port`,
+  );
+  Server.listen();
+}
 const GET_TORRENT_STREAMS_TIMEOUT_MS = 2 * 10_000;
 const MAX_QUEUE_SIZE = 5;
 let fileTorrentStreamQueue: {
@@ -78,7 +85,7 @@ async function getTorrentStreams(torrentID: string): Promise<TorrentStream[]> {
       if (success || !(await Client.get(torrentID))) return;
       await removeTorrent(torrentID);
       console.error(`Torrent ${torrentID} timed out`);
-      return reject(new Error(TorrentStreamsError.TorrentTimeout));
+      return reject(new Error(GetTorrentStreamsError.TorrentTimeout));
     }, GET_TORRENT_STREAMS_TIMEOUT_MS);
   });
 }
@@ -99,7 +106,7 @@ async function selectTorrentStream(torrentStream: TorrentStream) {
     const torrent = Client.torrents.find(
       (torrent) => torrent.magnetURI === torrentStream.magnetURI,
     );
-    if (!torrent) return reject(TorrentStreamsError.TorrentWasRemoved);
+    if (!torrent) return reject(SelectTorrentStreamError.StreamNotFound);
     const file = torrent.files.find((f) => f.path === torrentStream.filepath);
     if (!file)
       return reject(

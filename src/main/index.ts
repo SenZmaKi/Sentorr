@@ -4,7 +4,7 @@ import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import configManager from "@/backend/config/manager";
 import torrentServer from "@/backend/torrent/server";
 import { type TorrentStream } from "@/backend/torrent/common/types";
-import { typedIpcMain } from "@/common/ipc";
+import { handle } from "@/common/ipc";
 
 // import icon from "../renderer/src/assets/icon.png?asset";
 const icon = "";
@@ -92,36 +92,26 @@ app.whenReady().then(() => {
 
   // IPC
 
-  typedIpcMain.handle("getTorrentStreams", (_, torrentID) =>
+  handle("getTorrentStreams", (torrentID) =>
     torrentServer.getTorrentStreams(torrentID),
   );
 
-  typedIpcMain.handle(
-    "selectTorrentStream",
-    (_, torrentStream: TorrentStream) =>
-      torrentServer.selectTorrentStream(torrentStream),
+  handle("selectTorrentStream", (torrentStream: TorrentStream) =>
+    torrentServer.selectTorrentStream(torrentStream),
   );
 
-  typedIpcMain.handle(
-    "closeTorrentStreamsServer",
-    torrentServer.closeTorrentStreamsServer,
-  );
+  handle("closeTorrentStreamsServer", torrentServer.closeTorrentStreamsServer);
 
-  typedIpcMain.handle("clearTorrents", torrentServer.clearTorrents);
+  handle("clearTorrents", torrentServer.clearTorrents);
 
-  typedIpcMain.handle(
-    "deselectAllTorrentStreams",
-    torrentServer.deselectAllTorrentStreams,
-  );
+  handle("deselectAllTorrentStreams", torrentServer.deselectAllTorrentStreams);
 
-  typedIpcMain.handle(
+  handle(
     "getCurrentTorrentStreamStats",
     torrentServer.getCurrentTorrentStreamStats,
   );
-  typedIpcMain.handle("getConfig", configManager.getConfig);
-  typedIpcMain.handle("setConfig", async (_, newConfig) =>
-    configManager.setConfig(newConfig),
-  );
+  handle("getConfig", configManager.getConfig);
+  handle("setConfig", async (newConfig) => configManager.setConfig(newConfig));
 
   createWindow();
 

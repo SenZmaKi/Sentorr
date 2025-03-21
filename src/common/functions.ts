@@ -42,7 +42,7 @@ type Success<T> = [data: T, error: undefined];
 
 type Failure<E> = [data: undefined, error: E];
 
-type Result<T, E = Error> = Success<T> | Failure<E>;
+export type Result<T, E = Error> = Success<T> | Failure<E>;
 
 export async function tryCatchAsync<T, E = Error>(
   promise: Promise<T>,

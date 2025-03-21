@@ -7,7 +7,7 @@ export const previewMedia = writable<Promise<Media> | undefined>(undefined);
 export const mediaCardType = writable(MediaCardType.Complex);
 export const config = writable(await window.ipc.config.getConfig());
 config.subscribe(async (newConfig) => {
-  console.log("config changed:", newConfig);
+  // console.log("config changed:", newConfig);
   await window.ipc.config.setConfig(newConfig);
 });
 export function getCurrentMediaProgress() {

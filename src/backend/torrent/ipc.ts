@@ -1,7 +1,7 @@
 import {
   type TorrentStream,
   type TorrentFile,
-  TorrentStreamsError,
+  GetTorrentStreamsError,
 } from "./common/types";
 import type { Episode, Media } from "@/backend/imdb/types";
 import { getTorrentsFiles as getMovieTorrents } from "./yts/api";
@@ -15,7 +15,7 @@ import {
 } from "./common/functions";
 import { filterMap } from "@/common/functions";
 import type { Language } from "@ctrl/video-filename-parser";
-import { typedIpcRenderer } from "@/common/ipc";
+import { invoke } from "@/common/ipc";
 
 // prettier-ignore
 const VIDEO_EXTS = ['3g2', '3gp', 'asf', 'avi', 'dv', 'flv', 'gxf', 'm2ts', 'm4a', 'm4b', 'm4p', 'm4r', 'm4v', 'mkv', 'mov', 'mp4', 'mpd', 'mpeg', 'mpg', 'mxf', 'nut', 'ogm', 'ogv', 'swf', 'ts', 'vob', 'webm', 'wmv', 'wtv']
@@ -119,15 +119,13 @@ async function getTorrentStreams(
   isTvSeries: boolean,
 ): Promise<TorrentStream[]> {
   const torrentID = torrentFile.torrentID;
-  const allStreams = await typedIpcRenderer.invoke(
-    "getTorrentStreams",
-    torrentID,
-  );
+  const allStreams = await invoke("getTorrentStreams", torrentID);
   const videoStreams = allStreams.filter(
     ({ filename }) =>
       VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample"),
   );
-  if (!videoStreams.length) throw new Error(TorrentStreamsError.NoVideoFiles);
+  if (!videoStreams.length)
+    throw new Error(GetTorrentStreamsError.NoVideoFiles);
   const torrentStreams = filterMap(videoStreams, (stream) => {
     if (!isSameTitle(title, stream.filename, isTvSeries).isSame) {
       console.warn(
@@ -167,16 +165,16 @@ async function getTorrentStreams(
     };
   });
   if (!torrentStreams.length)
-    throw new Error(TorrentStreamsError.NoMatchingFiles);
+    throw new Error(GetTorrentStreamsError.NoMatchingFiles);
   return torrentStreams;
 }
 
 async function selectTorrentStream(torrentStream: TorrentStream) {
-  return typedIpcRenderer.invoke("selectTorrentStream", torrentStream);
+  return await invoke("selectTorrentStream", torrentStream);
 }
 
 async function getCurrentTorrentStreamStats() {
-  return typedIpcRenderer.invoke("getCurrentTorrentStreamStats");
+  return await invoke("getCurrentTorrentStreamStats");
 }
 
 const torrentIpc = {

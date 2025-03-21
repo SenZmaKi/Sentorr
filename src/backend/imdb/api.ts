@@ -263,8 +263,8 @@ export async function getEpisodes(
     EPISODES_HASH,
   );
   const episodesJson = (await apiGet(url)) as EpisodesResultJson;
-  const results = episodesJson.data.title.episodes.episodes.edges.map(
-    ({ node: ep }) => {
+  const results =
+    episodesJson.data?.title.episodes.episodes.edges.map(({ node: ep }) => {
       const id = ep.id as EpisodeId;
       const title = ep.titleText.text;
       const episodeNumber = parseInt(
@@ -295,10 +295,9 @@ export async function getEpisodes(
         rating,
         ratingCount,
       };
-    },
-  );
-  const pageInfo = episodesJson.data.title.episodes.episodes.pageInfo;
-  const nextPageKey = pageInfo.hasNextPage ? pageInfo.endCursor : undefined;
+    }) ?? [];
+  const pageInfo = episodesJson.data?.title.episodes.episodes.pageInfo;
+  const nextPageKey = pageInfo?.hasNextPage ? pageInfo.endCursor : undefined;
   return { results, nextPageKey };
 }
 export async function getMedia(mediaID: MediaId) {

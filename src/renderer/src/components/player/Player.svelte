@@ -1,8 +1,10 @@
 <script lang="ts">
   import PageWrapper from "../common/PageWrapper.svelte";
   import {
-    TorrentStreamsError,
+    Resolution,
+    GetTorrentStreamsError,
     type TorrentFile,
+    SelectTorrentStreamError,
   } from "@/backend/torrent/common/types";
   import { computeTorrentScores } from "@/backend/torrent/common/functions";
   import { toast } from "svelte-sonner";
@@ -27,28 +29,27 @@
     blacklistedTorrents,
     languages,
     showControls,
+    strictResolution,
   } from "./common/store";
   import Controls from "./controls/Controls.svelte";
   import { getCurrentMediaProgress } from "../common/store";
   import { tryCatchAsync } from "@/common/functions";
+  import type { Episode, Media } from "@/backend/imdb/types";
+  import type { Language } from "@ctrl/video-filename-parser";
 
   export let hidden: boolean;
-  $: {
-    $playerMedia;
-    $playerEpisode;
-  }
 
-  async function load() {
-    let media = $playerMedia;
-    let episode = $playerEpisode;
-    if (!media) {
-      console.error("Media is not set");
-      return;
-    }
-    if (!episode) {
-      console.error("Episode is not set");
-      return;
-    }
+  async function load(params: {
+    media: Media;
+    episode: Episode | undefined;
+    languages: Language[];
+    resolution: Resolution;
+    strictResolution: boolean;
+  }) {
+    const { media, episode, languages, resolution, strictResolution } = params;
+    console.log("load()", params);
+    $playerTorrentStream = undefined;
+    $playerTorrentFile = undefined;
     if (!media.title) {
       console.error(`Media ${media.id} has no title`);
       toast.error("No media title", {
@@ -59,30 +60,37 @@
     const torrentFiles = await window.ipc.torrent.getTorrentFiles({
       media,
       episode,
-      languages: $languages,
+      languages,
       blacklistedTorrents: $blacklistedTorrents,
     });
-    if (!torrentFiles.length) {
+    // load() was called later and it resolved faster than the current call
+    if ($playerTorrentStream && $playerTorrentFile) return;
+    const resTorrentFiles = strictResolution
+      ? torrentFiles.filter((torrent) => torrent.resolution === $resolution)
+      : torrentFiles;
+    if (!resTorrentFiles.length) {
       console.error("No torrent files found");
       toast.error("No torrents found", {
-        description: "No torrents were found for this media.",
+        description: torrentFiles.length
+          ? `No ${resolution}p torrents found. Try disabling "strict resolution".`
+          : "No torrents were found for this media.",
       });
       return;
     }
-    const seasonFiles = torrentFiles.filter(
+    const seasonFiles = resTorrentFiles.filter(
       (torrent) => torrent.isCompleteSeason,
     );
-    const episodeFiles = torrentFiles.filter(
+    const episodeFiles = resTorrentFiles.filter(
       (torrent) => !torrent.isCompleteSeason,
     );
     const torrentAndScore = [
       ...computeTorrentScores({
         torrents: seasonFiles,
-        preferredResolution: $resolution,
+        preferredResolution: resolution,
       }),
       ...computeTorrentScores({
         torrents: episodeFiles,
-        preferredResolution: $resolution,
+        preferredResolution: resolution,
       }),
     ];
     const sortedByScore = torrentAndScore.sort((a, b) => b.score - a.score);
@@ -95,7 +103,7 @@
       ),
     );
     if (torrentStreamsError) {
-      onTorrentStreamsError(torrentStreamsError, torrentFile);
+      onGetTorrentStreamsError(torrentStreamsError, torrentFile);
       return;
     }
     if (!torrentsStreams.length) {
@@ -123,7 +131,19 @@
         seasonNumber: episode.seasonEpisode.seasonNumber,
       };
     console.log("streamURL:", torrentStream.url);
-    await window.ipc.torrent.selectTorrentStream(torrentStream);
+    const [, stsError] = await tryCatchAsync(
+      window.ipc.torrent.selectTorrentStream(torrentStream),
+    );
+    if (stsError) {
+      if (stsError.message === SelectTorrentStreamError.StreamNotFound) {
+        console.error(SelectTorrentStreamError.StreamNotFound, torrentStream);
+        toast.error(SelectTorrentStreamError.StreamNotFound, {
+          description:
+            "😖 app in invalid state!!! Dismiss this message to reload the torrent.",
+          onDismiss: reload,
+        });
+      }
+    }
     $playerTorrentStream = torrentStream;
     $playerTorrentFile = torrentFile;
   }
@@ -131,33 +151,37 @@
   async function reload() {
     if (!$playerTorrentStream) return;
     window.ipc.torrent.selectTorrentStream($playerTorrentStream);
-    $playerTorrentStream = $playerTorrentStream;
+    $playerTorrentStream = { ...$playerTorrentStream };
+  }
+  async function maybeLoad() {
+    loadParams && (await load(loadParams));
   }
 
-  function onTorrentStreamsError(error: Error, torrentFile: TorrentFile) {
+  function onGetTorrentStreamsError(error: Error, torrentFile: TorrentFile) {
     $blacklistedTorrents = [...$blacklistedTorrents, torrentFile];
+
     switch (error.message) {
-      case TorrentStreamsError.TorrentTimeout:
-        console.error(TorrentStreamsError.TorrentTimeout, torrentFile);
-        toast.error(TorrentStreamsError.TorrentTimeout, {
+      case GetTorrentStreamsError.TorrentTimeout:
+        console.error(GetTorrentStreamsError.TorrentTimeout, torrentFile);
+        toast.error(GetTorrentStreamsError.TorrentTimeout, {
           description:
-            "The torrent timed out while being fetched. This is usually because the torrent is not available anymore. Dismiss this message to fetch a new torrent.",
-          onDismiss: load,
+            "The torrent timed out while being fetched, usually because it has no peers. Dismiss this message to fetch a new torrent.",
+          onDismiss: maybeLoad,
         });
         break;
-      case TorrentStreamsError.NoVideoFiles:
-        console.error(TorrentStreamsError.TorrentTimeout, torrentFile);
-        toast.error(TorrentStreamsError.NoVideoFiles, {
+      case GetTorrentStreamsError.NoVideoFiles:
+        console.error(GetTorrentStreamsError.NoVideoFiles, torrentFile);
+        toast.error(GetTorrentStreamsError.NoVideoFiles, {
           description:
             "The torrent contains no video files. Dismiss this message to fetch a new torrent.",
-          onDismiss: load,
+          onDismiss: maybeLoad,
         });
-      case TorrentStreamsError.NoMatchingFiles:
-        console.error(TorrentStreamsError.NoMatchingFiles, torrentFile);
-        toast.error(TorrentStreamsError.NoMatchingFiles, {
+      case GetTorrentStreamsError.NoMatchingFiles:
+        console.error(GetTorrentStreamsError.NoMatchingFiles, torrentFile);
+        toast.error(GetTorrentStreamsError.NoMatchingFiles, {
           description:
             "The torrent does not contain files matching the media parameters. Dismiss this message to fetch a new torrent.",
-          onDismiss: load,
+          onDismiss: maybeLoad,
         });
         break;
       default:
@@ -179,7 +203,7 @@
         toast.error("Media codec error", {
           description:
             "The video or audio codec is unsupported. Dismiss this message to fetch a new torrent.",
-          onDismiss: load,
+          onDismiss: maybeLoad,
         });
         break;
       case error.MEDIA_ERR_NETWORK:
@@ -201,17 +225,14 @@
         toast.error("Media decoding error", {
           description:
             "Failed to decode media. Dismiss this message to fetch a new torrent.",
-          onDismiss: load,
+          onDismiss: maybeLoad,
         });
 
       default:
         throw error;
     }
   }
-  $: if ($playerMedia && $playerEpisode) {
-    // DEBUG
-    load();
-  }
+
   function isValidCodecs() {
     if (!$video) return false;
     // We it's valid assume cause we don't have any information
@@ -223,7 +244,7 @@
       toast.error("Media codec error", {
         description:
           "The video and audio codec is unsupported. Dismiss this message to fetch a new torrent.",
-        onDismiss: load,
+        onDismiss: maybeLoad,
       });
     }
     if (!$video.videoTracks.length) {
@@ -232,7 +253,7 @@
       toast.error("Video codec error", {
         description:
           "The video codec is unsupported. Dismiss this message to fetch a new torrent.",
-        onDismiss: load,
+        onDismiss: maybeLoad,
       });
       return false;
     }
@@ -242,7 +263,7 @@
       toast.error("Audio codec error", {
         description:
           "The audio codec is unsupported. Dismiss this message to fetch a new torrent.",
-        onDismiss: load,
+        onDismiss: maybeLoad,
       });
       return false;
     }
@@ -262,6 +283,14 @@
   // let videoUrl =
   //   "https://github.com/user-attachments/assets/06fae060-0bc9-43b0-8153-04f4cf430e22";
   $: videoUrl = $playerTorrentStream?.url;
+  $: loadParams = $playerMedia && {
+    media: $playerMedia,
+    episode: $playerEpisode,
+    languages: $languages,
+    resolution: $resolution,
+    strictResolution: $strictResolution,
+  };
+  $: if (loadParams) load(loadParams);
 </script>
 
 <PageWrapper {hidden}>

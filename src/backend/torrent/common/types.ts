@@ -49,11 +49,14 @@ export type GetTorrentFilesParams = {
   languages: Language[];
 };
 
-export enum TorrentStreamsError {
+export enum GetTorrentStreamsError {
   TorrentTimeout = "Torrent timeout",
   NoVideoFiles = "No video files",
   NoMatchingFiles = "No matching files",
-  TorrentWasRemoved = "Torrent was removed",
+}
+
+export enum SelectTorrentStreamError {
+  StreamNotFound = "Torrent stream not found",
 }
 
 export type TorrentStreamStats = {

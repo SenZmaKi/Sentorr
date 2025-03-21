@@ -57,6 +57,7 @@ export let showControls = playerState(true);
 export let volume = writable(0.8);
 export let muted = writable(false);
 export let resolution = writable(Resolution.R1080P);
+export let strictResolution = writable(false);
 export let playbackRate = writable(1);
 export let video = writable<HTMLVideoElement | undefined>(undefined);
 export let videoContainer = writable<HTMLDivElement | undefined>(undefined);

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { slide } from "svelte/transition";
-  import { isHoveringWithTimer, updateIsHoveringWithTimer } from "./../store";
+  import { showModal, icon } from "./../store";
   import Button from "../../Button.svelte";
   import ResolutionField from "./resolution/Field.svelte";
   import SleepTimerField from "./sleeptimer/Field.svelte";
@@ -10,17 +10,31 @@
   import SleepTimerModal from "./sleeptimer/Modal.svelte";
   import { currentFieldModal } from "./common/store";
   import { Field } from "./common/types";
+  import { onMount, onDestroy } from "svelte";
 
-  let isHovering = false;
-  $: updateIsHoveringWithTimer(isHovering);
-  $: if (!$isHoveringWithTimer) {
-    $currentFieldModal = undefined;
+  let modal: HTMLDivElement | undefined = undefined;
+
+  function onDocClick(event: MouseEvent) {
+    console.log("document clicked");
+    console.log("modal is:", modal);
+    const wasClicked = (element: HTMLElement | undefined) =>
+      element && event.composedPath().includes(element);
+    if (wasClicked(modal) || wasClicked($icon)) return;
+    console.log("click was outside modal");
+    $showModal = false;
   }
+
+  onMount(() => {
+    document.addEventListener("click", onDocClick);
+  });
+  onDestroy(() => {
+    document.removeEventListener("click", onDocClick);
+  });
 </script>
 
-{#if isHovering || $isHoveringWithTimer}
-  <div transition:slide>
-    <Button bind:isHovering setHoverScale={false} setSize={false}>
+{#if $showModal}
+  <div bind:this={modal} transition:slide>
+    <Button setHoverScale={false} setSize={false}>
       <div class="bg-black rounded-xl bg-opacity-70 w-[325px]">
         {#if !$currentFieldModal}
           <div class="rounded-xl flex-col flex">
@@ -33,9 +47,9 @@
         {:else if $currentFieldModal === Field.Resolution}
           <ResolutionModal />
         {:else if $currentFieldModal === Field.PlaybackRate}
-          <PlaybackRateModal  />
+          <PlaybackRateModal />
         {:else if $currentFieldModal === Field.SleepTimer}
-          <SleepTimerModal  />
+          <SleepTimerModal />
         {/if}
       </div>
     </Button>

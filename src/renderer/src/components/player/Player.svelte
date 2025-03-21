@@ -39,6 +39,13 @@
 
   export let hidden: boolean;
 
+  async function clearVideo() {
+    if (!$video) return;
+    $playerTorrentStream = undefined;
+    $playerTorrentFile = undefined;
+    await window.ipc.torrent.deselectAllTorrentStreams();
+  }
+
   async function load(params: {
     media: Media;
     episode: Episode | undefined;
@@ -48,8 +55,7 @@
   }) {
     const { media, episode, languages, resolution, strictResolution } = params;
     console.log("load()", params);
-    $playerTorrentStream = undefined;
-    $playerTorrentFile = undefined;
+    await clearVideo();
     if (!media.title) {
       console.error(`Media ${media.id} has no title`);
       toast.error("No media title", {
@@ -276,13 +282,13 @@
   //   // console.log(`torrentStreamStats: ${JSON.stringify(torrentStreamStats)}`);
   // }, 1_000);
   // const webtorrentDir = "file:C:\\Users\\Sen\\AppData\\Local\\Temp\\webtorrent";
-  // let videoUrl = `${webtorrentDir}\\Mr.Robot.Season.1-4.S01-04.COMPLETE.1080p.BluRay.WEB.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01.1080p.BluRay.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01E01.1080p.BluRay.10bit.DD5.1.x265-POIASD.mkv`;
-  // let videorl = `${webtorrentDir}\\Mr.Robot.SEASON.01.S01.COMPLETE.1080p.10bit.BluRay.6CH.x265.HEVC-PSA\\Mr.Robot.S01E01.eps1.0_hellofriend.mov.1080p.10bit.BluRay.6CH.x265.HEVC-PSA.mkv`;
-  // let videoUrl = `${webtorrentDir}\\Invincible (2021) Season 1 S01 (1080p WEB-DL x265 HEVC 10bit EAC3 5.1 SAMPA)\\Invincible (2021) - S01E01 - It's About Time (1080p WEB-DL x265 SAMPA).mkv`;
-  // let  videoUrl = `${webtorrentDir}\\[SubsPlease] Solo Leveling - 14 (1080p) [2FD84CD9].mkv`;
-  // let videoUrl =
+  // let videoSrc = `${webtorrentDir}\\Mr.Robot.Season.1-4.S01-04.COMPLETE.1080p.BluRay.WEB.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01.1080p.BluRay.10bit.DD5.1.x265-POIASD\\Mr.Robot.S01E01.1080p.BluRay.10bit.DD5.1.x265-POIASD.mkv`;
+  // let videoSrc = `${webtorrentDir}\\Mr.Robot.SEASON.01.S01.COMPLETE.1080p.10bit.BluRay.6CH.x265.HEVC-PSA\\Mr.Robot.S01E01.eps1.0_hellofriend.mov.1080p.10bit.BluRay.6CH.x265.HEVC-PSA.mkv`;
+  // let videoSrc = `${webtorrentDir}\\Invincible (2021) Season 1 S01 (1080p WEB-DL x265 HEVC 10bit EAC3 5.1 SAMPA)\\Invincible (2021) - S01E01 - It's About Time (1080p WEB-DL x265 SAMPA).mkv`;
+  // let  videoSrc = `${webtorrentDir}\\[SubsPlease] Solo Leveling - 14 (1080p) [2FD84CD9].mkv`;
+  // let videoSrc =
   //   "https://github.com/user-attachments/assets/06fae060-0bc9-43b0-8153-04f4cf430e22";
-  $: videoUrl = $playerTorrentStream?.url;
+  $: videoSrc = $playerTorrentStream?.url ?? "";
   $: loadParams = $playerMedia && {
     media: $playerMedia,
     episode: $playerEpisode,
@@ -322,7 +328,7 @@
         }
         await $video.play();
       }}
-      src={videoUrl}
+      src={videoSrc}
     >
     </video>
     <div class="absolute bottom-[5%] w-full">

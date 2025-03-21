@@ -177,11 +177,16 @@ async function getCurrentTorrentStreamStats() {
   return await invoke("getCurrentTorrentStreamStats");
 }
 
+async function deselectAllTorrentStreams() {
+  return await invoke("deselectAllTorrentStreams");
+}
+
 const torrentIpc = {
   getTorrentFiles,
   getTorrentStreams,
   selectTorrentStream,
   getCurrentTorrentStreamStats,
+  deselectAllTorrentStreams,
 };
 
 export type TorrentIpc = typeof torrentIpc;

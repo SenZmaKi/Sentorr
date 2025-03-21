@@ -17,6 +17,7 @@
     playerMedia,
     playerEpisode,
   } from "../common/store";
+  import { showModal } from "./settings/store";
   import { createThumbnailGenerator } from "./common/thumbnail";
   import Next from "./Next.svelte";
   import Volume from "./volume/Volume.svelte";
@@ -105,7 +106,7 @@
     );
   $: showWithPaused($paused);
   $: $video && addVideoListeners($video);
-  $: $showControls = show || $paused || $isHovering;
+  $: $showControls = show || $paused || $isHovering || $showModal;
 </script>
 
 <div
@@ -132,7 +133,7 @@
         <Volume />
         <Time />
       </div>
-      <div class="flex items-center gap-x-6">
+      <div class="flex items-center gap-x-6 ">
         <SettingsIcon />
         <Fullscreen />
         <Pip />

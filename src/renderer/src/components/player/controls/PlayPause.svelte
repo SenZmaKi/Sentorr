@@ -1,11 +1,12 @@
 <script lang="ts">
   import { scale } from "svelte/transition";
   import Button from "./Button.svelte";
+  import { showModal } from "./settings/store";
   import { paused, video } from "../common/store";
   import { onDestroy } from "svelte";
 
   async function onClick() {
-    if (!$video) return;
+    if (!$video || $showModal) return;
     $paused ? await $video.play() : $video.pause();
   }
   $: if ($video) {

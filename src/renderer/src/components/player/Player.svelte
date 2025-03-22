@@ -31,7 +31,7 @@
     strictResolution,
   } from "./common/store";
   import Controls from "./controls/Controls.svelte";
-  import { getCurrentMediaProgress } from "../common/store";
+  import { getMediaProgress } from "../common/store";
   import { tryCatchAsync } from "@/common/functions";
   import type { Episode, Media } from "@/backend/imdb/types";
   import type { Language } from "@ctrl/video-filename-parser";
@@ -320,16 +320,18 @@
       bind:videoHeight={$videoHeight}
       on:loadedmetadata={async () => {
         if (!$video || !isValidCodecs()) return;
-        const currentMediaProgress = getCurrentMediaProgress();
-        if (currentMediaProgress) {
-          $video.currentTime = currentMediaProgress.time;
+        if ($playerMedia) {
+          const currentMediaProgress = getMediaProgress($playerMedia.id);
+          if (currentMediaProgress) {
+            $video.currentTime = currentMediaProgress.time;
+          }
         }
         await $video.play();
       }}
       src={videoSrc}
     >
     </video>
-    <div class="absolute bottom-[5%] w-full">
+    <div class="absolute bottom-[0%] w-full">
       <Controls />
     </div>
   </div>

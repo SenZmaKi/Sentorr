@@ -9,10 +9,9 @@
 
 </script>
 
-<div bind:this={$icon}>
-  <Button {onClick} style="width: 20px; height: 20px;">
+  <Button bind:this={$icon} {onClick} style="width: 20px; height: 20px;">
     <svg
-      class="ease-in-out duration-[400ms] transition-transform hover:rotate-180"
+      class="ease-in-out duration-[300ms] transition-transform hover:rotate-180"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -27,4 +26,3 @@
       </g></svg
     >
   </Button>
-</div>

@@ -26,10 +26,10 @@
     </div>
   {/if}
   <div class="flex mt-6">
-    {#if media.creators && media.creators.length > 0}
+    {#if media.creators && media.creators.length}
       <div class=" xs-dark rounded-lg mr-4 p-2">
         <div class="opacity-85">
-          <span class="font-semibold">Creators:</span>
+          <span class="font-extrabold">Creators:</span>
           {#each media.creators as creator, idx}
             <span
               >{creator}{media.creators.length - 1 == idx
@@ -40,10 +40,10 @@
         </div>
       </div>
     {/if}
-    {#if media.actors && media.actors.length > 0}
+    {#if media.actors && media.actors.length}
       <div class="xs-dark rounded-lg p-2">
         <div class="opacity-85">
-          <span class="font-semibold">Cast:</span>
+          <span class="font-extrabold">Cast:</span>
           {#each media.actors.slice(0, 4) as actor, idx}
             <span
               >{actor.name}{media.actors.slice(0, 4).length - 1 == idx
@@ -56,10 +56,10 @@
     {/if}
   </div>
 </div>
-{#if media.recommendations && media.recommendations.length > 0}
+{#if media.recommendations && media.recommendations.length}
   <div class="text-opacity-90 pt-6 flex flex-col">
     <span class="font-semibold text-center text-lg opacity-90"
-      >Recommendations</span
+      >More like this</span
     >
     <hr class="h-2 mt-2 mb-2 xs-dark border-none" />
     <div class="flex overflow-y-auto">
@@ -75,8 +75,8 @@
     </div>
   </div>
 {/if}
-{#if $accumulatedReviews.length > 0}
-  <div class="flex flex-col">
+{#if $accumulatedReviews.length}
+  <div class="flex flex-col pt-6">
     <span class="font-semibold text-center text-lg opacity-90">Reviews</span>
     <hr class="h-2 mt-2 mb-2 xs-dark border-none" />
     <div on:scroll={infiniteScroll} class="flex overflow-y-auto">

@@ -2,32 +2,46 @@
   import TopInfo from "./TopInfo.svelte";
   import BottomInfo from "./BottomInfo.svelte";
   import SeasonsContainer from "./SeasonsContainer.svelte";
-  import { previewMedia, previewResult } from "../common/store";
+  import {
+    getMediaProgress,
+    previewMedia,
+    previewResult,
+  } from "../common/store";
   import PreviewSkeleton from "./PreviewSkeleton.svelte";
   import PageWrapper from "../common/PageWrapper.svelte";
+  import type { Media } from "@/backend/imdb/types";
+  import type { MediaProgress } from "@/backend/config/types";
+
   export let hidden: boolean;
 
-  // {#if $previewMedia && $previewResult}
-  //   <PageWrapper {hidden}>
-  //       <PreviewSkeleton isMovie={$previewResult.isMovie} />
-  //   </PageWrapper>
-  // {/if}
+  async function awaitMediaPromise(mediaPromise: Promise<Media>) {
+    // Clear previous media to show the skeleton as we await the new media
+    media = undefined;
+    mediaProgress = undefined;
+    media = await mediaPromise;
+    mediaProgress = getMediaProgress(media.id);
+  }
+
+  let media: Media | undefined;
+  let mediaProgress: MediaProgress | undefined;
+
+  $: $previewMedia && awaitMediaPromise($previewMedia);
 </script>
 
-{#if $previewMedia && $previewResult}
+{#if $previewResult}
   <PageWrapper {hidden}>
-    {#await $previewMedia}
+    {#if !media}
       <PreviewSkeleton isMovie={$previewResult.isMovie} />
-    {:then media}
+    {:else}
       <div class="flex max-h-screen">
         <div class="overflow-y-auto {!media.isMovie ? 'w-2/3' : ''} p-2">
-          <TopInfo {media} />
+          <TopInfo {media} {mediaProgress} />
           <BottomInfo {media} />
         </div>
         {#if !media.isMovie}
-          <SeasonsContainer {media} />
+          <SeasonsContainer {media} {mediaProgress} />
         {/if}
       </div>
-    {/await}
+    {/if}
   </PageWrapper>
 {/if}

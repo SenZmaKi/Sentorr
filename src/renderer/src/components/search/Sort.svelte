@@ -47,7 +47,7 @@
       style="transform: rotate({$sortOrder === SortOrder.ASC
         ? '180deg'
         : '0deg'});
-      transition: transform 0.4s ease;"
+      transition: transform 0.3s ease;"
       width="15px"
       height="15px"
       viewBox="0 0 16 16"

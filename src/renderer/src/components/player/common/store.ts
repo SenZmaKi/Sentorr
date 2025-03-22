@@ -70,7 +70,7 @@ export let progress = playerState(0);
 export let showControls = playerState(true);
 
 export let volume = writable(0.8);
-export let muted = writable(false);
+export let muted = writable(true);
 export let resolution = writable(Resolution.R1080P);
 export let strictResolution = writable(false);
 export let playbackRate = writable(1);

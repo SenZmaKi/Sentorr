@@ -96,7 +96,7 @@
   let hideTimer: Timer | undefined = undefined;
 
   $: buffer =
-    $buffered && $buffered.length > 0
+    $buffered && $buffered.length
       ? ($buffered[$buffered.length - 1].end / $duration) * 100
       : 0;
   $: thumbnailGenerator =
@@ -112,33 +112,34 @@
 </script>
 
 <div
+  class="w-full bg-gradient-to-t from-black/80 to-transparent pb-5"
   class:hidden={!$showControls}
   transition:fade
-  style="background: radial-gradient(oval, rgba(0,0,0,0.8) 0%, transparent 70%);"
-  class="flex flex-col items-center justify-center w-full"
 >
-  <div class="w-[98%]">
-    <div class="flex justify-end">
-      <SettingsModal />
-    </div>
-    <Seekbar
-      bind:progress={$progress}
-      {buffer}
-      length={$duration}
-      {onSeeking}
-      {thumbnailGenerator}
-    />
-    <div class="flex justify-between p-5 pb-0">
-      <div class="flex items-center gap-x-6">
-        <PlayPause />
-        <Next />
-        <Volume />
-        <Time />
+  <div class="flex flex-col items-center justify-center w-full">
+    <div class="w-[98%]">
+      <div class="flex justify-end">
+        <SettingsModal />
       </div>
-      <div class="flex items-center gap-x-6">
-        <SettingsIcon />
-        <Fullscreen />
-        <Pip />
+      <Seekbar
+        bind:progress={$progress}
+        {buffer}
+        length={$duration}
+        {onSeeking}
+        {thumbnailGenerator}
+      />
+      <div class="flex justify-between p-5 pb-0">
+        <div class="flex items-center gap-x-6">
+          <PlayPause />
+          <Next />
+          <Volume />
+          <Time />
+        </div>
+        <div class="flex items-center gap-x-6">
+          <SettingsIcon />
+          <Fullscreen />
+          <Pip />
+        </div>
       </div>
     </div>
   </div>

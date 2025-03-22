@@ -1,4 +1,4 @@
-import { type Language } from "@ctrl/video-filename-parser";
+import { Language } from "@ctrl/video-filename-parser";
 
 export type CommonTorrentFile = {
   resolution: Resolution;
@@ -40,6 +40,8 @@ export enum Resolution {
 export const RESOLUTIONS = Object.values(Resolution).filter(
   (value) => typeof value === "number",
 );
+
+export const LANGUAGES = Object.values(Language);
 
 export type GetTorrentFilesParams = {
   seasonFormattedTitle: string;

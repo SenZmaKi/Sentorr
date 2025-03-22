@@ -1,13 +1,15 @@
 <script lang="ts">
   import { scale } from "svelte/transition";
-  import Button from "./Button.svelte";
-  import { showModal } from "./settings/store";
+  import Button from "./common/Button.svelte";
+  import { showSettingsModal } from "./settings/store";
   import { paused, video } from "../common/store";
   import { onDestroy } from "svelte";
+  import { showControlsWithTimeout } from "./common/store";
 
   async function onClick() {
-    if (!$video || $showModal) return;
+    if (!$video || $showSettingsModal) return;
     $paused ? await $video.play() : $video.pause();
+    if (!$paused) showControlsWithTimeout();
   }
   $: if ($video) {
     $video.addEventListener("click", onClick);
@@ -15,21 +17,18 @@
   onDestroy(() => $video && $video.removeEventListener("click", onClick));
 </script>
 
-<Button style="position: relative;" {onClick}>
+<Button tooltip={$paused ? "Play" : "Pause"} style="position: relative;" {onClick}>
   {#if $paused}
     <svg
       transition:scale
-      class="absolute top-0 left-0"
+      class="absolute inset-0"
       viewBox="-1 0 12 12"
       version="1.1"
       fill="#ffffff"
     >
       <g stroke-width="0"></g>
-      <g
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      ></g>
-      <g >
+      <g stroke-linecap="round" stroke-linejoin="round"></g>
+      <g>
         <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
           <g transform="translate(-65.000000, -3803.000000)" fill="#ffffff">
             <g transform="translate(56.000000, 160.000000)">
@@ -43,7 +42,7 @@
     </svg>
   {:else}
     <svg
-      class="absolute top-0 left-0"
+      class="absolute inset-0"
       transition:scale
       viewBox="0 0 24 24"
       fill="none"

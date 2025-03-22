@@ -2,32 +2,24 @@
   import { slide } from "svelte/transition";
   import Seekbar from "../Seekbar.svelte";
   import Icon from "./Icon.svelte";
-  import { hoverManager } from "../common/functions";
   import { volume } from "../../common//store";
+  import HoverWrapper from "../common/HoverWrapper.svelte";
+  import TooltipWrapper from "../common/TooltipWrapper.svelte";
 
-  let isHovering = false;
-  const { onPointerEnter, onPointerLeave } = hoverManager();
   let progress = $volume * 100;
   $: $volume = progress / 100;
+  let isHovering = false;
 </script>
 
-<div
-  on:pointerenter={() => {
-    isHovering = true;
-    onPointerEnter();
-  }}
-  on:pointerleave={() => {
-    isHovering = false;
-    onPointerLeave();
-  }}
-  class="flex items-center justify-center cursor-pointer gap-x-4"
->
-  <Icon />
-  {#if isHovering}
-    <div transition:slide={{ axis: "x" }} class="w-[100px]">
-      <div>
-        <Seekbar bind:progress />
-      </div>
-    </div>
-  {/if}
-</div>
+<HoverWrapper bind:isHovering>
+  <div class="flex items-center justify-center cursor-pointer gap-x-4">
+    <Icon />
+    {#if isHovering}
+      <TooltipWrapper tooltip={`${progress.toFixed(0)}%`}>
+        <div transition:slide={{ axis: "x" }} class="w-[100px]">
+          <Seekbar bind:progress />
+        </div>
+      </TooltipWrapper>
+    {/if}
+  </div>
+</HoverWrapper>

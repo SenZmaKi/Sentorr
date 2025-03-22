@@ -1,40 +1,47 @@
 <script lang="ts">
   import { scale } from "svelte/transition";
-  import Button from "./Button.svelte";
+  import TooltipWrapper from "././common/TooltipWrapper.svelte";
   import { timeStamp } from "./common/functions";
   import { currentTime, duration } from "../common/store";
+  import HoverWrapper from "./common/HoverWrapper.svelte";
 
-  export let useElapsedTime = false;
+  export let showElapsedTime = true;
   let currentTimeWidth: number;
   let currentTimeHeight: number;
   function onClick() {
-    useElapsedTime = !useElapsedTime;
+    showElapsedTime = !showElapsedTime;
   }
 </script>
 
-<Button style="" setHoverScale={false} setSize={false} {onClick}>
-  <div class="relative">
-    <div class="flex items-center font-bold gap-x-2">
-      <div
-        class="relative"
-        style="width: {currentTimeWidth}px; height: {currentTimeHeight}px;"
-      >
-        {#key useElapsedTime}
-          <!-- CSS man...-->
+<button on:click={onClick}>
+  <HoverWrapper>
+    <TooltipWrapper
+      tooltip={showElapsedTime ? "Show remaining time" : "Show elapsed time"}
+    >
+      <div class="relative">
+        <div class="flex items-center font-bold gap-x-2">
           <div
-            bind:clientWidth={currentTimeWidth}
-            bind:clientHeight={currentTimeHeight}
-            class="absolute left-0"
-            transition:scale
+            class="relative"
+            style="width: {currentTimeWidth}px; height: {currentTimeHeight}px;"
           >
-            {useElapsedTime
-              ? `-${timeStamp($duration - $currentTime)}`
-              : timeStamp($currentTime)}
+            {#key showElapsedTime}
+              <!-- CSS man...-->
+              <div
+                bind:clientWidth={currentTimeWidth}
+                bind:clientHeight={currentTimeHeight}
+                class="absolute left-0"
+                transition:scale
+              >
+                {showElapsedTime
+                  ? timeStamp($currentTime)
+                  : `-${timeStamp($duration - $currentTime)}`}
+              </div>
+            {/key}
           </div>
-        {/key}
+          <div>/</div>
+          <div>{timeStamp($duration)}</div>
+        </div>
       </div>
-      <div>/</div>
-      <div>{timeStamp($duration)}</div>
-    </div>
-  </div>
-</Button>
+    </TooltipWrapper>
+  </HoverWrapper>
+</button>

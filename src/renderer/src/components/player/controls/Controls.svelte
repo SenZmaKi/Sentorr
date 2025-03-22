@@ -17,7 +17,11 @@
     playerMedia,
     playerEpisode,
   } from "../common/store";
-  import { showModal } from "./settings/store";
+  import { showSettingsModal } from "./settings/store";
+  import {
+    showControlsWithTimeout,
+    showControlsTimedOut,
+  } from "./common/store";
   import { createThumbnailGenerator } from "./common/thumbnail";
   import Next from "./Next.svelte";
   import Volume from "./volume/Volume.svelte";
@@ -33,33 +37,10 @@
     return time && $duration ? (time / $duration) * 100 : 0;
   }
 
-  function showWithTimeout() {
-    if ($paused || $isHovering) return;
-    if (hideTimer) {
-      clearTimeout(hideTimer);
-      hideTimer = undefined;
-    }
-    show = true;
-    hideTimer = setTimeout(() => {
-      show = false;
-    }, 3_000);
-  }
-
   function onSeeking(percent: number) {
     if ($video) $video.currentTime = (percent / 100) * $duration;
   }
 
-  function showWithPaused(paused: boolean) {
-    if (paused) {
-      if (hideTimer) {
-        clearTimeout(hideTimer);
-        hideTimer = undefined;
-      }
-      show = false;
-    } else {
-      showWithTimeout();
-    }
-  }
   function updateProgress() {
     if (!$video) return;
     $currentTime = $video.currentTime;
@@ -82,18 +63,15 @@
     $config = { ...$config, allMediaProgress: allMediaProgress };
   }
   function addVideoListeners(video: HTMLVideoElement) {
-    video.addEventListener("mousemove", showWithTimeout);
+    video.addEventListener("mousemove", showControlsWithTimeout);
     video.addEventListener("timeupdate", updateProgress);
   }
 
   onDestroy(() => {
     if (!$video) return;
-    $video.removeEventListener("mousemove", showWithTimeout);
+    $video.removeEventListener("mousemove", showControlsWithTimeout);
     $video.removeEventListener("timeupdate", updateProgress);
   });
-
-  let show = false;
-  let hideTimer: Timer | undefined = undefined;
 
   $: buffer =
     $buffered && $buffered.length
@@ -106,39 +84,48 @@
       $videoHeight,
       $videoWidth,
     );
-  $: showWithPaused($paused);
   $: $video && addVideoListeners($video);
-  $: $showControls = show || $paused || $isHovering || $showModal;
+  // Don't hide controls immediately after user stops hovering, it looks janky
+  $: if (!$isHovering) showControlsWithTimeout();
+  $: $showControls =
+    !$showControlsTimedOut || $paused || $isHovering || $showSettingsModal;
+  $: if (!$showControls) {
+    console.log("controls hidden");
+  }
 </script>
 
 <div
-  class="w-full bg-gradient-to-t from-black/80 to-transparent pb-5"
+  class="flex flex-col items-center justify-center w-full"
   class:hidden={!$showControls}
   transition:fade
 >
-  <div class="flex flex-col items-center justify-center w-full">
-    <div class="w-[98%]">
-      <div class="flex justify-end">
-        <SettingsModal />
-      </div>
-      <Seekbar
-        bind:progress={$progress}
-        {buffer}
-        length={$duration}
-        {onSeeking}
-        {thumbnailGenerator}
-      />
-      <div class="flex justify-between p-5 pb-0">
-        <div class="flex items-center gap-x-6">
-          <PlayPause />
-          <Next />
-          <Volume />
-          <Time />
-        </div>
-        <div class="flex items-center gap-x-6">
-          <SettingsIcon />
-          <Fullscreen />
-          <Pip />
+  <div class="w-full">
+    <div class="flex justify-end">
+      <SettingsModal />
+    </div>
+    <div
+      class="w-full flex flex-col items-center bg-gradient-to-t from-black/80 to-transparent pb-7 pt-3"
+    >
+      <div class="w-[98%]">
+        <Seekbar
+          bind:progress={$progress}
+          {buffer}
+          length={$duration}
+          {onSeeking}
+          {thumbnailGenerator}
+        />
+        <div class="flex justify-between p-5 pb-0">
+          <div class="flex items-center gap-x-6">
+            <PlayPause />
+            <Next />
+            <Volume />
+            <Time />
+          </div>
+          <div class="flex items-center gap-x-6">
+            <SettingsIcon />
+            <Fullscreen />
+            <Pip />
+          </div>
         </div>
       </div>
     </div>

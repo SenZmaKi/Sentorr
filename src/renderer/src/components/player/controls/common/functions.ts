@@ -1,18 +1,4 @@
-import { isHovering } from "./store";
 
-export function hoverManager() {
-  function onPointerEnter() {
-    isHovering.set(true);
-  }
-  function onPointerLeave() {
-    isHovering.set(false);
-  }
-
-  return {
-    onPointerEnter,
-    onPointerLeave,
-  };
-}
 
  export function timeStamp(sec: number): string {
     const hours = Math.floor(sec / 3600);

@@ -9,7 +9,7 @@ import path from "path";
 import fs from "fs/promises";
 import { tryCatchAsync, tryCatch } from "@/common/functions";
 
-const Client = new WebTorrent();
+const Client = new WebTorrent({maxConns: 50});
 const Server = Client.createServer({});
 const PORT = 5000;
 const [, listenError] = tryCatch(() => Server.listen(5000));

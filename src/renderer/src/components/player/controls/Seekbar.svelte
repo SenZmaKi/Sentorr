@@ -1,8 +1,9 @@
 <script lang="ts">
   // https://github.com/ThaUnknown/perfect-seekbar
-  import { hoverManager, timeStamp } from "./common/functions";
+  import { timeStamp } from "./common/functions";
   import type { Chapter } from "./common/types";
   import type { ThumbnailGenerator } from "./common/thumbnail";
+  import HoverWrapper from "./common/HoverWrapper.svelte";
 
   export let progress = 0;
   export let buffer = 0;
@@ -13,7 +14,6 @@
   export let onSeeking: ((percent: number) => void) | undefined = undefined;
   export let onSeeked: (() => void) | undefined = undefined;
   export let alwaysShowThumb = false;
-  const { onPointerEnter, onPointerLeave } = hoverManager();
 
   function clamp(value: number): number {
     return Math.min(Math.max(value, 0), 100);
@@ -44,7 +44,6 @@
   function endHover(): void {
     seek = 0;
     thumbnail = "";
-    onPointerLeave();
   }
 
   function startSeeking(e: PointerEvent): void {
@@ -103,82 +102,83 @@
   }
 </script>
 
-<div
-  class="seekbar w-full"
-  bind:this={seekbar}
-  on:pointerdown={startSeeking}
-  on:pointerup={endSeeking}
-  on:pointerenter={onPointerEnter}
-  on:pointerleave={endHover}
-  on:pointermove={calculatePositionProgress}
-  style="height: {seekbarHeight}px;--accent: {accentColor};"
->
-  {#each processedChapters as { size, offset, scale }}
-    {@const seekPercent = clamp((seek - offset) * scale)}
-    <div style="width: {size}%;" class="chapter-wrapper">
-      <div
-        class="chapter w-full"
-        class:active={seekPercent > 0 && seekPercent < 100}
-      >
-        <div class="base-bar w-full" />
-        <div
-          class="base-bar"
-          style="width: {clamp((buffer - offset) * scale)}%;"
-        />
-        <div class="base-bar" style="width: {seekPercent}%;" />
-        <div
-          class="ps-progress-bar"
-          style="width: {clamp((progress - offset) * scale)}%;"
-        />
-      </div>
-    </div>
-  {:else}
-    <div class="chapter-wrapper w-full">
-      <div class="chapter w-full">
-        <div class="base-bar w-full" />
-        <div class="base-bar" style="width: {clamp(buffer)}%;" />
-        <div class="base-bar" style="width: {clamp(seek)}%;" />
-        <div class="ps-progress-bar" style="width: {clamp(progress)}%;" />
-      </div>
-    </div>
-  {/each}
-
-  <div class="thumb-container center" style="left: {progress}%;">
-    <div
-      style={alwaysShowThumb ? "width: 13px; height: 13px;" : ""}
-      class="thumb"
-      class:active={checkThumbActive(progress, seek)}
-    />
-  </div>
-
+<HoverWrapper>
   <div
-    class="center hover-container"
-    style="--progress: {seek}%; --padding: {thumbnailGenerator
-      ? '75px'
-      : '15px'};"
+    class="seekbar w-full"
+    bind:this={seekbar}
+    on:pointerdown={startSeeking}
+    on:pointerup={endSeeking}
+    on:pointerleave={endHover}
+    on:pointermove={calculatePositionProgress}
+    style="height: {seekbarHeight}px;--accent: {accentColor};"
   >
-    <div class="center">
-      <div>{getCurrentChapterTitle(seek) || ""}</div>
-      {#if thumbnail}
-        <img
-          on:load={() => {
-            // Since the thumbnail has been loaded on the browser we can dispose the url version
-            // Almost like deleting an image on the backend after the client has loaded it
-            thumbnailGenerator &&
-              thumbnailGenerator.disposeThumbnail(thumbnail);
-          }}
-          style="min-width: {thumbnailGenerator?.width}px; min-height: {thumbnailGenerator?.height}px;"
-          alt="thumbnail"
-          class="thumbnail"
-          src={thumbnail}
-        />
-      {/if}
-      {#if length}
-        <div>{timeStamp(length * (seek / 100))}</div>
-      {/if}
+    {#each processedChapters as { size, offset, scale }}
+      {@const seekPercent = clamp((seek - offset) * scale)}
+      <div style="width: {size}%;" class="chapter-wrapper">
+        <div
+          class="chapter w-full"
+          class:active={seekPercent > 0 && seekPercent < 100}
+        >
+          <div class="base-bar w-full" />
+          <div
+            class="base-bar"
+            style="width: {clamp((buffer - offset) * scale)}%;"
+          />
+          <div class="base-bar" style="width: {seekPercent}%;" />
+          <div
+            class="ps-progress-bar"
+            style="width: {clamp((progress - offset) * scale)}%;"
+          />
+        </div>
+      </div>
+    {:else}
+      <div class="chapter-wrapper w-full">
+        <div class="chapter w-full">
+          <div class="base-bar w-full" />
+          <div class="base-bar" style="width: {clamp(buffer)}%;" />
+          <div class="base-bar" style="width: {clamp(seek)}%;" />
+          <div class="ps-progress-bar" style="width: {clamp(progress)}%;" />
+        </div>
+      </div>
+    {/each}
+
+    <div class="thumb-container center" style="left: {progress}%;">
+      <div
+        style={alwaysShowThumb ? "width: 13px; height: 13px;" : ""}
+        class="thumb"
+        class:active={checkThumbActive(progress, seek)}
+      />
+    </div>
+
+    <div
+      class="center hover-container"
+      style="--progress: {seek}%; --padding: {thumbnailGenerator
+        ? '75px'
+        : '15px'};"
+    >
+      <div class="center">
+        <div>{getCurrentChapterTitle(seek) || ""}</div>
+        {#if thumbnail}
+          <img
+            on:load={() => {
+              // Since the thumbnail has been loaded on the browser we can dispose the url version
+              // Almost like deleting an image on the backend after the client has loaded it
+              thumbnailGenerator &&
+                thumbnailGenerator.disposeThumbnail(thumbnail);
+            }}
+            style="min-width: {thumbnailGenerator?.width}px; min-height: {thumbnailGenerator?.height}px;"
+            alt="thumbnail"
+            class="thumbnail"
+            src={thumbnail}
+          />
+        {/if}
+        {#if length}
+          <div>{timeStamp(length * (seek / 100))}</div>
+        {/if}
+      </div>
     </div>
   </div>
-</div>
+</HoverWrapper>
 
 <style>
   .w-full {

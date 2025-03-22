@@ -1,7 +1,6 @@
 <script lang="ts">
   import { slide } from "svelte/transition";
-  import { showModal, icon } from "./../store";
-  import Button from "../../Button.svelte";
+  import { showSettingsModal, icon } from "./../store";
   import ResolutionField from "./resolution/Field.svelte";
   import SleepTimerField from "./sleeptimer/Field.svelte";
   import PlaybackRateField from "./playbackRate/Field.svelte";
@@ -11,6 +10,7 @@
   import { currentFieldModal } from "./common/store";
   import { Field } from "./common/types";
   import { onMount, onDestroy } from "svelte";
+    import { showControlsWithTimeout } from "../../common/store";
 
   let modal: HTMLDivElement | undefined = undefined;
 
@@ -21,7 +21,9 @@
       element && event.composedPath().includes(element);
     if (wasClicked(modal) || wasClicked($icon)) return;
     console.log("click was outside modal");
-    $showModal = false;
+    $showSettingsModal = false;
+    $currentFieldModal = undefined;
+    showControlsWithTimeout();
   }
 
   onMount(() => {
@@ -32,9 +34,9 @@
   });
 </script>
 
-{#if $showModal}
+{#if $showSettingsModal}
   <div bind:this={modal} transition:slide>
-    <Button setHoverScale={false} setSize={false}>
+    <button>
       <div class="bg-black rounded-xl bg-opacity-70 w-[325px]">
         {#if !$currentFieldModal}
           <div class="rounded-xl flex-col flex">
@@ -52,6 +54,6 @@
           <SleepTimerModal />
         {/if}
       </div>
-    </Button>
+    </button>
   </div>
 {/if}

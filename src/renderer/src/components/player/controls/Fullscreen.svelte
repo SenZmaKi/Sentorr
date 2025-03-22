@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { videoContainer } from "../common/store";
-  import Button from "./Button.svelte";
+  import Button from "./common/Button.svelte";
   let isFullscreen = document.fullscreenElement === $videoContainer;
   function invertFullscreen() {
     console.log("invertFullscreen()");
@@ -21,7 +21,7 @@
   );
 </script>
 
-<Button {onClick}>
+<Button tooltip={isFullscreen ? "Exit fullscreen" : "Fullscreen"} {onClick}>
   {#if isFullscreen}
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
       ><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"

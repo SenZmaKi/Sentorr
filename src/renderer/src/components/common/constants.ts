@@ -5,6 +5,7 @@ import "tippy.js/themes/light.css";
 
 export const tippy = createTippy({
   animation: "scale",
-  arrow: true,
+  arrow: false,
   theme: "light",
+  hideOnClick: false,
 });

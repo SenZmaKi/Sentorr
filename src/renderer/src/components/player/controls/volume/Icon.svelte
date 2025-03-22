@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from "../Button.svelte";
+  import Button from "../common/Button.svelte";
   import { muted, volume } from "../../common/store";
 
   function onClick() {
@@ -7,7 +7,11 @@
   }
 </script>
 
-<Button style="width: 20px; height: 20px;" {onClick}>
+<Button
+  tooltip={$muted ? "Unmute" : "Mute"}
+  style="width: 20px; height: 20px;"
+  {onClick}
+>
   {#if $muted}
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
       ><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"

@@ -15,4 +15,5 @@ src/test/results
 .env
 test.sh
 crap.ts
+electron.vite.config.*.mjs
 

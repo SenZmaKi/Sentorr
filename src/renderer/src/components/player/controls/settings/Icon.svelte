@@ -1,15 +1,15 @@
 <script lang="ts">
-  import Button from "../Button.svelte";
-  import { showModal, icon } from "./store";
+  import Button from "../common/Button.svelte";
+  import { showSettingsModal, icon } from "./store";
 
   function onClick() {
-    $showModal = !$showModal;
-    console.log("showModal:", $showModal);
+    $showSettingsModal = !$showSettingsModal;
+    console.log("showModal:", $showSettingsModal);
   }
 
 </script>
 
-  <Button bind:this={$icon} {onClick} style="width: 20px; height: 20px;">
+  <Button tooltip="Settings" bind:button={$icon} {onClick} style="width: 20px; height: 20px;">
     <svg
       class="ease-in-out duration-[300ms] transition-transform hover:rotate-180"
       viewBox="0 0 24 24"

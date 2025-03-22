@@ -3,12 +3,14 @@ import { writeFile, readFile, stat } from "fs/promises";
 import path from "path";
 import { type Config } from "./types";
 import { tryCatch, tryCatchAsync } from "@/common/functions";
+import { beforeQuitTasks } from "../common/constants";
 // import { rm } from "fs/promises";
 
 export async function createConfigManager() {
   const configFilePath = path.join(app.getPath("userData"), "config.json");
   console.log("configFilePath:", configFilePath);
   // await rm(configFilePath);
+  let writePromise: Promise<void> | undefined = undefined;
 
   async function loadConfig() {
     const [statResult, statError] = await tryCatchAsync(stat(configFilePath));
@@ -27,7 +29,11 @@ export async function createConfigManager() {
 
   async function saveConfig() {
     const configString = JSON.stringify(config, null, 4);
-    await writeFile(configFilePath, configString);
+    writePromise = writeFile(configFilePath, configString);
+    // Ensure that the config file is fully written before the app is quit
+    beforeQuitTasks.push(writePromise);
+    await writePromise;
+    beforeQuitTasks.splice(beforeQuitTasks.indexOf(writePromise), 1);
   }
   async function getConfig() {
     return config;

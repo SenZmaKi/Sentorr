@@ -5,6 +5,7 @@ import configManager from "@/backend/config/manager";
 import torrentServer from "@/backend/torrent/server";
 import { type TorrentStream } from "@/backend/torrent/common/types";
 import { handle } from "@/common/ipc";
+import { beforeQuitTasks } from "@/backend/common/constants";
 
 // import icon from "../renderer/src/assets/icon.png?asset";
 const icon = "";
@@ -96,29 +97,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  // IPC
-
-  handle("getTorrentStreams", (torrentID) =>
-    torrentServer.getTorrentStreams(torrentID),
-  );
-
-  handle("selectTorrentStream", (torrentStream: TorrentStream) =>
-    torrentServer.selectTorrentStream(torrentStream),
-  );
-
-  handle("closeTorrentStreamsServer", torrentServer.closeTorrentStreamsServer);
-
-  handle("clearTorrents", torrentServer.clearTorrents);
-
-  handle("deselectAllTorrentStreams", torrentServer.deselectAllTorrentStreams);
-
-  handle(
-    "getCurrentTorrentStreamStats",
-    torrentServer.getCurrentTorrentStreamStats,
-  );
-  handle("getConfig", configManager.getConfig);
-  handle("setConfig", async (newConfig) => configManager.setConfig(newConfig));
-
   createWindow();
 
   app.on("activate", function () {
@@ -139,3 +117,32 @@ app.on("window-all-closed", () => {
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
+
+app.on("before-quit", async () => {
+  console.log("before-quit");
+  console.log("beforeQuitTasks:", beforeQuitTasks);
+  await Promise.all(beforeQuitTasks);
+});
+
+// IPC
+
+handle("getTorrentStreams", (torrentID) =>
+  torrentServer.getTorrentStreams(torrentID),
+);
+
+handle("selectTorrentStream", (torrentStream: TorrentStream) =>
+  torrentServer.selectTorrentStream(torrentStream),
+);
+
+handle("closeTorrentStreamsServer", torrentServer.closeTorrentStreamsServer);
+
+handle("clearTorrents", torrentServer.clearTorrents);
+
+handle("deselectAllTorrentStreams", torrentServer.deselectAllTorrentStreams);
+
+handle(
+  "getCurrentTorrentStreamStats",
+  torrentServer.getCurrentTorrentStreamStats,
+);
+handle("getConfig", configManager.getConfig);
+handle("setConfig", async (newConfig) => configManager.setConfig(newConfig));

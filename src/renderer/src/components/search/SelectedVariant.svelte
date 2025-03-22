@@ -5,7 +5,7 @@
 </script>
 
 <button
-  class="m-dark flex p-2 m-1 items-center border-solid border-black text-sm rounded-md"
+  class="xxs-dark flex p-2 m-1 items-center text-sm rounded-md"
   on:mouseenter={() => (showX = true)}
   on:mouseleave={() => (showX = false)}
   on:click={() => {

@@ -6,6 +6,21 @@
   color-scheme: dark;
 }
 
+body {
+  margin: 0;
+}
+.titlebar {
+  height: 30px;
+  background: transparent;
+  width: 100%;
+  app-region: drag;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
 html * {
   font-family: "Bahnschrift", sans-serif !important;
 }

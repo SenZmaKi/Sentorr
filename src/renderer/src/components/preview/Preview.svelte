@@ -34,11 +34,11 @@
       <PreviewSkeleton isMovie={$previewResult.isMovie} />
     {:else}
       <div class="flex max-h-screen">
-        <div class="overflow-y-auto {!media.isMovie ? 'w-2/3' : ''} p-2">
+        <div class="overflow-y-auto {media.canHaveEpisodes ? 'w-2/3' : ''} p-2">
           <TopInfo {media} {mediaProgress} />
           <BottomInfo {media} />
         </div>
-        {#if !media.isMovie}
+        {#if media.canHaveEpisodes}
           <SeasonsContainer {media} {mediaProgress} />
         {/if}
       </div>

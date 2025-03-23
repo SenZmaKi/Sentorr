@@ -1,11 +1,12 @@
 <script lang="ts">
   import EnumFilter from "./EnumFilter.svelte";
   import { Genres } from "@/backend/imdb/constants";
-  import { genres } from "./store";
+  import { genres, currentGenre } from "./store";
 </script>
 
 <EnumFilter
   bind:selectedVariants={$genres}
+  bind:currentVariant={$currentGenre}
   viewBox="0 0 492.526 492.527"
   variants={Genres}
   name="Genre"

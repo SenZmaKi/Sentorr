@@ -1,11 +1,12 @@
 <script lang="ts">
   import EnumFilter from "./EnumFilter.svelte";
   import { MediaTypes } from "@/backend/imdb/constants";
-  import { mediaTypes } from "./store.js";
+  import { mediaTypes, currentMediaType } from "./store";
 </script>
 
 <EnumFilter
   bind:selectedVariants={$mediaTypes}
+  bind:currentVariant={$currentMediaType}
   variants={MediaTypes}
   viewBox="0 0 50 50"
   name="Type"

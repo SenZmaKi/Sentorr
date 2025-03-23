@@ -39,7 +39,7 @@ export type Media = BaseMedia & {
   seasonsCount?: number;
   productionStatus?: string;
   recommendations?: BaseResult[];
-  isMovie: boolean;
+  canHaveEpisodes: boolean;
   isOngoing: boolean;
 };
 

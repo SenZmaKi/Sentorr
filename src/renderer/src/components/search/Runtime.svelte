@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { runtimeRangeMinutes } from "./store.js";
+  import { runtimeRangeMinutes } from "./store";
   import NumberRangeFilter from "./NumberRangeFilter.svelte";
 </script>
 

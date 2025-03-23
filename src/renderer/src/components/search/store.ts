@@ -6,11 +6,11 @@ import {
   SortOrder,
   Genre,
   MediaType,
-} from "@/backend/imdb/types.js";
+} from "@/backend/imdb/types";
 import {
   DEFAULT_SORT_BY,
   DEFAULT_SORT_ORDER,
-} from "@/backend/imdb/constants.js";
+} from "@/backend/imdb/constants";
 
 // Individual stores for each field in searchFilters
 export const searchTerm = writable<string | undefined>(undefined);
@@ -20,7 +20,9 @@ export const releaseDateRange = writable<ReleaseDateRange | undefined>(
 export const ratingRange = writable<Range | undefined>(undefined);
 export const runtimeRangeMinutes = writable<Range | undefined>(undefined);
 export const genres = writable<Genre[] | undefined>(undefined);
+export const currentGenre = writable<string | undefined>(undefined);
 export const mediaTypes = writable<MediaType[] | undefined>(undefined);
+export const currentMediaType = writable<string | undefined>(undefined);
 export const sortBy = writable<SortBy | undefined>(DEFAULT_SORT_BY);
 export const sortOrder = writable<SortOrder | undefined>(DEFAULT_SORT_ORDER);
 

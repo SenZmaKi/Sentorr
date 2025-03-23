@@ -1,4 +1,5 @@
 import WebTorrent, { type TorrentFile as WTTorrentFile } from "webtorrent";
+
 import {
   type TorrentStream,
   GetTorrentStreamsError,
@@ -16,7 +17,7 @@ const server = client.createServer({});
 let PORT = 5000;
 server.listen(PORT);
 PORT = server.address().port;
-const GET_TORRENT_STREAMS_TIMEOUT_MS = 2 * 10_000;
+const GET_TORRENT_STREAMS_TIMEOUT_MS = 30 * 1000;
 const MAX_QUEUE_SIZE = 5;
 let fileTorrentStreamQueue: {
   file: WTTorrentFile;

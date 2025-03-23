@@ -26,12 +26,12 @@ async function setProgress() {
 // export let playerEpisode = writable<Episode | undefined>(sampleEpisodes[0]);
 /**
  *WARN: Whenever updating `playerMedia` and `playerEpisode`, update `playerEpisode` first.
- * This is because truthy `playerMedia` and `undefined`` `playerEpisode` triggers Player.load() i.e., when Media.Type is  Movie.
+ * This is because truthy `playerMedia` and `undefined`` `playerEpisode` triggers Player.load() i.e., when Media.canHaveEpisodes is false.
  */
 export let playerMedia = writable<Media | undefined>(undefined);
 /**
  *WARN: Whenever updating `playerMedia` and `playerEpisode`, update `playerEpisode` first.
- * This is because truthy `playerMedia` and `undefined` `playerEpisode` triggers Player.load() i.e., when Media.Type is  Movie.
+ * This is because truthy `playerMedia` and `undefined` `playerEpisode` triggers Player.load() i.e., when Media.canHaveEpisodes is false.
  */
 export let playerEpisode = writable<Episode | undefined>(undefined);
 setProgress();

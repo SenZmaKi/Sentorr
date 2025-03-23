@@ -2,6 +2,7 @@
   export let name: string;
   let showX = false;
   export let selectedVariants: string[] | undefined;
+  export let currentVariant: string | undefined;
 </script>
 
 <button
@@ -13,9 +14,7 @@
       return;
     }
     selectedVariants = selectedVariants.filter((v) => v !== name);
-    if (selectedVariants.length === 0) {
-      selectedVariants = undefined;
-    }
+    if (!selectedVariants.length) currentVariant = undefined;
   }}
 >
   {name}

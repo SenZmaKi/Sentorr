@@ -22,7 +22,6 @@ export const ADVANCED_TITLE_SEARCH_HASH =
 export const REVIEWS_HASH =
   "89aff4cd7503e060ff1dd5aba91885d8bac0f7a21aa1e1f781848a786a5bdc19";
 // IMDB API accepts data in ISO format YYYY-MM-DD
-export const DATE_STR = new Date().toISOString().split("T")[0];
 export const MAX_RATING = 10;
 
 export const DEFAULT_SORT_BY = SortBy.POPULARITY;

@@ -1,3 +1,7 @@
+/**
+ * Assume types's properties can be undefined except for id
+ */
+
 export type AdvancedTitleSearchResultJson = {
   data: {
     advancedTitleSearch: {

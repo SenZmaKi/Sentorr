@@ -5,21 +5,19 @@
   export let viewBox: string;
   export let variants: string[];
   export let selectedVariants: string[] | undefined;
-  let currentVariant: string | undefined = undefined;
-  $: selectedVariants = getVariants(currentVariant);
+  export let currentVariant: string | undefined;
 
-  function getVariants(newVariant: string | undefined): string[] | undefined {
-    if (newVariant === undefined) {
-      return undefined;
-    }
-    if (selectedVariants === undefined) {
-      return [newVariant];
-    }
-    if (selectedVariants.includes(newVariant)) {
-      return selectedVariants;
-    }
+  function getVariants(newVariant: string | undefined) {
+    if (!newVariant) return undefined;
+
+    if (!selectedVariants) return [newVariant];
+
+    if (selectedVariants.includes(newVariant)) return selectedVariants;
+
     return [...selectedVariants, newVariant];
   }
+
+  $: selectedVariants = getVariants(currentVariant);
 </script>
 
 <FilterWrapper {viewBox} {name}>

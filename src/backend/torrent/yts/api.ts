@@ -1,9 +1,9 @@
-import { netClient } from "@/common/constants.js";
-import type { SearchResultsJson } from "./jsonTypes.js";
-import type { YtsTorrentFile } from "../common/types.js";
+import { netClient } from "@/common/constants";
+import type { SearchResultsJson } from "./jsonTypes";
+import type { YtsTorrentFile } from "../common/types";
 import { parseResolution as vfpParseResolution } from "@ctrl/video-filename-parser";
-import { parseResolution } from "../common/functions.js";
-import { filterMap } from "@/common/functions.js";
+import { parseResolution } from "../common/functions";
+import { filterMap } from "@/common/functions";
 
 const API_ENTRY_POINT = "https://yts.mx/api/v2";
 

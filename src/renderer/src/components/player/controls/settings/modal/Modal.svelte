@@ -15,7 +15,6 @@
   let modal: HTMLDivElement | undefined = undefined;
 
   function onDocClick(event: MouseEvent) {
-    console.log("document clicked");
     const wasClicked = (element: HTMLElement | undefined) =>
       element && event.composedPath().includes(element);
     if (wasClicked(modal) || wasClicked($icon)) return;

@@ -34,7 +34,6 @@ import { DEBUG, netClient } from "@/common/constants";
 import { DEFAULT_SORT_BY, DEFAULT_SORT_ORDER } from "./constants";
 import {
   HOME_URL,
-  DATE_STR,
   FAN_FAVORITES_HASH,
   ADVANCED_TITLE_SEARCH_HASH,
   EPISODES_HASH,
@@ -44,7 +43,7 @@ import {
   DEFAULT_LOCALE,
   DEFAULT_EPISODES_RESULTS_LIMIT,
 } from "./constants";
-import { decode as decodeHtml } from "entities";
+import { decodeHTML } from "entities";
 
 export function makeScaledImageUrl(
   width: number,
@@ -119,7 +118,7 @@ function buildBaseResult(node: BaseNode): BaseResult {
   const url = node.primaryImage?.url;
   const imageUrl = (url as ScalableImageUrl) || undefined;
   const plotHtml = node.plot?.plotText?.plainText;
-  const plot = plotHtml && decodeHtml(plotHtml);
+  const plot = plotHtml && decodeHTML(plotHtml);
   const releaseYear = node.releaseYear?.year;
   const endYear = node.releaseYear?.endYear;
   const runtime = node.runtime?.seconds;
@@ -174,10 +173,11 @@ export async function getFanFavorites(): Promise<BaseResult[]> {
 }
 
 export async function getPopularTitles(): Promise<BaseResult[]> {
+  const end = new Date().toISOString().split("T")[0];
   const variables = {
     limit: DEFAULT_RESULTS_LIMIT,
     ...DEFAULT_RECOMMENDATIONS_VARIABLES,
-    queryFilter: { releaseDateRange: { end: DATE_STR } },
+    queryFilter: { releaseDateRange: { end } },
   };
   const url = generateAPIURL("PopularTitles", variables, POPULAR_TITLES_HASH);
   const popularTitleJson = (await apiGet(url)) as PopularTitlesResultJson;
@@ -279,7 +279,7 @@ export async function getEpisodes(
       };
       const imageUrl = (ep.primaryImage.url as ScalableImageUrl) || undefined;
       const plotHtml = ep.plot?.plotText.plaidHtml;
-      const plot = plotHtml && decodeHtml(plotHtml);
+      const plot = plotHtml && decodeHTML(plotHtml);
       const releaseDate = ep.releaseDate && {
         day: ep.releaseDate.day,
         month: ep.releaseDate.month,
@@ -339,9 +339,9 @@ async function getMediaOrEpisode(
 
 function extractBaseMedia(metadataJson: MediaMetadataJson): BaseMedia {
   const titleHtml = metadataJson.name;
-  const title = titleHtml && decodeHtml(titleHtml);
+  const title = titleHtml && decodeHTML(titleHtml);
   const plotHtml = metadataJson.description;
-  const plot = plotHtml && decodeHtml(plotHtml);
+  const plot = plotHtml && decodeHTML(plotHtml);
   return {
     title,
     imageUrl: (metadataJson.image as ScalableImageUrl) || undefined,
@@ -358,6 +358,7 @@ function combineMediaMetadata(
   const base = extractBaseMedia(metadataJson);
   const aboveTheFoldData = moreMetadata.props.pageProps.aboveTheFoldData;
   const mainColumnData = moreMetadata.props.pageProps.mainColumnData;
+  const canHaveEpisodes = aboveTheFoldData.canHaveEpisodes === true;
 
   return {
     ...base,
@@ -380,16 +381,14 @@ function combineMediaMetadata(
     runtime: aboveTheFoldData.runtime?.displayableProperty?.value?.plainText,
     episodeCount: mainColumnData?.episodes?.totalEpisodes?.total,
     seasonsCount: mainColumnData?.episodes?.seasons?.length,
+    canHaveEpisodes,
     productionStatus:
       aboveTheFoldData.productionStatus?.currentProductionStage?.text,
     recommendations: mainColumnData.moreLikeThisTitles.edges.map(({ node }) =>
       buildBaseResult(node),
     ),
-    isMovie:
-      aboveTheFoldData.titleType?.text == MediaType.TVMovie ||
-      aboveTheFoldData.titleType?.text == MediaType.Movie,
     isOngoing:
-      aboveTheFoldData.titleType?.text !== MediaType.Movie &&
+      canHaveEpisodes &&
       !!aboveTheFoldData.releaseYear?.year &&
       !aboveTheFoldData.releaseYear?.endYear,
   };
@@ -450,7 +449,7 @@ export async function getReviews(
   const results: Review[] = reviewsJson.data.title.reviews.edges.map(
     ({ node: review }) => {
       const contentHtml = review.text.originalText.plaidHtml;
-      const content = decodeHtml(contentHtml);
+      const content = decodeHTML(contentHtml);
       return {
         author: review.author.nickName,
         date: review.submissionDate,

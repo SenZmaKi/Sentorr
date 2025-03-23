@@ -105,7 +105,7 @@
       window.ipc.torrent.getTorrentStreams(
         media.title,
         torrentFile,
-        !media.isMovie,
+        media.canHaveEpisodes,
       ),
     );
     if (torrentStreamsError) {

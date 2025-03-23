@@ -1,5 +1,5 @@
-<script lang="ts" ii l>
-  import { type Media, MediaType } from "@/backend/imdb/types";
+<script lang="ts" >
+  import { type Media} from "@/backend/imdb/types";
   import ImageSkeleton from "../common/ImageSkeleton.svelte";
   import Rating from "../common/Rating.svelte";
   import {
@@ -15,7 +15,7 @@
   export let mediaProgress: MediaProgress | undefined = undefined;
 
   async function getFirstEpisode() {
-    if (media.type === MediaType.Movie) return undefined;
+    if (!media.canHaveEpisodes) return undefined;
 
     const { results } = await getEpisodes(media.id, 1);
     return results[0];
@@ -29,6 +29,7 @@
   function watchButtonContent() {
     if (!mediaProgress) return "PLAY";
     const episode = mediaProgress?.episode;
+
     if (!episode) return "CONTINUE";
     return `CONTINUE S${episode.seasonEpisode.seasonNumber}:E${episode.seasonEpisode.episodeNumber}`;
   }
@@ -177,7 +178,7 @@
           </div>
         {/if}
         <div class="pr-4">
-          {#if !media.isMovie && media.seasonsCount && media.episodeCount}
+          {#if media.canHaveEpisodes && media.seasonsCount && media.episodeCount}
             <span
               >{media.seasonsCount} SN&nbsp•&nbsp{prettyFormatNumber(
                 media.episodeCount,
@@ -190,7 +191,7 @@
           {/if}
         </div>
         <div>
-          {#if media.isMovie}
+          {#if !media.canHaveEpisodes}
             {#if media.releaseYear}
               <span>{media.releaseYear}</span>
             {/if}

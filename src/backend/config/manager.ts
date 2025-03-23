@@ -28,6 +28,8 @@ export async function createConfigManager() {
   }
 
   async function saveConfig() {
+    // Avoid writing the config file if it's already being written
+    if (writePromise) await writePromise;
     const configString = JSON.stringify(config, null, 4);
     writePromise = writeFile(configFilePath, configString);
     // Ensure that the config file is fully written before the app is quit

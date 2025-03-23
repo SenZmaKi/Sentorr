@@ -29,7 +29,7 @@
 <div>
   <button on:click={() => (open = !open)}>
     <div
-      class="xxs-dark min-w-[250px] shadow-lg rounded p-2 mt-2 flex justify-between items-center"
+      class="xxs-dark min-w-[250px] shadow-md shadow-black rounded-md p-2 mt-2 flex justify-between items-center"
     >
       <span class="font-semibold pr-2" style="font-size: 40px;">
         Season {seasonNumber}
@@ -48,6 +48,8 @@
     </div>
   </button>
   {#if open}
+
+      <div class="h-[10px] "></div>
     <div
       class="overflow-y-auto h-[670px] w-[98%] items-center"
       on:scroll={infiniteScroll}

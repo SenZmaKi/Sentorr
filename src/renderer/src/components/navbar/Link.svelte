@@ -7,11 +7,10 @@
   export let viewBox: string;
 </script>
 
-<div class="p-2 pb-4 flex justify-center items-center">
+<div class="p-2 pb-4 flex justify-center items-center opacity-90 ">
   <button
     class="relative p-2 rounded-full transition-transform duration-500 ease-in-out hover:scale-125 cursor-pointer
-             bg-gray-800 hover:bg-gray-700
-              shadow-md hover:shadow-lg active:shadow-sm"
+             xxs-dark shadow-md shadow-black"
     on:click={() => ($currentPage = page)}
   >
     <svg
@@ -24,7 +23,7 @@
     {#if $currentPage === page}
       <span
         transition:scale
-        class="absolute top-0 right-0 w-3 h-3 bg-blue-300 rounded-full border-2 border-white dark:border-gray-800"
+        class="absolute top-0 right-0 w-2 h-2 bg-white rounded-full"
       ></span>
     {/if}
   </button>

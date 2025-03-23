@@ -45,8 +45,8 @@
 </script>
 
 <div class="flex mb-16">
-  <div class="mr-4 relative h-[400px] w-[300px]">
-    <ImageSkeleton imageUrl={media.imageUrl} width={300} height={400} />
+  <div class="mr-4 relative h-[400px] w-[300px] ">
+    <ImageSkeleton class_="shadow-md shadow-black" imageUrl={media.imageUrl} width={300} height={400} />
     {#if media.contentRating}
       <span
         class="opacity-90 absolute top-0 right-0 text-white text-xs font-semibold xs-dark p-1 rounded-bl-md"

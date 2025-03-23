@@ -7,8 +7,7 @@
 </script>
 
 <button
-  style="text-align: unset;"
-  class={class_}
+  class={`text-left ${class_}`}
   on:click={() => {
     const media = getMedia(result.id);
     switchToPreviewPage(media, result);

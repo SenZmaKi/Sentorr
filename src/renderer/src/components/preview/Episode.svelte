@@ -71,7 +71,7 @@
 
 <button
   bind:this={button}
-  class="rounded text-left flex xs-dark m-7 w-[90%] min-w-[350px] duration-300 cursor-pointer ease-in-out hover:scale-110 {isWatching
+  class="rounded shadow-xl shadow-black text-left flex xs-dark m-7 w-[90%] min-w-[350px] duration-300 cursor-pointer ease-in-out hover:scale-110 {isWatching
     ? // Add 4 extra pixels (2 to the top and 2 to the bottom) to the height
       // to account for the border otherwise the image will cut off the border
       'border-2 border-white'

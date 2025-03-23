@@ -7,12 +7,13 @@
   export let height: number;
   export let rounded = true;
   export let animate = false;
+  export let class_ = "";
 
   const url = imageUrl && makeScaledImageUrl(width, height, imageUrl);
   let isLoading = true;
 </script>
 
-<div class="relative" style="width: {width}px; height: {height}px;">
+<div class={`relative ${class_}`} style="width: {width}px; height: {height}px;">
   {#if isLoading}
     <div
       class="absolute flex items-center justify-center bg-gray-700 text-gray-600"

@@ -19,15 +19,15 @@
 
 <div class="">
   {#if media.plot}
-    <div class="mt-10 xs-dark rounded-lg p-4 max-h-40 overflow-auto w-2/3">
-      <span class="opacity-85">
+    <div class="mt-10 xs-dark shadow-md shadow-black rounded-lg p-4 max-h-40 overflow-auto w-2/3">
+      <span class="opacity-85 ">
         {media.plot}
       </span>
     </div>
   {/if}
   <div class="flex mt-6">
     {#if media.creators && media.creators.length}
-      <div class=" xs-dark rounded-lg mr-4 p-2">
+      <div class=" xs-dark rounded-lg mr-4 p-2 shadow-md shadow-black ">
         <div class="opacity-85">
           <span class="font-extrabold">Creators:</span>
           {#each media.creators as creator, idx}
@@ -41,7 +41,7 @@
       </div>
     {/if}
     {#if media.actors && media.actors.length}
-      <div class="xs-dark rounded-lg p-2">
+      <div class="xs-dark rounded-lg p-2 shadow-md shadow-black ">
         <div class="opacity-85">
           <span class="font-extrabold">Cast:</span>
           {#each media.actors.slice(0, 4) as actor, idx}
@@ -61,15 +61,11 @@
     <span class="font-semibold text-center text-lg opacity-90"
       >More like this</span
     >
-    <hr class="h-2 mt-2 mb-2 xs-dark border-none" />
+    <hr class="h-2 mt-2 mb-2 xs-dark border-none shadow-md shadow-black" />
     <div class="flex overflow-y-auto">
       {#each media.recommendations as recommendation}
         {#if recommendation.imageUrl && recommendation.title}
-          <button style="all: unset;">
-            <div class="m-4">
               <Simple result={recommendation} />
-            </div>
-          </button>
         {/if}
       {/each}
     </div>
@@ -77,8 +73,8 @@
 {/if}
 {#if $accumulatedReviews.length}
   <div class="flex flex-col pt-6">
-    <span class="font-semibold text-center text-lg opacity-90">Reviews</span>
-    <hr class="h-2 mt-2 mb-2 xs-dark border-none" />
+    <span class="font-semibold text-center text-lg opacity-90 ">Reviews</span>
+    <hr class="h-2 mt-2 mb-2 xs-dark border-none shadow-md shadow-black" />
     <div on:scroll={infiniteScroll} class="flex overflow-y-auto">
       {#each $accumulatedReviews as review}
         {#if review}

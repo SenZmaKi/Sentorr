@@ -68,6 +68,7 @@
       languages,
       blacklistedTorrents: $blacklistedTorrents,
     });
+    console.log("torrentFiles:", torrentFiles);
     // load() was called later and it resolved faster than the current call
     if ($playerTorrentStream && $playerTorrentFile) return;
     const resTorrentFiles = strictResolution
@@ -144,7 +145,7 @@
         console.error(SelectTorrentStreamError.StreamNotFound, torrentStream);
         toast.error(SelectTorrentStreamError.StreamNotFound, {
           description:
-            "😖 app in invalid state!!! Dismiss this message to reload the torrent.",
+            "😖 app in invalid state!!!\nDismiss this message to reload the torrent.",
           onDismiss: reload,
         });
       }
@@ -170,7 +171,7 @@
         console.error(GetTorrentStreamsError.TorrentTimeout, torrentFile);
         toast.error(GetTorrentStreamsError.TorrentTimeout, {
           description:
-            "The torrent timed out while being fetched, usually because it has no peers. Dismiss this message to fetch a new torrent.",
+            "The torrent timed out while being fetched, usually because it has no peers.\nDismiss this message to fetch a new torrent.",
           onDismiss: maybeLoad,
         });
         break;
@@ -178,14 +179,14 @@
         console.error(GetTorrentStreamsError.NoVideoFiles, torrentFile);
         toast.error(GetTorrentStreamsError.NoVideoFiles, {
           description:
-            "The torrent contains no video files. Dismiss this message to fetch a new torrent.",
+            "The torrent contains no video files.\nDismiss this message to fetch a new torrent.",
           onDismiss: maybeLoad,
         });
       case GetTorrentStreamsError.NoMatchingFiles:
         console.error(GetTorrentStreamsError.NoMatchingFiles, torrentFile);
         toast.error(GetTorrentStreamsError.NoMatchingFiles, {
           description:
-            "The torrent does not contain files matching the media parameters. Dismiss this message to fetch a new torrent.",
+            "The torrent does not contain files matching the media.\nDismiss this message to fetch a new torrent.",
           onDismiss: maybeLoad,
         });
         break;
@@ -203,11 +204,11 @@
       case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
         $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
         console.error(
-          `Media codec error: Media at ${$playerTorrentStream.url} codec not supported (${JSON.stringify(error)}) `,
+          `Media codec error: Media at ${$playerTorrentStream.url} codec not supported`, error,
         );
         toast.error("Media codec error", {
           description:
-            "The video or audio codec is unsupported. Dismiss this message to fetch a new torrent.",
+            "The video or audio codec is unsupported.\nDismiss this message to fetch a new torrent.",
           onDismiss: maybeLoad,
         });
         break;
@@ -217,7 +218,7 @@
         );
         toast.error("Network error", {
           description:
-            "Failed to fetch media. Check your internet connection and try again. Dismiss this message to fetch reload.",
+            "Failed to fetch media. Check your internet connection and try again.\nDismiss this message to fetch reload.",
           onDismiss: reload,
         });
         break;
@@ -225,11 +226,11 @@
       case error.MEDIA_ERR_DECODE:
         $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
         console.error(
-          `Media decode error: Media at ${$playerTorrentStream.url} decode error (${JSON.stringify(error)}) `,
+          `Media decode error: Media at ${$playerTorrentStream.url} decode error`, error,
         );
         toast.error("Media decoding error", {
           description:
-            "Failed to decode media. Dismiss this message to fetch a new torrent.",
+            "Failed to decode media.\nDismiss this message to fetch a new torrent.",
           onDismiss: maybeLoad,
         });
 
@@ -248,7 +249,7 @@
       console.error("Media codec error: No video and audio tracks found");
       toast.error("Media codec error", {
         description:
-          "The video and audio codec is unsupported. Dismiss this message to fetch a new torrent.",
+          "The video and audio codec is unsupported.\nDismiss this message to fetch a new torrent.",
         onDismiss: maybeLoad,
       });
     }
@@ -257,7 +258,7 @@
       console.error(`Video codec error: Video track not found`);
       toast.error("Video codec error", {
         description:
-          "The video codec is unsupported. Dismiss this message to fetch a new torrent.",
+          "The video codec is unsupported.\nDismiss this message to fetch a new torrent.",
         onDismiss: maybeLoad,
       });
       return false;
@@ -267,7 +268,7 @@
       console.error(`Audio codec error: Audio track not found`);
       toast.error("Audio codec error", {
         description:
-          "The audio codec is unsupported. Dismiss this message to fetch a new torrent.",
+          "The audio codec is unsupported.\nDismiss this message to fetch a new torrent.",
         onDismiss: maybeLoad,
       });
       return false;
@@ -322,8 +323,11 @@
         if (!$video || !isValidCodecs()) return;
         if ($playerMedia) {
           const currentMediaProgress = getMediaProgress($playerMedia.id);
-          if (currentMediaProgress) {
-            $video.currentTime = currentMediaProgress.time;
+          if (
+            currentMediaProgress &&
+            currentMediaProgress.episode?.id === $playerEpisode?.id
+          ) {
+            $video.currentTime = currentMediaProgress.watchTime.currentTime;
           }
         }
         await $video.play();

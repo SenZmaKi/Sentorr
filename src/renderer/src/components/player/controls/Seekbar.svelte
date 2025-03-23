@@ -1,6 +1,7 @@
 <script lang="ts">
   // https://github.com/ThaUnknown/perfect-seekbar
-  import { timeStamp } from "./common/functions";
+  
+  import { timeStamp } from "../../common/functions";
   import type { Chapter } from "./common/types";
   import type { ThumbnailGenerator } from "./common/thumbnail";
   import HoverWrapper from "./common/HoverWrapper.svelte";

@@ -6,6 +6,7 @@ import torrentServer from "@/backend/torrent/server";
 import { type TorrentStream } from "@/backend/torrent/common/types";
 import { handle } from "@/common/ipc";
 import { beforeQuitTasks } from "@/backend/common/constants";
+import { tryCatchAsync } from "@/common/functions";
 
 // import icon from "../renderer/src/assets/icon.png?asset";
 const icon = "";
@@ -118,10 +119,17 @@ app.on("window-all-closed", () => {
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
 
-app.on("before-quit", async () => {
+app.on("before-quit", async (event) => {
   console.log("before-quit");
+  if (!beforeQuitTasks.length) return;
+  event.preventDefault();
   console.log("beforeQuitTasks:", beforeQuitTasks);
-  await Promise.all(beforeQuitTasks);
+  for (const task of beforeQuitTasks) {
+    const [, taskError] = await tryCatchAsync(task);
+    if (taskError) console.error(`Before quit task error:`, task, taskError);
+  }
+  beforeQuitTasks.length = 0;
+  app.quit();
 });
 
 // IPC
@@ -144,5 +152,7 @@ handle(
   "getCurrentTorrentStreamStats",
   torrentServer.getCurrentTorrentStreamStats,
 );
+
 handle("getConfig", configManager.getConfig);
-handle("setConfig", async (newConfig) => configManager.setConfig(newConfig));
+
+handle("setConfig", configManager.setConfig);

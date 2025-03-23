@@ -55,6 +55,7 @@
     "electron": "29.1.4",
     "electron-builder": "^24.9.1",
     "electron-vite": "^2.0.0",
+    "entities": "^6.0.0",
     "perfect-seekbar": "^1.1.0",
     "postcss": "^8.4.35",
     "prettier": "^3.2.4",

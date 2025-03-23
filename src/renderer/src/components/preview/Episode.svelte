@@ -98,7 +98,7 @@
         </div>
         {#if episode.plot}
           <div class="text-xs overflow-y-auto mb-2 max-h-[50px] opacity-85">
-            {@html episode.plot}
+            {episode.plot}
           </div>
         {/if}
         {#if prettyReleaseDate}

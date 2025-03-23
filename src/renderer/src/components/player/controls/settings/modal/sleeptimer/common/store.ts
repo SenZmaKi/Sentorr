@@ -1,5 +1,5 @@
 import { derived, get, writable, type Unsubscriber } from "svelte/store";
-import { timeStamp } from "../../../../common/functions";
+import { timeStamp } from "@/renderer/src/components/common/functions";
 import {
   video as videoStore,
   currentTime,

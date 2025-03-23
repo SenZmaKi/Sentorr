@@ -3,10 +3,15 @@ import type configManager from "./manager";
 
 export type ConfigManager = typeof configManager;
 
+type WatchTime = {
+  currentTime: number;
+  duration: number;
+};
+
 export type MediaProgress = {
   id: MediaId;
   title?: string;
-  time: number;
+  watchTime: WatchTime;
   episode?: {
     id: EpisodeId;
     title?: string;

@@ -46,22 +46,28 @@
     $currentTime = $video.currentTime;
     $progress = computeProgress($currentTime);
 
-    if (!$playerMedia) return;
+    if (!$playerMedia || !$currentTime || !$duration) return;
     const { allMediaProgress } = $config;
     allMediaProgress.current = $playerMedia.id;
     const episode = $playerEpisode && {
       id: $playerEpisode.id,
       title: $playerEpisode.title,
       seasonEpisode: $playerEpisode.seasonEpisode,
+      currentTime: $currentTime,
+      duration: $duration,
     };
     allMediaProgress.mediaProgress[allMediaProgress.current] = {
       id: $playerMedia.id,
       title: $playerMedia.title,
-      time: $currentTime,
+      watchTime: {
+        currentTime: $currentTime,
+        duration: $duration,
+      },
       episode,
     };
     $config = { ...$config, allMediaProgress: allMediaProgress };
   }
+
   function addVideoListeners(video: HTMLVideoElement) {
     video.addEventListener("mousemove", showControlsWithTimeout);
     video.addEventListener("timeupdate", updateProgress);
@@ -90,7 +96,6 @@
   $: $showControls =
     !$showControlsTimedOut || $paused || $isHovering || $showSettingsModal;
   $: if (!$showControls) {
-    console.log("controls hidden");
   }
 </script>
 

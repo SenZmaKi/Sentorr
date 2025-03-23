@@ -4,7 +4,7 @@ import {
   GetTorrentStreamsError,
 } from "./common/types";
 import type { Episode, Media } from "@/backend/imdb/types";
-import { getTorrentsFiles as getMovieTorrents } from "./yts/api";
+// import { getTorrentsFiles as ytsGetMovieTorrentFiles } from "./yts/api";
 import { getTorrentFiles as piratebayGetTorrentFiles } from "./piratebay/api";
 // import { getTorrentFiles as rargbGetTorrentFiles } from "./rargb/api";
 // import { getTorrentFiles as solidtorrentsGetTorrentFiles } from "./rargb/api";
@@ -32,8 +32,16 @@ async function getTorrentFiles({
   languages: Language[];
   blacklistedTorrents: TorrentFile[];
 }): Promise<TorrentFile[]> {
-  if (!episode) return getMovieTorrents(media.id);
   if (!media.title) throw new Error("Media title is required");
+  if (!episode)
+    return piratebayGetTorrentFiles({
+      title: media.title,
+      seasonFormattedTitle: media.title,
+      isTvSeries: false,
+      getCompleteSeason: false,
+      mediaImdbID: media.id,
+      languages,
+    });
   const { abbrvSeasonTitle, fullSeasonTitle } = seasonFormatTitle(
     media.title,
     episode.seasonEpisode.seasonNumber,

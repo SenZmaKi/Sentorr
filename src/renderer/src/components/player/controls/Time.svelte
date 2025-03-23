@@ -1,7 +1,8 @@
 <script lang="ts">
   import { scale } from "svelte/transition";
   import TooltipWrapper from "././common/TooltipWrapper.svelte";
-  import { timeStamp } from "./common/functions";
+  
+  import { timeStamp } from "../../common/functions";
   import { currentTime, duration } from "../common/store";
   import HoverWrapper from "./common/HoverWrapper.svelte";
 

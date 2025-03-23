@@ -27,7 +27,7 @@ export async function getTorrentFiles({
     // 501, 505, 506, 507 but we just ignore anything over 500 just incase
     if (category > 500) return undefined;
     // NOTE: The !!torrent.imdb is to handle a speculative edge case where they don't set in their response torrent.imdb
-    // so if episodeImdbID is undefined the second condition is true, I am yet to experience it but it could be annoying
+    // so if episodeImdbID is undefined then  torrent.imdb === episodeImdbID is true, I am yet to experience it but it could be annoying
     // to debug incase it ever happens
     const filename = torrent.name;
     const ignoreTitle =

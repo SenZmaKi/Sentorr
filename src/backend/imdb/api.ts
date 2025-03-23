@@ -44,6 +44,7 @@ import {
   DEFAULT_LOCALE,
   DEFAULT_EPISODES_RESULTS_LIMIT,
 } from "./constants";
+import { decode as decodeHtml } from "entities";
 
 export function makeScaledImageUrl(
   width: number,
@@ -117,7 +118,8 @@ function buildBaseResult(node: BaseNode): BaseResult {
     node.titleType?.text;
   const url = node.primaryImage?.url;
   const imageUrl = (url as ScalableImageUrl) || undefined;
-  const plot = node.plot?.plotText?.plainText;
+  const plotHtml = node.plot?.plotText?.plainText;
+  const plot = plotHtml && decodeHtml(plotHtml);
   const releaseYear = node.releaseYear?.year;
   const endYear = node.releaseYear?.endYear;
   const runtime = node.runtime?.seconds;
@@ -276,7 +278,8 @@ export async function getEpisodes(
         episodeNumber,
       };
       const imageUrl = (ep.primaryImage.url as ScalableImageUrl) || undefined;
-      const plot = ep.plot?.plotText.plaidHtml;
+      const plotHtml = ep.plot?.plotText.plaidHtml;
+      const plot = plotHtml && decodeHtml(plotHtml);
       const releaseDate = ep.releaseDate && {
         day: ep.releaseDate.day,
         month: ep.releaseDate.month,
@@ -335,10 +338,14 @@ async function getMediaOrEpisode(
 }
 
 function extractBaseMedia(metadataJson: MediaMetadataJson): BaseMedia {
+  const titleHtml = metadataJson.name;
+  const title = titleHtml && decodeHtml(titleHtml);
+  const plotHtml = metadataJson.description;
+  const plot = plotHtml && decodeHtml(plotHtml);
   return {
-    title: metadataJson.name,
+    title,
     imageUrl: (metadataJson.image as ScalableImageUrl) || undefined,
-    plot: metadataJson.description,
+    plot,
     rating: metadataJson.aggregateRating?.ratingValue,
     ratingCount: metadataJson.aggregateRating?.ratingCount,
   };
@@ -442,10 +449,12 @@ export async function getReviews(
   const reviewsJson: ReviewsResultJson = await apiGet(url);
   const results: Review[] = reviewsJson.data.title.reviews.edges.map(
     ({ node: review }) => {
+      const contentHtml = review.text.originalText.plaidHtml;
+      const content = decodeHtml(contentHtml);
       return {
         author: review.author.nickName,
         date: review.submissionDate,
-        content: review.text.originalText.plaidHtml,
+        content,
         title: review.summary.originalText,
         likes: review.helpfulness.upVotes,
         dislikes: review.helpfulness.downVotes,

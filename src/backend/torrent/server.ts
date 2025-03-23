@@ -7,18 +7,15 @@ import {
 } from "./common/types";
 import path from "path";
 import fs from "fs/promises";
-import { tryCatchAsync, tryCatch } from "@/common/functions";
+import { tryCatchAsync } from "@/common/functions";
 
-const Client = new WebTorrent({maxConns: 50});
-const Server = Client.createServer({});
-const PORT = 5000;
-const [, listenError] = tryCatch(() => Server.listen(5000));
-if (listenError) {
-  console.error(
-    `Failed to listen on port ${PORT}, retrying on any available port`,
-  );
-  Server.listen();
-}
+const client = new WebTorrent({ maxConns: 50 });
+client.on("error", onClientError);
+
+const server = client.createServer({});
+let PORT = 5000;
+server.listen(PORT);
+PORT = server.address().port;
 const GET_TORRENT_STREAMS_TIMEOUT_MS = 2 * 10_000;
 const MAX_QUEUE_SIZE = 5;
 let fileTorrentStreamQueue: {
@@ -26,10 +23,24 @@ let fileTorrentStreamQueue: {
   torrentStream: TorrentStream;
 }[] = [];
 
+function onClientError(error: Error | string) {
+  console.error(`WebTorrent client error`, error);
+  throw error;
+}
+
+function onTorrentError(error: Error | string) {
+  console.error(`WebTorrent torrent error`, error);
+  throw error;
+}
+
+function onTorrentWarning(warning: Error | string) {
+  console.warn(`WebTorrent torrent warning`, warning);
+}
+
 function getCurrentTorrent() {
   if (!fileTorrentStreamQueue.length) return undefined;
   const currentFile = fileTorrentStreamQueue[0].file;
-  const currentTorrent = Client.torrents.find((t) =>
+  const currentTorrent = client.torrents.find((t) =>
     t.files.includes(currentFile),
   );
   return currentTorrent;
@@ -49,7 +60,7 @@ function torrentToTorrentStreams(torrent: WebTorrent.Torrent): TorrentStream[] {
 
 async function removeTorrent(torrentID: string) {
   return new Promise<void>(async (resolve, reject) => {
-    await Client.remove(torrentID, { destroyStore: true }, (error) => {
+    await client.remove(torrentID, { destroyStore: true }, (error) => {
       if (error) {
         console.error(`Error removing torrent ${torrentID}: ${error}`);
         reject(error);
@@ -63,17 +74,19 @@ async function removeTorrent(torrentID: string) {
 async function getTorrentStreams(torrentID: string): Promise<TorrentStream[]> {
   return new Promise(async (resolve, reject) => {
     let success = false;
-    const existingTorrent = await Client.get(torrentID);
+    const existingTorrent = await client.get(torrentID);
     if (existingTorrent) {
       return resolve(torrentToTorrentStreams(existingTorrent));
     }
-    Client.add(
+    client.add(
       torrentID,
       {
         deselect: true,
         destroyStoreOnDestroy: true,
       },
       (torrent) => {
+        torrent.on("error", onTorrentError);
+        torrent.on("warning", onTorrentWarning);
         console.log(`Torrent ${torrentID} added`);
         success = true;
         const torrentStreams = torrentToTorrentStreams(torrent);
@@ -82,7 +95,7 @@ async function getTorrentStreams(torrentID: string): Promise<TorrentStream[]> {
     );
 
     setTimeout(async () => {
-      if (success || !(await Client.get(torrentID))) return;
+      if (success || !(await client.get(torrentID))) return;
       await removeTorrent(torrentID);
       console.error(`Torrent ${torrentID} timed out`);
       return reject(new Error(GetTorrentStreamsError.TorrentTimeout));
@@ -103,7 +116,7 @@ async function selectTorrentStream(torrentStream: TorrentStream) {
       );
       fileTorrentStreamQueue.splice(queuedIndex, 1);
     }
-    const torrent = Client.torrents.find(
+    const torrent = client.torrents.find(
       (torrent) => torrent.magnetURI === torrentStream.magnetURI,
     );
     if (!torrent) return reject(SelectTorrentStreamError.StreamNotFound);
@@ -147,9 +160,9 @@ async function selectTorrentStream(torrentStream: TorrentStream) {
 async function closeTorrentStreamsServer() {
   return new Promise<void>(async (resolve, reject) => {
     console.log("Closing server");
-    Server.close();
+    server.close();
     console.log("Destroying client");
-    Client.destroy((error) => {
+    client.destroy((error) => {
       if (error) {
         console.error(`Error destoying client: ${error}`);
         reject(error);
@@ -161,7 +174,7 @@ async function closeTorrentStreamsServer() {
 }
 
 async function clearTorrents() {
-  await Promise.all(Client.torrents.map((t) => removeTorrent(t.magnetURI)));
+  await Promise.all(client.torrents.map((t) => removeTorrent(t.magnetURI)));
   fileTorrentStreamQueue = [];
 }
 

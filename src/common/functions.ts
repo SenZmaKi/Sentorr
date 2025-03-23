@@ -1,4 +1,4 @@
-import { parseDocument } from "htmlparser2"; // htmlparser2 is faster at loading string to document than cheerio
+import { parseDocument } from "htmlparser2"; 
 import { load as cheerioLoad, type CheerioAPI } from "cheerio";
 
 export function printRunTimeLater(task: string = ""): () => void {
@@ -31,6 +31,7 @@ export function filterMap<E, T>(
 }
 
 export function parseHtml(htmlPage: string): CheerioAPI {
+  //// htmlparser2 is faster at parsing html than cheerio
   const doc = parseDocument(htmlPage);
   return cheerioLoad(doc);
 }

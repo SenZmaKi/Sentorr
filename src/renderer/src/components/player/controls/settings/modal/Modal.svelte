@@ -16,11 +16,9 @@
 
   function onDocClick(event: MouseEvent) {
     console.log("document clicked");
-    console.log("modal is:", modal);
     const wasClicked = (element: HTMLElement | undefined) =>
       element && event.composedPath().includes(element);
     if (wasClicked(modal) || wasClicked($icon)) return;
-    console.log("click was outside modal");
     $showSettingsModal = false;
     $currentFieldModal = undefined;
     showControlsWithTimeout();

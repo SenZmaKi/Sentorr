@@ -27,6 +27,10 @@ export function getMediaProgress(mediaID: MediaId): MediaProgress | undefined {
   const mediaProgress = allMediaProgress.mediaProgress[mediaID];
   return mediaProgress;
 }
+
 export const currentPage = writable(
-  get(config).allMediaProgress.current ? Page.Player : Page.Search,
+  Page.Preview
 );
+// export const currentPage = writable(
+//   get(config).allMediaProgress.current ? Page.Player : Page.Search,
+// );

@@ -2,15 +2,17 @@
   import TopInfoSkeleton from "./TopInfoSkeleton.svelte";
   import BottomInfoSkeleton from "./BottomInfoSkeleton.svelte";
   import SeasonsContainerSkeleton from "./SeasonsContainerSkeleton.svelte";
-  export let isMovie: boolean;
+  export let canHaveEpisodes: boolean;
 </script>
 
 <div class="flex max-h-screen">
-  <div class="overflow-y-auto {!isMovie ? 'w-2/3' : ''} p-2">
+  <div class="overflow-y-auto {canHaveEpisodes ? 'w-[60%]' : ''} p-2">
     <TopInfoSkeleton />
     <BottomInfoSkeleton />
   </div>
-  {#if !isMovie}
-    <SeasonsContainerSkeleton />
+  {#if canHaveEpisodes}
+    <div class="w-[40%]">
+      <SeasonsContainerSkeleton />
+    </div>
   {/if}
 </div>

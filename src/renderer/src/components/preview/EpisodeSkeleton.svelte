@@ -2,9 +2,9 @@
   import ImageSkeleton from "../common/ImageSkeleton.svelte";
 </script>
 
-<div class="rounded flex xs-dark m-7 h-[125px] w-[90%] min-w-[350px]">
+<div class="rounded flex xs-dark m-7 w-[90%] min-w-[350px]">
   <div>
-    <ImageSkeleton height={125} width={180} rounded={true} animate={true} />
+    <ImageSkeleton height={140} width={220} rounded={true} animate={true} />
   </div>
   <div class="animate-pulse flex-1">
     <div class="flex m-2 h-[15px]">

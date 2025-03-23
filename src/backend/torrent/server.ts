@@ -26,7 +26,7 @@ let fileTorrentStreamQueue: {
 
 function onClientError(error: Error | string) {
   console.error(`WebTorrent client error`, error);
-  throw error;
+  // throw error;
 }
 
 function onTorrentError(error: Error | string) {

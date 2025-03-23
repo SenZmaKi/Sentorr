@@ -123,7 +123,7 @@ function buildBaseResult(node: BaseNode): BaseResult {
   const endYear = node.releaseYear?.endYear;
   const runtime = node.runtime?.seconds;
   const genres = node.titleGenres?.genres?.map((g) => g.genre.text);
-  const isMovie = !node.canHaveEpisodes;
+  const canHaveEpisodes = node.canHaveEpisodes;
   return {
     id,
     title,
@@ -136,7 +136,7 @@ function buildBaseResult(node: BaseNode): BaseResult {
     endYear,
     rating,
     ratingCount,
-    isMovie,
+    canHaveEpisodes,
   };
 }
 // On IMDB the popularity is more akin to trending cause the popular media frequently change and are usually recently released media

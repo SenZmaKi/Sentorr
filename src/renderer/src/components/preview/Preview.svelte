@@ -31,15 +31,19 @@
 {#if $previewResult}
   <PageWrapper {hidden}>
     {#if !media}
-      <PreviewSkeleton isMovie={$previewResult.isMovie} />
+      <PreviewSkeleton canHaveEpisodes={$previewResult.canHaveEpisodes} />
     {:else}
       <div class="flex max-h-screen">
-        <div class="overflow-y-auto {media.canHaveEpisodes ? 'w-2/3' : ''} p-2">
+        <div
+          class="overflow-y-auto {media.canHaveEpisodes ? 'w-[60%]' : ''} p-2"
+        >
           <TopInfo {media} {mediaProgress} />
           <BottomInfo {media} />
         </div>
         {#if media.canHaveEpisodes}
-          <SeasonsContainer {media} {mediaProgress} />
+          <div class="w-[40%]">
+            <SeasonsContainer {media} {mediaProgress} />
+          </div>
         {/if}
       </div>
     {/if}

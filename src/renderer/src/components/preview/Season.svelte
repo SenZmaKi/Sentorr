@@ -49,12 +49,12 @@
   </button>
   {#if open}
     <div
-      class="overflow-y-auto h-[700px] w-[98%] items-center"
+      class="overflow-y-auto h-[670px] w-[98%] items-center"
       on:scroll={infiniteScroll}
     >
       {#each $accumulatedResults as episode}
         {#if episode}
-          <Episode {episode} {media} />
+          <Episode {episode} {media} {mediaProgress} />
         {:else}
           <EpisodeSkeleton />
         {/if}

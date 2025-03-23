@@ -58,7 +58,7 @@ export type BaseResult = {
   rating?: number | null;
   ratingCount?: number;
   genres?: string[];
-  isMovie: boolean;
+  canHaveEpisodes: boolean;
   /**
    * In seconds
    */

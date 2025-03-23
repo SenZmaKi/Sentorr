@@ -1,5 +1,5 @@
-<script lang="ts" >
-  import { type Media} from "@/backend/imdb/types";
+<script lang="ts">
+  import { type Media } from "@/backend/imdb/types";
   import ImageSkeleton from "../common/ImageSkeleton.svelte";
   import Rating from "../common/Rating.svelte";
   import {
@@ -174,7 +174,7 @@
                 ></path>
               </g></svg
             >
-            <span class="">{media.runtime}</span>
+            <span>{media.runtime}</span>
           </div>
         {/if}
         <div class="pr-4">
@@ -241,45 +241,52 @@
           </div>
         {/if}
       </div>
-      <div class="pt-4 flex gap-x-2">
+      <div class="pt-4 flex gap-x-2 items-center">
         {#if media.productionStatus}
           <div class="font-bold p-2">
             {media.productionStatus.toLocaleUpperCase()}
           </div>
         {/if}
-        <button
-          use:watchButtonTippyAction
-          on:click={onWatchClick}
-          class="hover:scale-110 ease-in-out duration-300 rounded-full p-3 xxs-dark flex items-center gap-x-2"
-        >
-          <svg
-            width="12px"
-            height="12px"
-            viewBox="-1 0 12 12"
-            version="1.1"
-            fill="#ffffff"
+        {#if media.productionStatus === "Released"}
+          <button
+            use:watchButtonTippyAction
+            on:click={onWatchClick}
+            class="hover:scale-110 shadow-md shadow-black ease-in-out duration-300 rounded-xl p-3 xxs-dark flex items-center gap-x-2"
           >
-            <g stroke-width="0"></g>
-            <g stroke-linecap="round" stroke-linejoin="round"></g>
-            <g>
-              <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+            <svg
+              width="12px"
+              height="12px"
+              viewBox="-1 0 12 12"
+              version="1.1"
+              fill="#ffffff"
+            >
+              <g stroke-width="0"></g>
+              <g stroke-linecap="round" stroke-linejoin="round"></g>
+              <g>
                 <g
-                  transform="translate(-65.000000, -3803.000000)"
-                  fill="#ffffff"
+                  stroke="none"
+                  stroke-width="1"
+                  fill="none"
+                  fill-rule="evenodd"
                 >
-                  <g transform="translate(56.000000, 160.000000)">
-                    <path
-                      d="M18.074,3650.7335 L12.308,3654.6315 C10.903,3655.5815 9,3654.5835 9,3652.8985 L9,3645.1015 C9,3643.4155 10.903,3642.4185 12.308,3643.3685 L18.074,3647.2665 C19.306,3648.0995 19.306,3649.9005 18.074,3650.7335"
-                    ></path>
+                  <g
+                    transform="translate(-65.000000, -3803.000000)"
+                    fill="#ffffff"
+                  >
+                    <g transform="translate(56.000000, 160.000000)">
+                      <path
+                        d="M18.074,3650.7335 L12.308,3654.6315 C10.903,3655.5815 9,3654.5835 9,3652.8985 L9,3645.1015 C9,3643.4155 10.903,3642.4185 12.308,3643.3685 L18.074,3647.2665 C19.306,3648.0995 19.306,3649.9005 18.074,3650.7335"
+                      ></path>
+                    </g>
                   </g>
                 </g>
               </g>
-            </g>
-          </svg>
-          <div>
-            {watchButtonContent()}
-          </div>
-        </button>
+            </svg>
+            <div>
+              {watchButtonContent()}
+            </div>
+          </button>
+        {/if}
       </div>
     </div>
   </div>

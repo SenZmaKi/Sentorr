@@ -15,6 +15,7 @@ export function handle<Channel extends keyof IpcRendererEvent>(
   ipcMain.handle(
     channel,
     async (_, ...args: Parameters<IpcRendererEvent[Channel]>) => {
+      console.log(`Handling ipc invocation: ${channel}()`, args);
       return await tryCatchAsync(listener(...args));
     },
   );

@@ -1,5 +1,5 @@
 import type { TorrentServer } from "@/backend/torrent/server/common/types";
-import { type Worker, MessagePort } from "worker_threads";
+import { type Worker, type MessagePort } from "worker_threads";
 import { type Result } from "@/common/types";
 import { tryCatchAsync } from "./functions";
 
@@ -82,11 +82,12 @@ function createHandle() {
     channelToListener = {};
     channelToListener[channel] = listener;
     port.on("message", async (message: Message<Channel>) => {
-      console.log(`Handling port invocation: ${message.channel}()`, message);
-      const listener = channelToListener![message.channel];
-      const result = await tryCatchAsync(listener(...message.args));
+      const { args, id, channel } = message;
+      console.log(`Handling port invocation: ${channel}()`, args);
+      const listener = channelToListener![channel];
+      const result = await tryCatchAsync(listener(...args));
       // @ts-ignore
-      const response: Response<Channel> = { channel, id: message.id, result };
+      const response: Response<Channel> = { channel, id, result };
       port.postMessage(response);
     });
   }

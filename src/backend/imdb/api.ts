@@ -100,10 +100,7 @@ async function apiGet(
   const response = await netClient.get(url, headers, cookies);
   const resp_json = await response.json();
   if (DEBUG) {
-    // console.log(
-    //   `Url: ${url}\nStatus Code: ${response.status}\nJson:\n${JSON.stringify(resp_json, undefined, 4)}`,
-    // );
-    console.log(`IMDB Api Call Made: ${url}`);
+    console.log(`IMDB Api Call: ${url}`, resp_json);
   }
   return resp_json;
 }

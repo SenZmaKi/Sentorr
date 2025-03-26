@@ -1,5 +1,5 @@
 import { app, shell, BrowserWindow } from "electron";
-import  { join } from "path";
+import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import configManager from "@/backend/config/manager";
 import { handle } from "@/common/ipc";

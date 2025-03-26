@@ -7,7 +7,8 @@ import {
   type ParsedMovie,
 } from "@ctrl/video-filename-parser";
 import levenshtein from "js-levenshtein";
-import { Resolution, RESOLUTIONS, type TorrentFile } from "./types";
+import { Resolution, type TorrentFile } from "./types";
+import { RESOLUTIONS } from "./constants";
 import { zfill } from "@/common/functions";
 
 export function seasonFormatTitle(

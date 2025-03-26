@@ -1,4 +1,4 @@
-import { getTorrentFiles } from "@/backend/torrent/piratebay/api";
+import { getTorrentFiles } from "@/backend/torrent/sources/piratebay/api";
 import { failIfEmpty } from "@/test/common/functions";
 import { test } from "bun:test";
 import {

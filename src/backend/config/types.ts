@@ -1,5 +1,5 @@
 import type { EpisodeId, MediaId, SeasonEpisode } from "../imdb/types";
-import type { Resolution } from "../torrent/common/types";
+import type { Resolution } from "../torrent/sources/common/types";
 import type { TorrentServerConfig } from "../torrent/server/common/types";
 import type configManager from "./manager";
 

@@ -1,4 +1,4 @@
-import { getTorrentFiles } from "@/backend/torrent/rargb/api";
+import { getTorrentFiles } from "@/backend/torrent/sources/rargb/api";
 import { failIfEmpty } from "@/test/common/functions";
 import { test } from "bun:test";
 import {

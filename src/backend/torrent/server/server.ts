@@ -2,7 +2,7 @@ import WebTorrent, { type NodeServer } from "webtorrent";
 import { tryCatchAsync } from "@/common/functions";
 import { onClientError, onClientInfo, onServerError } from "./handlers";
 import { TorrentClientError, type TorrentServerConfig } from "./common/types";
-import torrentManager from "./torrentManager";
+import torrentManager from "./manager";
 import { isErrorCode } from "./common/functions";
 import { InvalidStateError } from "@/common/types";
 

@@ -1,4 +1,4 @@
-import torrentServer from "./server/server";
+import torrentServer from "./server";
 import { parentPort } from "worker_threads";
 import { InvalidStateError } from "@/common/types";
 import { getHandle } from "@/common/port";

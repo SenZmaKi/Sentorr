@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { RESOLUTIONS } from "@/backend/torrent/common/types";
+  import { RESOLUTIONS } from "@/backend/torrent/sources/common/constants";
   import { resolution, strictResolution } from "../../../../common/store";
   import FieldModal from "../common/FieldModal.svelte";
   import { Field } from "../common/types";

@@ -1,8 +1,8 @@
-import { computeTorrentScores } from "@/backend/torrent/common/functions";
+import { computeTorrentScores } from "@/backend/torrent/sources/common/functions";
 import { test } from "bun:test";
 import torrents from "@/test/results/torrent/piratebay/getMovieTorrents.json";
 import { failIfEmpty } from "@/test/common/functions";
-import { Resolution } from "@/backend/torrent/common/types";
+import { Resolution } from "@/backend/torrent/sources/common/types";
 
 function prettyFormatBytes(bytes: number) {
   const bytes_in_kb = 1024;

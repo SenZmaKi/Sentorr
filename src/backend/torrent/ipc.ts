@@ -1,4 +1,4 @@
-import { type TorrentFile } from "./common/types";
+import { type TorrentFile } from "./sources/common/types";
 import {
   type TorrentServerConfig,
   type TorrentStream,
@@ -6,14 +6,14 @@ import {
 } from "./server/common/types";
 import type { Episode, Media } from "@/backend/imdb/types";
 // import { getTorrentsFiles as ytsGetMovieTorrentFiles } from "./yts/api";
-import { getTorrentFiles as piratebayGetTorrentFiles } from "./piratebay/api";
+import { getTorrentFiles as piratebayGetTorrentFiles } from "./sources/piratebay/api";
 // import { getTorrentFiles as rargbGetTorrentFiles } from "./rargb/api";
 // import { getTorrentFiles as solidtorrentsGetTorrentFiles } from "./rargb/api";
 import {
   isSameTitle,
   parseSeason,
   seasonFormatTitle,
-} from "./common/functions";
+} from "./sources/common/functions";
 import { filterMap } from "@/common/functions";
 import type { Language } from "@ctrl/video-filename-parser";
 import { invoke } from "@/common/ipc";

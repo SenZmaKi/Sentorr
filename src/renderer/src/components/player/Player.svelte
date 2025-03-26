@@ -1,11 +1,14 @@
 <script lang="ts">
   import PageWrapper from "../common/PageWrapper.svelte";
-  import { Resolution, type TorrentFile } from "@/backend/torrent/common/types";
+  import {
+    Resolution,
+    type TorrentFile,
+  } from "@/backend/torrent/sources/common/types";
   import {
     GetTorrentStreamsError,
     SelectTorrentStreamError,
   } from "@/backend/torrent/server/common/types";
-  import { computeTorrentScores } from "@/backend/torrent/common/functions";
+  import { computeTorrentScores } from "@/backend/torrent/sources/common/functions";
   import { toast } from "svelte-sonner";
   import {
     playerMedia,

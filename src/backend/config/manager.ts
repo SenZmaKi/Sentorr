@@ -4,7 +4,7 @@ import path from "path";
 import { type Config } from "./types";
 import { tryCatch, tryCatchAsync } from "@/common/functions";
 import { beforeQuitTasks } from "../common/constants";
-import { Resolution } from "../torrent/common/types";
+import { Resolution } from "../torrent/sources/common/types";
 // import { rm } from "fs/promises";
 
 export async function createConfigManager() {

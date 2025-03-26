@@ -76,12 +76,12 @@ function createGetSessionCookies() {
 }
 export const getSessionCookies = createGetSessionCookies();
 
-function stringifyAndEncodeJson(json: any): string {
+function stringifyAndEncodeJson(json: unknown): string {
   return encodeURIComponent(JSON.stringify(json));
 }
 function generateAPIURL(
   operationName: string,
-  variables: any,
+  variables: unknown,
   sha256Hash: string,
 ): string {
   const extensions = { persistedQuery: { sha256Hash, version: 1 } };
@@ -95,7 +95,7 @@ async function apiGet(
   url: string,
   headers: HeadersInit | undefined = undefined,
   cookies: string[] = [],
-): Promise<any> {
+) {
   headers = { ...headers, ...{ "Content-Type": "application/json" } };
   const response = await netClient.get(url, headers, cookies);
   const resp_json = await response.json();

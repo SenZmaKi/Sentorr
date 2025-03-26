@@ -20,7 +20,7 @@ export default defineConfig({
         input: {
           index: fileURLToPath(new URL("./src/main/index.ts", import.meta.url)),
           worker: fileURLToPath(
-            new URL("./src/backend/torrent/worker.ts", import.meta.url),
+            new URL("./src/backend/torrent/server/worker.ts", import.meta.url),
           ),
         },
       },

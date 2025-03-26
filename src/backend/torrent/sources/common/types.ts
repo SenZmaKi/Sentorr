@@ -12,9 +12,11 @@ export type CommonTorrentFile = {
 export type YtsTorrentFile = CommonTorrentFile & {
   filename: undefined;
 };
+
 export type NormalTorrentFile = CommonTorrentFile & {
   filename: string;
 };
+
 export type TorrentFile = YtsTorrentFile | NormalTorrentFile;
 
 export enum Resolution {
@@ -25,12 +27,6 @@ export enum Resolution {
   R540P = 540,
   R480P = 480,
 }
-
-export const RESOLUTIONS = Object.values(Resolution).filter(
-  (value) => typeof value === "number",
-);
-
-export const LANGUAGES = Object.values(Language);
 
 export type GetTorrentFilesParams = {
   seasonFormattedTitle: string;

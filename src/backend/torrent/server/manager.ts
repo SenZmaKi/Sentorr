@@ -11,8 +11,10 @@ import { onTorrentError, onTorrentWarning } from "./handlers";
 import { type TorrentStreamStats } from "./common/types";
 import WebTorrent from "webtorrent";
 
-const fileTorrentStreamQueue: { file: any; torrentStream: TorrentStream }[] =
-  [];
+const fileTorrentStreamQueue: {
+  file: WebTorrent.TorrentFile;
+  torrentStream: TorrentStream;
+}[] = [];
 
 function getCurrentTorrent() {
   if (!fileTorrentStreamQueue.length) return undefined;

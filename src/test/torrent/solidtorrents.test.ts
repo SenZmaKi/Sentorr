@@ -1,4 +1,4 @@
-import { getTorrentFiles } from "@/backend/torrent/solidtorrents/api";
+import { getTorrentFiles } from "@/backend/torrent/sources/solidtorrents/api";
 import { failIfEmpty } from "@/test/common/functions";
 import { test } from "bun:test";
 import {

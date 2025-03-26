@@ -67,7 +67,8 @@ export function getHandle(port: MessagePort) {
 }
 
 function createHandle() {
-  let channelToListener: Record<string, Function> | undefined = undefined;
+  // TODO: Fix this type
+  let channelToListener: Record<string, unknown> | undefined = undefined;
   async function handle<Channel extends keyof RendererPortEvent>(
     port: MessagePort,
     channel: Channel,
@@ -84,10 +85,10 @@ function createHandle() {
     port.on("message", async (message: Message<Channel>) => {
       const { args, id, channel } = message;
       console.log(`Handling port invocation: ${channel}()`, args);
-      const listener = channelToListener![channel];
+      const listener = channelToListener![channel] as any;
       const result = await tryCatchAsync(listener(...args));
-      // @ts-ignore
-      const response: Response<Channel> = { channel, id, result };
+      const anyResult = result as any;
+      const response: Response<Channel> = { channel, id, result: anyResult };
       port.postMessage(response);
     });
   }

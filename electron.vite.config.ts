@@ -14,6 +14,17 @@ export default defineConfig({
     resolve: {
       alias,
     },
+    root: ".",
+    build: {
+      rollupOptions: {
+        input: {
+          index: fileURLToPath(new URL("./src/main/index.ts", import.meta.url)),
+          worker: fileURLToPath(
+            new URL("./src/backend/torrent/worker.ts", import.meta.url),
+          ),
+        },
+      },
+    },
   },
   preload: {
     plugins: [externalizeDepsPlugin()],

@@ -63,7 +63,7 @@ export function makeScaledImageUrl(
   return scaledUrl;
 }
 
-export const getSessionCookies = (function () {
+function createGetSessionCookies() {
   let sessionCookies: string[] | undefined = undefined;
   return async function () {
     if (!sessionCookies) {
@@ -73,7 +73,8 @@ export const getSessionCookies = (function () {
     }
     return sessionCookies;
   };
-})();
+}
+export const getSessionCookies = createGetSessionCookies();
 
 function stringifyAndEncodeJson(json: any): string {
   return encodeURIComponent(JSON.stringify(json));

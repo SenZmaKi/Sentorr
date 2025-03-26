@@ -1,10 +1,15 @@
 import { app, shell, BrowserWindow } from "electron";
-import { join } from "path";
+import  { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import configManager from "@/backend/config/manager";
 import { handle } from "@/common/ipc";
 import { beforeQuitTasks } from "@/backend/common/constants";
 import { tryCatchAsync } from "@/common/functions";
+import { Worker } from "worker_threads";
+import { getHandleListenerGetter } from "@/common/port";
+
+const workerPath = join(__dirname, "worker.js");
+const worker = new Worker(workerPath);
 
 // import icon from "../renderer/src/assets/icon.png?asset";
 const icon = "";
@@ -59,7 +64,7 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, "../preload/index.mjs"),
       nodeIntegration: true,
-      contextIsolation: false,
+      contextIsolation: true,
       webSecurity: false,
       enableBlinkFeatures: "FontAccess, AudioVideoTracks",
     },
@@ -135,5 +140,16 @@ app.on("before-quit", async (event) => {
 // IPC
 
 handle("getConfig", configManager.getConfig);
-
 handle("setConfig", configManager.setConfig);
+
+const getListener = getHandleListenerGetter(worker);
+handle("clearTorrents", getListener("clearTorrents"));
+handle("getTorrentStreams", getListener("getTorrentStreams"));
+handle("close", getListener("close"));
+handle("selectTorrentStream", getListener("selectTorrentStream"));
+handle("deselectAllTorrentStreams", getListener("deselectAllTorrentStreams"));
+handle("start", getListener("start"));
+handle(
+  "getCurrentTorrentStreamStats",
+  getListener("getCurrentTorrentStreamStats"),
+);

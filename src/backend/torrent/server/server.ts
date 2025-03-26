@@ -1,7 +1,7 @@
 import WebTorrent, { type NodeServer } from "webtorrent";
 import { tryCatchAsync } from "@/common/functions";
 import { onClientError, onClientInfo, onServerError } from "./handlers";
-import { TorrentClientError, type ServerConfig } from "./common/types";
+import { TorrentClientError, type TorrentServerConfig } from "./common/types";
 import torrentManager from "./torrentManager";
 import { isErrorCode } from "./common/functions";
 import { InvalidStateError } from "@/common/types";
@@ -9,12 +9,12 @@ import { InvalidStateError } from "@/common/types";
 export let client: WebTorrent.Instance;
 export let server: NodeServer;
 export let readyState = createReadyState();
-export let config: ServerConfig;
+export let config: TorrentServerConfig;
 
 /**
  * Create a new `client` and `server` using the provided `config` and start listening on the `server`
  */
-export async function startClientServer(newConfig: ServerConfig) {
+export async function start(newConfig: TorrentServerConfig) {
   config = newConfig;
   client = new WebTorrent({
     maxConns: newConfig.maxConns,
@@ -40,7 +40,7 @@ export async function startClientServer(newConfig: ServerConfig) {
   readyState.resolveReady(true);
 }
 
-async function closeClientServer() {
+async function close() {
   return new Promise<void>(async (resolve, reject) => {
     console.log("Closing server");
     await readyState.waitTillReady();
@@ -121,8 +121,8 @@ function createReadyState() {
 }
 
 const torrentServer = {
-  startClientServer,
-  closeClientServer,
+  start,
+  close,
   ...torrentManager,
 };
 export default torrentServer;

@@ -1,11 +1,7 @@
 import { writable } from "svelte/store";
 import type { Media, Episode } from "@/backend/imdb/types";
-import {
-  Resolution,
-  type TorrentFile,
-  type TorrentStream,
-} from "@/backend/torrent/common/types";
-
+import { Resolution, type TorrentFile } from "@/backend/torrent/common/types";
+import { type TorrentStream } from "@/backend/torrent/server/common/types";
 // import sampleMedia from "@/test/results/imdb/getMedia.json";
 // import sampleEpisodes from "@/test/results/imdb/getEpisodes.json";
 import type { SvelteMediaTimeRange } from "svelte/elements";

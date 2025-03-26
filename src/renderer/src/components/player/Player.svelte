@@ -29,19 +29,19 @@
     showControls,
     strictResolution,
   } from "./common/store";
+  import { config } from "../common/store";
   import Controls from "./controls/Controls.svelte";
   import { getMediaProgress } from "../common/store";
   import { tryCatchAsync } from "@/common/functions";
   import type { Episode, Media } from "@/backend/imdb/types";
   import type { Language } from "@ctrl/video-filename-parser";
-
   export let hidden: boolean;
 
   async function clearVideo() {
     if (!$video) return;
     $playerTorrentStream = undefined;
     $playerTorrentFile = undefined;
-    await window.ipc.torrent.deselectAllTorrentStreams();
+    await window.ipc.torrentServer.deselectAllTorrentStreams();
   }
 
   async function load(params: {
@@ -61,7 +61,7 @@
       });
       return;
     }
-    const torrentFiles = await window.ipc.torrent.getTorrentFiles({
+    const torrentFiles = await window.ipc.torrentServer.getTorrentFiles({
       media,
       episode,
       languages,
@@ -101,7 +101,7 @@
     const sortedByScore = torrentAndScore.sort((a, b) => b.score - a.score);
     const torrentFile = sortedByScore[0].torrent;
     const [torrentsStreams, torrentStreamsError] = await tryCatchAsync(
-      window.ipc.torrent.getTorrentStreams(
+      window.ipc.torrentServer.getTorrentStreams(
         media.title,
         torrentFile,
         media.canHaveEpisodes,
@@ -137,7 +137,7 @@
       };
     console.log("streamURL:", torrentStream.url);
     const [, stsError] = await tryCatchAsync(
-      window.ipc.torrent.selectTorrentStream(torrentStream),
+      window.ipc.torrentServer.selectTorrentStream(torrentStream),
     );
     if (stsError) {
       if (stsError.message === SelectTorrentStreamError.StreamNotFound) {
@@ -155,7 +155,7 @@
 
   async function reload() {
     if (!$playerTorrentStream) return;
-    window.ipc.torrent.selectTorrentStream($playerTorrentStream);
+    window.ipc.torrentServer.selectTorrentStream($playerTorrentStream);
     $playerTorrentStream = { ...$playerTorrentStream };
   }
   async function maybeLoad() {
@@ -298,6 +298,7 @@
     strictResolution: $strictResolution,
   };
   $: if (loadParams) load(loadParams);
+  window.ipc.torrentServer.start($config.torrent);
 </script>
 
 <PageWrapper {hidden}>

@@ -1,3 +1,5 @@
+import type torrentServer from "../server";
+
 export enum GetTorrentStreamsError {
   TorrentTimeout = "Torrent timeout",
   NoVideoFiles = "No video files",
@@ -15,7 +17,7 @@ export enum TorrentClientError {
 /**
  * Zero typically means use default value or infinite
  */
-export type ServerConfig = {
+export type TorrentServerConfig = {
   maxConns: number;
   torrentPort: number;
   serverPort: number;
@@ -38,3 +40,5 @@ export type TorrentStream = {
     episodeNumber: number;
   };
 };
+
+export type TorrentServer = typeof torrentServer;

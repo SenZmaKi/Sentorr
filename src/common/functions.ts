@@ -1,5 +1,6 @@
-import { parseDocument } from "htmlparser2"; 
+import { parseDocument } from "htmlparser2";
 import { load as cheerioLoad, type CheerioAPI } from "cheerio";
+import type { Result } from "./types";
 
 export function printRunTimeLater(task: string = ""): () => void {
   const currentTime = new Date().getTime();
@@ -39,11 +40,6 @@ export function parseHtml(htmlPage: string): CheerioAPI {
 export function zfill(num: number): string {
   return num.toString().padStart(2, "0");
 }
-type Success<T> = [data: T, error: undefined];
-
-type Failure<E> = [data: undefined, error: E];
-
-export type Result<T, E = Error> = Success<T> | Failure<E>;
 
 export async function tryCatchAsync<T, E = Error>(
   promise: Promise<T>,

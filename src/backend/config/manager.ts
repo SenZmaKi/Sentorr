@@ -1,4 +1,4 @@
-import { app } from "electron/main";
+import { app } from "electron";
 import { writeFile, readFile, stat } from "fs/promises";
 import path from "path";
 import { type Config } from "./types";
@@ -48,6 +48,13 @@ export async function createConfigManager() {
 
   function defaultConfig(): Config {
     return {
+      torrent: {
+        serverPort: 0,
+        torrentPort: 0,
+        maxConns: 50,
+        maxTorrentStreams: 5,
+        torrentTimeoutSecs: 10,
+      },
       allMediaProgress: {
         current: undefined,
         mediaProgress: {},

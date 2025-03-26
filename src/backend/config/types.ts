@@ -1,4 +1,5 @@
 import type { EpisodeId, MediaId, SeasonEpisode } from "../imdb/types";
+import type { TorrentServerConfig } from "../torrent/server/common/types";
 import type configManager from "./manager";
 
 export type ConfigManager = typeof configManager;
@@ -20,6 +21,7 @@ export type MediaProgress = {
 };
 
 export type Config = {
+  torrent: TorrentServerConfig;
   allMediaProgress: {
     current: MediaId | undefined;
     mediaProgress: Record<MediaId, MediaProgress>;

@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs/promises";
-import { client, readyState, config } from "./server";
+import { client, server, readyState, config } from "./server";
 import {
   type TorrentStream,
   SelectTorrentStreamError,

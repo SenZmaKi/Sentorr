@@ -16,7 +16,9 @@ export function handle<Channel extends keyof IpcRendererEvent>(
     channel,
     async (_, ...args: Parameters<IpcRendererEvent[Channel]>) => {
       console.log(`Handling ipc invocation: ${channel}()`, args);
-      return await tryCatchAsync(listener(...args));
+      const result = await tryCatchAsync(listener(...args));
+      console.log(`Ipc handle result: ${channel}()`, result);
+      return result;
     },
   );
 }
@@ -26,11 +28,13 @@ export async function invoke<Channel extends keyof IpcRendererEvent>(
   ...args: Parameters<IpcRendererEvent[Channel]>
 ) {
   console.log(`Invoking ipc: ${channel}()`, args);
-  const [result, invokeError]: Result<ReturnType<IpcRendererEvent[Channel]>> =
+  const result: Result<ReturnType<IpcRendererEvent[Channel]>> =
     await ipcRenderer.invoke(channel, ...args);
+  console.log(`Ipc invocation result: ${channel}()`, result);
+  const [success, invokeError] = result;
   if (invokeError) {
     console.error(`Ipc invocation error: ${channel}()`, invokeError);
     throw new Error(invokeError.message);
   }
-  return result;
+  return success;
 }

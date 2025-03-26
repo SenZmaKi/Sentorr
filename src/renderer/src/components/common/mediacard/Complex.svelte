@@ -9,7 +9,7 @@
 </script>
 
 <ButtonWrapper
-  class_="m-2 xxs-dark w-[480px] h-[240px] shadow-lg shadow-black rounded-lg duration-300 ease-in-out hover:scale-110 cursor-pointer flex"
+  class="m-2 xxs-dark w-[480px] h-[240px] shadow-lg shadow-black rounded-lg duration-300 ease-in-out hover:scale-110 cursor-pointer flex"
   {result}
 >
   <div class="w-[160px]">

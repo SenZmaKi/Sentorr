@@ -11,5 +11,3 @@ handle("getTorrentStreams", torrentServer.getTorrentStreams);
 handle("close", torrentServer.close);
 handle("selectTorrentStream", torrentServer.selectTorrentStream);
 handle("deselectAllTorrentStreams", torrentServer.deselectAllTorrentStreams);
-
-console.log("hello from worker");

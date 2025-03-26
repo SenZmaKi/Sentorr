@@ -1,13 +1,15 @@
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import type { Media, Episode } from "@/backend/imdb/types";
 import { Resolution, type TorrentFile } from "@/backend/torrent/common/types";
 import { type TorrentStream } from "@/backend/torrent/server/common/types";
+import { type Config } from "@/backend/config/types";
 // import sampleMedia from "@/test/results/imdb/getMedia.json";
 // import sampleEpisodes from "@/test/results/imdb/getEpisodes.json";
 import type { SvelteMediaTimeRange } from "svelte/elements";
 import { Language } from "@ctrl/video-filename-parser";
 import { getCurrentMediaProgress } from "../../common/store";
 import { getMedia, getEpisode } from "@/backend/imdb/api";
+import { config } from "../../common/store";
 
 async function setProgress() {
   const mediaProgress = getCurrentMediaProgress();
@@ -65,12 +67,30 @@ export let videoWidth = playerState(0);
 export let progress = playerState(0);
 export let showControls = playerState(true);
 
-export let volume = writable(0.8);
-export let muted = writable(true);
-export let resolution = writable(Resolution.R1080P);
-export let strictResolution = writable(false);
-export let playbackRate = writable(1);
-export let video = writable<HTMLVideoElement | undefined>(undefined);
-export let videoContainer = writable<HTMLDivElement | undefined>(undefined);
+function configState<Key extends keyof Config["player"]>(key: Key) {
+  const value = get(config).player[key];
+  const store = writable(value);
+  let isInitialRun = true;
+  store.subscribe((newValue) => {
+    if (isInitialRun) {
+      isInitialRun = false;
+      return;
+    }
+    config.update((config) => ({
+      ...config,
+      player: { ...config.player, [key]: newValue },
+    }));
+  });
+  return store;
+}
+
+export let volume = configState("volume");
+export let muted = configState("muted");
+export let resolution = configState("resolution");
+export let strictResolution = configState("strictResolution");
+export let playbackRate = configState("playbackRate");
 export let blacklistedTorrents = writable<TorrentFile[]>([]);
 export let languages = writable([Language.English]);
+
+export let video = writable<HTMLVideoElement | undefined>(undefined);
+export let videoContainer = writable<HTMLDivElement | undefined>(undefined);

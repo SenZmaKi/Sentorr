@@ -329,7 +329,11 @@
             currentMediaProgress &&
             currentMediaProgress.episode?.id === $playerEpisode?.id
           ) {
-            $video.currentTime = currentMediaProgress.watchTime.currentTime;
+            const currentTime =
+              currentMediaProgress.watchTime.currentTime -
+              $config.player.continueRewindSecs;
+            if (currentTime <= 0) return;
+            $video.currentTime = currentTime;
           }
         }
         await $video.play();

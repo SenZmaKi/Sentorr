@@ -2,12 +2,13 @@
   import { getMedia } from "@/backend/imdb/api";
   import type { BaseResult } from "@/backend/imdb/types";
   import { switchToPreviewPage } from "../functions";
-  export let class_: string;
+  let className: string;
+  export { className as class };
   export let result: BaseResult;
 </script>
 
 <button
-  class={`text-left ${class_}`}
+  class={`text-left ${className}`}
   on:click={() => {
     const media = getMedia(result.id);
     switchToPreviewPage(media, result);

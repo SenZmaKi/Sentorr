@@ -40,6 +40,7 @@ function createInvoke() {
           if (anyResponse.id !== message.id) return;
           port.off("message", handleMessage);
           const response = anyResponse as Response<Channel>;
+          console.log(`Port invocation response: ${channel}()`, response);
           const [success, invokeError] = response.result;
           if (invokeError) {
             console.error(`Port invocation error ${channel}():`, invokeError);
@@ -89,6 +90,7 @@ function createHandle() {
       const result = await tryCatchAsync(listener(...args));
       const anyResult = result as any;
       const response: Response<Channel> = { channel, id, result: anyResult };
+      console.log(`Port handle response: ${channel}()`, response);
       port.postMessage(response);
     });
   }

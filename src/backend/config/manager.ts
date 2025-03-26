@@ -4,6 +4,7 @@ import path from "path";
 import { type Config } from "./types";
 import { tryCatch, tryCatchAsync } from "@/common/functions";
 import { beforeQuitTasks } from "../common/constants";
+import { Resolution } from "../torrent/common/types";
 // import { rm } from "fs/promises";
 
 export async function createConfigManager() {
@@ -54,6 +55,14 @@ export async function createConfigManager() {
         maxConns: 50,
         maxTorrentStreams: 5,
         torrentTimeoutSecs: 10,
+      },
+      player: {
+        continueRewindSecs: 5,
+        volume: 0.8,
+        muted: false,
+        playbackRate: 1,
+        resolution: Resolution.R1080P,
+        strictResolution: false,
       },
       allMediaProgress: {
         current: undefined,

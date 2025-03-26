@@ -1,4 +1,5 @@
 import type { EpisodeId, MediaId, SeasonEpisode } from "../imdb/types";
+import type { Resolution } from "../torrent/common/types";
 import type { TorrentServerConfig } from "../torrent/server/common/types";
 import type configManager from "./manager";
 
@@ -20,8 +21,18 @@ export type MediaProgress = {
   };
 };
 
+export type Player = {
+  continueRewindSecs: number;
+  resolution: Resolution;
+  strictResolution: boolean;
+  volume: number;
+  muted: boolean;
+  playbackRate: number;
+};
+
 export type Config = {
   torrent: TorrentServerConfig;
+  player: Player;
   allMediaProgress: {
     current: MediaId | undefined;
     mediaProgress: Record<MediaId, MediaProgress>;

@@ -1,6 +1,6 @@
 <script lang="ts">
   // https://github.com/ThaUnknown/perfect-seekbar
-  
+
   import { timeStamp } from "../../common/functions";
   import type { Chapter } from "./common/types";
   import type { ThumbnailGenerator } from "./common/thumbnail";
@@ -103,7 +103,7 @@
   }
 </script>
 
-<HoverWrapper>
+<HoverWrapper class="w-full">
   <div
     class="seekbar w-full"
     bind:this={seekbar}

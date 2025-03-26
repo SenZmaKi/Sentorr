@@ -7,7 +7,7 @@
 </script>
 
 <ButtonWrapper
-  class_="w-[144px] m-4 xs-dark shadow-black shadow-lg rounded-lg p-1 flex items-center flex-col cursor-pointer ease-in-out hover:scale-110 duration-300"
+  class="w-[144px] m-4 xs-dark shadow-black shadow-lg rounded-lg p-1 flex items-center flex-col cursor-pointer ease-in-out hover:scale-110 duration-300"
   {result}
 >
   <ImageSkeleton imageUrl={result.imageUrl} width={130} height={180} />

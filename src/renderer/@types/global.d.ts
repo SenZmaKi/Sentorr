@@ -1,5 +1,5 @@
 /// <reference types="typescript/lib/lib.dom" />
-import {type Ipc} from "@/preload/index"
+import { Ipc } from "@/preload/index";
 
 declare global {
   interface MediaTrack {

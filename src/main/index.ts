@@ -2,14 +2,13 @@ import { app, shell, BrowserWindow } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import configManager from "@/backend/config/manager";
-import torrentServer from "@/backend/torrent/server";
-import { type TorrentStream } from "@/backend/torrent/common/types";
 import { handle } from "@/common/ipc";
 import { beforeQuitTasks } from "@/backend/common/constants";
 import { tryCatchAsync } from "@/common/functions";
 
 // import icon from "../renderer/src/assets/icon.png?asset";
 const icon = "";
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
 
 // https://github.com/ThaUnknown/miru/blob/master/electron/src/main/util.js#L6
 // const flags = [
@@ -60,6 +59,7 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, "../preload/index.mjs"),
       nodeIntegration: true,
+      contextIsolation: false,
       webSecurity: false,
       enableBlinkFeatures: "FontAccess, AudioVideoTracks",
     },
@@ -133,25 +133,6 @@ app.on("before-quit", async (event) => {
 });
 
 // IPC
-
-handle("getTorrentStreams", (torrentID) =>
-  torrentServer.getTorrentStreams(torrentID),
-);
-
-handle("selectTorrentStream", (torrentStream: TorrentStream) =>
-  torrentServer.selectTorrentStream(torrentStream),
-);
-
-handle("closeTorrentStreamsServer", torrentServer.closeTorrentStreamsServer);
-
-handle("clearTorrents", torrentServer.clearTorrents);
-
-handle("deselectAllTorrentStreams", torrentServer.deselectAllTorrentStreams);
-
-handle(
-  "getCurrentTorrentStreamStats",
-  torrentServer.getCurrentTorrentStreamStats,
-);
 
 handle("getConfig", configManager.getConfig);
 

@@ -1,11 +1,10 @@
 <script lang="ts">
   import PageWrapper from "../common/PageWrapper.svelte";
+  import { Resolution, type TorrentFile } from "@/backend/torrent/common/types";
   import {
-    Resolution,
     GetTorrentStreamsError,
-    type TorrentFile,
     SelectTorrentStreamError,
-  } from "@/backend/torrent/common/types";
+  } from "@/backend/torrent/server/common/types";
   import { computeTorrentScores } from "@/backend/torrent/common/functions";
   import { toast } from "svelte-sonner";
   import {
@@ -204,7 +203,8 @@
       case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
         $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
         console.error(
-          `Media codec error: Media at ${$playerTorrentStream.url} codec not supported`, error,
+          `Media codec error: Media at ${$playerTorrentStream.url} codec not supported`,
+          error,
         );
         toast.error("Media codec error", {
           description:
@@ -226,7 +226,8 @@
       case error.MEDIA_ERR_DECODE:
         $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
         console.error(
-          `Media decode error: Media at ${$playerTorrentStream.url} decode error`, error,
+          `Media decode error: Media at ${$playerTorrentStream.url} decode error`,
+          error,
         );
         toast.error("Media decoding error", {
           description:

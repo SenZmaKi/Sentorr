@@ -17,17 +17,6 @@ export type NormalTorrentFile = CommonTorrentFile & {
 };
 export type TorrentFile = YtsTorrentFile | NormalTorrentFile;
 
-export type TorrentStream = {
-  filepath: string;
-  filename: string;
-  magnetURI: string;
-  url: string;
-  info?: {
-    seasonNumber: number;
-    episodeNumber: number;
-  };
-};
-
 export enum Resolution {
   R2160P = 2160,
   R1080P = 1080,
@@ -49,20 +38,4 @@ export type GetTorrentFilesParams = {
   getCompleteSeason: boolean;
   isTvSeries: boolean;
   languages: Language[];
-};
-
-export enum GetTorrentStreamsError {
-  TorrentTimeout = "Torrent timeout",
-  NoVideoFiles = "No video files",
-  NoMatchingFiles = "No matching files",
-}
-
-export enum SelectTorrentStreamError {
-  StreamNotFound = "Torrent stream not found",
-}
-
-export type TorrentStreamStats = {
-  downloadSpeed: number;
-  uploadSpeed: number;
-  numPeers: number;
 };

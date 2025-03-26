@@ -1,9 +1,8 @@
-import type { TorrentServer } from "@/backend/torrent/server";
 import type { ConfigManager } from "@/backend/config/types";
 import { ipcRenderer, ipcMain } from "electron";
 import { tryCatchAsync, type Result } from "./functions";
 
-type IpcRendererEvent = TorrentServer & ConfigManager;
+type IpcRendererEvent =  ConfigManager;
 
 export function handle<Channel extends keyof IpcRendererEvent>(
   channel: Channel,

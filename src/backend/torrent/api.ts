@@ -1,8 +1,6 @@
-import {
-  type TorrentStream,
-  type TorrentFile,
-  GetTorrentStreamsError,
-} from "./common/types";
+import { type TorrentFile } from "./common/types";
+import { GetTorrentStreamsError } from "./server/common/types";
+import { type TorrentStream } from "./server/common/types";
 import type { Episode, Media } from "@/backend/imdb/types";
 // import { getTorrentsFiles as ytsGetMovieTorrentFiles } from "./yts/api";
 import { getTorrentFiles as piratebayGetTorrentFiles } from "./piratebay/api";
@@ -15,7 +13,7 @@ import {
 } from "./common/functions";
 import { filterMap } from "@/common/functions";
 import type { Language } from "@ctrl/video-filename-parser";
-import { invoke } from "@/common/ipc";
+import torrentServer from "./server/server";
 
 // prettier-ignore
 const VIDEO_EXTS = ['3g2', '3gp', 'asf', 'avi', 'dv', 'flv', 'gxf', 'm2ts', 'm4a', 'm4b', 'm4p', 'm4r', 'm4v', 'mkv', 'mov', 'mp4', 'mpd', 'mpeg', 'mpg', 'mxf', 'nut', 'ogm', 'ogv', 'swf', 'ts', 'vob', 'webm', 'wmv', 'wtv']
@@ -127,7 +125,7 @@ async function getTorrentStreams(
   isTvSeries: boolean,
 ): Promise<TorrentStream[]> {
   const torrentID = torrentFile.torrentID;
-  const allStreams = await invoke("getTorrentStreams", torrentID);
+  const allStreams = await torrentServer.getTorrentStreams(torrentID);
   const videoStreams = allStreams.filter(
     ({ filename }) =>
       VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample"),
@@ -177,25 +175,19 @@ async function getTorrentStreams(
   return torrentStreams;
 }
 
-async function selectTorrentStream(torrentStream: TorrentStream) {
-  return await invoke("selectTorrentStream", torrentStream);
-}
+const config = {
+  maxConns: 50,
+  torrentPort: 5000,
+  serverPort: 3000,
+  maxTorrentStreams: 5,
+  torrentTimeoutSecs: 10,
+};
+torrentServer.startClientServer(config);
 
-async function getCurrentTorrentStreamStats() {
-  return await invoke("getCurrentTorrentStreamStats");
-}
-
-async function deselectAllTorrentStreams() {
-  return await invoke("deselectAllTorrentStreams");
-}
-
-const torrentIpc = {
+const torrentApi = {
+  ...torrentServer,
   getTorrentFiles,
   getTorrentStreams,
-  selectTorrentStream,
-  getCurrentTorrentStreamStats,
-  deselectAllTorrentStreams,
 };
 
-export type TorrentIpc = typeof torrentIpc;
-export default torrentIpc;
+export default torrentApi;

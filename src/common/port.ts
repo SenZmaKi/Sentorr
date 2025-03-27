@@ -24,7 +24,7 @@ export function getHandleListenerGetter(worker: Worker) {
 }
 
 function createInvoke() {
-  let invokeId = 0;
+  let id = 0;
 
   return function invoke<Channel extends keyof RendererPortEvent>(
     port: Worker,
@@ -34,7 +34,7 @@ function createInvoke() {
     return new Promise<Awaited<ReturnType<RendererPortEvent[Channel]>>>(
       function (resolve, reject) {
         console.log(`Invoking port: ${channel}()`, args);
-        const message: Message<Channel> = { channel, args, id: invokeId++ };
+        const message: Message<Channel> = { channel, args, id: id++ };
 
         function handleMessage(anyResponse: Response<keyof RendererPortEvent>) {
           if (anyResponse.id !== message.id) return;

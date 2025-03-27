@@ -14,22 +14,22 @@ export let config: TorrentServerConfig;
 /**
  * Create a new `client` and `server` using the provided `config` and start listening on the `server`
  */
-export async function start(newConfig: TorrentServerConfig) {
-  config = newConfig;
+export async function start(torrentConfig: TorrentServerConfig) {
+  config = torrentConfig;
   client = new WebTorrent({
-    maxConns: newConfig.maxConns,
-    torrentPort: newConfig.torrentPort,
+    maxConns: torrentConfig.maxConns,
+    torrentPort: torrentConfig.torrentPort,
   });
   client.on("error", onClientError);
   client.on("info", onClientInfo);
   server = client.createServer({}, "node") as NodeServer;
   const [, listenError] = await tryCatchAsync(
-    listen(server, client, newConfig.serverPort),
+    listen(server, client, torrentConfig.serverPort),
   );
   // Most likely client errored out and was destroyed
   if (listenError) {
     console.error(
-      `Server Error listening on port ${newConfig.serverPort}`,
+      `Server Error listening on port ${torrentConfig.serverPort}`,
       listenError,
     );
     readyState.resolveReady(false);

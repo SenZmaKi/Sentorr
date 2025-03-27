@@ -37,7 +37,7 @@
   function watchButtonTippyAction(element: HTMLButtonElement) {
     if (!mediaProgress) return undefined;
     const { currentTime, duration } = mediaProgress.watchTime;
-    const content = `${timeStamp(currentTime)} / ${timeStamp(duration)}`;
+    const content = `Continue from ${timeStamp(currentTime)} / ${timeStamp(duration)}`;
     return tippy(element, { content });
   }
 

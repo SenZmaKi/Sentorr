@@ -7,7 +7,7 @@
   export let viewBox: string;
 </script>
 
-<div class="p-2 pb-4 flex justify-center items-center opacity-90 ">
+<div class="p-2 pb-4 flex justify-center items-center opacity-90">
   <button
     class="relative p-2 rounded-full transition-transform duration-500 ease-in-out hover:scale-125 cursor-pointer
              xxs-dark shadow-md shadow-black"

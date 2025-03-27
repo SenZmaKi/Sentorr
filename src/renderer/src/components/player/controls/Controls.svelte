@@ -5,13 +5,13 @@
   import { isHovering } from "./common/store";
   import {
     video,
+    src,
+    videoHeight,
+    videoWidth,
     duration,
     paused,
     currentTime,
     buffered,
-    playerTorrentStream,
-    videoHeight,
-    videoWidth,
     progress,
     showControls,
     playerMedia,
@@ -32,6 +32,7 @@
   import Pip from "./Pip.svelte";
   import { onDestroy } from "svelte";
   import { config } from "../../common/store";
+  import Miniplayer from "./Miniplayer.svelte";
 
   function computeProgress(time: number) {
     return time && $duration ? (time / $duration) * 100 : 0;
@@ -79,17 +80,20 @@
     $video.removeEventListener("timeupdate", updateProgress);
   });
 
+  const thumbnailGenerator = createThumbnailGenerator();
+
+  $: videoProperties = {
+    src: $src,
+    videoHeight: $videoHeight,
+    videoWidth: $videoWidth,
+    duration: $duration,
+  };
+
+  $: thumbnailGenerator.setVideoProperties(videoProperties);
   $: buffer =
     $buffered && $buffered.length
       ? ($buffered[$buffered.length - 1].end / $duration) * 100
       : 0;
-  $: thumbnailGenerator =
-    $playerTorrentStream &&
-    createThumbnailGenerator(
-      $playerTorrentStream.url,
-      $videoHeight,
-      $videoWidth,
-    );
   $: $video && addVideoListeners($video);
   // Don't hide controls immediately after user stops hovering, it looks janky
   $: if (!$isHovering) showControlsWithTimeout();
@@ -114,10 +118,10 @@
       <div class="w-[98%]">
         <Seekbar
           bind:progress={$progress}
+          {thumbnailGenerator}
           {buffer}
           length={$duration}
           {onSeeking}
-          {thumbnailGenerator}
         />
         <div class="flex justify-between p-5 pb-0">
           <div class="flex items-center gap-x-6">
@@ -129,6 +133,7 @@
           <div class="flex items-center gap-x-6">
             <SettingsIcon />
             <Fullscreen />
+            <Miniplayer />
             <Pip />
           </div>
         </div>

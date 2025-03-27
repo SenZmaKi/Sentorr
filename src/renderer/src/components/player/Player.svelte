@@ -15,18 +15,10 @@
     playerEpisode,
     playerTorrentFile,
     playerTorrentStream,
-    muted,
-    volume,
-    ended,
-    playbackRate,
     video,
     videoContainer,
-    buffered,
-    paused,
-    duration,
+    src,
     resolution,
-    videoHeight,
-    videoWidth,
     blacklistedTorrents,
     languages,
     showControls,
@@ -38,6 +30,8 @@
   import { tryCatchAsync } from "@/common/functions";
   import type { Episode, Media } from "@/backend/imdb/types";
   import type { Language } from "@ctrl/video-filename-parser";
+  import Video from "./Video.svelte";
+
   export let hidden: boolean;
 
   async function clearVideo() {
@@ -150,7 +144,7 @@
             "😖 app in invalid state!!!\nDismiss this message to reload the torrent.",
           onDismiss: reload,
         });
-      }
+      } else throw stsError;
     }
     $playerTorrentStream = torrentStream;
     $playerTorrentFile = torrentFile;
@@ -197,10 +191,7 @@
     }
   }
 
-  function onPlaybackError() {
-    if (!$video) return;
-    const error = $video.error;
-    if (!error) return;
+  function onVideoError(error: MediaError) {
     if (!$playerTorrentFile || !$playerTorrentStream) return;
     switch (error.code) {
       case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
@@ -279,6 +270,24 @@
     }
     return true;
   }
+  async function onLoadedMetadata() {
+    if (!$video || !isValidCodecs()) return;
+    if ($playerMedia) {
+      const currentMediaProgress = getMediaProgress($playerMedia.id);
+      if (
+        currentMediaProgress &&
+        currentMediaProgress.episode?.id === $playerEpisode?.id
+      ) {
+        const currentTime =
+          currentMediaProgress.watchTime.currentTime -
+          $config.player.continueRewindSecs;
+        if (currentTime <= 0) return;
+        $video.currentTime = currentTime;
+      }
+    }
+    await $video.play();
+  }
+
   // setInterval(async () => {
   //   if (!$playerMedia || !$playerTorrentStream || !$playerTorrentFile) return;
   //   const torrentStreamStats =
@@ -292,7 +301,7 @@
   // let  videoSrc = `${webtorrentDir}\\[SubsPlease] Solo Leveling - 14 (1080p) [2FD84CD9].mkv`;
   // let videoSrc =
   //   "https://github.com/user-attachments/assets/06fae060-0bc9-43b0-8153-04f4cf430e22";
-  $: videoSrc = $playerTorrentStream?.url ?? "";
+
   $: loadParams = $playerMedia && {
     media: $playerMedia,
     episode: $playerEpisode,
@@ -301,6 +310,8 @@
     strictResolution: $strictResolution,
   };
   $: if (loadParams) load(loadParams);
+  $: $src = $playerTorrentStream?.url ?? "";
+
   window.ipc.torrentServer.start($config.torrent);
 </script>
 
@@ -310,40 +321,7 @@
     class:cursor-none={!$showControls}
     class="relative flex flex-col items-center justify-center bg-black w-full h-screen"
   >
-    <!-- svelte-ignore a11y-media-has-caption -->
-    <video
-      crossorigin="anonymous"
-      bind:muted={$muted}
-      bind:volume={$volume}
-      bind:playbackRate={$playbackRate}
-      bind:ended={$ended}
-      bind:buffered={$buffered}
-      bind:paused={$paused}
-      bind:duration={$duration}
-      bind:this={$video}
-      on:error={onPlaybackError}
-      bind:videoWidth={$videoWidth}
-      bind:videoHeight={$videoHeight}
-      on:loadedmetadata={async () => {
-        if (!$video || !isValidCodecs()) return;
-        if ($playerMedia) {
-          const currentMediaProgress = getMediaProgress($playerMedia.id);
-          if (
-            currentMediaProgress &&
-            currentMediaProgress.episode?.id === $playerEpisode?.id
-          ) {
-            const currentTime =
-              currentMediaProgress.watchTime.currentTime -
-              $config.player.continueRewindSecs;
-            if (currentTime <= 0) return;
-            $video.currentTime = currentTime;
-          }
-        }
-        await $video.play();
-      }}
-      src={videoSrc}
-    >
-    </video>
+    <Video onError={onVideoError} {onLoadedMetadata} />
     <div class="absolute bottom-[0%] w-full">
       <Controls />
     </div>

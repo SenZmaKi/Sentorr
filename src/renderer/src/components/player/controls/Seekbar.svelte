@@ -15,13 +15,11 @@
   export let onSeeking: ((percent: number) => void) | undefined = undefined;
   export let onSeeked: (() => void) | undefined = undefined;
   export let alwaysShowThumb = false;
+  export let chapters: Chapter[] = [];
 
   function clamp(value: number): number {
     return Math.min(Math.max(value, 0), 100);
   }
-
-  let seekbar: HTMLDivElement | null = null;
-  let seeking = false;
 
   function calculatePositionProgress(e: PointerEvent): void {
     const { pageX, currentTarget } = e;
@@ -38,13 +36,14 @@
     }
     if (seek !== percent) {
       seek = percent;
-      updateThumbnail(seek);
+      updateThumbnail(percent);
     }
   }
 
   function endHover(): void {
     seek = 0;
-    thumbnail = "";
+    showThumbnail = false;
+    console.log("hiding thumbnail");
   }
 
   function startSeeking(e: PointerEvent): void {
@@ -60,21 +59,6 @@
     if (onSeeked) onSeeked();
   }
 
-  export let chapters: Chapter[] = [];
-
-  let sum = 0;
-  let processedChapters = chapters.map(({ size, text }) => {
-    const cloned = {
-      size,
-      text,
-      offset: sum,
-      scale: 100 / size,
-    };
-    sum += size;
-    return cloned;
-  });
-  let seekbarHeight = processedChapters.length ? 25 : 13;
-
   function checkThumbActive(progress: number, seek: number): boolean {
     return processedChapters.some(
       ({ offset, size }) =>
@@ -89,18 +73,32 @@
     return chapter ? chapter.text : "";
   }
 
-  let thumbnail: string = "";
-
-  async function updateThumbnail(seek: number) {
+  async function updateThumbnail(percent: number) {
     if (!thumbnailGenerator) return;
-    const initialTime = seek;
-    const newThumbnail = await thumbnailGenerator.getThumbnail(seek);
-    if (initialTime === seek) {
-      thumbnail = newThumbnail;
-    } else {
-      thumbnailGenerator.disposeThumbnail(newThumbnail);
-    }
+    await thumbnailGenerator.updateThumbnail(percent);
+    if (percent !== seek) return;
+    showThumbnail = true;
+    console.log("showing thumbnail");
   }
+
+  let seekbar: HTMLDivElement | null = null;
+  let seeking = false;
+  let showThumbnail = false;
+  let sum = 0;
+  let processedChapters = chapters.map(({ size, text }) => {
+    const cloned = {
+      size,
+      text,
+      offset: sum,
+      scale: 100 / size,
+    };
+    sum += size;
+    return cloned;
+  });
+  let seekbarHeight = processedChapters.length ? 25 : 13;
+  let thumbnailCanvas: HTMLCanvasElement | undefined = undefined;
+  $: if (thumbnailGenerator && thumbnailCanvas)
+    thumbnailGenerator.setCanvas(thumbnailCanvas);
 </script>
 
 <HoverWrapper class="w-full">
@@ -159,18 +157,11 @@
     >
       <div class="center">
         <div>{getCurrentChapterTitle(seek) || ""}</div>
-        {#if thumbnail}
-          <img
-            on:load={() => {
-              // Since the thumbnail has been loaded on the browser we can dispose the url version
-              // Almost like deleting an image on the backend after the client has loaded it
-              thumbnailGenerator &&
-                thumbnailGenerator.disposeThumbnail(thumbnail);
-            }}
-            style="min-width: {thumbnailGenerator?.width}px; min-height: {thumbnailGenerator?.height}px;"
-            alt="thumbnail"
+        {#if thumbnailGenerator}
+          <canvas
             class="thumbnail"
-            src={thumbnail}
+            class:hidden={!showThumbnail}
+            bind:this={thumbnailCanvas}
           />
         {/if}
         {#if length}
@@ -231,9 +222,6 @@
     bottom: 13px;
     border: #eee 2px solid;
     border-radius: 4px;
-  }
-  .thumbnail[src=""] {
-    display: none;
   }
   .seekbar:active {
     cursor: grabbing;

@@ -101,6 +101,7 @@
 
   async function next() {
     console.log("next()");
+    console.log("playerEpisode:", $playerEpisode);
     if (!$playerEpisode) {
       const nextMedia = await nextMediaPromise;
       setNextMedia(nextMedia);

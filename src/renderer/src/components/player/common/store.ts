@@ -61,6 +61,7 @@ export let buffered = playerState<SvelteMediaTimeRange[] | undefined>(
 export let paused = playerState(true);
 export let videoHeight = playerState(0);
 export let videoWidth = playerState(0);
+export let src = playerState("");
 /**
  * Video watch progress, from 0 to 100.
  */
@@ -94,3 +95,4 @@ export let languages = writable([Language.English]);
 
 export let video = writable<HTMLVideoElement | undefined>(undefined);
 export let videoContainer = writable<HTMLDivElement | undefined>(undefined);
+export let useMiniplayer = writable(false);

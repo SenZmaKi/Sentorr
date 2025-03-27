@@ -2,72 +2,84 @@ import { InvalidStateError } from "@/common/types";
 
 export type ThumbnailGenerator = ReturnType<typeof createThumbnailGenerator>;
 
-export function createThumbnailGenerator(
-  videoSrc: string,
-  videoHeight: number,
-  videoWidth: number,
-  thumbnailWidth = 180,
-) {
-  const thumbnailVideo = document.createElement("video");
-  thumbnailVideo.src = videoSrc;
-  thumbnailVideo.crossOrigin = "anonymous";
-  const thumbnailCanvas = document.createElement("canvas");
-  thumbnailCanvas.width = thumbnailWidth;
-  thumbnailCanvas.height = thumbnailCanvas.width * (videoHeight / videoWidth);
-  const thumbnailCtx = thumbnailCanvas.getContext("2d");
-  if (!thumbnailCtx)
-    throw new InvalidStateError("Failed to get thumbnailCanvas 2d context");
-  const loadingMetadata = new Promise<void>((resolve) => {
-    thumbnailVideo.addEventListener(
-      "loadedmetadata",
-      () => {
-        resolve();
-      },
-      { once: true },
-    );
-  });
+export type VideoProperties = {
+  src: string;
+  videoHeight: number;
+  videoWidth: number;
+  duration: number;
+};
 
-  async function getThumbnail(seekPercent: number): Promise<string> {
-    if (!thumbnailCtx) return "";
+export function createThumbnailGenerator(thumbnailWidth = 180) {
+  let thumbnailVideo: HTMLVideoElement | undefined = undefined;
+  let thumbnailCanvas: HTMLCanvasElement | undefined = undefined;
+  let canvasCtx: CanvasRenderingContext2D | undefined = undefined;
+  let thumbnailHeight: number | undefined = undefined;
+  let videoProperties: VideoProperties | undefined = undefined;
+
+  function setVideoProperties(properties: VideoProperties) {
+    videoProperties = properties;
+    if (!thumbnailVideo) thumbnailVideo = document.createElement("video");
+    thumbnailVideo.src = properties.src;
+    thumbnailVideo.crossOrigin = "anonymous";
+    setCanvasDimensions();
+  }
+
+  function setCanvasDimensions() {
+    if (!thumbnailCanvas || !videoProperties) return;
+    thumbnailHeight =
+      thumbnailWidth *
+      (videoProperties.videoHeight / videoProperties.videoWidth);
+    thumbnailCanvas.height = thumbnailHeight;
+    thumbnailCanvas.width = thumbnailWidth;
+    if (canvasCtx) return;
+    const maybeCtx = thumbnailCanvas.getContext("2d");
+    if (!maybeCtx)
+      throw new InvalidStateError("Failed to get canvas 2d context");
+    canvasCtx = maybeCtx;
+  }
+
+  function setCanvas(canvas: HTMLCanvasElement) {
+    thumbnailCanvas = canvas;
+    setCanvasDimensions();
+  }
+
+  async function updateThumbnail(seekPercent: number): Promise<void> {
     return new Promise(async (resolve) => {
-      await loadingMetadata;
-      const seekTime = (seekPercent / 100) * thumbnailVideo.duration;
+      if (!thumbnailVideo || !videoProperties) return;
+      const seekTime = (seekPercent / 100) * videoProperties.duration;
       thumbnailVideo.currentTime = seekTime;
 
-      const onSeeked = async () => {
-        thumbnailCtx.drawImage(
+      async function onSeeked() {
+        if (!thumbnailVideo || !canvasCtx || !thumbnailCanvas) return;
+        if (!canvasCtx) return;
+        canvasCtx.drawImage(
           thumbnailVideo,
           0,
           0,
           thumbnailCanvas.width,
           thumbnailCanvas.height,
         );
-        const url = await new Promise<string>((resolve, reject) => {
-          thumbnailCanvas.toBlob((blob: Blob | null) => {
-            if (!blob)
-              return reject(
-                new InvalidStateError(
-                  "Failed to create blob from thumbnailCanvas",
-                ),
-              );
-            resolve(URL.createObjectURL(blob));
-          });
+        console.log("thumbnail updated");
+        console.log("generator data", {
+          thumbnailVideo,
+          canvasCtx,
+          thumbnailCanvas,
+          thumbnailHeight,
+          thumbnailWidth,
+          videoProperties,
         });
-        resolve(url);
-      };
+        resolve();
+      }
 
       thumbnailVideo.addEventListener("seeked", onSeeked, { once: true });
     });
   }
 
-  function disposeThumbnail(thumbnail: string) {
-    thumbnail && URL.revokeObjectURL(thumbnail);
-  }
-
   return {
-    getThumbnail,
-    disposeThumbnail,
-    height: thumbnailCanvas.height,
-    width: thumbnailCanvas.width,
+    updateThumbnail,
+    setCanvas,
+    setVideoProperties,
+    thumbnailHeight,
+    thumbnailWidth,
   };
 }

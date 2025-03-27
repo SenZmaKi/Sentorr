@@ -26,11 +26,11 @@ function setupPortHandlers(worker: Worker) {
 
 function setupRawHandlers(worker: Worker) {
   worker.on("error", (error) => {
-    console.error("Worker error:", error);
+    console.error("Received worker error:", error);
     throw error;
   });
   worker.on("messageerror", (error) => {
-    console.error("Worker message error:", error);
+    console.error("Received worker message error:", error);
     throw error;
   });
 }

@@ -1,13 +1,13 @@
 export enum Page {
-  Home,
-  Search,
-  Preview,
-  Player,
-  Settings,
-  About,
+  Home = "Home",
+  Search = "Search",
+  Preview = "Preview",
+  Player = "Player",
+  Settings = "Settings",
+  About = "About",
 }
 
 export enum MediaCardType {
-  Complex,
-  Simple,
+  Complex = "Complex",
+  Simple = "Simple",
 }

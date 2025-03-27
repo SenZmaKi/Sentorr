@@ -1,7 +1,7 @@
 import type { TorrentServer } from "@/backend/torrent/server/common/types";
 import { type Worker, type MessagePort } from "worker_threads";
 import { type Result } from "@/common/types";
-import { tryCatchAsync } from "./functions";
+import { jsonStringify, tryCatchAsync } from "./functions";
 
 type RendererPortEvent = TorrentServer;
 
@@ -33,17 +33,23 @@ function createInvoke() {
   ): Promise<Awaited<ReturnType<RendererPortEvent[Channel]>>> {
     return new Promise<Awaited<ReturnType<RendererPortEvent[Channel]>>>(
       function (resolve, reject) {
-        console.log(`Invoking port: ${channel}()`, args);
+        console.log(`Invoking port: ${channel}()`, jsonStringify(args));
         const message: Message<Channel> = { channel, args, id: id++ };
 
         function handleMessage(anyResponse: Response<keyof RendererPortEvent>) {
           if (anyResponse.id !== message.id) return;
           port.off("message", handleMessage);
           const response = anyResponse as Response<Channel>;
-          console.log(`Port invocation response: ${channel}()`, response);
+          console.log(
+            `Port invocation response: ${channel}()`,
+            jsonStringify(response),
+          );
           const [success, invokeError] = response.result;
           if (invokeError) {
-            console.error(`Port invocation error ${channel}():`, invokeError);
+            console.error(
+              `Port invocation error ${channel}():`,
+              jsonStringify(invokeError),
+            );
             return reject(invokeError);
           }
           resolve(success);
@@ -85,12 +91,18 @@ function createHandle() {
     channelToListener[channel] = listener;
     port.on("message", async (message: Message<Channel>) => {
       const { args, id, channel } = message;
-      console.log(`Handling port invocation: ${channel}()`, args);
+      console.log(
+        `Handling port invocation: ${channel}()`,
+        jsonStringify(args),
+      );
       const listener = channelToListener![channel] as any;
       const result = await tryCatchAsync(listener(...args));
       const anyResult = result as any;
       const response: Response<Channel> = { channel, id, result: anyResult };
-      console.log(`Port handle response: ${channel}()`, response);
+      console.log(
+        `Port handle response: ${channel}()`,
+        jsonStringify(response),
+      );
       port.postMessage(response);
     });
   }

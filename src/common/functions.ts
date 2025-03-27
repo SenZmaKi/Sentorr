@@ -1,6 +1,17 @@
 import { parseDocument } from "htmlparser2";
 import { load as cheerioLoad, type CheerioAPI } from "cheerio";
 import type { Result } from "./types";
+import { IS_BROWSER } from "./constants";
+
+/**
+ * Convenience function to quickly stringify an object for logging
+ * @param ignoreBrowser If `true` will not stringify the object if running in the browser cause devtools log objects better. Default `true`
+ *
+ */
+export function jsonStringify(object: any, space = 2, ignoreBrowser = true) {
+  if (ignoreBrowser && IS_BROWSER) return object;
+  return JSON.stringify(object, null, space);
+}
 
 export function printRunTimeLater(task: string = ""): () => void {
   const currentTime = new Date().getTime();

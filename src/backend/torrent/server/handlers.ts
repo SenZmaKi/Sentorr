@@ -3,7 +3,9 @@ import { config, readyState, start } from "./server";
 
 export async function onClientError(error: Error | string) {
   console.error(`WebTorrent client error`, error);
-  if (isErrorCode(error, "EADDRINUSE", "EACCESS")) {
+  if (isErrorCode(error, "EADDRINUSE", "EACCES")) {
+    // TODO: Handle this
+    if (isErrorCode("EACCES")) return;
     readyState.notReady();
     console.error(
       `Torrent port ${config.serverPort} is already in use, retrying on any available port`,

@@ -3,7 +3,7 @@ import { tryCatchAsync } from "@/common/functions";
 import { onClientError, onClientInfo, onServerError } from "./handlers";
 import { TorrentClientError, type TorrentServerConfig } from "./common/types";
 import torrentManager from "./manager";
-import { isErrorCode } from "./common/functions";
+import { hasErrorCode } from "./common/functions";
 import { InvalidStateError } from "@/common/types";
 
 export let client: WebTorrent.Instance;
@@ -73,7 +73,7 @@ async function listen(
       reject(new Error("Client Error", { cause: error })),
     );
     server.server.once("error", (error) => {
-      if (isErrorCode(error, "EADDRINUSE")) {
+      if (hasErrorCode(error, ["EADDRINUSE"])) {
         console.error(
           `Server port ${port} is already in use, retrying on any available port`,
         );

@@ -23,16 +23,16 @@
     languages,
     showControls,
     strictResolution,
+    useMiniplayer,
   } from "./common/store";
-  import { config } from "../common/store";
+  import { config, currentPage } from "../common/store";
   import Controls from "./controls/Controls.svelte";
   import { getMediaProgress } from "../common/store";
   import { tryCatchAsync } from "@/common/functions";
   import type { Episode, Media } from "@/backend/imdb/types";
   import type { Language } from "@ctrl/video-filename-parser";
   import Video from "./Video.svelte";
-
-  export let hidden: boolean;
+  import { Page } from "../common/types";
 
   async function clearVideo() {
     if (!$video) return;
@@ -160,6 +160,7 @@
   }
 
   function onGetTorrentStreamsError(error: Error, torrentFile: TorrentFile) {
+    console.error("onGetTorrentStreamsError()", error, torrentFile);
     $blacklistedTorrents = [...$blacklistedTorrents, torrentFile];
 
     switch (error.message) {
@@ -178,6 +179,7 @@
             "The torrent contains no video files.\nDismiss this message to fetch a new torrent.",
           onDismiss: maybeLoad,
         });
+        break;
       case GetTorrentStreamsError.NoMatchingFiles:
         console.error(GetTorrentStreamsError.NoMatchingFiles, torrentFile);
         toast.error(GetTorrentStreamsError.NoMatchingFiles, {
@@ -315,15 +317,21 @@
   window.ipc.torrentServer.start($config.torrent);
 </script>
 
-<PageWrapper {hidden}>
-  <div
-    bind:this={$videoContainer}
-    class:cursor-none={!$showControls}
-    class="relative flex flex-col items-center justify-center bg-black w-full h-screen"
-  >
+{#if $useMiniplayer}
+  <div class="w-[400px] h-[250px]">
     <Video onError={onVideoError} {onLoadedMetadata} />
-    <div class="absolute bottom-[0%] w-full">
-      <Controls />
-    </div>
   </div>
-</PageWrapper>
+{:else}
+  <PageWrapper hidden={$currentPage !== Page.Player}>
+    <div
+      bind:this={$videoContainer}
+      class:cursor-none={!$showControls}
+      class="relative flex flex-col items-center justify-center bg-black w-full h-screen"
+    >
+      <Video onError={onVideoError} {onLoadedMetadata} />
+      <div class="absolute bottom-[0%] w-full">
+        <Controls />
+      </div>
+    </div>
+  </PageWrapper>
+{/if}

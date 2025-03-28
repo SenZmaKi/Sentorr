@@ -6,10 +6,43 @@ import {
   SelectTorrentStreamError,
   GetTorrentStreamsError,
 } from "./common/types";
-import { tryCatchAsync } from "@/common/functions";
+import { jsonStringify, tryCatchAsync } from "@/common/functions";
 import { onTorrentError, onTorrentWarning } from "./handlers";
 import { type TorrentStreamStats } from "./common/types";
 import WebTorrent from "webtorrent";
+import { hasErrorMessage } from "./common/functions";
+import { RecoverableErrorMessage } from "./common/constants";
+
+function createGetTorrentStreamsLock() {
+  let promise: Promise<void> | undefined = undefined;
+  let resolvePromise: (() => void) | undefined = undefined;
+
+  async function acquire() {
+    while (promise) await promise;
+
+    promise = new Promise<void>((resolve) => {
+      resolvePromise = resolve;
+    });
+  }
+
+  function release() {
+    if (!resolvePromise) return;
+    resolvePromise();
+    promise = undefined;
+    resolvePromise = undefined;
+  }
+  return {
+    async withLock<T>(callback: () => Promise<T> | T): Promise<T> {
+      await acquire();
+      try {
+        return await callback();
+      } finally {
+        release();
+      }
+    },
+  };
+}
+const getTorrentStreamsLock = createGetTorrentStreamsLock();
 
 const fileTorrentStreamQueue: {
   file: WebTorrent.TorrentFile;
@@ -52,27 +85,61 @@ async function removeTorrent(torrentID: string) {
   });
 }
 
-async function getTorrentStreams(torrentID: string): Promise<TorrentStream[]> {
+export async function getTorrent(torrentID: string) {
+  const torrent = await client.get(torrentID);
+  if (!torrent) return undefined;
+  await waitForMetadata(torrent);
+  return torrent;
+}
+
+function waitForMetadata(torrent: WebTorrent.Torrent) {
+  return new Promise<void>(async (resolve) => {
+    if (torrent.files.length) return resolve();
+    torrent.once("metadata", () => {
+      return resolve();
+    });
+  });
+}
+
+//  Most of the awkwardness here is to handle concurrent calls where torrentID is the same
+async function getTorrentStreams(torrentID: string) {
+  console.log("getTorrentStreams()", torrentID);
   await readyState.waitTillReady();
-  return new Promise(async (resolve, reject) => {
+
+  return new Promise<TorrentStream[]>(async (resolve, reject) => {
     let success = false;
-    const existingTorrent = await client.get(torrentID);
-    if (existingTorrent) {
-      return resolve(torrentToTorrentStreams(existingTorrent));
+
+    function succeed(torrent: WebTorrent.Torrent) {
+      const torrentStreams = torrentToTorrentStreams(torrent);
+      console.log("getTorrentStreams() done", jsonStringify(torrentStreams[0]));
+      success = true;
+      client.removeListener("error", handleDuplicateError);
+      resolve(torrentStreams);
     }
+
+    async function handleDuplicateError(error: Error | string) {
+      if (!hasErrorMessage(error, [RecoverableErrorMessage.DuplicateTorrent]))
+        return;
+      const torrent = await getTorrent(torrentID);
+      if (!torrent) return;
+      succeed(torrent);
+    }
+
+    client.on("error", handleDuplicateError);
+
+    const maybeTorrent = await getTorrent(torrentID);
+    if (maybeTorrent) succeed(maybeTorrent);
     client.add(
       torrentID,
       {
         deselect: true,
         destroyStoreOnDestroy: true,
       },
-      (torrent) => {
+      async (torrent) => {
+        await waitForMetadata(torrent);
         torrent.on("error", onTorrentError);
         torrent.on("warning", onTorrentWarning);
-        console.log(`Torrent ${torrentID} added`);
-        success = true;
-        const torrentStreams = torrentToTorrentStreams(torrent);
-        return resolve(torrentStreams);
+        succeed(torrent);
       },
     );
 
@@ -147,9 +214,10 @@ async function clearTorrents() {
 }
 
 async function deselectAllTorrentStreams() {
-  console.log("Deselecting all torrent streams");
+  console.log("deselectAllTorrentStreams()");
   await readyState.waitTillReady();
   fileTorrentStreamQueue.forEach((f) => f.file.deselect());
+  console.log("deselectAllTorrentStreams() done");
 }
 
 async function getCurrentTorrentStreamStats(): Promise<

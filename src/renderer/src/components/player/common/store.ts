@@ -29,7 +29,7 @@ async function setProgress() {
 export let playerMedia = writable<Media | undefined>(undefined);
 /**
  *WARN: Whenever updating `playerMedia` and `playerEpisode`, update `playerEpisode` first.
- * This is because truthy `playerMedia` and `undefined` `playerEpisode` triggers Player.load() i.e., when Media.canHaveEpisodes is false.
+ * This is because truthy `playerMedia` and `undefined` `playerEpisode` triggers Player.load() i.e., when `Media.canHaveEpisodes` is `false`.
  */
 export let playerEpisode = writable<Episode | undefined>(undefined);
 setProgress();
@@ -95,4 +95,4 @@ export let languages = writable([Language.English]);
 
 export let video = writable<HTMLVideoElement | undefined>(undefined);
 export let videoContainer = writable<HTMLDivElement | undefined>(undefined);
-export let useMiniplayer = writable(false);
+export let useMiniplayer = writable(true);

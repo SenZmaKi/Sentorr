@@ -1,11 +1,10 @@
 <script lang="ts">
-  import Search from "./components/search/Main.svelte";
+  import Search from "./components/search/Search.svelte";
   import Preview from "./components/preview/Preview.svelte";
-  import { Page } from "./components/common/types";
   import Player from "./components/player/Player.svelte";
   import Navbar from "./components/navbar/Navbar.svelte";
-  import { currentPage } from "./components/common/store";
   import { Toaster } from "svelte-sonner";
+  import { useMiniplayer } from "./components/player/common/store";
 </script>
 
 <body>
@@ -21,9 +20,11 @@
         closeButton
       />
 
-      <Search hidden={$currentPage !== Page.Search} />
-      <Preview hidden={$currentPage !== Page.Preview} />
-      <Player hidden={$currentPage !== Page.Player} />
+      <Search />
+      <Preview />
+      {#if !$useMiniplayer}
+        <Player />
+      {/if}
     </div>
   </div>
 </body>

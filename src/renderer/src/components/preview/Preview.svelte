@@ -3,6 +3,7 @@
   import BottomInfo from "./BottomInfo.svelte";
   import SeasonsContainer from "./SeasonsContainer.svelte";
   import {
+    currentPage,
     getMediaProgress,
     previewMedia,
     previewResult,
@@ -11,8 +12,7 @@
   import PageWrapper from "../common/PageWrapper.svelte";
   import type { Media } from "@/backend/imdb/types";
   import type { MediaProgress } from "@/backend/config/types";
-
-  export let hidden: boolean;
+  import { Page } from "../common/types";
 
   async function awaitMediaPromise(mediaPromise: Promise<Media>) {
     // Clear previous media to show the skeleton as we await the new media
@@ -29,7 +29,7 @@
 </script>
 
 {#if $previewResult}
-  <PageWrapper {hidden}>
+  <PageWrapper hidden={$currentPage !== Page.Preview}>
     {#if !media}
       <PreviewSkeleton canHaveEpisodes={$previewResult.canHaveEpisodes} />
     {:else}

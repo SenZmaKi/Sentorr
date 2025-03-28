@@ -33,7 +33,7 @@ export function getMediaProgress(mediaID: MediaId): MediaProgress | undefined {
   return mediaProgress;
 }
 
-export const currentPage = writable(Page.Player);
+export const currentPage = writable(Page.Search);
 currentPage.subscribe(() => {
   console.log("currentPage:", get(currentPage));
 });

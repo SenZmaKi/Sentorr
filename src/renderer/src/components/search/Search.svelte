@@ -10,7 +10,10 @@
   import ResultsContainer from "./ResultsContainer.svelte";
   import PageWrapper from "../common/PageWrapper.svelte";
   import MediaCardTypes from "./MediaCardTypes.svelte";
-  export let hidden: boolean;
+  import { currentPage } from "../common/store";
+  import { Page } from "../common/types";
+
+  $: hidden = $currentPage !== Page.Search;
 </script>
 
 <PageWrapper {hidden}>
@@ -30,6 +33,6 @@
         <Sort />
       </div>
     </div>
-    <ResultsContainer bind:hidden />
+    <ResultsContainer {hidden} />
   </div>
 </PageWrapper>

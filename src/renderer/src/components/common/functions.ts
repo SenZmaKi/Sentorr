@@ -7,7 +7,12 @@ import {
 } from "@/renderer/src/components/common/store";
 import type { Media } from "@/backend/imdb/types";
 import { Page } from "./types";
-import { playerEpisode, playerMedia } from "../player/common/store";
+import {
+  playerEpisode,
+  playerMedia,
+  useMiniplayer,
+} from "../player/common/store";
+import { get } from "svelte/store";
 
 export function prettyFormatNumber(num: number): string {
   if (num >= 1000_000_000) {
@@ -94,7 +99,7 @@ export function switchToPreviewPage(
 export function switchToPlayerPage(media: Media, episode?: Episode): void {
   playerEpisode.set(episode);
   playerMedia.set(media);
-  currentPage.set(Page.Player);
+  if (!get(useMiniplayer)) currentPage.set(Page.Player);
 }
 
 /**
@@ -116,13 +121,10 @@ export function makeActionWhenInViewport(callback: () => void) {
   };
 }
 export function timeStamp(sec: number): string {
-    const hours = Math.floor(sec / 3600);
-    let minutes: string | number = Math.floor(sec / 60) - hours * 60;
-    let seconds: string | number = Math.floor(sec % 60);
-    if (minutes < 10 && hours > 0) minutes = "0" + minutes;
-    if (seconds < 10) seconds = "0" + seconds;
-    return hours > 0
-        ? `${hours}:${minutes}:${seconds}`
-        : `${minutes}:${seconds}`;
+  const hours = Math.floor(sec / 3600);
+  let minutes: string | number = Math.floor(sec / 60) - hours * 60;
+  let seconds: string | number = Math.floor(sec % 60);
+  if (minutes < 10 && hours > 0) minutes = "0" + minutes;
+  if (seconds < 10) seconds = "0" + seconds;
+  return hours > 0 ? `${hours}:${minutes}:${seconds}` : `${minutes}:${seconds}`;
 }
-

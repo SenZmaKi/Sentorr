@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { runtimeRangeMinutes } from "./store";
+  import { runtimeRangeMinutes } from "./common/store";
   import NumberRangeFilter from "./NumberRangeFilter.svelte";
 </script>
 
 <NumberRangeFilter
   bind:range={$runtimeRangeMinutes}
+  tooltip="In minutes"
   name="Runtime"
   viewBox="0 0 24 24"
 >

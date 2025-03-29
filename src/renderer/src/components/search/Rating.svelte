@@ -1,6 +1,6 @@
 <script lang="ts">
   import { MAX_RATING } from "@/backend/imdb/constants";
-  import { ratingRange } from "./store";
+  import { ratingRange } from "./common/store";
   import NumberRangeFilter from "./NumberRangeFilter.svelte";
 </script>
 

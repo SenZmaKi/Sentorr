@@ -1,7 +1,7 @@
 <script lang="ts">
   import { scale } from "svelte/transition";
   import TooltipWrapper from "././common/TooltipWrapper.svelte";
-  
+
   import { timeStamp } from "../../common/functions";
   import { currentTime, duration } from "../common/store";
   import HoverWrapper from "./common/HoverWrapper.svelte";
@@ -26,7 +26,7 @@
             style="width: {currentTimeWidth}px; height: {currentTimeHeight}px;"
           >
             {#key showElapsedTime}
-              <!-- CSS man...-->
+              <!-- TODO: Find a better way to do this-->
               <div
                 bind:clientWidth={currentTimeWidth}
                 bind:clientHeight={currentTimeHeight}

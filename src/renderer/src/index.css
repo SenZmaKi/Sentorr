@@ -25,16 +25,34 @@ html * {
   font-family: "Bahnschrift", sans-serif !important;
 }
 
-input {
+.search-filter-input {
   padding-left: 0.5rem;
   outline: none;
-  border-radius: 0.25rem;
+  @apply shake-on-active border-transparent border-2  focus:border-gray-300 rounded;
 }
 
-select {
-  padding-left: 0.5rem;
-  outline: none;
-  border-radius: 0.25rem;
+@layer components {
+  .shake-on-active:active {
+    animation: shake-animation 0.2s ease-in-out;
+  }
+}
+
+@keyframes shake-animation {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 svg {

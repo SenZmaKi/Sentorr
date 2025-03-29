@@ -48,8 +48,8 @@ export function parseHtml(htmlPage: string): CheerioAPI {
   return cheerioLoad(doc);
 }
 
-export function zfill(num: number): string {
-  return num.toString().padStart(2, "0");
+export function zfill(num: number, count = 2): string {
+  return num.toString().padStart(count, "0");
 }
 
 export async function tryCatchAsync<T, E = Error>(

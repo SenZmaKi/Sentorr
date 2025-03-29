@@ -3,7 +3,7 @@
   import { Page } from "../common/types";
 </script>
 
-<div class="p-1 h-screen w-[5%] flex flex-col justify-center">
+<div class="m-2 h-screen w-[5%] flex flex-col justify-center">
   <Link page={Page.Home} viewBox="0 0 24 24">
     <path
       fill-rule="evenodd"

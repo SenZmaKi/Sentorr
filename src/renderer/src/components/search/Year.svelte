@@ -1,25 +1,30 @@
 <script lang="ts">
-  import type { Range, ReleaseDateRange } from "@/backend/imdb/types";
-  import { releaseDateRange } from "./store";
+  import type { ReleaseDateRange, Range } from "@/backend/imdb/types";
+  import { releaseDateRange } from "./common/store";
   import NumberRangeFilter from "./NumberRangeFilter.svelte";
+  import { zfill } from "@/common/functions";
+
   let range: Range | undefined = undefined;
   $: $releaseDateRange = getDateRange(range);
+  $: console.log("range", range);
+  $: console.log("releaseDateRange", $releaseDateRange);
 
   function getDateRange(
     range: Range | undefined,
   ): ReleaseDateRange | undefined {
-    if (range === undefined) {
-      return undefined;
-    }
-    const getStartDate = () => `${range.min}-01-01`;
-    const getEndDate = () => `${range.max}-12-31`;
-    if (range.min === undefined) {
-      return { end: getEndDate() };
-    }
-    if (range.max === undefined) {
-      return { start: getStartDate() };
-    }
-    return { start: getStartDate(), end: getEndDate() };
+    if (!range) return undefined;
+
+    const { min, max } = range;
+    const start = min ? `${zfill(min, 4)}-01-01` : undefined;
+    const end = max ? `${zfill(max, 4)}-12-31` : undefined;
+
+    if (!start && !end) return undefined;
+
+    if (!end) return { start };
+
+    if (!start) return { end };
+
+    return { start, end };
   }
 </script>
 

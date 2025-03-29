@@ -154,8 +154,8 @@ export enum SortOrder {
   DESC = "DESC",
 }
 export type Range = {
-  min?: number | string;
-  max?: number | string;
+  min?: number;
+  max?: number;
 };
 
 export type ReleaseDateRange = {

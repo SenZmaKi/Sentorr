@@ -6,7 +6,8 @@
 </script>
 
 <button
-  class="hover:scale-125 {$mediaCardType == cardType ? '' : 'opacity-40'}"
+  class="hover:scale-125 shake-on-active"
+  class:opacity-40={$mediaCardType != cardType}
   on:click={() => ($mediaCardType = cardType)}
 >
   <svg

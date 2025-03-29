@@ -16,7 +16,7 @@
   export let onError: (error: MediaError) => void;
   export let onLoadedMetadata: () => void;
 
-  $: console.log("video src;", src);
+  $: console.log("video src;", $src);
 </script>
 
 <!-- svelte-ignore a11y-media-has-caption -->

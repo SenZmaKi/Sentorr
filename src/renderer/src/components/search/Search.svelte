@@ -15,7 +15,7 @@
 
 <PageWrapper page={Page.Search}>
   <div class="opacity-90 flex-col justify-between p-3">
-    <div class="flex justify-between flex-wrap">
+    <div class="flex justify-between flex-wrap m-4 gap-4">
       <SearchTerm />
       <Genre />
       <MediaType />
@@ -23,9 +23,9 @@
       <Year />
       <Runtime />
     </div>
-    <div class="flex items-baseline pt-3 pb-3 justify-between">
+    <div class="flex flex-wrap items-baseline pt-3 pb-3 justify-between">
       <AllSelectedVariants />
-      <div class="flex pt-2">
+      <div class="flex flex-wrap pt-2">
         <MediaCardTypes />
         <Sort />
       </div>

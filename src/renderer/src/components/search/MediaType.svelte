@@ -1,7 +1,7 @@
 <script lang="ts">
   import EnumFilter from "./EnumFilter.svelte";
   import { MediaTypes } from "@/backend/imdb/constants";
-  import { mediaTypes, currentMediaType } from "./store";
+  import { mediaTypes, currentMediaType } from "./common/store";
 </script>
 
 <EnumFilter

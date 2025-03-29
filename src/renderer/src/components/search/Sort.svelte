@@ -1,6 +1,6 @@
 <script lang="ts">
   import { SortOrder, SortBy } from "@/backend/imdb/types";
-  import { sortBy, sortOrder } from "./store";
+  import { sortBy, sortOrder } from "./common/store";
   const formattedSortBy = {
     [SortBy.POPULARITY]: "Popularity rank",
     [SortBy.USER_RATING]: "Rating",
@@ -29,7 +29,7 @@
 <div class="flex items-center gap-5 pr-3">
   <div>
     <span>Sort by</span>
-    <select bind:value={$sortBy}>
+    <select class="search-filter-input" bind:value={$sortBy}>
       {#each Object.entries(formattedSortBy) as [key, value]}
         <option value={key}>{value}</option>
       {/each}

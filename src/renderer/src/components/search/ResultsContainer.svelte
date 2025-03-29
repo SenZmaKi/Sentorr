@@ -5,7 +5,7 @@
   import Simple from "../common/mediacard/Simple.svelte";
   import ComplexSkeleton from "../common/mediacard/ComplexSkeleton.svelte";
   import SimpleSkeleton from "../common/mediacard/SimpleSkeleton.svelte";
-  import { searchFilters } from "./store";
+  import { searchFilters } from "./common/store";
   import { createInfiniteScrollStore } from "../common/functions";
   import type { SearchFilters } from "@/backend/imdb/types";
   import { mediaCardType } from "../common/store";

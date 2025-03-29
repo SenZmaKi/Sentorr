@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { type Range } from "@/backend/imdb/types";
+  import { tippy } from "../common/constants";
   import FilterWrapper from "./FilterWrapper.svelte";
-  let minInput: number | null = null;
-  let maxInput: number | null = null;
+  import { type Range } from "@/backend/imdb/types";
+
   export let range: Range | undefined = undefined;
   export let name: string;
   export let viewBox: string;
   export let minRange = 0;
   export let maxRange: number | undefined = undefined;
+  export let tooltip: string | undefined = undefined;
 
   function validateMinAndMaxRange() {
     if (minInput !== null && maxInput !== null) {
@@ -44,13 +45,20 @@
     validateMinAndMaxRange();
     updateRange();
   }
+
+  let minInput: number | null = null;
+  let maxInput: number | null = null;
+
+  $: maybeTippy = tooltip ? tippy : () => {};
 </script>
 
 <FilterWrapper {name} {viewBox}>
   <slot slot="svgpath" />
   <div slot="picker" class="flex">
     <input
-      class="max-w-20"
+      class="search-filter-input w-24"
+      use:maybeTippy={{ content: tooltip, placement: "bottom" }}
+      on:focusout={onChange}
       on:change={onChange}
       min={minRange}
       max={maxRange}
@@ -60,8 +68,10 @@
     />
     <span class="pr-1 pl-1"> to </span>
     <input
-      class="max-w-20"
+      class="search-filter-input w-24"
+      use:maybeTippy={{ content: tooltip, placement: "bottom" }}
       on:change={onChange}
+      on:focusout={onChange}
       min={minRange}
       max={maxRange}
       type="number"

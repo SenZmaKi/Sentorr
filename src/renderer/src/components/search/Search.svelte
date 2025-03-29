@@ -10,13 +10,10 @@
   import ResultsContainer from "./ResultsContainer.svelte";
   import PageWrapper from "../common/PageWrapper.svelte";
   import MediaCardTypes from "./MediaCardTypes.svelte";
-  import { currentPage } from "../common/store";
   import { Page } from "../common/types";
-
-  $: hidden = $currentPage !== Page.Search;
 </script>
 
-<PageWrapper {hidden}>
+<PageWrapper page={Page.Search}>
   <div class="opacity-90 flex-col justify-between p-3">
     <div class="flex justify-between flex-wrap">
       <SearchTerm />
@@ -33,6 +30,6 @@
         <Sort />
       </div>
     </div>
-    <ResultsContainer {hidden} />
+    <ResultsContainer />
   </div>
 </PageWrapper>

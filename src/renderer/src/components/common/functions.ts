@@ -2,7 +2,7 @@ import type { BaseResult, Episode, Pagination } from "@/backend/imdb/types";
 import { writable } from "svelte/store";
 import {
   currentPage,
-  previewMedia,
+  previewMediaPromise,
   previewResult,
 } from "@/renderer/src/components/common/store";
 import type { Media } from "@/backend/imdb/types";
@@ -87,11 +87,11 @@ export function createInfiniteScrollStore<T>(
   return [accumulatedResults, infiniteScroll] as const;
 }
 
-export function switchToPreviewPage(
-  media: Promise<Media>,
+export async function switchToPreviewPage(
+  mediaPromise: Promise<Media>,
   result: BaseResult,
-): void {
-  previewMedia.set(media);
+) {
+  previewMediaPromise.set(mediaPromise);
   previewResult.set(result);
   currentPage.set(Page.Preview);
 }

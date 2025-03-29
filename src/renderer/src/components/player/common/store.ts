@@ -87,6 +87,7 @@ function configState<Key extends keyof Config["player"]>(key: Key) {
 
 export let volume = configState("volume");
 export let muted = configState("muted");
+muted.set(true);
 export let resolution = configState("resolution");
 export let strictResolution = configState("strictResolution");
 export let playbackRate = configState("playbackRate");

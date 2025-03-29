@@ -10,8 +10,8 @@
 <button
   class={`text-left ${className}`}
   on:click={() => {
-    const media = getMedia(result.id);
-    switchToPreviewPage(media, result);
+    const mediaPromise = getMedia(result.id);
+    switchToPreviewPage(mediaPromise, result);
   }}
 >
   <slot />

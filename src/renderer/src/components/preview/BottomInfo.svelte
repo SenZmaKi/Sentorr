@@ -58,33 +58,35 @@
     {/if}
   </div>
 </div>
-{#if media.recommendations && media.recommendations.length}
-  <div class="text-opacity-90 pt-6 flex flex-col">
-    <span class="font-semibold text-center text-lg opacity-90"
-      >More like this</span
-    >
-    <hr class="h-2 mt-2 mb-2 xs-dark border-none shadow-md shadow-black" />
-    <div class="flex overflow-y-auto">
-      {#each media.recommendations as recommendation}
-        {#if recommendation.imageUrl && recommendation.title}
-          <Simple result={recommendation} />
-        {/if}
-      {/each}
+<div class="">
+  {#if media.recommendations && media.recommendations.length}
+    <div class="text-opacity-90 pt-6 flex flex-col">
+      <span class="font-semibold text-center text-lg opacity-90"
+        >More like this</span
+      >
+      <hr class="h-2 mt-2 mb-2 xs-dark border-none shadow-md shadow-black" />
+      <div class="flex overflow-x-auto">
+        {#each media.recommendations as recommendation}
+          {#if recommendation.imageUrl && recommendation.title}
+            <Simple result={recommendation} />
+          {/if}
+        {/each}
+      </div>
     </div>
-  </div>
-{/if}
-{#if $accumulatedReviews.length}
-  <div class="flex flex-col pt-6">
-    <span class="font-semibold text-center text-lg opacity-90">Reviews</span>
-    <hr class="h-2 mt-2 mb-2 xs-dark border-none shadow-md shadow-black" />
-    <div on:scroll={infiniteScroll} class="flex overflow-y-auto">
-      {#each $accumulatedReviews as review}
-        {#if review}
-          <Review {review} width={256} height={192} />
-        {:else}
-          <ReviewSkeleton width={256} height={192} />
-        {/if}
-      {/each}
+  {/if}
+  {#if $accumulatedReviews.length}
+    <div class="flex flex-col pt-6">
+      <span class="font-semibold text-center text-lg opacity-90">Reviews</span>
+      <hr class="h-2 mt-2 mb-2 xs-dark border-none shadow-md shadow-black" />
+      <div on:scroll={infiniteScroll} class="flex overflow-x-auto">
+        {#each $accumulatedReviews as review}
+          {#if review}
+            <Review {review} width={256} height={192} />
+          {:else}
+            <ReviewSkeleton width={256} height={192} />
+          {/if}
+        {/each}
+      </div>
     </div>
-  </div>
-{/if}
+  {/if}
+</div>

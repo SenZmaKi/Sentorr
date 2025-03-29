@@ -3,9 +3,8 @@
   import BottomInfo from "./BottomInfo.svelte";
   import SeasonsContainer from "./SeasonsContainer.svelte";
   import {
-    currentPage,
     getMediaProgress,
-    previewMedia,
+    previewMediaPromise,
     previewResult,
   } from "../common/store";
   import PreviewSkeleton from "./PreviewSkeleton.svelte";
@@ -13,6 +12,7 @@
   import type { Media } from "@/backend/imdb/types";
   import type { MediaProgress } from "@/backend/config/types";
   import { Page } from "../common/types";
+  import PageTransition from "../common/PageTransition.svelte";
 
   async function awaitMediaPromise(mediaPromise: Promise<Media>) {
     // Clear previous media to show the skeleton as we await the new media
@@ -22,30 +22,36 @@
     mediaProgress = getMediaProgress(media.id);
   }
 
-  let media: Media | undefined;
-  let mediaProgress: MediaProgress | undefined;
+  let media: Media | undefined = undefined;
+  let mediaProgress: MediaProgress | undefined = undefined;
 
-  $: $previewMedia && awaitMediaPromise($previewMedia);
+  $: if ($previewMediaPromise) awaitMediaPromise($previewMediaPromise);
 </script>
 
-{#if $previewResult}
-  <PageWrapper hidden={$currentPage !== Page.Preview}>
-    {#if !media}
-      <PreviewSkeleton canHaveEpisodes={$previewResult.canHaveEpisodes} />
-    {:else}
-      <div class="flex max-h-screen">
-        <div
-          class="overflow-y-auto {media.canHaveEpisodes ? 'w-[60%]' : ''} p-2"
-        >
-          <TopInfo {media} {mediaProgress} />
-          <BottomInfo {media} />
-        </div>
-        {#if media.canHaveEpisodes}
-          <div class="w-[40%]">
-            <SeasonsContainer {media} {mediaProgress} />
-          </div>
-        {/if}
-      </div>
-    {/if}
-  </PageWrapper>
-{/if}
+<PageWrapper page={Page.Preview}>
+  {#if $previewResult}
+    <div class="relative">
+      {#key $previewMediaPromise}
+        <PageTransition class="flex">
+          {#if !media}
+            <PreviewSkeleton canHaveEpisodes={$previewResult.canHaveEpisodes} />
+          {:else}
+            <div
+              class="overflow-y-auto h-screen {media.canHaveEpisodes
+                ? 'w-[60%]'
+                : ''} p-2"
+            >
+              <TopInfo {media} {mediaProgress} />
+              <BottomInfo {media} />
+            </div>
+            {#if media.canHaveEpisodes}
+              <div class="w-[40%]">
+                <SeasonsContainer {media} {mediaProgress} />
+              </div>
+            {/if}
+          {/if}
+        </PageTransition>
+      {/key}
+    </div>
+  {/if}
+</PageWrapper>

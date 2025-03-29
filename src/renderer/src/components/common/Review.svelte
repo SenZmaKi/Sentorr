@@ -2,6 +2,7 @@
   import type { Review } from "@/backend/imdb/types";
   import Rating from "./Rating.svelte";
   import Like from "./Like.svelte";
+
   export let review: Review;
   export let width: number;
   export let height: number;

@@ -48,8 +48,7 @@
     </div>
   </button>
   {#if open}
-
-      <div class="h-[10px] "></div>
+    <div class="h-[10px]"></div>
     <div
       class="overflow-y-auto h-[670px] w-[98%] items-center"
       on:scroll={infiniteScroll}

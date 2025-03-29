@@ -25,7 +25,7 @@
     strictResolution,
     useMiniplayer,
   } from "./common/store";
-  import { config, currentPage } from "../common/store";
+  import { config } from "../common/store";
   import Controls from "./controls/Controls.svelte";
   import { getMediaProgress } from "../common/store";
   import { tryCatchAsync } from "@/common/functions";
@@ -230,7 +230,7 @@
             "Failed to decode media.\nDismiss this message to fetch a new torrent.",
           onDismiss: maybeLoad,
         });
-
+        break;
       default:
         throw error;
     }
@@ -238,20 +238,28 @@
 
   function isValidCodecs() {
     if (!$video) return false;
-    // We it's valid assume cause we don't have any information
+    // We assume it's valid cause we don't have enough information
     if (!$video.videoTracks || !$video.audioTracks || !$playerTorrentFile)
       return true;
-    if (!$video.videoTracks.length && !$video.audioTracks.length) {
+
+    function blacklistCurrentTorrent() {
+      if (!$playerTorrentFile) return;
       $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
+    }
+
+    if (!$video.videoTracks.length && !$video.audioTracks.length) {
+      blacklistCurrentTorrent();
       console.error("Media codec error: No video and audio tracks found");
       toast.error("Media codec error", {
         description:
-          "The video and audio codec is unsupported.\nDismiss this message to fetch a new torrent.",
+          "The video and audio codec are unsupported.\nDismiss this message to fetch a new torrent.",
         onDismiss: maybeLoad,
       });
+      return false;
     }
+
     if (!$video.videoTracks.length) {
-      $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
+      blacklistCurrentTorrent();
       console.error(`Video codec error: Video track not found`);
       toast.error("Video codec error", {
         description:
@@ -260,8 +268,9 @@
       });
       return false;
     }
+
     if (!$video.audioTracks.length) {
-      $blacklistedTorrents = [...$blacklistedTorrents, $playerTorrentFile];
+      blacklistCurrentTorrent();
       console.error(`Audio codec error: Audio track not found`);
       toast.error("Audio codec error", {
         description:
@@ -311,18 +320,19 @@
     resolution: $resolution,
     strictResolution: $strictResolution,
   };
-  $: if (loadParams) load(loadParams);
+  $: console.log("episode and media:", $playerEpisode, $playerMedia);
+  // $: if (loadParams) load(loadParams);
   $: $src = $playerTorrentStream?.url ?? "";
 
   window.ipc.torrentServer.start($config.torrent);
 </script>
 
 {#if $useMiniplayer}
-  <div class="w-[400px] h-[250px]">
+  <div class="w-[400px] h-[250px] absolute bottom-4 right-4">
     <Video onError={onVideoError} {onLoadedMetadata} />
   </div>
 {:else}
-  <PageWrapper hidden={$currentPage !== Page.Player}>
+  <PageWrapper page={Page.Player}>
     <div
       bind:this={$videoContainer}
       class:cursor-none={!$showControls}

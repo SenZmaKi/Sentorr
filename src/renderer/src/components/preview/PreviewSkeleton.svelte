@@ -5,14 +5,12 @@
   export let canHaveEpisodes: boolean;
 </script>
 
-<div class="flex max-h-screen">
-  <div class="overflow-y-auto {canHaveEpisodes ? 'w-[60%]' : ''} p-2">
-    <TopInfoSkeleton />
-    <BottomInfoSkeleton />
-  </div>
-  {#if canHaveEpisodes}
-    <div class="w-[40%]">
-      <SeasonsContainerSkeleton />
-    </div>
-  {/if}
+<div class="overflow-y-auto {canHaveEpisodes ? 'w-[60%]' : ''} p-2">
+  <TopInfoSkeleton />
+  <BottomInfoSkeleton />
 </div>
+{#if canHaveEpisodes}
+  <div class="w-[40%]">
+    <SeasonsContainerSkeleton />
+  </div>
+{/if}

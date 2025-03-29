@@ -1,17 +1,13 @@
 <script lang="ts">
-  import { useMiniplayer } from "../player/common/store";
-  import Player from "../player/Player.svelte";
+  import { currentPage } from "./store";
+  import type { Page } from "./types";
+  import PageTransition from "./PageTransition.svelte";
 
-  export let hidden: boolean;
+  export let page: Page;
 </script>
 
-<div class=" {hidden ? 'hidden' : ''}">
-  <div class="relative">
+{#if $currentPage === page}
+  <PageTransition>
     <slot />
-    {#if $useMiniplayer}
-      <div class="absolute bottom-2 right-4">
-        <Player />
-      </div>
-    {/if}
-  </div>
-</div>
+  </PageTransition>
+{/if}

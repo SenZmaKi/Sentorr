@@ -8,7 +8,9 @@ import { MediaCardType, Page } from "./types";
 import type { MediaProgress } from "@/backend/config/types";
 
 export const previewResult = writable<BaseResult | undefined>(undefined);
-export const previewMedia = writable<Promise<Media> | undefined>(undefined);
+export const previewMediaPromise = writable<Promise<Media> | undefined>(
+  undefined,
+);
 export const mediaCardType = writable(MediaCardType.Complex);
 export const config = writable(await window.ipc.config.getConfig());
 let isInitialRun = true;

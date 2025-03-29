@@ -65,13 +65,13 @@
     : [undefined, false];
 
   let button: HTMLButtonElement | undefined = undefined;
-  const isWatching = mediaProgress?.episode?.id === episode.id;
-  $: if (isWatching && button) button.focus();
+  const inProgress = mediaProgress?.episode?.id === episode.id;
+  $: if (inProgress && button) button.focus();
 </script>
 
 <button
   bind:this={button}
-  class="rounded shadow-xl shadow-black text-left flex xs-dark m-7 w-[90%] min-w-[350px] duration-300 cursor-pointer ease-in-out hover:scale-110 {isWatching
+  class="rounded shadow-xl shadow-black text-left flex xs-dark m-7 w-[90%] min-w-[350px] duration-300 cursor-pointer ease-in-out hover:scale-110 {inProgress
     ? // Add 4 extra pixels (2 to the top and 2 to the bottom) to the height
       // to account for the border otherwise the image will cut off the border
       'border-2 border-white'

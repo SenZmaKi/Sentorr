@@ -10,6 +10,7 @@ js/
 .performance-profiles/
 electron-dists/
 src/test/results
+.github/videos
 
 
 .env

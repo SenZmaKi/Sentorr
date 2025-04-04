@@ -23,7 +23,6 @@
     languages,
     showControls,
     strictResolution,
-    useMiniplayer,
   } from "./common/store";
   import { config } from "../common/store";
   import Controls from "./controls/Controls.svelte";
@@ -321,27 +320,21 @@
     strictResolution: $strictResolution,
   };
   $: console.log("episode and media:", $playerEpisode, $playerMedia);
-  // $: if (loadParams) load(loadParams);
+  $: if (loadParams) load(loadParams);
   $: $src = $playerTorrentStream?.url ?? "";
 
   window.ipc.torrentServer.start($config.torrent);
 </script>
 
-{#if $useMiniplayer}
-  <div class="w-[400px] h-[250px] absolute bottom-4 right-4">
+<PageWrapper page={Page.Player}>
+  <div
+    bind:this={$videoContainer}
+    class:cursor-none={!$showControls}
+    class="relative flex flex-col items-center justify-center bg-black w-full h-screen"
+  >
     <Video onError={onVideoError} {onLoadedMetadata} />
-  </div>
-{:else}
-  <PageWrapper page={Page.Player}>
-    <div
-      bind:this={$videoContainer}
-      class:cursor-none={!$showControls}
-      class="relative flex flex-col items-center justify-center bg-black w-full h-screen"
-    >
-      <Video onError={onVideoError} {onLoadedMetadata} />
-      <div class="absolute bottom-[0%] w-full">
-        <Controls />
-      </div>
+    <div class="absolute bottom-[0%] w-full">
+      <Controls />
     </div>
-  </PageWrapper>
-{/if}
+  </div>
+</PageWrapper>

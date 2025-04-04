@@ -99,6 +99,7 @@
   $: if (!$isHovering) showControlsWithTimeout();
   $: $showControls =
     !$showControlsTimedOut || $paused || $isHovering || $showSettingsModal;
+  $: console.log("showControls", $showControls);
   $: if (!$showControls) {
   }
 </script>

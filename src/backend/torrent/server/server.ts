@@ -16,10 +16,7 @@ export let config: TorrentServerConfig;
  */
 export async function start(torrentConfig: TorrentServerConfig) {
   config = torrentConfig;
-  client = new WebTorrent({
-    maxConns: torrentConfig.maxConns,
-    torrentPort: torrentConfig.torrentPort,
-  });
+  client = new WebTorrent(torrentConfig);
   client.on("error", onClientError);
   client.on("info", onClientInfo);
   server = client.createServer({}, "node") as NodeServer;

@@ -8,8 +8,8 @@
 
   async function onClick() {
     if (!$video || $showSettingsModal) return;
+    if ($paused) showControlsWithTimeout(true);
     $paused ? await $video.play() : $video.pause();
-    if (!$paused) showControlsWithTimeout();
   }
   $: if ($video) {
     $video.addEventListener("click", onClick);
@@ -17,7 +17,11 @@
   onDestroy(() => $video && $video.removeEventListener("click", onClick));
 </script>
 
-<Button tooltip={$paused ? "Play" : "Pause"} style="position: relative;" {onClick}>
+<Button
+  tooltip={$paused ? "Play" : "Pause"}
+  style="position: relative;"
+  {onClick}
+>
   {#if $paused}
     <svg
       transition:scale

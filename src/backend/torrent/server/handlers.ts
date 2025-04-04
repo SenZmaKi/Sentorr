@@ -6,7 +6,8 @@ import {
   RecoverableErrorCode,
 } from "./common/constants";
 import { hasErrorCode, hasErrorMessage } from "./common/functions";
-import { config, readyState, start } from "./server";
+import { client, config, readyState } from "./server";
+import torrentServer from "./server";
 
 export async function onClientError(error: Error | string) {
   console.error(`WebTorrent client error`, error);
@@ -16,7 +17,8 @@ export async function onClientError(error: Error | string) {
     console.error(
       `Torrent port ${config.serverPort} is already in use, retrying on any available port`,
     );
-    await start({ ...config, torrentPort: 0 });
+    if (!client.destroyed) await torrentServer.close();
+    await torrentServer.start({ ...config, torrentPort: 0 });
     return;
   }
 

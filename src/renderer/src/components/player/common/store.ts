@@ -67,6 +67,7 @@ export let src = playerState("");
  */
 export let progress = playerState(0);
 export let showControls = playerState(true);
+export let waiting = playerState(true);
 
 function configState<Key extends keyof Config["player"]>(key: Key) {
   const value = get(config).player[key];
@@ -93,6 +94,6 @@ export let playbackRate = configState("playbackRate");
 export let blacklistedTorrents = writable<TorrentFile[]>([]);
 export let languages = writable([Language.English]);
 
-export let video = writable<HTMLVideoElement | undefined>(undefined);
-export let videoContainer = writable<HTMLDivElement | undefined>(undefined);
+export let video = writable<HTMLVideoElement | null>(null);
+export let videoContainer = writable<HTMLDivElement | null>(null);
 export let useMiniplayer = writable(false);

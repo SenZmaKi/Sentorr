@@ -38,9 +38,9 @@ export async function start(torrentConfig: TorrentServerConfig) {
 }
 
 async function close() {
+  await readyState.waitTillReady();
   return new Promise<void>(async (resolve, reject) => {
     console.log("Closing server");
-    await readyState.waitTillReady();
     server.close();
     console.log("Destroying client");
     client.destroy((error) => {

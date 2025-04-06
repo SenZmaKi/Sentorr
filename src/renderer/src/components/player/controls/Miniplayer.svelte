@@ -3,6 +3,7 @@
   import { Page } from "../../common/types";
   import { useMiniplayer } from "../common/store";
   import Button from "./common/Button.svelte";
+
   function onClick() {
     $useMiniplayer = !$useMiniplayer;
     $currentPage = $useMiniplayer ? Page.Search : Page.Player;

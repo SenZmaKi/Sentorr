@@ -5,7 +5,7 @@
     type TorrentFile,
   } from "@/backend/torrent/sources/common/types";
   import {
-    GetTorrentStreamsError,
+    GetTorrentStreamError,
     SelectTorrentStreamError,
   } from "@/backend/torrent/server/common/types";
   import { computeTorrentScores } from "@/backend/torrent/sources/common/functions";
@@ -23,12 +23,13 @@
     languages,
     showControls,
     strictResolution,
+    waiting,
   } from "./common/store";
   import { config } from "../common/store";
   import Controls from "./controls/Controls.svelte";
   import { getMediaProgress } from "../common/store";
   import { tryCatchAsync } from "@/common/functions";
-  import type { Episode, Media } from "@/backend/imdb/types";
+  import type { Episode, Media, SeasonEpisode } from "@/backend/imdb/types";
   import type { Language } from "@ctrl/video-filename-parser";
   import Video from "./Video.svelte";
   import { Page } from "../common/types";
@@ -42,43 +43,48 @@
     await window.ipc.torrentServer.deselectAllTorrentStreams();
   }
 
-  async function load(params: {
+  async function getBestTorrentFile({
+    media,
+    episode,
+    languages,
+    resolution,
+    strictResolution,
+  }: {
     media: Media;
     episode: Episode | undefined;
     languages: Language[];
     resolution: Resolution;
     strictResolution: boolean;
   }) {
-    const { media, episode, languages, resolution, strictResolution } = params;
-    console.log("load()", params);
-    await clearVideo();
     if (!media.title) {
       console.error(`Media ${media.id} has no title`);
       toast.error("No media title", {
         description: "The media has no title to use to fetch torrents.",
       });
-      return;
+      return undefined;
     }
     const torrentFiles = await window.ipc.torrentServer.getTorrentFiles({
-      media,
-      episode,
+      title: media.title,
+      mediaImdbID: media.id,
+      episodeImdbID: episode?.id,
+      seasonEpisode: episode?.seasonEpisode,
       languages,
       blacklistedTorrents: $blacklistedTorrents,
     });
     console.log("torrentFiles:", torrentFiles);
     // load() was called later and it resolved faster than the current call
-    if ($playerTorrentStream && $playerTorrentFile) return;
+    if ($playerTorrentStream && $playerTorrentFile) return undefined;
     const resTorrentFiles = strictResolution
       ? torrentFiles.filter((torrent) => torrent.resolution === resolution)
       : torrentFiles;
     if (!resTorrentFiles.length) {
       console.error("No torrent files found: ", media);
       toast.error("No torrents found", {
-        description: torrentFiles.length
+        description: strictResolution
           ? `No ${resolution}p torrents found. Try disabling "strict resolution".`
           : "No torrents were found for this media.",
       });
-      return;
+      return undefined;
     }
     const seasonFiles = resTorrentFiles.filter(
       (torrent) => torrent.isCompleteSeason,
@@ -97,58 +103,99 @@
       }),
     ];
     const sortedByScore = torrentAndScore.sort((a, b) => b.score - a.score);
-    const torrentFile = sortedByScore[0].torrent;
-    const [torrentsStreams, torrentStreamsError] = await tryCatchAsync(
-      window.ipc.torrentServer.getTorrentStreams(
-        media.title,
+    const { torrent, score } = sortedByScore[0];
+    console.log("Best torrent file:", torrent, "with score:", score);
+    return torrent;
+  }
+
+  async function streamTorrent(
+    {
+      title,
+      seasonEpisode,
+      torrentFile,
+    }: {
+      title: string;
+      seasonEpisode: SeasonEpisode | undefined;
+      torrentFile: TorrentFile;
+    },
+    attempt = 0,
+  ) {
+    const [torrentStream, getError] = await tryCatchAsync(
+      window.ipc.torrentServer.getTorrentStream(
+        title,
         torrentFile,
-        media.canHaveEpisodes,
+        seasonEpisode,
       ),
     );
-    if (torrentStreamsError) {
-      onGetTorrentStreamsError(torrentStreamsError, torrentFile);
-      return;
-    }
-    if (!torrentsStreams.length) {
-      console.error("No torrent streams found");
-      return;
-    }
-    const torrentStream = !torrentFile.isCompleteSeason
-      ? torrentsStreams[0]
-      : torrentsStreams.find(
-          (torrStream) =>
-            torrStream.info &&
-            episode &&
-            torrStream.info.episodeNumber ===
-              episode.seasonEpisode.episodeNumber &&
-            torrStream.info.seasonNumber === episode.seasonEpisode.seasonNumber,
+    if (getError) {
+      const maxRetries = $config.torrent.torrentTimeoutRetries;
+      if (
+        getError.message === GetTorrentStreamError.TorrentTimeout &&
+        attempt < maxRetries
+      ) {
+        const nextAttempt = attempt + 1;
+        toast.error(GetTorrentStreamError.TorrentTimeout, {
+          description: `Torrent timed out while being fetched. Retrying ${nextAttempt}/${maxRetries} times...`,
+        });
+        return streamTorrent(
+          {
+            title,
+            seasonEpisode,
+            torrentFile,
+          },
+          nextAttempt,
         );
-    if (!torrentStream) {
-      console.error("No matching torrent stream found");
+      }
+      onGetTorrentStreamError(getError, torrentFile);
       return;
     }
-    // We assume the episode and season are the one's we wanted
-    if (!torrentFile.isCompleteSeason && episode)
-      torrentStream.info = {
-        episodeNumber: episode.seasonEpisode.episodeNumber,
-        seasonNumber: episode.seasonEpisode.seasonNumber,
-      };
-    console.log("streamURL:", torrentStream.url);
-    const [, stsError] = await tryCatchAsync(
+    if (attempt) {
+      toast.success("Torrent fetched successfully", {
+        description: `Torrent fetched successfully after ${attempt} retries.`,
+      });
+    }
+    console.log("torrentStream", torrentStream);
+    const [, selectError] = await tryCatchAsync(
       window.ipc.torrentServer.selectTorrentStream(torrentStream),
     );
-    if (stsError) {
-      if (stsError.message === SelectTorrentStreamError.StreamNotFound) {
+    if (selectError) {
+      if (selectError.message === SelectTorrentStreamError.StreamNotFound) {
         console.error(SelectTorrentStreamError.StreamNotFound, torrentStream);
         toast.error(SelectTorrentStreamError.StreamNotFound, {
           description:
             "😖 app in invalid state!!!\nDismiss this message to reload the torrent.",
           onDismiss: reload,
         });
-      } else throw stsError;
+      } else throw selectError;
     }
     $playerTorrentStream = torrentStream;
     $playerTorrentFile = torrentFile;
+  }
+
+  async function load(params: {
+    media: Media;
+    episode: Episode | undefined;
+    languages: Language[];
+    resolution: Resolution;
+    strictResolution: boolean;
+  }) {
+    const { media, episode, languages, resolution, strictResolution } = params;
+    console.log("load()", params);
+    await clearVideo();
+    const torrentFile = await getBestTorrentFile({
+      media,
+      episode,
+      languages,
+      resolution,
+      strictResolution,
+    });
+    if (!torrentFile) return;
+    if (!media.title) return;
+    streamTorrent({
+      title: media.title,
+      seasonEpisode: episode?.seasonEpisode,
+      torrentFile,
+    });
   }
 
   async function reload() {
@@ -160,30 +207,22 @@
     loadParams && (await load(loadParams));
   }
 
-  function onGetTorrentStreamsError(error: Error, torrentFile: TorrentFile) {
-    console.error("onGetTorrentStreamsError()", error, torrentFile);
+  function onGetTorrentStreamError(error: Error, torrentFile: TorrentFile) {
+    console.error("onGetTorrentStreamError()", error, torrentFile);
     $blacklistedTorrents = [...$blacklistedTorrents, torrentFile];
 
     switch (error.message) {
-      case GetTorrentStreamsError.TorrentTimeout:
-        console.error(GetTorrentStreamsError.TorrentTimeout, torrentFile);
-        toast.error(GetTorrentStreamsError.TorrentTimeout, {
+      case GetTorrentStreamError.TorrentTimeout:
+        console.error(GetTorrentStreamError.TorrentTimeout, torrentFile);
+        toast.error(GetTorrentStreamError.TorrentTimeout, {
           description:
             "The torrent timed out while being fetched, usually because it has no peers.\nDismiss this message to fetch a new torrent.",
           onDismiss: maybeLoad,
         });
         break;
-      case GetTorrentStreamsError.NoVideoFiles:
-        console.error(GetTorrentStreamsError.NoVideoFiles, torrentFile);
-        toast.error(GetTorrentStreamsError.NoVideoFiles, {
-          description:
-            "The torrent contains no video files.\nDismiss this message to fetch a new torrent.",
-          onDismiss: maybeLoad,
-        });
-        break;
-      case GetTorrentStreamsError.NoMatchingFiles:
-        console.error(GetTorrentStreamsError.NoMatchingFiles, torrentFile);
-        toast.error(GetTorrentStreamsError.NoMatchingFiles, {
+      case GetTorrentStreamError.NoMatchingFile:
+        console.error(GetTorrentStreamError.NoMatchingFile, torrentFile);
+        toast.error(GetTorrentStreamError.NoMatchingFile, {
           description:
             "The torrent does not contain files matching the media.\nDismiss this message to fetch a new torrent.",
           onDismiss: maybeLoad,
@@ -283,7 +322,6 @@
     return true;
   }
   async function onLoadedMetadata() {
-    hasLoadedMetadata = true;
     if (!$video || !hasValidCodecs()) return;
     if ($playerMedia) {
       const currentMediaProgress = getMediaProgress($playerMedia.id);
@@ -298,7 +336,7 @@
         $video.currentTime = currentTime;
       }
     }
-    // await $video.play();
+    await $video.play();
   }
 
   // setInterval(async () => {
@@ -326,10 +364,9 @@
   $: if (loadParams) load(loadParams);
   $: $src = $playerTorrentStream?.url ?? "";
 
-  let hasLoadedMetadata = false;
-
   window.ipc.torrentServer.start($config.torrent);
   setInterval(() => {
+    return;
     //  TODO: Add types for this
     // @ts-ignore
     const memory = performance.memory;
@@ -351,15 +388,16 @@
     class:cursor-none={!$showControls}
     class="relative flex flex-col items-center justify-center bg-black w-full h-screen"
   >
-    {#if !hasLoadedMetadata}
+    {#if $waiting}
       <div
         transition:fade
         class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
       >
-        <Spinner class="w-14 h-14" />
+        <Spinner class="w-16 h-16 fill-[#f00]" />
       </div>
     {/if}
     <Video onError={onVideoError} {onLoadedMetadata} />
+
     <div class="absolute bottom-[0%] w-full">
       <Controls />
     </div>

@@ -2,7 +2,7 @@
   import { onDestroy } from "svelte";
   import { videoContainer } from "../common/store";
   import Button from "./common/Button.svelte";
-  let isFullscreen = document.fullscreenElement === $videoContainer;
+
   function invertFullscreen() {
     console.log("invertFullscreen()");
     isFullscreen = document.fullscreenElement === $videoContainer;
@@ -19,6 +19,10 @@
   onDestroy(() =>
     document.removeEventListener("fullscreenchange", invertFullscreen),
   );
+
+  let isFullscreen =
+    !!$videoContainer && document.fullscreenElement === $videoContainer;
+  $: console.log("isFullscreen", isFullscreen);
 </script>
 
 <Button tooltip={isFullscreen ? "Exit fullscreen" : "Fullscreen"} {onClick}>
@@ -49,7 +53,7 @@
       ><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"
       ></g><g>
         <g>
-          <g >
+          <g>
             <path
               d="M8 2H4C2.89543 2 2 2.89543 2 4V8"
               stroke="#ffffff"

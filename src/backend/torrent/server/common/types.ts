@@ -1,9 +1,8 @@
 import type torrentServer from "../server";
 
-export enum GetTorrentStreamsError {
+export enum GetTorrentStreamError {
   TorrentTimeout = "Torrent timeout",
-  NoVideoFiles = "No video files",
-  NoMatchingFiles = "No matching files",
+  NoMatchingFile = "No matching file",
 }
 
 export enum SelectTorrentStreamError {
@@ -23,6 +22,7 @@ export type TorrentServerConfig = {
   serverPort: number;
   maxTorrentStreams: number;
   torrentTimeoutSecs: number;
+  torrentTimeoutRetries: number;
 };
 
 export type TorrentStreamStats = {
@@ -35,10 +35,6 @@ export type TorrentStream = {
   filename: string;
   magnetURI: string;
   url: string;
-  info?: {
-    seasonNumber: number;
-    episodeNumber: number;
-  };
 };
 
 export type TorrentServer = typeof torrentServer;

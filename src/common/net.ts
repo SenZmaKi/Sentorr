@@ -2,6 +2,7 @@ export type NetClient = ReturnType<typeof createNetClient>;
 
 export function createNetClient() {
   const hrsToMs = 60 * 60 * 1000;
+  // TODO: Make this configurable
   const maxCacheAgeMs = 2 * hrsToMs;
   let isFirstFetch = true;
   const userAgents = [
@@ -54,9 +55,8 @@ export function createNetClient() {
   }
 
   async function cachedFetch(url: string, init?: RequestInit) {
-
-const isBrowser =
-  typeof window !== "undefined" && typeof window.document !== "undefined";
+    const isBrowser =
+      typeof window !== "undefined" && typeof window.document !== "undefined";
     if (!isBrowser) return fetch(url, init);
     const cache = await caches.open("sentorr-cache");
     if (isFirstFetch) {

@@ -2,9 +2,9 @@ import { type TorrentFile } from "./sources/common/types";
 import {
   type TorrentServerConfig,
   type TorrentStream,
-  GetTorrentStreamsError,
+  GetTorrentStreamError,
 } from "./server/common/types";
-import type { Episode, Media } from "@/backend/imdb/types";
+import type { Episode, Media, SeasonEpisode } from "@/backend/imdb/types";
 // import { getTorrentsFiles as ytsGetMovieTorrentFiles } from "./yts/api";
 import { getTorrentFiles as piratebayGetTorrentFiles } from "./sources/piratebay/api";
 // import { getTorrentFiles as rargbGetTorrentFiles } from "./rargb/api";
@@ -14,7 +14,6 @@ import {
   parseSeason,
   seasonFormatTitle,
 } from "./sources/common/functions";
-import { filterMap } from "@/common/functions";
 import type { Language } from "@ctrl/video-filename-parser";
 import { invoke } from "@/common/ipc";
 
@@ -23,34 +22,39 @@ const VIDEO_EXTS = ['3g2', '3gp', 'asf', 'avi', 'dv', 'flv', 'gxf', 'm2ts', 'm4a
 const VIDEO_RX = new RegExp(`.(${VIDEO_EXTS.join("|")})$`, "i");
 
 async function getTorrentFiles({
-  media,
-  episode,
+  mediaImdbID,
+  episodeImdbID,
+  title,
+  seasonEpisode,
   languages,
   blacklistedTorrents,
 }: {
-  media: Media;
-  episode?: Episode;
+  mediaImdbID: string;
+  episodeImdbID: string | undefined;
+  title: string;
+  seasonEpisode: SeasonEpisode | undefined;
   languages: Language[];
   blacklistedTorrents: TorrentFile[];
 }): Promise<TorrentFile[]> {
-  if (!media.title) throw new Error("Media title is required");
-  if (!episode)
+  if (!seasonEpisode)
     return piratebayGetTorrentFiles({
-      title: media.title,
-      seasonFormattedTitle: media.title,
+      title,
+      seasonFormattedTitle: title,
       isTvSeries: false,
       getCompleteSeason: false,
-      mediaImdbID: media.id,
+      mediaImdbID,
+      episodeImdbID,
       languages,
     });
   const { abbrvSeasonTitle, fullSeasonTitle } = seasonFormatTitle(
-    media.title,
-    episode.seasonEpisode.seasonNumber,
-    episode.seasonEpisode.episodeNumber,
+    title,
+    seasonEpisode.seasonNumber,
+    seasonEpisode.episodeNumber,
   );
   const commonParams = {
-    mediaImdbID: media.id,
-    title: media.title,
+    mediaImdbID,
+    episodeImdbID,
+    title,
     isTvSeries: true,
     languages: languages,
   };
@@ -78,9 +82,7 @@ async function getTorrentFiles({
           "torrentFile",
           false,
         );
-        return parsedSeason?.seasonNumbers.includes(
-          episode.seasonEpisode.seasonNumber,
-        );
+        return parsedSeason?.seasonNumbers.includes(seasonEpisode.seasonNumber);
       }),
     );
 
@@ -105,12 +107,8 @@ async function getTorrentFiles({
           return false;
         const parsedSeason = parseSeason(torrent.filename, "torrentFile", true);
         return (
-          parsedSeason?.seasonNumbers.includes(
-            episode.seasonEpisode.seasonNumber,
-          ) &&
-          parsedSeason?.episodeNumbers.includes(
-            episode.seasonEpisode.episodeNumber,
-          )
+          parsedSeason?.seasonNumbers.includes(seasonEpisode.seasonNumber) &&
+          parsedSeason?.episodeNumbers.includes(seasonEpisode.episodeNumber)
         );
       }),
     );
@@ -122,60 +120,50 @@ async function getTorrentFiles({
   return torrentFiles;
 }
 
-async function getTorrentStreams(
+async function getTorrentStream(
   title: string,
   torrentFile: TorrentFile,
-  isTvSeries: boolean,
-): Promise<TorrentStream[]> {
+  seasonEpisode: SeasonEpisode | undefined,
+): Promise<TorrentStream> {
   const torrentID = torrentFile.torrentID;
   const allStreams = await invoke("getTorrentStreams", torrentID);
-  const videoStreams = allStreams.filter(
-    ({ filename }) =>
-      VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample"),
-  );
-  if (!videoStreams.length)
-    throw new Error(GetTorrentStreamsError.NoVideoFiles);
-  const torrentStreams = filterMap(videoStreams, (stream) => {
-    if (!isSameTitle(title, stream.filename, isTvSeries).isSame) {
-      console.warn(
-        `Torrent stream did not match title "${title}"  "${stream.filename}"`,
+  const isTvSeries = !!seasonEpisode;
+  const matchingStream = allStreams
+    .filter(
+      ({ filename }) =>
+        VIDEO_RX.test(filename) && !filename.toLowerCase().includes("sample"),
+    )
+    .find((torrentStream) => {
+      if (!isSameTitle(title, torrentStream.filename, isTvSeries).isSame) {
+        console.warn(
+          `Torrent stream did not match title "${title}"  "${torrentStream.filename}"`,
+        );
+        return undefined;
+      }
+      if (!isTvSeries) return true;
+      const streamSeason = parseSeason(
+        torrentStream.filename,
+        "torrentStream",
+        !torrentFile.isCompleteSeason,
       );
-      return undefined;
-    }
-    if (!isTvSeries)
-      return {
-        ...stream,
-        info: undefined,
-      };
-    const streamSeason = parseSeason(
-      stream.filename,
-      "torrentStream",
-      !torrentFile.isCompleteSeason,
-    );
-    if (!streamSeason) {
-      return undefined;
-    }
-    const seasonNumber = streamSeason.seasonNumbers[0];
-    if (!seasonNumber) {
-      console.warn("Failed to parse season number", stream.filename);
-      return undefined;
-    }
-    const episodeNumber = streamSeason.episodeNumbers[0];
-    if (!episodeNumber) {
-      console.warn("Failed to parse episode number", stream.filename);
-      return undefined;
-    }
-    return {
-      ...stream,
-      info: {
-        seasonNumber,
-        episodeNumber,
-      },
-    };
-  });
-  if (!torrentStreams.length)
-    throw new Error(GetTorrentStreamsError.NoMatchingFiles);
-  return torrentStreams;
+      if (!streamSeason) return false;
+      const seasonNumber = streamSeason.seasonNumbers[0];
+      if (!seasonNumber) {
+        console.warn("Failed to parse season number", torrentStream.filename);
+        return false;
+      }
+      const episodeNumber = streamSeason.episodeNumbers[0];
+      if (!episodeNumber) {
+        console.warn("Failed to parse episode number", torrentStream.filename);
+        return false;
+      }
+      return (
+        seasonNumber === seasonEpisode.seasonNumber &&
+        episodeNumber === seasonEpisode.episodeNumber
+      );
+    });
+  if (!matchingStream) throw new Error(GetTorrentStreamError.NoMatchingFile);
+  return matchingStream;
 }
 
 async function selectTorrentStream(torrentStream: TorrentStream) {
@@ -196,7 +184,7 @@ async function start(config: TorrentServerConfig) {
 
 const torrentIpc = {
   getTorrentFiles,
-  getTorrentStreams,
+  getTorrentStream,
   selectTorrentStream,
   getCurrentTorrentStreamStats,
   deselectAllTorrentStreams,

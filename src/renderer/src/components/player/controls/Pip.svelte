@@ -2,7 +2,7 @@
   import { onDestroy } from "svelte";
   import { video } from "../common/store";
   import Button from "./common/Button.svelte";
-  let isPip = document.pictureInPictureElement === $video;
+
   function invertPip() {
     console.log("invertPip()");
     isPip = document.pictureInPictureElement === $video;
@@ -24,11 +24,15 @@
     $video.addEventListener("leavepictureinpicture", invertPip);
     $video.addEventListener("enterpictureinpicture", invertPip);
   }
+
+  let isPip = !!$video && document.pictureInPictureElement === $video;
 </script>
 
-<Button 
+<Button
   tooltip={isPip ? "Exit picture-in-picture" : "Picture-in-picture"}
-  style="width: 18px; height: 20px;" {onClick}>
+  style="width: 18px; height: 20px;"
+  {onClick}
+>
   {#if isPip}
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
       ><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"

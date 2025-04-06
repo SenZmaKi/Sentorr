@@ -151,7 +151,7 @@
     }
     if (attempt) {
       toast.success("Torrent fetched successfully", {
-        description: `Torrent fetched successfully after ${attempt} retries.`,
+        description: `Fetched after ${attempt} retries.`,
       });
     }
     console.log("torrentStream", torrentStream);

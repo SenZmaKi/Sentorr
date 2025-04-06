@@ -57,6 +57,7 @@
     strictResolution: boolean;
   }) {
     if (!media.title) {
+      $waiting = false;
       console.error(`Media ${media.id} has no title`);
       toast.error("No media title", {
         description: "The media has no title to use to fetch torrents.",
@@ -78,6 +79,7 @@
       ? torrentFiles.filter((torrent) => torrent.resolution === resolution)
       : torrentFiles;
     if (!resTorrentFiles.length) {
+      $waiting = false;
       console.error("No torrent files found: ", media);
       toast.error("No torrents found", {
         description: strictResolution
@@ -160,6 +162,7 @@
     );
     if (selectError) {
       if (selectError.message === SelectTorrentStreamError.StreamNotFound) {
+        $waiting = false;
         console.error(SelectTorrentStreamError.StreamNotFound, torrentStream);
         toast.error(SelectTorrentStreamError.StreamNotFound, {
           description:
@@ -209,6 +212,7 @@
 
   function onGetTorrentStreamError(error: Error, torrentFile: TorrentFile) {
     console.error("onGetTorrentStreamError()", error, torrentFile);
+    $waiting = false;
     $blacklistedTorrents = [...$blacklistedTorrents, torrentFile];
 
     switch (error.message) {
@@ -234,6 +238,8 @@
   }
 
   function onVideoError(error: MediaError) {
+    console.error("onVideoError()", error);
+    $waiting = false;
     if (!$playerTorrentFile || !$playerTorrentStream) return;
     switch (error.code) {
       case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
@@ -322,7 +328,10 @@
     return true;
   }
   async function onLoadedMetadata() {
-    if (!$video || !hasValidCodecs()) return;
+    if (!$video || !hasValidCodecs()) {
+      $waiting = false;
+      return;
+    }
     if ($playerMedia) {
       const currentMediaProgress = getMediaProgress($playerMedia.id);
       if (

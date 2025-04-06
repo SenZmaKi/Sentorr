@@ -149,11 +149,11 @@
       onGetTorrentStreamError(getError, torrentFile);
       return;
     }
-    if (attempt) {
+    if (attempt)
       toast.success("Torrent fetched successfully", {
-        description: `Fetched after ${attempt} retries.`,
+        description: `Fetched after ${attempt} ${attempt === 1 ? "retry" : "retries"}.`,
       });
-    }
+
     console.log("torrentStream", torrentStream);
     const [, selectError] = await tryCatchAsync(
       window.ipc.torrentServer.selectTorrentStream(torrentStream),
@@ -393,7 +393,7 @@
         transition:fade
         class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
       >
-        <Spinner class="w-16 h-16 fill-[#f00]" />
+        <Spinner class="w-16 h-16 fill-[#f00] " />
       </div>
     {/if}
     <Video onError={onVideoError} {onLoadedMetadata} />

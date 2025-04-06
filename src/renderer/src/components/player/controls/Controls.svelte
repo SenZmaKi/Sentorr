@@ -128,7 +128,7 @@
       <SettingsModal />
     </div>
     <div
-      class="w-full flex flex-col items-center bg-gradient-to-t from-black/80 to-transparent pb-7 pt-3"
+      class="w-full flex flex-col items-center bg-gradient-to-t from-black/100 to-transparent pb-7 pt-3"
     >
       <div class="w-[98%]">
         <Seekbar
@@ -177,10 +177,10 @@
   }
 
   .fade-in {
-    animation: fadeIn 1s forwards;
+    animation: fadeIn 0.5s ease-in-out forwards;
   }
 
   .fade-out {
-    animation: fadeOut 1s forwards;
+    animation: fadeOut 0.5s ease-in-out forwards;
   }
 </style>

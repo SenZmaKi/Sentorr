@@ -5,7 +5,7 @@
   export let canHaveEpisodes: boolean;
 </script>
 
-<div class="overflow-y-auto {canHaveEpisodes ? 'w-[60%]' : ''} p-2">
+<div class="overflow-y-auto h-screen {canHaveEpisodes ? 'w-[60%]' : ''} p-2">
   <TopInfoSkeleton />
   <BottomInfoSkeleton />
 </div>

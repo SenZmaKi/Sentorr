@@ -32,6 +32,8 @@
   import type { Language } from "@ctrl/video-filename-parser";
   import Video from "./Video.svelte";
   import { Page } from "../common/types";
+  import { fade } from "svelte/transition";
+  import Spinner from "../common/Spinner.svelte";
 
   async function clearVideo() {
     if (!$video) return;
@@ -235,7 +237,7 @@
     }
   }
 
-  function isValidCodecs() {
+  function hasValidCodecs() {
     if (!$video) return false;
     // We assume it's valid cause we don't have enough information
     if (!$video.videoTracks || !$video.audioTracks || !$playerTorrentFile)
@@ -281,7 +283,8 @@
     return true;
   }
   async function onLoadedMetadata() {
-    if (!$video || !isValidCodecs()) return;
+    hasLoadedMetadata = true;
+    if (!$video || !hasValidCodecs()) return;
     if ($playerMedia) {
       const currentMediaProgress = getMediaProgress($playerMedia.id);
       if (
@@ -295,7 +298,7 @@
         $video.currentTime = currentTime;
       }
     }
-    await $video.play();
+    // await $video.play();
   }
 
   // setInterval(async () => {
@@ -323,7 +326,23 @@
   $: if (loadParams) load(loadParams);
   $: $src = $playerTorrentStream?.url ?? "";
 
+  let hasLoadedMetadata = false;
+
   window.ipc.torrentServer.start($config.torrent);
+  setInterval(() => {
+    //  TODO: Add types for this
+    // @ts-ignore
+    const memory = performance.memory;
+    console.log(
+      `Used Memory: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
+    );
+    console.log(
+      `Total Memory: ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
+    );
+    console.log(
+      `Memory Limit: ${(memory.jsHeapSizeLimit / 1024 / 1024 / 1024).toFixed(2)} GB`,
+    );
+  }, 1_000);
 </script>
 
 <PageWrapper page={Page.Player}>
@@ -332,6 +351,14 @@
     class:cursor-none={!$showControls}
     class="relative flex flex-col items-center justify-center bg-black w-full h-screen"
   >
+    {#if !hasLoadedMetadata}
+      <div
+        transition:fade
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+      >
+        <Spinner class="w-14 h-14" />
+      </div>
+    {/if}
     <Video onError={onVideoError} {onLoadedMetadata} />
     <div class="absolute bottom-[0%] w-full">
       <Controls />

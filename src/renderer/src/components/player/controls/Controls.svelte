@@ -68,15 +68,18 @@
     };
     $config = { ...$config, allMediaProgress: allMediaProgress };
   }
+  function timeoutListener() {
+    showControlsWithTimeout();
+  }
 
   function addVideoListeners(video: HTMLVideoElement) {
-    video.addEventListener("mousemove", showControlsWithTimeout);
+    video.addEventListener("mousemove", timeoutListener);
     video.addEventListener("timeupdate", updateProgress);
   }
 
   onDestroy(() => {
     if (!$video) return;
-    $video.removeEventListener("mousemove", showControlsWithTimeout);
+    $video.removeEventListener("mousemove", timeoutListener);
     $video.removeEventListener("timeupdate", updateProgress);
   });
 
@@ -104,41 +107,39 @@
   }
 </script>
 
-<div
-  class="flex flex-col items-center justify-center w-full"
-  class:hidden={!$showControls}
-  transition:fade
->
-  <div class="w-full">
-    <div class="flex justify-end">
-      <SettingsModal />
-    </div>
-    <div
-      class="w-full flex flex-col items-center bg-gradient-to-t from-black/80 to-transparent pb-7 pt-3"
-    >
-      <div class="w-[98%]">
-        <Seekbar
-          bind:progress={$progress}
-          {thumbnailGenerator}
-          {buffer}
-          length={$duration}
-          {onSeeking}
-        />
-        <div class="flex justify-between p-5 pb-0">
-          <div class="flex items-center gap-x-6">
-            <PlayPause />
-            <Next />
-            <Volume />
-            <Time />
-          </div>
-          <div class="flex items-center gap-x-6">
-            <SettingsIcon />
-            <Fullscreen />
-            <Miniplayer />
-            <Pip />
+{#if $showControls}
+  <div class="flex flex-col items-center justify-center w-full" transition:fade>
+    <div class="w-full">
+      <div class="flex justify-end">
+        <SettingsModal />
+      </div>
+      <div
+        class="w-full flex flex-col items-center bg-gradient-to-t from-black/80 to-transparent pb-7 pt-3"
+      >
+        <div class="w-[98%]">
+          <Seekbar
+            bind:progress={$progress}
+            {thumbnailGenerator}
+            {buffer}
+            length={$duration}
+            {onSeeking}
+          />
+          <div class="flex justify-between p-5 pb-0">
+            <div class="flex items-center gap-x-6">
+              <PlayPause />
+              <Next />
+              <Volume />
+              <Time />
+            </div>
+            <div class="flex items-center gap-x-6">
+              <SettingsIcon />
+              <Fullscreen />
+              <Miniplayer />
+              <Pip />
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
+{/if}

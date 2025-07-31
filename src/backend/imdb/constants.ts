@@ -20,7 +20,7 @@ export const EPISODES_HASH =
 export const ADVANCED_TITLE_SEARCH_HASH =
 "81b46290a78cc1e8b3d713e6a43c191c55b4dccf3e1945d6b46668945846d832";
 export const REVIEWS_HASH =
-  "89aff4cd7503e060ff1dd5aba91885d8bac0f7a21aa1e1f781848a786a5bdc19";
+  "8e851a269025170d18a33b296a5ced533529abb4e7bc3d6b96d1f36636e7f685";
 // IMDB API accepts data in ISO format YYYY-MM-DD
 export const MAX_RATING = 10;
 

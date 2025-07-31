@@ -31,7 +31,10 @@ export function createThumbnailGenerator(thumbnailWidth = 180) {
       (videoProperties.videoHeight / videoProperties.videoWidth);
     thumbnailCanvas.height = thumbnailHeight;
     thumbnailCanvas.width = thumbnailWidth;
-    if (canvasCtx) return;
+  }
+
+  function setCanvasContext() {
+    if (!thumbnailCanvas) return;
     const maybeCtx = thumbnailCanvas.getContext("2d");
     if (!maybeCtx)
       throw new InvalidStateError("Failed to get canvas 2d context");
@@ -41,6 +44,7 @@ export function createThumbnailGenerator(thumbnailWidth = 180) {
   function setCanvas(canvas: HTMLCanvasElement) {
     thumbnailCanvas = canvas;
     setCanvasDimensions();
+    setCanvasContext();
   }
 
   async function updateThumbnail(seekPercent: number): Promise<void> {

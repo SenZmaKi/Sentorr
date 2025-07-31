@@ -16,7 +16,7 @@ export async function getTorrentFiles({
   episodeImdbID,
 }: GetTorrentFilesParams & {
   mediaImdbID: string;
-  episodeImdbID?: string;
+  episodeImdbID: string | undefined;
 }) {
   const url = `${API_ENTRYPOINT}q=${seasonFormattedTitle}`;
   const response = await netClient.get(url);

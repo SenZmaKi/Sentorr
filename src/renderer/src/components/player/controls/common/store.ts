@@ -14,8 +14,12 @@ function clearHideTimer() {
   }
 }
 
-export function showControlsWithTimeout() {
-  if (get(paused) || get(isHovering)) return;
+/**
+ * WARN: To avoid flickering of the controls, set the variables that hide controls **AFTER** calling this.
+ * For instance in `PlayPause.svelte`, set `paused` to `false` **AFTER** calling this function
+ */
+export function showControlsWithTimeout(ignorePaused = false) {
+  if ((!ignorePaused && get(paused)) || get(isHovering)) return;
   clearHideTimer();
   hideTimer = setTimeout(() => {
     showControlsTimedOut.set(true);

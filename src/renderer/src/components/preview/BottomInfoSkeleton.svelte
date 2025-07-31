@@ -3,10 +3,10 @@
   import SimpleSkeleton from "../common/mediacard/SimpleSkeleton.svelte";
 </script>
 
-<div class="">
+<div class="animate-pulse">
   <div class="xs-dark p-2 rounded w-min">
-    <div class="rounded-lg bg-gray-700 mb-2 h-[10px] w-[800px]"></div>
-    <div class="rounded-lg bg-gray-700 mb-2 h-[10px] w-[755px]"></div>
+    <div class="rounded-lg bg-gray-700 mb-2 h-[10px] w-[740px]"></div>
+    <div class="rounded-lg bg-gray-700 mb-2 h-[10px] w-[735px]"></div>
     <div class="rounded-lg bg-gray-700 mb-2 h-[10px] w-[700px]"></div>
     <div class="rounded-lg bg-gray-700 h-[10px] w-[655px]"></div>
   </div>
@@ -16,7 +16,7 @@
     </div>
     <div>
       <div class="rounded xs-dark mt-8 p-2">
-        <div class="rounded bg-gray-700 h-[10px] w-[500px]"></div>
+        <div class="rounded bg-gray-700 h-[10px] w-[400px]"></div>
       </div>
     </div>
   </div>

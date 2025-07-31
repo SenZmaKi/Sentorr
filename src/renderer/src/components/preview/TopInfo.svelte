@@ -15,7 +15,8 @@
   export let mediaProgress: MediaProgress | undefined = undefined;
 
   async function getFirstEpisode() {
-    if (!media.canHaveEpisodes) return undefined;
+    console.log("media ", media);
+    if (!media.canHaveEpisodes || !media.seasonsCount) return undefined;
 
     const { results } = await getEpisodes(media.id, 1);
     return results[0];

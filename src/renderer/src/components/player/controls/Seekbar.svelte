@@ -96,7 +96,7 @@
     return cloned;
   });
   let seekbarHeight = processedChapters.length ? 25 : 13;
-  let thumbnailCanvas: HTMLCanvasElement | undefined = undefined;
+  let thumbnailCanvas: HTMLCanvasElement | null = null;
   $: if (thumbnailGenerator && thumbnailCanvas)
     thumbnailGenerator.setCanvas(thumbnailCanvas);
 </script>

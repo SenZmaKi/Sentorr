@@ -10,7 +10,7 @@
   import { currentFieldModal } from "./common/store";
   import { Field } from "./common/types";
   import { onMount, onDestroy } from "svelte";
-    import { showControlsWithTimeout } from "../../common/store";
+  import { showControlsWithTimeout } from "../../common/store";
 
   let modal: HTMLDivElement | undefined = undefined;
 
@@ -18,9 +18,9 @@
     const wasClicked = (element: HTMLElement | undefined) =>
       element && event.composedPath().includes(element);
     if (wasClicked(modal) || wasClicked($icon)) return;
+    showControlsWithTimeout();
     $showSettingsModal = false;
     $currentFieldModal = undefined;
-    showControlsWithTimeout();
   }
 
   onMount(() => {

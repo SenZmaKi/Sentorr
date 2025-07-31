@@ -1,7 +1,7 @@
 <script lang="ts">
   import FilterWrapper from "./FilterWrapper.svelte";
   import { searchTerm } from "./common/store";
-  let value = "";
+  let value = $searchTerm ?? "";
 
   export function debounce(callback: () => void, ms: number) {
     let timer: NodeJS.Timer | undefined = undefined;

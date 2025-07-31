@@ -1,7 +1,6 @@
 <script lang="ts">
   import Seekbar from "./Seekbar.svelte";
   import PlayPause from "./PlayPause.svelte";
-  import { fade } from "svelte/transition";
   import { isHovering } from "./common/store";
   import {
     video,
@@ -16,6 +15,7 @@
     showControls,
     playerMedia,
     playerEpisode,
+    waiting,
   } from "../common/store";
   import { showSettingsModal } from "./settings/store";
   import {
@@ -68,15 +68,18 @@
     };
     $config = { ...$config, allMediaProgress: allMediaProgress };
   }
+  function timeoutListener() {
+    showControlsWithTimeout();
+  }
 
   function addVideoListeners(video: HTMLVideoElement) {
-    video.addEventListener("mousemove", showControlsWithTimeout);
+    video.addEventListener("mousemove", timeoutListener);
     video.addEventListener("timeupdate", updateProgress);
   }
 
   onDestroy(() => {
     if (!$video) return;
-    $video.removeEventListener("mousemove", showControlsWithTimeout);
+    $video.removeEventListener("mousemove", timeoutListener);
     $video.removeEventListener("timeupdate", updateProgress);
   });
 
@@ -98,22 +101,34 @@
   // Don't hide controls immediately after user stops hovering, it looks janky
   $: if (!$isHovering) showControlsWithTimeout();
   $: $showControls =
-    !$showControlsTimedOut || $paused || $isHovering || $showSettingsModal;
-  $: if (!$showControls) {
-  }
+    !$showControlsTimedOut ||
+    $paused ||
+    $isHovering ||
+    $showSettingsModal ||
+    $waiting;
+  $: console.log("showControls", $showControls);
+
+  let hidden = false;
 </script>
 
 <div
   class="flex flex-col items-center justify-center w-full"
-  class:hidden={!$showControls}
-  transition:fade
+  on:animationend={(event) => {
+    if (event.animationName === "fadeOut") hidden = true;
+  }}
+  on:animationstart={(event) => {
+    if (event.animationName === "fadeIn") hidden = false;
+  }}
+  class:fade-in={$showControls}
+  class:fade-out={!$showControls}
+  class:hidden
 >
   <div class="w-full">
     <div class="flex justify-end">
       <SettingsModal />
     </div>
     <div
-      class="w-full flex flex-col items-center bg-gradient-to-t from-black/80 to-transparent pb-7 pt-3"
+      class="w-full flex flex-col items-center bg-gradient-to-t from-black/100 to-transparent pb-7 pt-3"
     >
       <div class="w-[98%]">
         <Seekbar
@@ -141,3 +156,31 @@
     </div>
   </div>
 </div>
+
+<style>
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out forwards;
+  }
+
+  .fade-out {
+    animation: fadeOut 0.5s ease-in-out forwards;
+  }
+</style>

@@ -1,34 +1,8 @@
-# sentorr
+# Sentorr
 
-An Electron application with Svelte and TypeScript
+**(WIP 🛠️)** Stream movies and tv series from torrents like that!!! 💅🏿✨
 
-## Recommended IDE Setup
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode)
 
-## Project Setup
+https://github.com/user-attachments/assets/f6b3cb10-0961-4b66-8789-90d4f8511eaf
 
-### Install
-
-```bash
-$ npm install
-```
-
-### Development
-
-```bash
-$ npm run dev
-```
-
-### Build
-
-```bash
-# For windows
-$ npm run build:win
-
-# For macOS
-$ npm run build:mac
-
-# For Linux
-$ npm run build:linux
-```

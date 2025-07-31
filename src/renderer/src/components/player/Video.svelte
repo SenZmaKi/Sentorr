@@ -11,6 +11,7 @@
     videoHeight,
     videoWidth,
     src,
+    waiting,
   } from "./common/store";
 
   export let onError: (error: MediaError) => void;
@@ -28,6 +29,8 @@
   bind:playbackRate={$playbackRate}
   bind:ended={$ended}
   bind:buffered={$buffered}
+  on:canplay={() => ($waiting = false)}
+  on:waiting={() => ($waiting = true)}
   bind:paused={$paused}
   bind:duration={$duration}
   bind:videoWidth={$videoWidth}

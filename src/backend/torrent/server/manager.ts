@@ -4,45 +4,14 @@ import { client, server, readyState, config } from "./server";
 import {
   type TorrentStream,
   SelectTorrentStreamError,
-  GetTorrentStreamsError,
+  GetTorrentStreamError,
 } from "./common/types";
 import { jsonStringify, tryCatchAsync } from "@/common/functions";
 import { onTorrentError, onTorrentWarning } from "./handlers";
 import { type TorrentStreamStats } from "./common/types";
 import WebTorrent from "webtorrent";
 import { hasErrorMessage } from "./common/functions";
-import { RecoverableErrorMessage } from "./common/constants";
-
-function createGetTorrentStreamsLock() {
-  let promise: Promise<void> | undefined = undefined;
-  let resolvePromise: (() => void) | undefined = undefined;
-
-  async function acquire() {
-    while (promise) await promise;
-
-    promise = new Promise<void>((resolve) => {
-      resolvePromise = resolve;
-    });
-  }
-
-  function release() {
-    if (!resolvePromise) return;
-    resolvePromise();
-    promise = undefined;
-    resolvePromise = undefined;
-  }
-  return {
-    async withLock<T>(callback: () => Promise<T> | T): Promise<T> {
-      await acquire();
-      try {
-        return await callback();
-      } finally {
-        release();
-      }
-    },
-  };
-}
-const getTorrentStreamsLock = createGetTorrentStreamsLock();
+import { ClientRecoverableErrorMessage } from "./common/constants";
 
 const fileTorrentStreamQueue: {
   file: WebTorrent.TorrentFile;
@@ -72,15 +41,13 @@ function torrentToTorrentStreams(torrent: WebTorrent.Torrent): TorrentStream[] {
 }
 
 async function removeTorrent(torrentID: string) {
+  await readyState.waitTillReady();
   return new Promise<void>(async (resolve, reject) => {
-    await readyState.waitTillReady();
     await client.remove(torrentID, { destroyStore: true }, (error) => {
       if (error) {
         console.error(`Error removing torrent ${torrentID}: ${error}`);
         reject(error);
-      } else {
-        resolve();
-      }
+      } else resolve();
     });
   });
 }
@@ -118,7 +85,11 @@ async function getTorrentStreams(torrentID: string) {
     }
 
     async function handleDuplicateError(error: Error | string) {
-      if (!hasErrorMessage(error, [RecoverableErrorMessage.DuplicateTorrent]))
+      if (
+        !hasErrorMessage(error, [
+          ClientRecoverableErrorMessage.DuplicateTorrent,
+        ])
+      )
         return;
       const torrent = await getTorrent(torrentID);
       if (!torrent) return;
@@ -147,14 +118,14 @@ async function getTorrentStreams(torrentID: string) {
       if (success || !(await client.get(torrentID))) return;
       await removeTorrent(torrentID);
       console.error(`Torrent ${torrentID} timed out`);
-      return reject(new Error(GetTorrentStreamsError.TorrentTimeout));
+      return reject(new Error(GetTorrentStreamError.TorrentTimeout));
     }, config.torrentTimeoutSecs * 1000);
   });
 }
 
 async function selectTorrentStream(torrentStream: TorrentStream) {
+  await readyState.waitTillReady();
   return new Promise<void>(async (resolve, reject) => {
-    await readyState.waitTillReady();
     const queuedIndex = fileTorrentStreamQueue.findIndex(
       (f) =>
         f.torrentStream.filepath === torrentStream.filepath &&

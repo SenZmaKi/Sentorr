@@ -20,13 +20,15 @@
     const nextEpisode = await nextEpisodePromise;
     const nextMedia = await nextMediaPromise;
     const media = nextEpisode ? $playerMedia : nextMedia;
-    if (!nextEpisode || !media) return;
+    if (!nextEpisode || !media || !media.title) return;
     // Relies on the caching at the net client level
     // TODO: Remove double work since getTorrentFiles will reprocess the torrent files at Player.svelte:load()
     // TODO: Use a better way to prefetch torrent files as oppossed to relying on the caching at the net client level
     await window.ipc.torrentServer.getTorrentFiles({
-      media,
-      episode: nextEpisode,
+      mediaImdbID: media.id,
+      episodeImdbID: nextEpisode.id,
+      title: media.title,
+      seasonEpisode: nextEpisode.seasonEpisode,
       languages: $languages,
       blacklistedTorrents: $blacklistedTorrents,
     });

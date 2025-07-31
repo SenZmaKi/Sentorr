@@ -16,10 +16,7 @@ export let config: TorrentServerConfig;
  */
 export async function start(torrentConfig: TorrentServerConfig) {
   config = torrentConfig;
-  client = new WebTorrent({
-    maxConns: torrentConfig.maxConns,
-    torrentPort: torrentConfig.torrentPort,
-  });
+  client = new WebTorrent(torrentConfig);
   client.on("error", onClientError);
   client.on("info", onClientInfo);
   server = client.createServer({}, "node") as NodeServer;
@@ -41,9 +38,9 @@ export async function start(torrentConfig: TorrentServerConfig) {
 }
 
 async function close() {
+  await readyState.waitTillReady();
   return new Promise<void>(async (resolve, reject) => {
     console.log("Closing server");
-    await readyState.waitTillReady();
     server.close();
     console.log("Destroying client");
     client.destroy((error) => {

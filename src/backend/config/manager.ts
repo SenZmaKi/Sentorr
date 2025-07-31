@@ -55,6 +55,7 @@ export async function createConfigManager() {
         maxConns: 50,
         maxTorrentStreams: 5,
         torrentTimeoutSecs: 10,
+        torrentTimeoutRetries: 3,
       },
       player: {
         continueRewindSecs: 5,

@@ -45,7 +45,6 @@ import {
 } from "./constants";
 import { decodeHTML } from "entities";
 
-export type ScalableImageUrl = string & { __brand: "ScalableImageUrl" };
 
 export function makeScaledImageUrl(
   width: number,
@@ -123,7 +122,7 @@ function buildBaseResult(node: BaseNode): BaseResult {
   const endYear = node.releaseYear?.endYear;
   const runtime = node.runtime?.seconds;
   const genres = node.titleGenres?.genres?.map((g) => g.genre.text);
-  const canHaveEpisodes = node.canHaveEpisodes;
+  const canHaveEpisodes = node.titleType.canHaveEpisodes;
   return {
     id,
     title,
@@ -235,6 +234,7 @@ export async function search(
   const advancedTitleSearchResultJson = (await apiGet(
     url,
   )) as AdvancedTitleSearchResultJson;
+  console.log("advancedTitleSearchResultJson", advancedTitleSearchResultJson);
   const results =
     advancedTitleSearchResultJson.data.advancedTitleSearch.edges.map(
       ({ node }) => buildBaseResult(node.title),
@@ -331,6 +331,7 @@ async function getMediaOrEpisode(
   const metadataJson = JSON.parse(ldJsonStr) as MediaMetadataJson;
   const moreldJsonStr = $("script#\\__NEXT_DATA__").text();
   const moreMetadataJson = JSON.parse(moreldJsonStr) as MoreMetadataJson;
+  console.log("moreMetadataJson", moreMetadataJson); 
 
   return isEpisode
     ? combineEpisodeMetadata(metadataJson, moreMetadataJson)
@@ -358,7 +359,7 @@ function combineMediaMetadata(
   const base = extractBaseMedia(metadataJson);
   const aboveTheFoldData = moreMetadata.props.pageProps.aboveTheFoldData;
   const mainColumnData = moreMetadata.props.pageProps.mainColumnData;
-  const canHaveEpisodes = aboveTheFoldData.canHaveEpisodes === true;
+  const canHaveEpisodes = aboveTheFoldData.titleType.canHaveEpisodes === true;
 
   return {
     ...base,

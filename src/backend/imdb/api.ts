@@ -45,6 +45,8 @@ import {
 } from "./constants";
 import { decodeHTML } from "entities";
 
+export type ScalableImageUrl = string & { __brand: "ScalableImageUrl" };
+
 export function makeScaledImageUrl(
   width: number,
   height: number,
@@ -53,7 +55,7 @@ export function makeScaledImageUrl(
 ): string {
   const split = url.split(".");
   const ext = split.pop();
-  // Get a larger image for better quality, otherwise the images look ass
+  // Get a larger image for better quality, otherwise the images look bad
   quality = quality ?? 2;
   // The original url has high res images and they have really large sizes
   // if we use them we waste bandwidth and run into image rendering issues

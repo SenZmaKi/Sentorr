@@ -1,0 +1,34 @@
+name: design_demo
+description: "Sentorr design direction showcase: theme layers, depth roles and core components."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: Geist
+      fonts:
+        - asset: assets/fonts/Geist-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Geist-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Geist-SemiBold.ttf
+          weight: 600
+    - family: GeistMono
+      fonts:
+        - asset: assets/fonts/GeistMono-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/GeistMono-Medium.ttf
+          weight: 500

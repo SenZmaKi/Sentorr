@@ -1,0 +1,2 @@
+- Fetch subs from opensubtitles
+- Fade out controls

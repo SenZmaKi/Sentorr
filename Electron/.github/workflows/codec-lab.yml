@@ -1,0 +1,61 @@
+name: Codec Lab builds
+on:
+  workflow_dispatch:
+  push:
+    paths: ['codec_lab/**', '.github/workflows/codec-lab.yml']
+  pull_request:
+    paths: ['codec_lab/**', '.github/workflows/codec-lab.yml']
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows
+            output: codec_lab/build/windows/x64/runner/Release/
+          - os: macos-latest
+            target: macos
+            output: codec_lab/build/macos/Build/Products/Release/
+          - os: ubuntu-latest
+            target: linux
+            output: codec_lab/build/linux/x64/release/bundle/
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.2'
+      - if: matrix.target == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libmpv-dev
+      - run: flutter pub get
+        working-directory: codec_lab
+      - run: flutter analyze
+        working-directory: codec_lab
+      - run: flutter build ${{ matrix.target }} --release
+        working-directory: codec_lab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: codec-lab-${{ matrix.target }}
+          path: ${{ matrix.output }}
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.2'
+      - run: flutter pub get
+        working-directory: codec_lab
+      - run: flutter build apk --release
+        working-directory: codec_lab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: codec-lab-android
+          path: codec_lab/build/app/outputs/flutter-apk/app-release.apk

@@ -1,0 +1,251 @@
+# Sentorr design contract
+
+Status: locked for the initial Flutter implementation, 1 October 2026. Use Resend/Vercel typography and restraint with the layered depth in the user-supplied reference frames; extend component contracts as features need them.
+
+## Purpose
+
+Keep Sentorr visually coherent as features grow. Shared appearance belongs in the theme system; screens compose components and express product behavior. Begin with one design identity in light and dark modes, while allowing future identities to use the same component contracts.
+
+## Sources of truth
+
+- This document owns design intent, usage rules and the reasons behind constraints.
+- Until the Flutter app is scaffolded, the tables below are the implementation specification. Once implemented, typed Dart definitions own exact runtime values; replace these value tables with code pointers while retaining the intent and usage rules. Change shared values centrally, not through screen overrides.
+- Comments next to unusual token mappings explain their purpose or tradeoff. Avoid comments that merely repeat the value.
+- Electron is a reference for behavior, not an approved visual design. Senpwai is a reference for implementation patterns, not Sentorr's identity.
+
+## Locked visual direction
+
+Use a neutral, layered space: canvas behind panels, panels beneath raised controls, recessed wells below their parent surface, and floating overlays above everything else. Surface luminance, soft contact shadows and fine edge highlights establish those relationships. Keep Geist typography, monochrome actions and precise spacing from the Resend/Vercel direction. Artwork supplies most of the color.
+
+The user's [before](docs/design-references/depth/before.png), [light after](docs/design-references/depth/after-light.png) and [dark after](docs/design-references/depth/after-dark.png) frames are the primary depth reference. They show grouped panels, brighter child surfaces, recessed tracks and small shadows beneath raised objects. They also change grouping, spacing and information hierarchy; adding shadows alone will not reproduce the improvement. These supplied still frames establish appearance, not video motion or exact source measurements.
+
+The depth specification below supersedes the earlier flat-card and shadow-free dark-mode rules. Values are Sentorr implementation choices derived from the visible relationships, not measured values from the video. Maintain one identity with light and dark modes.
+
+### Color roles
+
+All hex values are opaque sRGB unless explicitly stated. These are resolved semantic roles; Dart implementation may derive them from shared primitives. Both modes use the reference's distinct canvas, panel and control planes. Status pairs and interaction colors complete the references for app use.
+
+| Role | Dark | Light | Use |
+| --- | --- | --- | --- |
+| canvas | `#0D0D0D` | `#E7E7E7` | Back plane |
+| surface | `#191919` | `#F3F3F3` | Panels and grouped containers |
+| surfaceControl | `#262626` | `#FFFFFF` | Raised controls and child cards |
+| surfaceRaised | `#303030` | `#FFFFFF` | Floating menus and dialogs |
+| surfaceInset | `#090909` | `#DCDCDC` | Recessed wells and tracks |
+| foreground | `#FCFDFF` | `#171717` | Titles and primary text |
+| foregroundSecondary | `#B3B3B3` | `#4D4D4D` | Body descriptions and metadata |
+| foregroundMuted | `#AAAAAA` | `#606060` | Captions, hints; never essential content in disabled styling |
+| foregroundDisabled | `#464A4D` | `#A1A1A1` | Disabled controls only |
+| borderSubtle | `#333333` | `#D4D4D4` | Decorative dividers and panel edges |
+| borderStrong | `#454545` | `#B8B8B8` | Structural edges |
+| borderControl | `#AAAAAA` | `#707070` | Input boundaries and controls requiring visible outlines |
+| action | `#FCFDFF` | `#171717` | Primary button fill, selected checks and progress |
+| onAction | `#000000` | `#FFFFFF` | Content on action fill |
+| actionHover | `#E5E5E5` | `#333333` | Primary hover |
+| actionPressed | `#D4D4D4` | `#000000` | Primary pressed |
+| stateHover | `#333333` | `#F5F5F5` | Neutral interactive surface hover |
+| statePressed | `#1F1F1F` | `#E5E5E5` | Neutral interactive surface pressed |
+| selection | `#262626` | `#EBEBEB` | Selected navigation/rows; pair with foreground |
+| focus | `#FCFDFF` | `#171717` | Keyboard focus ring |
+| link / info | `#3B9EFF` | `#0761D1` | Links and informational status |
+| infoSurface | `#071B30` | `#EAF3FF` | Information badge/background |
+| success | `#11FF99` | `#067647` | Ready, completed, successful action |
+| successSurface | `#052619` | `#ECFDF3` | Success badge/background |
+| warning | `#FFC53D` | `#854A0E` | Waiting, degraded conditions requiring attention |
+| warningSurface | `#2A2108` | `#FFFAEB` | Warning badge/background |
+| error | `#FF6B81` | `#C50000` | Failure, destructive intent |
+| errorSurface | `#300710` | `#FFF1F2` | Error badge/background |
+
+Status foregrounds pair with their corresponding status surfaces. Do not use saturated status colors as large fills. Neutral buttons remain the default, including Play. Use error text/border for destructive actions, with confirmation when product behavior warrants it. Links are underlined in prose. Status labels accompany color: queued and paused are neutral, active transfer is info, ready/completed is success, and failure is error; buffering itself is not an error.
+
+### Typography
+
+Bundle **Geist Sans** (400, 500, 600) and **Geist Mono** (400, 500) with the Flutter app when implementing the theme, including the font license. Obtain them from the [official Geist repository](https://github.com/vercel/geist-font). Use platform fallback only for unavailable glyphs. Display and body both use Geist Sans; no third family is needed.
+
+Dimensions below are Flutter logical units before user text scaling. Line height is an absolute specification; map it to Flutter's `TextStyle.height` as line height divided by font size. Tracking is logical units, not a percentage.
+
+| Text role | Size / line height | Weight | Tracking | Use |
+| --- | --- | --- | --- | --- |
+| display | 48 / 56 | 600 | -1.5 | Media detail title at wide widths |
+| headline | 32 / 40 | 600 | -0.8 | Page title; compact detail title |
+| title | 24 / 32 | 600 | -0.4 | Section and dialog title |
+| subtitle | 20 / 28 | 600 | -0.3 | Panel and group heading |
+| bodyLarge | 18 / 28 | 400 | 0 | Synopsis lead where appropriate |
+| body | 16 / 24 | 400 | 0 | Normal prose and settings |
+| bodySmall | 14 / 20 | 400 | 0 | Metadata, rows and secondary copy |
+| label | 14 / 20 | 500 | 0 | Controls, tabs and navigation |
+| caption | 12 / 16 | 400 | 0 | Nonessential annotations |
+| technical | 13 / 20 | 400 | 0 | Geist Mono: filenames, speeds, sizes and diagnostics |
+
+Use sentence case. Keep ordinary text at 400, controls at 500 and headings at 600. Technical data and time counters use tabular figures; descriptions stay in sans. Essential data is at least bodySmall. Preserve text scaling, wrapping and font fallback; heights are minima rather than clipping boxes. Long filenames may ellipsize with an accessible way to view the full value.
+
+### Geometry and rhythm
+
+| Scale | Approved values | Application |
+| --- | --- | --- |
+| Spacing | 0, 2, 4, 8, 12, 16, 24, 32, 40, 48, 64, 96, 128 | Base step 4; 2 reserved for optical micro-adjustments |
+| Radius | 0, 4, 6, 8, 12, 16, full | Controls 8; child cards 12; group panels/dialogs 16; chips 6; circular controls full |
+| Border | 1, 2 | 1 for edges; 2 for focus and selected indicators |
+| Icon | 16, 20, 24 | Metadata 16; ordinary controls 20; navigation/player 24 |
+| Control minimum height | 36 compact, 40 standard, 48 touch | Compact is desktop-only; touch hit regions at least 48 × 48 |
+| Motion duration | 100, 150, 200 ms | Press 100; hover/focus 150; panels/theme 200 |
+
+Use 8 between related inline items, 12–16 within groups, 24–32 between groups, and 48 between major sections. Panels use 24 padding; dense rows use 12 vertical and 16 horizontal. App content has 24 horizontal gutters on larger layouts and 16 on compact layouts. The 96/128 steps are reserved for exceptional feature openings, not routine lists or empty states.
+
+### Depth as a theme contract
+
+Use a consistent light source above the interface: a fine lighter top edge and a small darker shadow beneath raised objects. In both modes, child controls read as nearer than their parent panel. Dark mode preserves this through brighter surfaces and edge highlights as well as shadows; light mode uses light surfaces against a darker canvas. No perspective transforms are needed.
+
+| Depth role | Surface | Treatment | Use |
+| --- | --- | --- | --- |
+| base | canvas | No shadow | Page background |
+| panel | surface | panel shadow + edge highlight | Settings group, detail summary, grouped selections |
+| raised | surfaceControl | raised shadow + edge highlight | Secondary buttons, child selection cards, input controls |
+| inset | surfaceInset | inset shading | Slider/progress trough, technical well |
+| floating | surfaceRaised | floating shadow + edge highlight | Dialog, menu, popover |
+
+Starting shadow recipes use `(offsetX, offsetY, blur, spread, black opacity)` in Flutter logical units. Each recipe is an ordered stack. Theme code owns these values:
+
+| Recipe | Light | Dark |
+| --- | --- | --- |
+| panel | `(0, 1, 2, 0, 8%)`, `(0, 4, 12, -2, 6%)` | `(0, 2, 4, 0, 24%)`, `(0, 8, 16, -4, 20%)` |
+| raised | `(0, 1, 2, 0, 12%)`, `(0, 3, 6, -1, 8%)` | `(0, 1, 2, 0, 32%)`, `(0, 4, 8, -2, 24%)` |
+| floating | `(0, 2, 4, 0, 10%)`, `(0, 12, 32, -4, 14%)` | `(0, 2, 4, 0, 36%)`, `(0, 12, 32, -4, 32%)` |
+
+`edgeHighlight`: white at 70% in light mode and 8% in dark mode, on the top edge with a 1-unit width. `edgeShade`: black at 8% light / 24% dark on the bottom edge. These edges describe lighting; accessible control boundaries still use borderControl when required.
+
+`insetShade`: black at 10% light / 40% dark, fading inward over 3 units from the top of a recessed well; a 1-unit bottom highlight uses edgeHighlight. Render this within the component, not as an outer drop shadow. Raised progress fills/thumbs may use the raised recipe; active contrast remains governed by action and onAction.
+
+Provide a small typed `SurfaceDepth` vocabulary (`base`, `panel`, `raised`, `inset`, `floating`) and theme-owned resolved styles containing fill, edge treatment and shadow stack. Shared surface widgets render those styles. Where Flutter's component theme cannot express edge lighting or inset shading, use a shared decorator or painter consuming the typed style. Feature screens choose the role; they do not compose their own shadows or gradients. Avoid combining automatic Material elevation with the explicit shadow stack. Disable automatic colored surface tint.
+
+Maintain readable depth through grouping and spacing. Show no more than three persistent planes in a typical region (canvas → panel → child control); a temporary overlay may add the floating plane. Add a containing surface for a meaningful group, not around every label or row. Dense lists remain on one plane with dividers. Leave space for shadows, and clip artwork independently so panel shadows are not cut off.
+
+Hover on an already raised control may increase its edge highlight; pressing retains only the first contact-shadow layer of the raised recipe and uses statePressed. No translation, layout shift or scale bounce. Flat/ghost controls remain flat. Selection adds a check or indicator rather than a larger shadow. Focus remains an independent high-contrast ring. Neutral surface gradients are allowed only for these theme-owned lighting/inset treatments; saturated decorative gradients stay outside app chrome.
+
+### Depth acceptance
+
+- In grayscale, canvas, panel, raised controls and recessed tracks remain distinguishable by their surfaces and lighting.
+- Light and dark layouts preserve the same grouping and front-to-back order.
+- The reference's panel/child separation is evident at rest; hover is not needed to reveal hierarchy.
+- Shadows stay local and soft; edge highlights remain fine. No broad white halos around dark panels or embossed treatment on text/icons.
+- Focus, selected state, status and readable text still work when shadows are absent. Depth does not substitute for accessible interaction cues.
+- Evaluate a settings group, nested choice cards and a progress track in both modes when implemented. These docs do not establish visual implementation verification.
+
+### Composition and artwork
+
+- At available width below 600, use compact navigation and stacked details; 600–959 may use a navigation rail and two-column details when content fits; 960 and above may use the full desktop shell. Layouts respond to local constraints, not platform names.
+- Keep normal content centered with a maximum width of 1400. Player and artwork backdrops may fill available space. Reading prose caps at 720.
+- Catalog poster grids choose their column count from available width, with nominal tile widths of 160–220 and 16 gaps; smaller layouts may use two columns if titles and targets still fit. Never fix a desktop column count on mobile.
+- Posters use a 2:3 frame; backdrops and video previews use 16:9. Crop posters/backdrops appropriately; preserve the video's actual aspect ratio with letterboxing rather than cropping playback.
+- Put media title and metadata below posters. Detail pages may put titles over artwork using the image-overlay roles below. Artwork stays in its original colors; surrounding chrome stays neutral.
+- Selection uses a neutral fill plus a visible indicator or check. Hover uses surface and border changes, with no card lift, scale bounce or new glow.
+- Keep torrent rows aligned by information: filename, quality, size, availability and action. Technical information uses the technical role; the primary action remains visually obvious.
+- Empty, loading and error states retain the same layout rhythm. Use neutral skeletons without decorative shimmer by default. Explain errors and offer the next action in plain language.
+
+Gradients serve artwork legibility and the theme-owned depth lighting described above. The initial app does not need marketing mesh gradients, ambient glows, glass panels, gradient buttons or colored heading text. Keep any future marketing treatment separate from these app components.
+
+### Playback and image overlays
+
+Playback chrome is an explicit presentation context independent of app brightness. Define these as theme roles: overlay foreground `#FFFFFF`, secondary foreground `#D4D4D4`, control surface black at 80%, scrim black at 60%, and focus `#FFFFFF`. A bottom artwork fade runs from transparent to black at 80%; maintain a scrim behind text where needed rather than trusting the image to be dark.
+
+Player buttons use circular targets of at least 48, icons 24, and neutral hover/pressed surfaces from the overlay context. Slider active track and thumb are white; inactive track is `#888888` over the control surface. Scrim opacity is theme-owned. Keep captions legible using dedicated caption styling and preserve user subtitle preferences. Do not apply the light app foreground to controls over video.
+
+## Fundamental component contracts
+
+These are implementation requirements as components are introduced, not a request to prebuild every widget.
+
+| Component / variant | Theme-owned appearance | Composition and behavior |
+| --- | --- | --- |
+| Button / primary | action + onAction; raised recipe; radius 8; label; height 40; horizontal padding 16 | Dominant action per task group; hover/pressed use action state roles |
+| Button / secondary | surfaceControl + foreground; raised depth; borderStrong; otherwise primary geometry | Secondary action; hover/pressed use neutral state roles |
+| Button / ghost | Transparent + foreground; radius 8; same sizing | Low-emphasis action; visible neutral hover/pressed fill |
+| Button / destructive | error foreground; errorSurface on hover/press; radius 8 | Named destructive action; do not style ordinary failures as an action |
+| Icon button | Ghost style; icon 20; 40 desktop or 48 touch target | Accessible label and tooltip; circular only for player/contextual circular variant |
+| Input / search / dropdown | surfaceControl + foreground; raised depth; borderControl; focus border 2; radius 8; bodySmall; height 40; padding 12 | Persistent label or accessible name; hints foregroundMuted; inline error text and border |
+| Checkbox / radio / switch | action + onAction when selected; borderControl otherwise | Selected state has shape/check/thumb position, not color alone; visible focus |
+| Surface / panel | surface, panel depth, radius 16, padding 24 | Group related content; decorative border is not an interaction boundary |
+| Dialog / menu / toast | surfaceRaised, borderStrong, floating depth | Dialog radius 16/padding 24; menus radius 8/padding 8; toast radius 12/padding 16; correct focus/announcement semantics |
+| Navigation item / tab | foregroundSecondary idle; selection + foreground active; radius 8 | label plus icon as needed; active indicator 2; selected semantics |
+| Chip / filter | surfaceInset + foregroundSecondary; radius 6; label; padding 4 vertical/8 horizontal | Selected uses selection + foreground and a check or clear affordance; inflate touch region |
+| Media tile | surfaceControl frame, raised depth where framed, radius 12; title bodySmall weight 500; metadata caption | Poster first, text below; keyboard activation and visible focus; neutral placeholder |
+| Torrent / episode row | Transparent idle; stateHover/statePressed; selection when selected; borderSubtle divider | bodySmall + technical values; grow with text scaling; no independent card around every cell |
+| Status / progress | Paired status roles for status, action for ordinary progress; surfaceInset track with inset depth | Label and icon express state; determinate progress when known; buffering is explicit |
+| Player control | Overlay roles and geometry above | Behavior follows playback requirements; keyboard and touch controls remain discoverable |
+
+Apply these shared state rules centrally:
+
+- **Focus:** 2-unit focus ring with 2-unit separation, visible beyond the component boundary. An input may use its 2-unit focus border. Focus remains visible during hover and selection.
+- **Disabled:** surfaceInset and foregroundDisabled; no hover/pressed feedback or activation. Disabled contrast does not define normal text contrast.
+- **Loading:** preserve the control's width and action context, show a progress indicator and prevent duplicate activation; announce busy state.
+- **Error:** error foreground on errorSurface or canvas/surface/control, with text explaining what to do. Color alone is insufficient.
+- **Motion:** use ease-out for entry and ease-in-out for state changes. Respect reduced motion by removing nonessential animation and using immediate state changes. No perpetual decorative animation.
+
+Normal text must reach 4.5:1 contrast; large text 3:1; essential control boundaries, indicators and focus 3:1 against adjacent colors. Decorative hairlines are intentionally quieter and cannot be the sole cue for an interactive control. Check actual composition, especially images, overlays and pressed states. Support keyboard traversal/activation and text scaling without hiding actions. These are acceptance requirements, not claims that an unbuilt UI has passed them.
+
+## Theme layers
+
+Resolve appearance in this direction:
+
+`theme identity + brightness → primitives → semantic roles → component styles → widgets`
+
+1. **Primitives:** palette values, type metrics, spacing, radii, border widths and motion durations. Name scale entries consistently. Keep raw appearance values inside theme definitions.
+2. **Semantic roles:** purpose-based values such as surface, foreground, muted foreground, outline, action, focus and status. Pair backgrounds with foregrounds. Use Flutter's `ColorScheme` and `TextTheme` roles where they fit; add typed extensions for missing roles. A role's meaning must survive a theme change.
+3. **Component styles:** resolve shared control appearance, size, padding, shape and interaction states centrally. Use `ThemeData` component themes for Flutter controls; use typed `ThemeExtension` styles for custom Sentorr components as they become necessary.
+
+Components consume semantic roles or resolved component styles, not palette positions. Do not scatter opacity formulas, hex values, font sizes, radii or shadow recipes across screens.
+
+Layout composition may consume named spacing scales directly when a semantic alias adds no meaning. Share reusable layout constraints where needed; screens still decide how content fits available space.
+
+Not every numeric constant is a design token. Aspect ratios, media metadata, seek positions and layout calculations belong with their behavior. Promote repeated visual decisions or intentionally controlled design choices, rather than every number.
+
+## Flutter structure
+
+Proposed location, once the app exists:
+
+```text
+lib/ui/shared/theme/
+  tokens.dart           # Primitive scales and semantic token types
+  theme_definition.dart # An identity with complete light/dark definitions
+  theme.dart            # Build ThemeData and resolve component styles
+  theme_extensions.dart # Only values not covered by Flutter theme APIs
+lib/ui/components/      # Shared widgets consuming the theme
+```
+
+Start small; split files as responsibilities grow. Theme selection and persistence belong with settings, not widget styling. Keep identity separate from brightness: initially one identity and light/dark/system selection. New identities should supply the same token contract without requiring branches in feature widgets. A theme editor, import format and preset marketplace are outside the initial scope.
+
+Theme extensions must implement `copyWith` and `lerp`; define interpolation deliberately for values that cannot interpolate. Every identity must resolve a complete set of roles in each supported mode.
+
+## Extending component contracts
+
+When adding a component beyond the fundamental contracts above, document:
+
+| Field | What to specify |
+| --- | --- |
+| Purpose | When it is appropriate and which existing component to reuse |
+| Variants | Named intents or sizes; avoid arbitrary styling parameters |
+| Anatomy | Content slots, hierarchy and allowed composition |
+| Appearance | Semantic roles and theme-owned dimensions |
+| States | Applicable idle, hover, focus, pressed, selected, disabled, loading and error behavior |
+| Interaction | Keyboard behavior, semantics, target size and focus visibility |
+| Adaptation | What changes with available space, text scaling and input method |
+
+Begin with buttons, icon buttons, inputs, selection controls, surfaces, dialogs and navigation as features need them. Add media cards, status indicators and player controls when their behavior is understood. Do not build an exhaustive component library ahead of use.
+
+Widgets still own structure, semantics and behavior. The theme owns their shared appearance. A custom wrapper is useful when it standardizes behavior or composition; styling alone should use Flutter's existing theme hooks where possible.
+
+## Rules for implementation agents
+
+- Use the supplied after frames as the surface/depth target. Keep their layering consistent with the explicit depth roles above.
+
+- Read this contract and the relevant theme/component implementation before changing UI.
+- Reuse existing semantic roles and variants. If a new role is necessary, define its meaning and supply both brightness modes centrally.
+- Fix a shared appearance issue at the theme or component contract where it originates. Do not patch individual screens with competing styles.
+- Avoid brightness checks and theme-identity checks in feature widgets. Resolve those differences in the theme. An intentionally distinct presentation context, such as controls over video, should have explicit semantic roles.
+- Local styles are appropriate for genuine content-specific layout or presentation. Repeated exceptions require a shared variant; explain deliberate one-off visual exceptions beside the code.
+- Preserve accessible focus, readable text scaling, reduced-motion behavior and status information that does not rely on color alone.
+- Check applicable component states in both modes. Report exactly what was verified. Do not use browser inspection unless explicitly requested.
+- Keep this contract synchronized when changing design rules; update Dart definitions when changing values.
+
+## Research
+
+See [design research](docs/design-research.md) for primary-source examples and the reasoning behind the proposed structure. Research informs the contract. The archived sources in [design references](docs/design-references/README.md) explain provenance; this merged contract controls implementation when those sources conflict.

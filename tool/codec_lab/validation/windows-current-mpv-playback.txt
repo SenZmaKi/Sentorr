@@ -1,0 +1,307 @@
+[   0.002][v][cplayer] mpv v0.41.0-1092-g3186d369f Copyright © 2000-2026 mpv/MPlayer/mplayer2 projects
+[   0.002][v][cplayer]  built on Oct  1 2026 01:07:43
+[   0.002][v][cplayer] libplacebo version: v7.374.0 (v7.360.0-148-g1937bee-dirty)
+[   0.002][v][cplayer] FFmpeg version: N-127043-g5a54fcf75
+[   0.002][v][cplayer] FFmpeg library versions:
+[   0.002][v][cplayer]    libavcodec      63.15.100
+[   0.002][v][cplayer]    libavdevice     63.2.100
+[   0.002][v][cplayer]    libavfilter     12.4.100
+[   0.002][v][cplayer]    libavformat     63.7.100
+[   0.002][v][cplayer]    libavutil       61.10.100
+[   0.002][v][cplayer]    libswresample   7.3.101
+[   0.002][v][cplayer]    libswscale      10.2.100
+[   0.002][v][cplayer] Configuration: -Dprefix=/__w/mpv-winbuild-cmake/mpv-winbuild-cmake/build_x86_64/x86_64-w64-mingw32 -Dlibdir=/__w/mpv-winbuild-cmake/mpv-winbuild-cmake/build_x86_64/x86_64-w64-mingw32/lib -Ddefault_library=shared -Dprefer_static=true -Ddebug=true -Db_ndebug=true -Doptimization=3 -Db_lto=true -Db_lto_mode=thin -Dlibmpv=true -Dpdf-build=enabled -Dlua=enabled -Djavascript=enabled -Dsdl2-gamepad=enabled -Dlibarchive=enabled -Dlibbluray=enabled -Ddvdnav=enabled -Duchardet=enabled -Drubberband=enabled -Dlcms2=enabled -Dopenal=enabled -Dspirv-cross=enabled -Dvulkan=enabled -Dvapoursynth=enabled -Dsubrandr=enabled -Dsixel=enabled -Dgl=enabled -Degl-angle=enabled -Dlibcurl=enabled -Dc_args=-Wno-error=int-conversion --cross-file=/__w/mpv-winbuild-cmake/mpv-winbuild-cmake/build_x86_64/meson_cross.txt
+[   0.002][v][cplayer] List of enabled features: amf build-date cplugins cuda-hwaccel cuda-interop d3d-hwaccel d3d11 d3d9-hwaccel debug direct3d dos-paths dvda dvdnav dxgi-debug-d3d11 egl-angle egl-angle-win32 ffmpeg ffnvcodec gl gl-dxinterop gl-dxinterop-d3d9 gl-win32 glob glob-win32 gpl iconv javascript jpeg lcms2 libarchive libass libavdevice libbluray libcurl libplacebo luajit openal rubberband rubberband-3 sdl2-gamepad shaderc sixel spirv-cross subrandr uchardet vaapi vaapi-win32 vapoursynth vector vk-khr-display vulkan wasapi win32 win32-desktop win32-executable win32-smtc win32-threads zimg zimg-st428 zlib
+[   0.002][v][cplayer] Built with NDEBUG.
+[   0.002][v][cplayer] Command line options: '--no-config' '--vid=no' '--audio-display=no' '--idle=no' '--keep-open=no' '--ao=pcm' '--ao-pcm-file=validation/mpv-current/truehd-decoded.wav' '--log-file=validation/mpv-current/truehd.log' 'assets/media/truehd_51.mkv'
+[   0.002][v][cplayer] mpv v0.41.0-1092-g3186d369f Copyright © 2000-2026 mpv/MPlayer/mplayer2 projects
+[   0.002][v][cplayer]  built on Oct  1 2026 01:07:43
+[   0.002][v][cplayer] libplacebo version: v7.374.0 (v7.360.0-148-g1937bee-dirty)
+[   0.002][v][cplayer] FFmpeg version: N-127043-g5a54fcf75
+[   0.002][v][cplayer] FFmpeg library versions:
+[   0.002][v][cplayer]    libavcodec      63.15.100
+[   0.002][v][cplayer]    libavdevice     63.2.100
+[   0.002][v][cplayer]    libavfilter     12.4.100
+[   0.002][v][cplayer]    libavformat     63.7.100
+[   0.002][v][cplayer]    libavutil       61.10.100
+[   0.002][v][cplayer]    libswresample   7.3.101
+[   0.002][v][cplayer]    libswscale      10.2.100
+[   0.002][v][cplayer] Configuration: -Dprefix=/__w/mpv-winbuild-cmake/mpv-winbuild-cmake/build_x86_64/x86_64-w64-mingw32 -Dlibdir=/__w/mpv-winbuild-cmake/mpv-winbuild-cmake/build_x86_64/x86_64-w64-mingw32/lib -Ddefault_library=shared -Dprefer_static=true -Ddebug=true -Db_ndebug=true -Doptimization=3 -Db_lto=true -Db_lto_mode=thin -Dlibmpv=true -Dpdf-build=enabled -Dlua=enabled -Djavascript=enabled -Dsdl2-gamepad=enabled -Dlibarchive=enabled -Dlibbluray=enabled -Ddvdnav=enabled -Duchardet=enabled -Drubberband=enabled -Dlcms2=enabled -Dopenal=enabled -Dspirv-cross=enabled -Dvulkan=enabled -Dvapoursynth=enabled -Dsubrandr=enabled -Dsixel=enabled -Dgl=enabled -Degl-angle=enabled -Dlibcurl=enabled -Dc_args=-Wno-error=int-conversion --cross-file=/__w/mpv-winbuild-cmake/mpv-winbuild-cmake/build_x86_64/meson_cross.txt
+[   0.002][v][cplayer] List of enabled features: amf build-date cplugins cuda-hwaccel cuda-interop d3d-hwaccel d3d11 d3d9-hwaccel debug direct3d dos-paths dvda dvdnav dxgi-debug-d3d11 egl-angle egl-angle-win32 ffmpeg ffnvcodec gl gl-dxinterop gl-dxinterop-d3d9 gl-win32 glob glob-win32 gpl iconv javascript jpeg lcms2 libarchive libass libavdevice libbluray libcurl libplacebo luajit openal rubberband rubberband-3 sdl2-gamepad shaderc sixel spirv-cross subrandr uchardet vaapi vaapi-win32 vapoursynth vector vk-khr-display vulkan wasapi win32 win32-desktop win32-executable win32-smtc win32-threads zimg zimg-st428 zlib
+[   0.002][v][cplayer] Built with NDEBUG.
+[   0.002][d][global] home path: '' -> '-'
+[   0.002][d][global] user path: '~~home/' -> ''
+[   0.002][d][global] user path: '~~old_home/' -> ''
+[   0.002][v][cplayer] Setting option 'config' = 'no' (flags = 8)
+[   0.002][v][cplayer] Setting option 'vid' = 'no' (flags = 8)
+[   0.002][v][cplayer] Setting option 'audio-display' = 'no' (flags = 8)
+[   0.002][v][cplayer] Setting option 'idle' = 'no' (flags = 8)
+[   0.002][v][cplayer] Setting option 'keep-open' = 'no' (flags = 8)
+[   0.002][v][cplayer] Setting option 'ao' = 'pcm' (flags = 8)
+[   0.002][v][cplayer] Setting option 'ao-pcm-file' = 'validation/mpv-current/truehd-decoded.wav' (flags = 8)
+[   0.002][v][cplayer] Setting option 'log-file' = 'validation/mpv-current/truehd.log' (flags = 8)
+[   0.005][d][osc] Loading lua script @osc.lua...
+[   0.005][d][ytdl_hook] Loading lua script @ytdl_hook.lua...
+[   0.005][d][stats] Loading lua script @stats.lua...
+[   0.005][d][console] Loading lua script @console.lua...
+[   0.006][d][auto_profiles] Loading lua script @auto_profiles.lua...
+[   0.006][d][select] Loading lua script @select.lua...
+[   0.006][d][positioning] Loading lua script @positioning.lua...
+[   0.006][d][commands] Loading lua script @commands.lua...
+[   0.006][v][clipboard] Initialized win32 clipboard backend.
+[   0.006][v][cplayer] Waiting for scripts...
+[   0.006][d][select] loading mp.defaults
+[   0.007][d][osc] loading mp.defaults
+[   0.007][d][auto_profiles] loading mp.defaults
+[   0.007][d][console] loading mp.defaults
+[   0.007][d][ytdl_hook] loading mp.defaults
+[   0.007][d][stats] loading mp.defaults
+[   0.007][d][positioning] loading mp.defaults
+[   0.007][d][commands] loading mp.defaults
+[   0.008][d][auto_profiles] loading @auto_profiles.lua
+[   0.008][d][console] loading @console.lua
+[   0.008][d][ytdl_hook] loading @ytdl_hook.lua
+[   0.008][d][stats] loading @stats.lua
+[   0.008][d][select] loading @select.lua
+[   0.008][d][osc] loading @osc.lua
+[   0.008][d][positioning] loading @positioning.lua
+[   0.008][d][commands] loading @commands.lua
+[   0.008][d][positioning] reading options for positioning
+[   0.008][d][positioning] script-opts/positioning.conf not found.
+[   0.008][d][cplayer] Run command: define-section, flags=64, args=[name="input_positioning", contents="", flags="default"]
+[   0.008][d][cplayer] Run command: enable-section, flags=64, args=[name="input_positioning", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.008][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_positioning", contents="", flags="force"]
+[   0.008][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_positioning", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.008][d][ytdl_hook] reading options for ytdl_hook
+[   0.008][d][ytdl_hook] script-opts/ytdl_hook.conf not found.
+[   0.008][d][commands] reading options for commands
+[   0.008][d][commands] script-opts/commands.conf not found.
+[   0.008][d][cplayer] Run command: define-section, flags=64, args=[name="input_commands", contents="", flags="default"]
+[   0.008][d][cplayer] Run command: enable-section, flags=64, args=[name="input_commands", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.008][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_commands", contents="", flags="force"]
+[   0.008][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_commands", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.009][d][select] reading options for select
+[   0.009][d][select] script-opts/select.conf not found.
+[   0.009][d][auto_profiles] Destroying client handle...
+[   0.009][d][cplayer] Run command: define-section, flags=64, args=[name="input_select", contents="", flags="default"]
+[   0.009][d][cplayer] Run command: enable-section, flags=64, args=[name="input_select", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.009][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_select", contents="", flags="force"]
+[   0.009][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_select", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.009][d][stats] reading options for stats
+[   0.009][d][stats] script-opts/stats.conf not found.
+[   0.010][d][console] reading options for console
+[   0.010][d][console] script-opts/console.conf not found.
+[   0.010][d][cplayer] Run command: define-section, flags=64, args=[name="input_stats", contents="", flags="default"]
+[   0.010][d][cplayer] Run command: enable-section, flags=64, args=[name="input_stats", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.010][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_stats", contents="", flags="force"]
+[   0.010][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_stats", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.010][d][cplayer] Run command: define-section, flags=64, args=[name="input_console", contents="", flags="default"]
+[   0.010][d][cplayer] Run command: enable-section, flags=64, args=[name="input_console", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.010][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_console", contents="", flags="force"]
+[   0.010][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_console", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.012][d][cplayer] Run command: define-section, flags=64, args=[name="showhide", contents="mouse_move script-binding osc/__keybinding1\nmouse_leave script-binding osc/__keybinding2\n", flags="force"]
+[   0.012][d][cplayer] Run command: define-section, flags=64, args=[name="showhide_wc", contents="mouse_move script-binding osc/__keybinding3\nmouse_leave script-binding osc/__keybinding4\n", flags="force"]
+[   0.012][d][cplayer] Run command: enable-section, flags=64, args=[name="showhide", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.012][d][cplayer] Run command: enable-section, flags=64, args=[name="showhide_wc", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.012][d][cplayer] Run command: define-section, flags=64, args=[name="input", contents="mbtn_left script-binding osc/__keybinding5\nmbtn_mid script-binding osc/__keybinding6\nmbtn_right script-binding osc/__keybinding7\nshift+mbtn_left script-binding osc/__keybinding8\nwheel_up script-binding osc/__keybinding9\nwheel_down script-binding osc/__keybinding10\nmbtn_left_dbl ignore\nshift+mbtn_left_dbl ignore\nmbtn_right_dbl ignore\n", flags="force"]
+[   0.012][d][cplayer] Run command: enable-section, flags=64, args=[name="input", flags=""]
+[   0.012][d][cplayer] Run command: define-section, flags=64, args=[name="window-controls", contents="mbtn_left script-binding osc/__keybinding11\n", flags="force"]
+[   0.012][d][cplayer] Run command: enable-section, flags=64, args=[name="window-controls", flags=""]
+[   0.012][d][osc] reading options for osc
+[   0.012][d][osc] script-opts/osc.conf not found.
+[   0.012][v][cplayer] Set property: user-data/osc/visibility="auto" -> 1
+[   0.012][d][cplayer] Run command: disable-section, flags=64, args=[name="input"]
+[   0.012][d][cplayer] Run command: disable-section, flags=64, args=[name="window-controls"]
+[   0.012][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.013][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.013][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.013][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.013][v][cplayer] Set property: user-data/osc/margins={"r":0,"t":0,"l":0,"b":0} -> 1
+[   0.013][v][cplayer] Done loading scripts.
+[   0.013][d][global] state path: 'watch_later' -> '-'
+[   0.013][v][cplayer] Running hook: auto_profiles/on_before_start_file
+[   0.013][v][cplayer] Failed sending hook command auto_profiles/on_before_start_file. Removing hook.
+[   0.013][d][global] state path: 'watch_later' -> '-'
+[   0.013][v][cplayer] Running hook: auto_profiles/on_load
+[   0.013][v][cplayer] Failed sending hook command auto_profiles/on_load. Removing hook.
+[   0.013][v][cplayer] Running hook: ytdl_hook/on_load
+[   0.013][v][cplayer] Running hook: ytdl_hook/on_load
+[   0.013][v][ytdl_hook] playlist hook
+[   0.013][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.013][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.013][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.013][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.013][v][cplayer] Set property: user-data/osc/margins={"r":0,"t":0,"l":0,"b":0} -> 1
+[   0.013][d][osc] osc_init
+[   0.013][v][ifo_dvda] Opening C:\Users\Sen\Dev\Sentorr\codec_lab\assets\media\truehd_51.mkv
+[   0.014][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.014][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.014][v][ifo_dvdnav] Opening C:\Users\Sen\Dev\Sentorr\codec_lab\assets\media\truehd_51.mkv
+[   0.014][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.014][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.014][v][bdmv/bluray] Opening C:\Users\Sen\Dev\Sentorr\codec_lab\assets\media\truehd_51.mkv
+[   0.014][v][cplayer] Set property: user-data/osc/margins={"r":0,"t":0,"l":0,"b":0} -> 1
+[   0.014][d][osd/libass] ASS library version: 0x1705000 (runtime 0x1705000)
+[   0.014][v][osd/libass] libass API version: 0x1705000
+[   0.014][v][osd/libass] libass source: meson, commit: 0.17.5-11-gf61db567e6593df3470e91594bcd4ad2d0473aff
+[   0.014][v][file] Opening C:\Users\Sen\Dev\Sentorr\codec_lab\assets\media\truehd_51.mkv
+[   0.014][v][osd/libass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.1 (COMPLEX)
+[   0.014][v][osd/libass] Setting up fonts...
+[   0.014][d][file] resize stream to 131072 bytes, drop 0 bytes
+[   0.014][d][file] Stream opened successfully.
+[   0.014][v][demux] Trying demuxers for level=normal.
+[   0.014][d][demux] Trying demuxer: directory (force-level: normal)
+[   0.017][d][demux] Trying demuxer: disc (force-level: normal)
+[   0.017][d][demux] Trying demuxer: edl (force-level: normal)
+[   0.017][d][demux] Trying demuxer: cue (force-level: normal)
+[   0.017][d][demux] Trying demuxer: rawaudio (force-level: normal)
+[   0.017][d][demux] Trying demuxer: rawvideo (force-level: normal)
+[   0.017][d][demux] Trying demuxer: mkv (force-level: normal)
+[   0.017][d][mkv] Found the head...
+[   0.017][d][mkv] + a segment...
+[   0.017][d][mkv] Parsing seek head...
+[   0.017][d][mkv] |+ segment information...
+[   0.017][d][mkv] float 10000.000000
+[   0.017][d][mkv] | + muxing app: Lavf61.7.100
+[   0.017][d][mkv] | + writing app: Lavf61.7.100
+[   0.017][d][mkv] | + timecode scale: 1000000
+[   0.017][d][mkv] | + duration: 10.000s
+[   0.017][d][mkv] | + segment uid d0 e6 9a b3 c5 0e 23 5f e9 f4 28 08 b0 c2 4e 22
+[   0.017][d][mkv] |+ segment tracks...
+[   0.017][d][mkv] float 48000.000000
+[   0.017][d][mkv] | + a track...
+[   0.017][d][mkv] |  + Track number: 1
+[   0.017][d][mkv] |  + Track type: Video
+[   0.017][d][mkv] |  + Video track
+[   0.017][d][mkv] |   + Pixel width: 1920
+[   0.017][d][mkv] |   + Pixel height: 1080
+[   0.017][d][mkv] |    + ChromaLocation: mpeg2/4/h264
+[   0.017][d][mkv] |  + Codec ID: V_MPEG4/ISO/AVC
+[   0.017][d][mkv] |  + CodecPrivate, length 48
+[   0.017][d][mkv] |  + Language: und
+[   0.017][d][mkv] |  + Default duration: 16.667ms ( = 60.000 fps)
+[   0.017][d][mkv] | + a track...
+[   0.017][d][mkv] |  + Track number: 2
+[   0.017][d][mkv] |  + Track type: Audio
+[   0.017][d][mkv] |  + Audio track
+[   0.018][d][mkv] |   + Sampling frequency: 48000.000000
+[   0.018][d][mkv] |   + Bit depth: 24
+[   0.018][d][mkv] |   + Channels: 6
+[   0.018][d][mkv] |  + Codec ID: A_TRUEHD
+[   0.018][d][mkv] |  + Language: und
+[   0.018][d][mkv] |  + Default flag: 0
+[   0.018][d][mkv] |+ found cluster
+[   0.018][v][mkv] Deferring reading cues.
+[   0.018][v][mkv] All headers are parsed!
+[   0.018][v][demux] Detected file format: Matroska
+[   0.018][v][cplayer] Opening done: C:\Users\Sen\Dev\Sentorr\codec_lab\assets\media\truehd_51.mkv
+[   0.018][v][osd/libass] Using font provider directwrite (with GDI)
+[   0.018][v][osd/libass] Done.
+[   0.018][d][osc] osc_init
+[   0.018][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.018][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.018][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.018][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.018][v][cplayer] Set property: user-data/osc/margins={"r":0,"t":0,"l":0,"b":0} -> 1
+[   0.018][d][cplayer] Run command: define-section, flags=64, args=[name="input_osc", contents="", flags="default"]
+[   0.018][d][cplayer] Run command: enable-section, flags=64, args=[name="input_osc", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.018][v][find_files] Loading external files in C:\Users\Sen\Dev\Sentorr\codec_lab\assets\media\
+[   0.018][d][cplayer] Run command: define-section, flags=64, args=[name="input_forced_osc", contents="", flags="force"]
+[   0.018][v][cplayer] Running hook: auto_profiles/on_preloaded
+[   0.018][v][cplayer] Failed sending hook command auto_profiles/on_preloaded. Removing hook.
+[   0.018][v][cplayer] Running hook: ytdl_hook/on_preloaded
+[   0.018][d][cplayer] Run command: enable-section, flags=64, args=[name="input_forced_osc", flags="allow-hide-cursor+allow-vo-dragging"]
+[   0.018][v][cplayer] Running hook: auto_profiles/on_loaded
+[   0.018][v][cplayer] Failed sending hook command auto_profiles/on_loaded. Removing hook.
+[   0.018][v][mkv] select track 1
+[   0.018][v][mkv] refresh track 1 (audio)
+[   0.018][v][mkv] refresh seek to 0.000000
+[   0.018][i][cplayer] ○ Video  --vid=1  (h264 1920x1080 60 fps) [default]
+[   0.018][i][cplayer] ● Audio  --aid=1  (truehd 6ch 48000 Hz)
+[   0.018][v][mkv] execute seek (to 0.000000 flags 32)
+[   0.018][v][mkv] Seeking to 8305463 to read header element 0x1c53bb6b.
+[   0.018][v][file] stream level seek from 524813 to 8305463
+[   0.018][v][mkv] Parsing cues...
+[   0.018][w][mkv] Discarding potentially broken or useless index.
+[   0.018][v][file] stream level seek from 8305529 to 867
+[   0.018][v][mkv] creating index until TC 5000000
+[   0.019][v][ad] Codec list:
+[   0.019][v][ad]     truehd - TrueHD
+[   0.019][v][ad] Opening decoder truehd
+[   0.020][v][ad] Requesting 1 threads for decoding.
+[   0.020][v][ad] Selected decoder: truehd - TrueHD
+[   0.020][v][af] User filter list:
+[   0.020][v][af]   (empty)
+[   0.020][v][cplayer] Starting playback...
+[   0.024][v][file] stream level seek from 3811881 to 867
+[   0.024][v][mkv] seek done
+[   0.024][v][af] [in] 48000Hz 5.1(side) 6ch s32
+[   0.024][v][af] [userspeed] 48000Hz 5.1(side) 6ch s32
+[   0.024][v][af] [userspeed] (disabled)
+[   0.024][v][af] [convert] 48000Hz 5.1(side) 6ch s32
+[   0.024][v][ao] Trying audio driver 'pcm'
+[   0.024][v][ao/pcm] requested format: 48000 Hz, 5.1(side) channels, s32
+[   0.024][v][ao/pcm] Channel layouts:
+[   0.024][v][ao/pcm]  - waveext
+[   0.024][v][ao/pcm] result: 5.1(side)
+[   0.024][i][ao/pcm] File: validation/mpv-current/truehd-decoded.wav (WAVE)
+[   0.024][i][ao/pcm] PCM: Samplerate: 48000 Hz Channels: 6 Format: s32
+[   0.025][v][ao/pcm] device buffer: 65536 samples.
+[   0.025][v][ao/pcm] using soft-buffer of 65536 samples.
+[   0.026][i][cplayer] AO: [pcm] 48000Hz 5.1(side) 6ch s32
+[   0.026][v][cplayer] AO: Description: RAW PCM/WAVE file writer audio output
+[   0.026][v][af] [convert] (disabled)
+[   0.026][v][af] [out] 48000Hz 5.1(side) 6ch s32
+[   0.045][v][cplayer] audio ready
+[   0.045][v][cplayer] starting audio playback
+[   0.045][d][osc] osc_init
+[   0.045][v][cplayer] playback restart complete @ -0.000000, audio=playing, video=eof
+[   0.047][v][ao/pcm] starting AO
+[   0.179][v][mkv] EOF reached.
+[   0.199][v][af] filter input EOF
+[   0.199][v][af] filter output EOF
+[   0.199][v][cplayer] audio filter EOF
+[   0.199][v][ao/pcm] audio end or underrun
+[   0.199][v][cplayer] AO signaled EOF (while in state playing)
+[   0.199][v][cplayer] EOF code: 1  
+[   0.199][v][cplayer] Running hook: osc/on_unload
+[   0.199][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.199][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.199][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.200][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.200][v][cplayer] Set property: user-data/osc/margins={"r":0,"t":0,"l":0,"b":0} -> 1
+[   0.200][d][ad] Uninit decoder.
+[   0.200][v][ad] dropping request due to pin disconnect
+[   0.200][v][ad] dropping request due to pin disconnect
+[   0.200][v][demux_in] dropping request due to pin disconnect
+[   0.200][v][af] dropping request due to pin disconnect
+[   0.200][v][nop] dropping request due to pin disconnect
+[   0.200][v][user_filter_wrapper] dropping request due to pin disconnect
+[   0.200][v][user_filter_wrapper] dropping request due to pin disconnect
+[   0.200][v][autoaspeed] dropping request due to pin disconnect
+[   0.200][v][autoaspeed] dropping request due to pin disconnect
+[   0.200][v][user_filter_wrapper] dropping request due to pin disconnect
+[   0.200][v][autoconvert] dropping request due to pin disconnect
+[   0.200][v][autoconvert] dropping request due to pin disconnect
+[   0.200][v][user_filter_wrapper] dropping request due to pin disconnect
+[   0.200][v][nop] dropping request due to pin disconnect
+[   0.200][v][user_filter_wrapper] dropping request due to pin disconnect
+[   0.200][v][ao] dropping request due to pin disconnect
+[   0.200][v][async_queue_in] dropping request due to pin disconnect
+[   0.201][v][cplayer] finished playback, success (reason 0)
+[   0.201][v][cplayer] Running hook: ytdl_hook/on_after_end_file
+[   0.201][d][cplayer] Run command: del, flags=64, args=[name="user-data/mpv/ytdl/json-subprocess-result"]
+[   0.201][i][cplayer] Exiting... (End of file)
+[   0.202][v][cplayer] Set property: sub-margin-y-offset=0 -> 1
+[   0.202][v][cplayer] Set property: osd-margin-y-offset=0 -> 1
+[   0.202][d][cplayer] Run command: del, flags=64, args=[name="user-data/osc"]
+[   0.202][d][ytdl_hook] Destroying client handle...
+[   0.202][d][positioning] Destroying client handle...
+[   0.202][d][dnd] Destroying client handle...
+[   0.202][d][cplayer] Run command: del, flags=64, args=[name="user-data/mpv/console"]
+[   0.202][d][select] Destroying client handle...
+[   0.204][d][stats] Destroying client handle...
+[   0.204][d][commands] Destroying client handle...
+[   0.204][d][console] Destroying client handle...
+[   0.204][d][osc] Destroying client handle...
+[   0.287][d][SystemMediaTransportControls] Destroying client handle...

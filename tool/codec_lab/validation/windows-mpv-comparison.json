@@ -1,0 +1,81 @@
+{
+  "testedAtUtc": "2026-10-01T06:18:06.897044+00:00",
+  "source": "https://github.com/shinchiro/mpv-winbuild-cmake/releases/tag/20261001",
+  "fixture": "assets/media/truehd_51.mkv",
+  "fixtureSha256": "8ec98a647d8364c2e53dbf7ddbfaf5bad97017adc7bc9c5bf7ea8e29d26f6f05",
+  "bundledLibrary": {
+    "mpv": "mpv v0.36.0-403-g652a1dd907",
+    "ffmpeg": "n6.0",
+    "decoderCount": 135,
+    "relevantDecoders": [
+      {
+        "codec": "ac3",
+        "driver": "ac3",
+        "description": ""
+      },
+      {
+        "codec": "dts",
+        "driver": "dca",
+        "description": ""
+      },
+      {
+        "codec": "eac3",
+        "driver": "eac3",
+        "description": ""
+      }
+    ]
+  },
+  "currentLibrary": {
+    "mpv": "mpv v0.41.0-1092-g3186d369f",
+    "ffmpeg": "N-127043-g5a54fcf75",
+    "decoderCount": 521,
+    "relevantDecoders": [
+      {
+        "codec": "ac3",
+        "driver": "ac3",
+        "description": "ATSC A/52A (AC-3)"
+      },
+      {
+        "codec": "ac3",
+        "driver": "ac3_fixed",
+        "description": "ATSC A/52A (AC-3)"
+      },
+      {
+        "codec": "dts",
+        "driver": "dca",
+        "description": "DCA (DTS Coherent Acoustics)"
+      },
+      {
+        "codec": "eac3",
+        "driver": "eac3",
+        "description": "ATSC A/52B (AC-3, E-AC-3)"
+      },
+      {
+        "codec": "mlp",
+        "driver": "mlp",
+        "description": "MLP (Meridian Lossless Packing)"
+      },
+      {
+        "codec": "truehd",
+        "driver": "truehd",
+        "description": "TrueHD"
+      }
+    ]
+  },
+  "currentLibrarySha256": "ec77593d23735f36eb08e486154e89cf1cc6a5650327dab125736c1bb5d3af40",
+  "currentPlayerArchiveSha256": "7f680aecfd0d66fd0c1f032dd3a5588a3a7755f0ef6dcde2462cc34a9fb04c61",
+  "currentLibraryArchiveSha256": "de0aa24a39e27b07d9f663616f8d09c91586c7328d8c33fbfbc8e3888c35d89c",
+  "standaloneDecodedPcm": {
+    "sampleRate": 48000,
+    "channels": 6,
+    "seconds": 10,
+    "meanDb": -24.9,
+    "peakDb": -21.9
+  },
+  "flutterNativeSmoke": {
+    "bundledPassed": 12,
+    "currentPassed": 13,
+    "total": 13
+  },
+  "scope": "Decoder presence, PCM decode and native Flutter playback progression/seek/subtitle text. No visual or listening certification."
+}

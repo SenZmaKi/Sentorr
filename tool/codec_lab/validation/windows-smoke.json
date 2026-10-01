@@ -1,0 +1,759 @@
+{
+  "platform": "windows",
+  "timestamp": "2026-10-01T06:03:58.024399Z",
+  "scope": "Native decode, playback progression, seek and track-selection commands; no visual/audio certification",
+  "results": [
+    {
+      "title": "H.264 · MP4",
+      "properties": {
+        "video-codec": "h264 ((null))",
+        "audio-codec-name": "",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "h264",
+        "container-fps": "60.000000",
+        "estimated-vf-fps": "60.000000",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "26",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "nv12",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "",
+        "demuxer-cache-duration": "8.383333",
+        "avsync": ""
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "HEVC · MP4",
+      "properties": {
+        "video-codec": "hevc ((null))",
+        "audio-codec-name": "",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "hevc",
+        "container-fps": "30.000000",
+        "estimated-vf-fps": "30.000000",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "nv12",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "",
+        "demuxer-cache-duration": "8.266667",
+        "avsync": ""
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "AV1 · MP4",
+      "properties": {
+        "video-codec": "libdav1d ((null))",
+        "audio-codec-name": "",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "av1",
+        "container-fps": "30.000000",
+        "estimated-vf-fps": "30.000000",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "nv12",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "",
+        "demuxer-cache-duration": "8.333333",
+        "avsync": ""
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "VP9 · WebM",
+      "properties": {
+        "video-codec": "vp9 ((null))",
+        "audio-codec-name": "",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "vp9",
+        "container-fps": "30.000000",
+        "estimated-vf-fps": "30.000000",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "nv12",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "",
+        "demuxer-cache-duration": "8.334000",
+        "avsync": ""
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "HEVC Main10 · AAC · MKV",
+      "properties": {
+        "video-codec": "hevc ((null))",
+        "audio-codec-name": "aac",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "hevc",
+        "container-fps": "60.000004",
+        "estimated-vf-fps": "60.000002",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "p010",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "128234",
+        "demuxer-cache-duration": "8.213000",
+        "avsync": "0.000018"
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "1",
+          "codec": "aac",
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "H.264 Hi10P · FLAC · MKV",
+      "properties": {
+        "video-codec": "h264 ((null))",
+        "audio-codec-name": "flac",
+        "hwdec-current": "no",
+        "video-format": "h264",
+        "container-fps": "60.000004",
+        "estimated-vf-fps": "60.000002",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "yuv420p10",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "108181",
+        "demuxer-cache-duration": "8.251000",
+        "avsync": "0.001148"
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "1",
+          "codec": "flac",
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "H.264 · AC-3 5.1 · MKV",
+      "properties": {
+        "video-codec": "h264 ((null))",
+        "audio-codec-name": "ac3",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "h264",
+        "container-fps": "60.000004",
+        "estimated-vf-fps": "60.000002",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "nv12",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "448000",
+        "demuxer-cache-duration": "8.196333",
+        "avsync": "0.000050"
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "1",
+          "codec": "ac3",
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "H.264 · E-AC-3 5.1 · MKV",
+      "properties": {
+        "video-codec": "h264 ((null))",
+        "audio-codec-name": "eac3",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "h264",
+        "container-fps": "60.000004",
+        "estimated-vf-fps": "60.000002",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "nv12",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "448000",
+        "demuxer-cache-duration": "8.196333",
+        "avsync": "0.000125"
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "1",
+          "codec": "eac3",
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "H.264 · DTS 5.1 · MKV",
+      "properties": {
+        "video-codec": "h264 ((null))",
+        "audio-codec-name": "dts",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "h264",
+        "container-fps": "60.000004",
+        "estimated-vf-fps": "60.000002",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "nv12",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "1413940",
+        "demuxer-cache-duration": "8.224000",
+        "avsync": "0.000098"
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "1",
+          "codec": "dts",
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "H.264 · TrueHD 5.1 · MKV",
+      "properties": {
+        "video-codec": "h264 ((null))",
+        "audio-codec-name": "",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "h264",
+        "container-fps": "60.000004",
+        "estimated-vf-fps": "60.000002",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "nv12",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "",
+        "demuxer-cache-duration": "8.400000",
+        "avsync": ""
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "1",
+          "codec": "truehd",
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": false,
+      "seekAdvanced": true,
+      "passed": false,
+      "errors": [
+        "Failed to initialize a decoder for codec 'truehd'."
+      ]
+    },
+    {
+      "title": "H.264 · Opus · MKV",
+      "properties": {
+        "video-codec": "h264 ((null))",
+        "audio-codec-name": "opus",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "h264",
+        "container-fps": "60.000004",
+        "estimated-vf-fps": "60.000002",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "nv12",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "113632",
+        "demuxer-cache-duration": "8.240000",
+        "avsync": "0.000550"
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "1",
+          "codec": "opus",
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "Track switching · AAC ×2 · SRT + ASS",
+      "properties": {
+        "video-codec": "h264 ((null))",
+        "audio-codec-name": "aac",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "h264",
+        "container-fps": "60.000004",
+        "estimated-vf-fps": "60.000002",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "1",
+        "mistimed-frame-count": "",
+        "video-params/w": "1920",
+        "video-params/h": "1080",
+        "video-params/pixelformat": "nv12",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "68656",
+        "demuxer-cache-duration": "8.213000",
+        "avsync": "0.000969"
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "1",
+          "codec": "aac",
+          "title": "Low tone 440 Hz"
+        },
+        {
+          "id": "2",
+          "codec": "aac",
+          "title": "High tone 880 Hz"
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "1",
+          "codec": "subrip",
+          "title": "Plain SRT"
+        },
+        {
+          "id": "2",
+          "codec": "ass",
+          "title": "Styled ASS"
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "decodedSubtitleText": {
+        "1": "SRT subtitle: white text, first four seconds.",
+        "2": "ASS subtitle: yellow and bold"
+      },
+      "subtitlesDecoded": true,
+      "trackSelectionCommandsAccepted": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "title": "4K60 · HEVC Main10 · synthetic",
+      "properties": {
+        "video-codec": "hevc ((null))",
+        "audio-codec-name": "",
+        "hwdec-current": "d3d11va-copy",
+        "video-format": "hevc",
+        "container-fps": "60.000004",
+        "estimated-vf-fps": "60.000002",
+        "display-fps": "",
+        "decoder-frame-drop-count": "0",
+        "frame-drop-count": "0",
+        "mistimed-frame-count": "",
+        "video-params/w": "3840",
+        "video-params/h": "2160",
+        "video-params/pixelformat": "p010",
+        "video-params/gamma": "bt.1886",
+        "video-bitrate": "",
+        "audio-bitrate": "",
+        "demuxer-cache-duration": "4.400000",
+        "avsync": ""
+      },
+      "audioTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "subtitleTracks": [
+        {
+          "id": "auto",
+          "codec": null,
+          "title": null
+        },
+        {
+          "id": "no",
+          "codec": null,
+          "title": null
+        }
+      ],
+      "playbackAdvanced": true,
+      "videoDecoded": true,
+      "audioDecoderPresent": true,
+      "seekAdvanced": true,
+      "passed": true,
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "mpv": "mpv v0.41.0-1092-g3186d369f",
+  "ffmpeg": "N-127043-g5a54fcf75",
+  "decoderCount": 521,
+  "relevantDecoders": [
+    {
+      "codec": "ac3",
+      "driver": "ac3",
+      "description": "ATSC A/52A (AC-3)"
+    },
+    {
+      "codec": "ac3",
+      "driver": "ac3_fixed",
+      "description": "ATSC A/52A (AC-3)"
+    },
+    {
+      "codec": "dts",
+      "driver": "dca",
+      "description": "DCA (DTS Coherent Acoustics)"
+    },
+    {
+      "codec": "eac3",
+      "driver": "eac3",
+      "description": "ATSC A/52B (AC-3, E-AC-3)"
+    },
+    {
+      "codec": "mlp",
+      "driver": "mlp",
+      "description": "MLP (Meridian Lossless Packing)"
+    },
+    {
+      "codec": "truehd",
+      "driver": "truehd",
+      "description": "TrueHD"
+    }
+  ]
+}

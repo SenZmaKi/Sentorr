@@ -1,0 +1,22 @@
+{
+  "mpv": "mpv v0.36.0-403-g652a1dd907",
+  "ffmpeg": "n6.0",
+  "decoderCount": 135,
+  "relevantDecoders": [
+    {
+      "codec": "ac3",
+      "driver": "ac3",
+      "description": ""
+    },
+    {
+      "codec": "dts",
+      "driver": "dca",
+      "description": ""
+    },
+    {
+      "codec": "eac3",
+      "driver": "eac3",
+      "description": ""
+    }
+  ]
+}

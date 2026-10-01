@@ -25,36 +25,36 @@ The depth specification below supersedes the earlier flat-card and shadow-free d
 
 All hex values are opaque sRGB unless explicitly stated. These are resolved semantic roles; Dart implementation may derive them from shared primitives. Both modes use the reference's distinct canvas, panel and control planes. Status pairs and interaction colors complete the references for app use.
 
-| Role | Dark | Light | Use |
-| --- | --- | --- | --- |
-| canvas | `#0D0D0D` | `#E7E7E7` | Back plane |
-| surface | `#191919` | `#F3F3F3` | Panels and grouped containers |
-| surfaceControl | `#262626` | `#FFFFFF` | Raised controls and child cards |
-| surfaceRaised | `#303030` | `#FFFFFF` | Floating menus and dialogs |
-| surfaceInset | `#090909` | `#DCDCDC` | Recessed wells and tracks |
-| foreground | `#FCFDFF` | `#171717` | Titles and primary text |
-| foregroundSecondary | `#B3B3B3` | `#4D4D4D` | Body descriptions and metadata |
-| foregroundMuted | `#AAAAAA` | `#606060` | Captions, hints; never essential content in disabled styling |
-| foregroundDisabled | `#464A4D` | `#A1A1A1` | Disabled controls only |
-| borderSubtle | `#333333` | `#D4D4D4` | Decorative dividers and panel edges |
-| borderStrong | `#454545` | `#B8B8B8` | Structural edges |
-| borderControl | `#AAAAAA` | `#707070` | Input boundaries and controls requiring visible outlines |
-| action | `#FCFDFF` | `#171717` | Primary button fill, selected checks and progress |
-| onAction | `#000000` | `#FFFFFF` | Content on action fill |
-| actionHover | `#E5E5E5` | `#333333` | Primary hover |
-| actionPressed | `#D4D4D4` | `#000000` | Primary pressed |
-| stateHover | `#333333` | `#F5F5F5` | Neutral interactive surface hover |
-| statePressed | `#1F1F1F` | `#E5E5E5` | Neutral interactive surface pressed |
-| selection | `#262626` | `#EBEBEB` | Selected navigation/rows; pair with foreground |
-| focus | `#FCFDFF` | `#171717` | Keyboard focus ring |
-| link / info | `#3B9EFF` | `#0761D1` | Links and informational status |
-| infoSurface | `#071B30` | `#EAF3FF` | Information badge/background |
-| success | `#11FF99` | `#067647` | Ready, completed, successful action |
-| successSurface | `#052619` | `#ECFDF3` | Success badge/background |
-| warning | `#FFC53D` | `#854A0E` | Waiting, degraded conditions requiring attention |
-| warningSurface | `#2A2108` | `#FFFAEB` | Warning badge/background |
-| error | `#FF6B81` | `#C50000` | Failure, destructive intent |
-| errorSurface | `#300710` | `#FFF1F2` | Error badge/background |
+| Role                | Dark      | Light     | Use                                                          |
+| ------------------- | --------- | --------- | ------------------------------------------------------------ |
+| canvas              | `#0D0D0D` | `#E7E7E7` | Back plane                                                   |
+| surface             | `#191919` | `#F3F3F3` | Panels and grouped containers                                |
+| surfaceControl      | `#262626` | `#FFFFFF` | Raised controls and child cards                              |
+| surfaceRaised       | `#303030` | `#FFFFFF` | Floating menus and dialogs                                   |
+| surfaceInset        | `#090909` | `#DCDCDC` | Recessed wells and tracks                                    |
+| foreground          | `#FCFDFF` | `#171717` | Titles and primary text                                      |
+| foregroundSecondary | `#B3B3B3` | `#4D4D4D` | Body descriptions and metadata                               |
+| foregroundMuted     | `#AAAAAA` | `#606060` | Captions, hints; never essential content in disabled styling |
+| foregroundDisabled  | `#464A4D` | `#A1A1A1` | Disabled controls only                                       |
+| borderSubtle        | `#333333` | `#D4D4D4` | Decorative dividers and panel edges                          |
+| borderStrong        | `#454545` | `#B8B8B8` | Structural edges                                             |
+| borderControl       | `#AAAAAA` | `#707070` | Input boundaries and controls requiring visible outlines     |
+| action              | `#FCFDFF` | `#171717` | Primary button fill, selected checks and progress            |
+| onAction            | `#000000` | `#FFFFFF` | Content on action fill                                       |
+| actionHover         | `#E5E5E5` | `#333333` | Primary hover                                                |
+| actionPressed       | `#D4D4D4` | `#000000` | Primary pressed                                              |
+| stateHover          | `#333333` | `#F5F5F5` | Neutral interactive surface hover                            |
+| statePressed        | `#1F1F1F` | `#E5E5E5` | Neutral interactive surface pressed                          |
+| selection           | `#262626` | `#EBEBEB` | Selected navigation/rows; pair with foreground               |
+| focus               | `#FCFDFF` | `#171717` | Keyboard focus ring                                          |
+| link / info         | `#3B9EFF` | `#0761D1` | Links and informational status                               |
+| infoSurface         | `#071B30` | `#EAF3FF` | Information badge/background                                 |
+| success             | `#11FF99` | `#067647` | Ready, completed, successful action                          |
+| successSurface      | `#052619` | `#ECFDF3` | Success badge/background                                     |
+| warning             | `#FFC53D` | `#854A0E` | Waiting, degraded conditions requiring attention             |
+| warningSurface      | `#2A2108` | `#FFFAEB` | Warning badge/background                                     |
+| error               | `#FF6B81` | `#C50000` | Failure, destructive intent                                  |
+| errorSurface        | `#300710` | `#FFF1F2` | Error badge/background                                       |
 
 Status foregrounds pair with their corresponding status surfaces. Do not use saturated status colors as large fills. Neutral buttons remain the default, including Play. Use error text/border for destructive actions, with confirmation when product behavior warrants it. Links are underlined in prose. Status labels accompany color: queued and paused are neutral, active transfer is info, ready/completed is success, and failure is error; buffering itself is not an error.
 
@@ -64,31 +64,31 @@ Bundle **Geist Sans** (400, 500, 600) and **Geist Mono** (400, 500) with the Flu
 
 Dimensions below are Flutter logical units before user text scaling. Line height is an absolute specification; map it to Flutter's `TextStyle.height` as line height divided by font size. Tracking is logical units, not a percentage.
 
-| Text role | Size / line height | Weight | Tracking | Use |
-| --- | --- | --- | --- | --- |
-| display | 48 / 56 | 600 | -1.5 | Media detail title at wide widths |
-| headline | 32 / 40 | 600 | -0.8 | Page title; compact detail title |
-| title | 24 / 32 | 600 | -0.4 | Section and dialog title |
-| subtitle | 20 / 28 | 600 | -0.3 | Panel and group heading |
-| bodyLarge | 18 / 28 | 400 | 0 | Synopsis lead where appropriate |
-| body | 16 / 24 | 400 | 0 | Normal prose and settings |
-| bodySmall | 14 / 20 | 400 | 0 | Metadata, rows and secondary copy |
-| label | 14 / 20 | 500 | 0 | Controls, tabs and navigation |
-| caption | 12 / 16 | 400 | 0 | Nonessential annotations |
-| technical | 13 / 20 | 400 | 0 | Geist Mono: filenames, speeds, sizes and diagnostics |
+| Text role | Size / line height | Weight | Tracking | Use                                                  |
+| --------- | ------------------ | ------ | -------- | ---------------------------------------------------- |
+| display   | 48 / 56            | 600    | -1.5     | Media detail title at wide widths                    |
+| headline  | 32 / 40            | 600    | -0.8     | Page title; compact detail title                     |
+| title     | 24 / 32            | 600    | -0.4     | Section and dialog title                             |
+| subtitle  | 20 / 28            | 600    | -0.3     | Panel and group heading                              |
+| bodyLarge | 18 / 28            | 400    | 0        | Synopsis lead where appropriate                      |
+| body      | 16 / 24            | 400    | 0        | Normal prose and settings                            |
+| bodySmall | 14 / 20            | 400    | 0        | Metadata, rows and secondary copy                    |
+| label     | 14 / 20            | 500    | 0        | Controls, tabs and navigation                        |
+| caption   | 12 / 16            | 400    | 0        | Nonessential annotations                             |
+| technical | 13 / 20            | 400    | 0        | Geist Mono: filenames, speeds, sizes and diagnostics |
 
 Use sentence case. Keep ordinary text at 400, controls at 500 and headings at 600. Technical data and time counters use tabular figures; descriptions stay in sans. Essential data is at least bodySmall. Preserve text scaling, wrapping and font fallback; heights are minima rather than clipping boxes. Long filenames may ellipsize with an accessible way to view the full value.
 
 ### Geometry and rhythm
 
-| Scale | Approved values | Application |
-| --- | --- | --- |
-| Spacing | 0, 2, 4, 8, 12, 16, 24, 32, 40, 48, 64, 96, 128 | Base step 4; 2 reserved for optical micro-adjustments |
-| Radius | 0, 4, 6, 8, 12, 16, full | Controls 8; child cards 12; group panels/dialogs 16; chips 6; circular controls full |
-| Border | 1, 2 | 1 for edges; 2 for focus and selected indicators |
-| Icon | 16, 20, 24 | Metadata 16; ordinary controls 20; navigation/player 24 |
-| Control minimum height | 36 compact, 40 standard, 48 touch | Compact is desktop-only; touch hit regions at least 48 × 48 |
-| Motion duration | 100, 150, 200 ms | Press 100; hover/focus 150; panels/theme 200 |
+| Scale                  | Approved values                                 | Application                                                                          |
+| ---------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Spacing                | 0, 2, 4, 8, 12, 16, 24, 32, 40, 48, 64, 96, 128 | Base step 4; 2 reserved for optical micro-adjustments                                |
+| Radius                 | 0, 4, 6, 8, 12, 16, full                        | Controls 8; child cards 12; group panels/dialogs 16; chips 6; circular controls full |
+| Border                 | 1, 2                                            | 1 for edges; 2 for focus and selected indicators                                     |
+| Icon                   | 16, 20, 24                                      | Metadata 16; ordinary controls 20; navigation/player 24                              |
+| Control minimum height | 36 compact, 40 standard, 48 touch               | Compact is desktop-only; touch hit regions at least 48 × 48                          |
+| Motion duration        | 100, 150, 200 ms                                | Press 100; hover/focus 150; panels/theme 200                                         |
 
 Use 8 between related inline items, 12–16 within groups, 24–32 between groups, and 48 between major sections. Panels use 24 padding; dense rows use 12 vertical and 16 horizontal. App content has 24 horizontal gutters on larger layouts and 16 on compact layouts. The 96/128 steps are reserved for exceptional feature openings, not routine lists or empty states.
 
@@ -96,20 +96,20 @@ Use 8 between related inline items, 12–16 within groups, 24–32 between group
 
 Use a consistent light source above the interface: a fine lighter top edge and a small darker shadow beneath raised objects. In both modes, child controls read as nearer than their parent panel. Dark mode preserves this through brighter surfaces and edge highlights as well as shadows; light mode uses light surfaces against a darker canvas. No perspective transforms are needed.
 
-| Depth role | Surface | Treatment | Use |
-| --- | --- | --- | --- |
-| base | canvas | No shadow | Page background |
-| panel | surface | panel shadow + edge highlight | Settings group, detail summary, grouped selections |
-| raised | surfaceControl | raised shadow + edge highlight | Secondary buttons, child selection cards, input controls |
-| inset | surfaceInset | inset shading | Slider/progress trough, technical well |
-| floating | surfaceRaised | floating shadow + edge highlight | Dialog, menu, popover |
+| Depth role | Surface        | Treatment                        | Use                                                      |
+| ---------- | -------------- | -------------------------------- | -------------------------------------------------------- |
+| base       | canvas         | No shadow                        | Page background                                          |
+| panel      | surface        | panel shadow + edge highlight    | Settings group, detail summary, grouped selections       |
+| raised     | surfaceControl | raised shadow + edge highlight   | Secondary buttons, child selection cards, input controls |
+| inset      | surfaceInset   | inset shading                    | Slider/progress trough, technical well                   |
+| floating   | surfaceRaised  | floating shadow + edge highlight | Dialog, menu, popover                                    |
 
 Starting shadow recipes use `(offsetX, offsetY, blur, spread, black opacity)` in Flutter logical units. Each recipe is an ordered stack. Theme code owns these values:
 
-| Recipe | Light | Dark |
-| --- | --- | --- |
-| panel | `(0, 1, 2, 0, 8%)`, `(0, 4, 12, -2, 6%)` | `(0, 2, 4, 0, 24%)`, `(0, 8, 16, -4, 20%)` |
-| raised | `(0, 1, 2, 0, 12%)`, `(0, 3, 6, -1, 8%)` | `(0, 1, 2, 0, 32%)`, `(0, 4, 8, -2, 24%)` |
+| Recipe   | Light                                       | Dark                                        |
+| -------- | ------------------------------------------- | ------------------------------------------- |
+| panel    | `(0, 1, 2, 0, 8%)`, `(0, 4, 12, -2, 6%)`    | `(0, 2, 4, 0, 24%)`, `(0, 8, 16, -4, 20%)`  |
+| raised   | `(0, 1, 2, 0, 12%)`, `(0, 3, 6, -1, 8%)`    | `(0, 1, 2, 0, 32%)`, `(0, 4, 8, -2, 24%)`   |
 | floating | `(0, 2, 4, 0, 10%)`, `(0, 12, 32, -4, 14%)` | `(0, 2, 4, 0, 36%)`, `(0, 12, 32, -4, 32%)` |
 
 `edgeHighlight`: white at 70% in light mode and 8% in dark mode, on the top edge with a 1-unit width. `edgeShade`: black at 8% light / 24% dark on the bottom edge. These edges describe lighting; accessible control boundaries still use borderControl when required.
@@ -154,23 +154,23 @@ Player buttons use circular targets of at least 48, icons 24, and neutral hover/
 
 These are implementation requirements as components are introduced, not a request to prebuild every widget.
 
-| Component / variant | Theme-owned appearance | Composition and behavior |
-| --- | --- | --- |
-| Button / primary | action + onAction; raised recipe; radius 8; label; height 40; horizontal padding 16 | Dominant action per task group; hover/pressed use action state roles |
-| Button / secondary | surfaceControl + foreground; raised depth; borderStrong; otherwise primary geometry | Secondary action; hover/pressed use neutral state roles |
-| Button / ghost | Transparent + foreground; radius 8; same sizing | Low-emphasis action; visible neutral hover/pressed fill |
-| Button / destructive | error foreground; errorSurface on hover/press; radius 8 | Named destructive action; do not style ordinary failures as an action |
-| Icon button | Ghost style; icon 20; 40 desktop or 48 touch target | Accessible label and tooltip; circular only for player/contextual circular variant |
-| Input / search / dropdown | surfaceControl + foreground; raised depth; borderControl; focus border 2; radius 8; bodySmall; height 40; padding 12 | Persistent label or accessible name; hints foregroundMuted; inline error text and border |
-| Checkbox / radio / switch | action + onAction when selected; borderControl otherwise | Selected state has shape/check/thumb position, not color alone; visible focus |
-| Surface / panel | surface, panel depth, radius 16, padding 24 | Group related content; decorative border is not an interaction boundary |
-| Dialog / menu / toast | surfaceRaised, borderStrong, floating depth | Dialog radius 16/padding 24; menus radius 8/padding 8; toast radius 12/padding 16; correct focus/announcement semantics |
-| Navigation item / tab | foregroundSecondary idle; selection + foreground active; radius 8 | label plus icon as needed; active indicator 2; selected semantics |
-| Chip / filter | surfaceInset + foregroundSecondary; radius 6; label; padding 4 vertical/8 horizontal | Selected uses selection + foreground and a check or clear affordance; inflate touch region |
-| Media tile | surfaceControl frame, raised depth where framed, radius 12; title bodySmall weight 500; metadata caption | Poster first, text below; keyboard activation and visible focus; neutral placeholder |
-| Torrent / episode row | Transparent idle; stateHover/statePressed; selection when selected; borderSubtle divider | bodySmall + technical values; grow with text scaling; no independent card around every cell |
-| Status / progress | Paired status roles for status, action for ordinary progress; surfaceInset track with inset depth | Label and icon express state; determinate progress when known; buffering is explicit |
-| Player control | Overlay roles and geometry above | Behavior follows playback requirements; keyboard and touch controls remain discoverable |
+| Component / variant       | Theme-owned appearance                                                                                               | Composition and behavior                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Button / primary          | action + onAction; raised recipe; radius 8; label; height 40; horizontal padding 16                                  | Dominant action per task group; hover/pressed use action state roles                                                    |
+| Button / secondary        | surfaceControl + foreground; raised depth; borderStrong; otherwise primary geometry                                  | Secondary action; hover/pressed use neutral state roles                                                                 |
+| Button / ghost            | Transparent + foreground; radius 8; same sizing                                                                      | Low-emphasis action; visible neutral hover/pressed fill                                                                 |
+| Button / destructive      | error foreground; errorSurface on hover/press; radius 8                                                              | Named destructive action; do not style ordinary failures as an action                                                   |
+| Icon button               | Ghost style; icon 20; 40 desktop or 48 touch target                                                                  | Accessible label and tooltip; circular only for player/contextual circular variant                                      |
+| Input / search / dropdown | surfaceControl + foreground; raised depth; borderControl; focus border 2; radius 8; bodySmall; height 40; padding 12 | Persistent label or accessible name; hints foregroundMuted; inline error text and border                                |
+| Checkbox / radio / switch | action + onAction when selected; borderControl otherwise                                                             | Selected state has shape/check/thumb position, not color alone; visible focus                                           |
+| Surface / panel           | surface, panel depth, radius 16, padding 24                                                                          | Group related content; decorative border is not an interaction boundary                                                 |
+| Dialog / menu / toast     | surfaceRaised, borderStrong, floating depth                                                                          | Dialog radius 16/padding 24; menus radius 8/padding 8; toast radius 12/padding 16; correct focus/announcement semantics |
+| Navigation item / tab     | foregroundSecondary idle; selection + foreground active; radius 8                                                    | label plus icon as needed; active indicator 2; selected semantics                                                       |
+| Chip / filter             | surfaceInset + foregroundSecondary; radius 6; label; padding 4 vertical/8 horizontal                                 | Selected uses selection + foreground and a check or clear affordance; inflate touch region                              |
+| Media tile                | surfaceControl frame, raised depth where framed, radius 12; title bodySmall weight 500; metadata caption             | Poster first, text below; keyboard activation and visible focus; neutral placeholder                                    |
+| Torrent / episode row     | Transparent idle; stateHover/statePressed; selection when selected; borderSubtle divider                             | bodySmall + technical values; grow with text scaling; no independent card around every cell                             |
+| Status / progress         | Paired status roles for status, action for ordinary progress; surfaceInset track with inset depth                    | Label and icon express state; determinate progress when known; buffering is explicit                                    |
+| Player control            | Overlay roles and geometry above                                                                                     | Behavior follows playback requirements; keyboard and touch controls remain discoverable                                 |
 
 Apply these shared state rules centrally:
 
@@ -219,15 +219,15 @@ Theme extensions must implement `copyWith` and `lerp`; define interpolation deli
 
 When adding a component beyond the fundamental contracts above, document:
 
-| Field | What to specify |
-| --- | --- |
-| Purpose | When it is appropriate and which existing component to reuse |
-| Variants | Named intents or sizes; avoid arbitrary styling parameters |
-| Anatomy | Content slots, hierarchy and allowed composition |
-| Appearance | Semantic roles and theme-owned dimensions |
-| States | Applicable idle, hover, focus, pressed, selected, disabled, loading and error behavior |
-| Interaction | Keyboard behavior, semantics, target size and focus visibility |
-| Adaptation | What changes with available space, text scaling and input method |
+| Field       | What to specify                                                                        |
+| ----------- | -------------------------------------------------------------------------------------- |
+| Purpose     | When it is appropriate and which existing component to reuse                           |
+| Variants    | Named intents or sizes; avoid arbitrary styling parameters                             |
+| Anatomy     | Content slots, hierarchy and allowed composition                                       |
+| Appearance  | Semantic roles and theme-owned dimensions                                              |
+| States      | Applicable idle, hover, focus, pressed, selected, disabled, loading and error behavior |
+| Interaction | Keyboard behavior, semantics, target size and focus visibility                         |
+| Adaptation  | What changes with available space, text scaling and input method                       |
 
 Begin with buttons, icon buttons, inputs, selection controls, surfaces, dialogs and navigation as features need them. Add media cards, status indicators and player controls when their behavior is understood. Do not build an exhaustive component library ahead of use.
 
@@ -248,4 +248,5 @@ Widgets still own structure, semantics and behavior. The theme owns their shared
 
 ## Research
 
-See [design research](docs/design-research.md) for primary-source examples and the reasoning behind the proposed structure. Research informs the contract. The archived sources in [design references](docs/design-references/README.md) explain provenance; this merged contract controls implementation when those sources conflict.
+- See [design research](docs/design-research.md) for primary-source examples and the reasoning behind the proposed structure. Research informs the contract. The archived sources in [design references](docs/design-references/README.md) explain provenance; this merged contract controls implementation when those sources conflict.
+- See [design demo](tool/design_demo) for a sample flutter app showcasing the design.

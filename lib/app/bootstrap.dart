@@ -46,7 +46,17 @@ class AppRuntime with WidgetsBindingObserver {
 
   static Future<AppRuntime> initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
-    MediaKit.ensureInitialized();
+    // The native video plugin links this framework. Loading another copy via
+    // an environment override or framework search can pass an incompatible
+    // player handle to its renderer and abort in m_config_cache_from_shadow.
+    MediaKit.ensureInitialized(
+      libmpv: Platform.isMacOS
+          ? File(
+              '${File(Platform.resolvedExecutable).parent.parent.path}'
+              '/Frameworks/Mpv.framework/Mpv',
+            ).resolveSymbolicLinksSync()
+          : null,
+    );
     setupLogger();
     ErrorReports.install();
     final log = Logger('sentorr.app');

@@ -57,9 +57,8 @@ class TorrentPlayback {
   final SessionConfig configFor;
   final TorrentFinder find;
 
-  /// Completes once the video output's render context exists. libmpv
-  /// aborts in `mpv_render_context_create` when that runs while the first
-  /// torrent session in the process loads libtorrent, so sessions wait.
+  /// Completes once the video output's render context exists, so torrent
+  /// preparation and playback start with the renderer ready.
   final Future<void> Function() outputReady;
 
   final status = ValueNotifier<StreamStatus?>(null);

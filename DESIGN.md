@@ -165,6 +165,16 @@ The player is a layer over the app, as in the Electron original. Code: `lib/ui/p
 - **Ends.** Over the closing seconds a slim Up next row (still, eyebrow with the countdown and code, title, Play now, a dismiss control at the row's end) sits in the corner on the floating surface. When the item ends the next one starts on its own, in every mode, with no second countdown. The end screen (Play next / Replay, or Replay / Back when nothing follows) appears only when Up next was dismissed, the sleep timer's End of video claimed the ending, or the queue is exhausted.
 - **Keys.** YouTube's layout: k/space, j/l, arrows, m, f, c, Shift+N/P, </>, 0–9, i for mini player, q for episodes, Escape as above.
 
+### Play launch
+
+Play anywhere (cards, previews, title page, the episodes panel) first finds a torrent; the player opens once one is chosen. One floating dialog (radius 16, padding 24, max width 560, scrim barrier) owned by the app, not the tile, so a closed hover preview cannot strand it. Code: `lib/ui/pages/launch/`, logic in `lib/player/launch.dart`.
+
+- **Header.** Subject as a muted eyebrow (`Title · 2026`, `Series · S1 E2 · Episode`), then a title-role heading naming the state: Finding a torrent, Ready to play, Closest match, Couldn’t find a torrent, Couldn’t prepare playback.
+- **Exact match** (preferred quality, single file): the best `TorrentOption` selected, a ghost Show N more, an inset countdown track with action fill, and primary Play in Ns. It plays after 4 s. Any touch, scroll or key in the dialog stops the countdown for that launch; it does not restart. A viewer setting can skip the dialog for exact matches.
+- **Close match** (other or unknown quality, whole season): every option listed, the best selected, and a warning-pair note naming the compromise. No countdown.
+- **Miss:** the resolver's message and recovery suggestions, then a labelled field to search under another title.
+- **`TorrentOption`:** a row on the dialog plane, not a card: radio glyph or check, filename in technical (two lines, full name in a tooltip), then a `MetaLine` of best-match marker, quality, size, seeders and Whole season. stateHover/statePressed, selection fill when chosen, borderSubtle dividers.
+
 Name the data provider nowhere in the interface; rows, errors and labels describe what the viewer gets, not where it comes from.
 
 ## Fundamental component contracts

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../settings/notifier.dart';
 import '../../shared/app_lifecycle.dart';
 import '../pages/home/home_page.dart';
+import '../pages/launch/launch_host.dart';
 import '../pages/player/player_host.dart';
 import '../pages/search/search_page.dart';
 import '../pages/settings_page.dart';
@@ -24,14 +25,16 @@ class SentorrApp extends ConsumerWidget {
       themeMode: ref.watch(
         settingsProvider.select((settings) => settings.themeMode),
       ),
-      home: PlayerHost(
-        child: AppShell(
-          pages: const {
-            AppDestination.home: HomePage(),
-            AppDestination.search: SearchPage(),
-            AppDestination.settings: SettingsPage(),
-          },
-          titlePage: (route) => TitlePage(route: route),
+      home: LaunchHost(
+        child: PlayerHost(
+          child: AppShell(
+            pages: const {
+              AppDestination.home: HomePage(),
+              AppDestination.search: SearchPage(),
+              AppDestination.settings: SettingsPage(),
+            },
+            titlePage: (route) => TitlePage(route: route),
+          ),
         ),
       ),
     );

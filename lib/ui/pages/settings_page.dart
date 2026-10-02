@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../settings/models.dart';
 import '../../settings/notifier.dart';
 import '../components/navigation.dart';
 import '../components/surface.dart';
@@ -44,13 +43,7 @@ class SettingsPage extends ConsumerWidget {
                 },
                 onChanged: (mode) => ref
                     .read(settingsProvider.notifier)
-                    .save(
-                      AppSettings(
-                        themeMode: mode,
-                        window: settings.window,
-                        imageCacheMaxBytes: settings.imageCacheMaxBytes,
-                      ),
-                    ),
+                    .save(settings.copyWith(themeMode: mode)),
               ),
             ],
           ),

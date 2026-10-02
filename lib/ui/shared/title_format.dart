@@ -76,6 +76,19 @@ String compactCount(int n) {
   return '$n';
 }
 
+/// "1.4 GB", "700 MB": binary units, one decimal below ten.
+String sizeLabel(int bytes) {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  var v = bytes.toDouble();
+  var i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  final n = i == 0 || v >= 10 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+  return '$n ${units[i]}';
+}
+
 /// Player-style clock: "48:12" or "1:34:00".
 String clockLabel(Duration d) {
   String two(int v) => v.toString().padLeft(2, '0');

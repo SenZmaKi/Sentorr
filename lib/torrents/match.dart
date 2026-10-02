@@ -1,0 +1,50 @@
+import 'resolution_models.dart';
+
+/// Why the best candidate is not exactly what was asked for. Identity is
+/// already validated by the sources; these are preference compromises.
+enum MatchConcern {
+  /// Quality differs from the preferred resolution.
+  otherResolution,
+
+  /// The release does not state its quality.
+  unknownResolution,
+
+  /// A season pack; the episode is chosen from its files at playback.
+  seasonPack;
+
+  String describe(TorrentPreferences preferences) => switch (this) {
+    otherResolution => 'Not available in ${preferences.preferredResolution}p.',
+    unknownResolution => 'The release does not state its quality.',
+    seasonPack =>
+      'This is a whole season; the episode is picked from its files.',
+  };
+}
+
+/// The best candidate of a resolution, judged against the preferences that
+/// produced it: exact matches may start on their own, close ones ask first.
+class TorrentMatch {
+  TorrentMatch._(this.candidate, Iterable<MatchConcern> concerns)
+    : concerns = List.unmodifiable(concerns);
+
+  /// Null when the resolution has no candidates.
+  static TorrentMatch? of(
+    TorrentResolution resolution,
+    TorrentPreferences preferences,
+  ) {
+    final best = resolution.best;
+    if (best == null) return null;
+    final quality = best.release.resolution;
+    return TorrentMatch._(best, [
+      if (quality == null)
+        MatchConcern.unknownResolution
+      else if (quality != preferences.preferredResolution)
+        MatchConcern.otherResolution,
+      if (best.requiresFileSelection) MatchConcern.seasonPack,
+    ]);
+  }
+
+  final TorrentCandidate candidate;
+  final List<MatchConcern> concerns;
+
+  bool get exact => concerns.isEmpty;
+}

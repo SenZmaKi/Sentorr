@@ -79,6 +79,19 @@ On 2026-10-02 the live default probe resolved Big Buck Bunny to 13 candidates
 with no source failures. This verifies metadata discovery and ranking, not swarm
 connectivity or playback.
 
+## App integration
+
+Play requests go through `playbackLaunchProvider` (`lib/player/launch.dart`)
+before the player opens. It finds the item to play (building the season queue
+for a series' first episode), maps it with `torrentQueryFor`, and resolves with
+`TorrentSettings` from app settings (preferred resolution, languages; season-pack
+fallback on). `TorrentMatch` (`lib/torrents/match.dart`) calls the best candidate
+exact only at the preferred resolution in a single file. Other or unknown quality
+and season packs are close matches, which always wait for the viewer. The chosen
+candidate is stored in `PlayerSession.torrents` by item ID. Playback still uses
+sample media until the streaming engine is connected, and later queue items are
+not resolved yet.
+
 ## Reporting and recovery
 
 `message` and `recoverySuggestions` are ready for app presentation. `attempts`

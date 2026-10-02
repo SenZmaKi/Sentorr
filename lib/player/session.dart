@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 
 import '../app/services.dart';
 import '../imdb/providers.dart';
+import '../torrents/resolution_models.dart';
 import 'models.dart';
 import 'queue_builder.dart';
 
@@ -16,6 +17,7 @@ class PlayerSession {
     this.queue,
     this.error,
     this.resolving = false,
+    this.torrents = const {},
   });
 
   final PlayRequest request;
@@ -29,6 +31,10 @@ class PlayerSession {
   /// The rest of the queue (or the next season) is being fetched.
   final bool resolving;
 
+  /// The torrent chosen for each item, by item ID. Playback does not stream
+  /// them yet; items still play sample media.
+  final Map<String, TorrentCandidate> torrents;
+
   PlaybackItem? get current => queue?.current;
 
   PlayerSession copyWith({PlayQueue? queue, Object? error, bool? resolving}) =>
@@ -37,8 +43,16 @@ class PlayerSession {
         queue: queue ?? this.queue,
         error: error,
         resolving: resolving ?? this.resolving,
+        torrents: torrents,
       );
 }
+
+final queueBuilderProvider = Provider<QueueBuilder>(
+  (ref) => QueueBuilder(
+    ref.watch(imdbRepositoryProvider),
+    (id) => ref.read(titleDetailsProvider(id).future),
+  ),
+);
 
 /// The open player session; null while the player is closed.
 final playerSessionProvider =
@@ -49,10 +63,7 @@ final playerSessionProvider =
 class PlayerSessionNotifier extends Notifier<PlayerSession?> {
   CancelToken? _cancel;
 
-  late final _builder = QueueBuilder(
-    ref.read(imdbRepositoryProvider),
-    (id) => ref.read(titleDetailsProvider(id).future),
-  );
+  QueueBuilder get _builder => ref.read(queueBuilderProvider);
 
   /// The open queue, for callers outside the notifier.
   PlayQueue? get queue => state?.queue;
@@ -64,15 +75,25 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
   }
 
   /// Opens the player on [request]; the first item plays as soon as it is
-  /// known and the rest of the queue fills in behind it.
-  void play(PlayRequest request) {
+  /// known and the rest of the queue fills in behind it. A [queue] already
+  /// built for the request is used as is. [torrent] is the release chosen
+  /// for the first item.
+  void play(
+    PlayRequest request, {
+    PlayQueue? queue,
+    TorrentCandidate? torrent,
+  }) {
     final cancel = _restart();
+    final first = queue ?? _builder.immediate(request);
     state = PlayerSession(
       request: request,
-      queue: _builder.immediate(request),
-      resolving: true,
+      queue: first,
+      resolving: queue == null,
+      torrents: {
+        if (first != null && torrent != null) first.current.id: torrent,
+      },
     );
-    _resolve(request, cancel);
+    if (queue == null) _resolve(request, cancel);
   }
 
   void retry() {
@@ -119,6 +140,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
   Future<void> _resolve(PlayRequest request, CancelToken cancel) async {
     try {
       final queue = await _builder.resolve(request, cancel);
+      if (!ref.mounted) return;
       final s = state;
       if (cancel != _cancel || s == null) return;
       // Keep the item already playing current, wherever it sits now.
@@ -131,7 +153,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
         resolving: false,
       );
     } catch (error, stack) {
-      if (cancel != _cancel || _cancelled(error)) return;
+      if (!ref.mounted || cancel != _cancel || _cancelled(error)) return;
       _log.warning('Could not build play queue', error, stack);
       state = state?.copyWith(error: error, resolving: false);
     }
@@ -143,6 +165,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
     state = state?.copyWith(resolving: true);
     try {
       final extended = await _builder.extend(queue, cancel);
+      if (!ref.mounted) return;
       final s = state;
       if (cancel != _cancel || s?.queue == null) return;
       final current = s!.queue!.index;
@@ -150,7 +173,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
       state = s.copyWith(queue: next, resolving: false);
       if (thenAdvance && next.next != null) jump(current + 1);
     } catch (error, stack) {
-      if (cancel != _cancel || _cancelled(error)) return;
+      if (!ref.mounted || cancel != _cancel || _cancelled(error)) return;
       _log.warning('Could not load the next season', error, stack);
       state = state?.copyWith(resolving: false);
     }

@@ -1,6 +1,10 @@
+import 'package:logging/logging.dart';
+
 import 'backend.dart';
 import 'models.dart';
 import 'repository.dart';
+
+final _log = Logger('sentorr.downloads');
 
 /// Torrent-only queue adapted from Senpwai's in-process download runtime.
 /// The isolate serializes commands and polling; native handles never leave it.
@@ -23,10 +27,14 @@ class DownloadEngine {
       if (item.status.isTerminal) continue;
       try {
         _transfers[item.id] = backend.add(item.job);
-      } catch (error) {
+      } catch (error, stack) {
+        _log.warning('Could not restore ${_name(item)}', error, stack);
         _items[n] = item.withStatus(DownloadStatus.failed, error: '$error');
       }
     }
+    _log.info(
+      'Restored ${_items.length} downloads, ${_transfers.length} active',
+    );
     _reconcile();
     await flush();
   }
@@ -41,6 +49,10 @@ class DownloadEngine {
       rethrow;
     }
     _transfers[id] = transfer;
+    _log.info(
+      'Queued ${job.title} ($id) to ${job.destinationDirectory}, '
+      '${job.selectedFileIndices.isEmpty ? 'all' : job.selectedFileIndices.length} files',
+    );
     _reconcile();
     await flush();
     return id;
@@ -58,6 +70,7 @@ class DownloadEngine {
       return;
     }
     _transfers[id]!.pause();
+    _log.info('Paused ${_name(_items[n])}');
     _items[n] = _items[n].withStatus(DownloadStatus.paused);
     _reconcile();
     await flush();
@@ -71,6 +84,7 @@ class DownloadEngine {
       return;
     }
     _transfers[id] ??= backend.add(item.job);
+    _log.info('Resumed ${_name(item)}');
     _items[n] = item.withStatus(DownloadStatus.queued);
     _reconcile();
     await flush();
@@ -83,6 +97,9 @@ class DownloadEngine {
     if (item.status.isTerminal) return;
     _transfers[id]?.remove(deleteFiles: deleteFiles);
     _transfers.remove(id);
+    _log.info(
+      'Cancelled ${_name(item)}${deleteFiles ? ', deleting its files' : ''}',
+    );
     _items[n] = item.withStatus(DownloadStatus.cancelled);
     _reconcile();
     await flush();
@@ -100,13 +117,19 @@ class DownloadEngine {
   }
 
   Future<void> clearHistory() async {
+    final before = _items.length;
     _items.removeWhere((i) => i.status.isTerminal);
+    _log.info('Cleared ${before - _items.length} finished downloads');
     await flush();
   }
 
   Future<void> configure(DownloadSettings next) async {
     next.validate();
     backend.configure(next);
+    _log.info(
+      'Download settings: ${next.maxActiveDownloads} active, '
+      '${next.maxActiveSeeds} seeding, seeding ${next.seedingMode.name}',
+    );
     settings = next;
     _reconcile();
     await tick();
@@ -148,9 +171,15 @@ class DownloadEngine {
             _transfers.remove(previous.id);
           }
         }
-        changed |= next.status != previous.status;
+        if (next.status != previous.status) {
+          changed = true;
+          _log.info(
+            '${_name(next)}: ${previous.status.name} → ${next.status.name}',
+          );
+        }
         _items[n] = next;
-      } catch (error) {
+      } catch (error, stack) {
+        _log.warning('${_name(previous)} failed', error, stack);
         try {
           transfer.remove();
         } catch (_) {}
@@ -177,6 +206,7 @@ class DownloadEngine {
           ? (isSeed ? DownloadStatus.seeding : DownloadStatus.downloading)
           : DownloadStatus.queued;
       if (item.status == status) continue;
+      _log.fine('${_name(item)}: ${item.status.name} → ${status.name}');
       final transfer = _transfers[item.id]!;
       if (allowed) {
         transfer.resume();
@@ -188,6 +218,8 @@ class DownloadEngine {
   }
 
   Future<void> flush() => repository.save(items);
+
+  String _name(DownloadItem item) => '${item.job.title} (${item.id})';
   Future<void> dispose() async {
     try {
       for (final transfer in _transfers.values) {

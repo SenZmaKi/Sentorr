@@ -2,11 +2,16 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:logging/logging.dart';
+
+import '../shared/log.dart';
 import '../shared/persistence/json_file_store.dart';
 import 'backend.dart';
 import 'engine.dart';
 import 'models.dart';
 import 'repository.dart';
+
+final _log = Logger('sentorr.downloads');
 
 class DownloadIsolateRuntime {
   DownloadIsolateRuntime({
@@ -34,6 +39,7 @@ class DownloadIsolateRuntime {
     initialSettings.validate();
     _inbox = ReceivePort();
     _inbox!.listen((dynamic raw) {
+      if (writeForwardedLog(raw)) return;
       if (raw is SendPort) {
         _ready.complete(raw);
         return;
@@ -72,7 +78,9 @@ class DownloadIsolateRuntime {
     );
     try {
       await _ready.future.timeout(const Duration(seconds: 30));
-    } catch (_) {
+      _log.info('Download worker ready');
+    } catch (error, stack) {
+      _log.warning('Download worker failed to start', error, stack);
       _isolate?.kill();
       _inbox?.close();
       rethrow;
@@ -80,6 +88,9 @@ class DownloadIsolateRuntime {
   }
 
   void _fail(Object error) {
+    if (_failure == null && !_closed) {
+      _log.severe('Download worker failed', error);
+    }
     _failure ??= error;
     if (!_ready.isCompleted) _ready.completeError(error);
     for (final c in _pending.values) {
@@ -153,6 +164,7 @@ class DownloadIsolateRuntime {
 
 Future<void> _worker((SendPort, String, DownloadSettings) args) async {
   final (out, file, settings) = args;
+  forwardLogsTo(out);
   final engine = DownloadEngine(
     LibtorrentDownloadBackend(),
     DownloadRepository(JsonFileStore(File(file))),
@@ -160,7 +172,8 @@ Future<void> _worker((SendPort, String, DownloadSettings) args) async {
   final inbox = ReceivePort();
   try {
     await engine.initialize(settings);
-  } catch (error) {
+  } catch (error, stack) {
+    _log.severe('Downloads could not be restored', error, stack);
     engine.backend.close();
     out.send({'fatal': '$error'});
     inbox.close();
@@ -179,7 +192,8 @@ Future<void> _worker((SendPort, String, DownloadSettings) args) async {
       try {
         await engine.tick();
         publish();
-      } catch (error) {
+      } catch (error, stack) {
+        _log.severe('Download poll failed', error, stack);
         out.send({'fatal': '$error'});
       } finally {
         polling = false;
@@ -221,7 +235,8 @@ Future<void> _worker((SendPort, String, DownloadSettings) args) async {
         }
         publish();
         out.send({'id': m['id'], 'result': result});
-      } catch (error) {
+      } catch (error, stack) {
+        _log.warning('Download ${m['command']} failed', error, stack);
         out.send({'id': m['id'], 'error': '$error'});
       }
     });

@@ -449,7 +449,7 @@ packages:
     source: hosted
     version: "3.0.2"
   libtorrent_dart:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       path: "../libtorrent_dart"
       relative: true

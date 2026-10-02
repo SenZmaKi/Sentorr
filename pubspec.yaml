@@ -32,6 +32,10 @@ dependencies:
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.7
   anitomy_dart: ^1.0.1
+  libtorrent_dart:
+    git:
+      url: https://github.com/SenZmaKi/libtorrent_dart.git
+      ref: de9fc4b07ff63dd3f3433497c0fb48568c86f5af
   torrent_stream:
     path: packages/torrent_stream
   file_picker: ^9.2.1

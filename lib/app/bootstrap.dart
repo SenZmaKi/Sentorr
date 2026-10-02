@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart' show windowManager;
 
+import '../downloads/manager.dart';
 import '../settings/notifier.dart';
 import '../settings/repository.dart';
 import '../shared/log.dart';
@@ -107,12 +108,14 @@ class AppRuntime with WidgetsBindingObserver {
         await runtime.quit();
       }
     });
+    await container.read(downloadRuntimeProvider).initialize();
     WidgetsBinding.instance.addObserver(runtime);
     log.info('Application services ready');
     return runtime;
   }
 
   Future<void> flush() async {
+    await container.read(downloadRuntimeProvider).flush();
     await container.read(settingsProvider.notifier).flushed;
     await repository.store.flushed;
     await history.store.flushed;
@@ -142,6 +145,7 @@ class AppRuntime with WidgetsBindingObserver {
   Future<void> _dispose() async {
     _quitting = true;
     await flush();
+    await container.read(downloadRuntimeProvider).dispose();
     WidgetsBinding.instance.removeObserver(this);
     tray.dispose();
     window.dispose();

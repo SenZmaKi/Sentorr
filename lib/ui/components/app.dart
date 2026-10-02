@@ -3,7 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../settings/notifier.dart';
 import '../../shared/app_lifecycle.dart';
+import '../pages/home/home_page.dart';
+import '../pages/search_page.dart';
+import '../pages/settings_page.dart';
 import '../shared/theme/theme.dart';
+import 'app_shell.dart';
 
 class SentorrApp extends ConsumerWidget {
   const SentorrApp({super.key});
@@ -18,7 +22,13 @@ class SentorrApp extends ConsumerWidget {
       themeMode: ref.watch(
         settingsProvider.select((settings) => settings.themeMode),
       ),
-      home: const Scaffold(body: SizedBox.expand()),
+      home: const AppShell(
+        pages: {
+          AppDestination.home: HomePage(),
+          AppDestination.search: SearchPage(),
+          AppDestination.settings: SettingsPage(),
+        },
+      ),
     );
   }
 }

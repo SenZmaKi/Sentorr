@@ -40,13 +40,26 @@ flutter:
   assets:
     - assets/images/
   fonts:
-    - family: Geist
+    - family: Barlow
       fonts:
-        - asset: assets/fonts/Geist-Regular.ttf
+        - asset: assets/fonts/Barlow-Regular.ttf
           weight: 400
-        - asset: assets/fonts/Geist-Medium.ttf
+        - asset: assets/fonts/Barlow-Medium.ttf
           weight: 500
-        - asset: assets/fonts/Geist-SemiBold.ttf
+        - asset: assets/fonts/Barlow-SemiBold.ttf
+          weight: 600
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+    # Inter's optical cut for large sizes: tighter spacing, finer details.
+    - family: InterDisplay
+      fonts:
+        - asset: assets/fonts/InterDisplay-SemiBold.ttf
           weight: 600
     - family: GeistMono
       fonts:

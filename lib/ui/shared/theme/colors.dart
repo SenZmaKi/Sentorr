@@ -32,6 +32,7 @@ class SentorrColors extends ThemeExtension<SentorrColors> {
     required this.warningSurface,
     required this.error,
     required this.errorSurface,
+    required this.ambientVeil,
   });
 
   final Color canvas;
@@ -63,6 +64,9 @@ class SentorrColors extends ThemeExtension<SentorrColors> {
   final Color error;
   final Color errorSurface;
 
+  /// Tones blurred spotlight artwork into the page behind it.
+  final Color ambientVeil;
+
   static const dark = SentorrColors(
     canvas: Color(0xFF0D0D0D),
     surface: Color(0xFF191919),
@@ -92,6 +96,7 @@ class SentorrColors extends ThemeExtension<SentorrColors> {
     warningSurface: Color(0xFF2A2108),
     error: Color(0xFFFF6B81),
     errorSurface: Color(0xFF300710),
+    ambientVeil: Color(0x59191919), // surface at 35%
   );
 
   static const light = SentorrColors(
@@ -123,6 +128,7 @@ class SentorrColors extends ThemeExtension<SentorrColors> {
     warningSurface: Color(0xFFFFFAEB),
     error: Color(0xFFC50000),
     errorSurface: Color(0xFFFFF1F2),
+    ambientVeil: Color(0x99F3F3F3), // surface at 60%
   );
 
   @override
@@ -161,14 +167,25 @@ class SentorrColors extends ThemeExtension<SentorrColors> {
       warningSurface: l(warningSurface, other.warningSurface),
       error: l(error, other.error),
       errorSurface: l(errorSurface, other.errorSurface),
+      ambientVeil: l(ambientVeil, other.ambientVeil),
     );
   }
+}
+
+/// Animated fills must fade to a color's own clear version: [Colors.transparent]
+/// is transparent black, so a light fill passing through it turns gray midway.
+extension ClearColor on Color {
+  Color get clear => withValues(alpha: 0);
 }
 
 /// Playback/image-overlay context, independent of app brightness.
 abstract final class OverlayColors {
   static const foreground = Color(0xFFFFFFFF);
   static const foregroundSecondary = Color(0xFFD4D4D4);
+  // Descriptive prose over artwork, quieter than titles and facts.
+  static const foregroundMuted = Color(0xFFA3A3A3);
+  // Content on an overlay foreground fill, e.g. the Play glyph.
+  static const onForeground = Color(0xFF000000);
   static const controlSurface = Color(0xCC000000); // black 80%
   static const scrim = Color(0x99000000); // black 60%
   static const focus = Color(0xFFFFFFFF);

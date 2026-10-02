@@ -15,7 +15,7 @@ Keep Sentorr visually coherent as features grow. Shared appearance belongs in th
 
 ## Locked visual direction
 
-Use a neutral, layered space: canvas behind panels, panels beneath raised controls, recessed wells below their parent surface, and floating overlays above everything else. Surface luminance, soft contact shadows and fine edge highlights establish those relationships. Keep Geist typography, monochrome actions and precise spacing from the Resend/Vercel direction. Artwork supplies most of the color.
+Use a neutral, layered space: canvas behind panels, panels beneath raised controls, recessed wells below their parent surface, and floating overlays above everything else. Surface luminance, soft contact shadows and fine edge highlights establish those relationships. Keep Inter typography (Geist Mono for technical values), monochrome actions and precise spacing from the Resend/Vercel direction. Artwork supplies most of the color.
 
 The user's [before](docs/design-references/depth/before.png), [light after](docs/design-references/depth/after-light.png) and [dark after](docs/design-references/depth/after-dark.png) frames are the primary depth reference. They show grouped panels, brighter child surfaces, recessed tracks and small shadows beneath raised objects. They also change grouping, spacing and information hierarchy; adding shadows alone will not reproduce the improvement. These supplied still frames establish appearance, not video motion or exact source measurements.
 
@@ -60,20 +60,20 @@ Status foregrounds pair with their corresponding status surfaces. Do not use sat
 
 ### Typography
 
-Bundle **Geist Sans** (400, 500, 600) and **Geist Mono** (400, 500) with the Flutter app when implementing the theme, including the font license. Obtain them from the [official Geist repository](https://github.com/vercel/geist-font). Use platform fallback only for unavailable glyphs. Display and body both use Geist Sans; no third family is needed.
+Bundle **Inter** (400, 500, 600), **Inter Display** (600) and **Geist Mono** (400, 500) with the app, including their licenses (`assets/fonts/*-LICENSE.txt`). Inter comes from the [official Inter releases](https://github.com/rsms/inter/releases), Geist Mono from the [official Geist repository](https://github.com/vercel/geist-font). Display, headline and title use Inter Display, Inter's optical cut for large sizes; everything else uses Inter. Use platform fallback only for unavailable glyphs. Inter replaced Geist Sans on 2 October 2026 at the owner's request. **Barlow** (400, 500, 600; [Google Fonts repository](https://github.com/google/fonts/tree/main/ofl/barlow)) is on trial as the active face from the same date. Faces are `TypeFace` entries in `lib/ui/shared/theme/typography.dart` that carry their own per-role tracking; switch with `SentorrType.face`. The tracking column below is Inter's.
 
 Dimensions below are Flutter logical units before user text scaling. Line height is an absolute specification; map it to Flutter's `TextStyle.height` as line height divided by font size. Tracking is logical units, not a percentage.
 
 | Text role | Size / line height | Weight | Tracking | Use                                                  |
 | --------- | ------------------ | ------ | -------- | ---------------------------------------------------- |
-| display   | 48 / 56            | 600    | -1.5     | Media detail title at wide widths                    |
-| headline  | 32 / 40            | 600    | -0.8     | Page title; compact detail title                     |
-| title     | 24 / 32            | 600    | -0.4     | Section and dialog title                             |
-| subtitle  | 20 / 28            | 600    | -0.3     | Panel and group heading                              |
-| bodyLarge | 18 / 28            | 400    | 0        | Synopsis lead where appropriate                      |
-| body      | 16 / 24            | 400    | 0        | Normal prose and settings                            |
-| bodySmall | 14 / 20            | 400    | 0        | Metadata, rows and secondary copy                    |
-| label     | 14 / 20            | 500    | 0        | Controls, tabs and navigation                        |
+| display   | 48 / 56            | 600    | -1.0     | Media detail title at wide widths                    |
+| headline  | 32 / 40            | 600    | -0.5     | Page title; compact detail title                     |
+| title     | 24 / 32            | 600    | -0.2     | Section and dialog title                             |
+| subtitle  | 20 / 28            | 600    | -0.35    | Panel and group heading                              |
+| bodyLarge | 18 / 28            | 400    | -0.25    | Synopsis lead where appropriate                      |
+| body      | 16 / 24            | 400    | -0.18    | Normal prose and settings                            |
+| bodySmall | 14 / 20            | 400    | -0.08    | Metadata, rows and secondary copy                    |
+| label     | 14 / 20            | 500    | -0.08    | Controls, tabs and navigation                        |
 | caption   | 12 / 16            | 400    | 0        | Nonessential annotations                             |
 | technical | 13 / 20            | 400    | 0        | Geist Mono: filenames, speeds, sizes and diagnostics |
 
@@ -88,7 +88,7 @@ Use sentence case. Keep ordinary text at 400, controls at 500 and headings at 60
 | Border                 | 1, 2                                            | 1 for edges; 2 for focus and selected indicators                                     |
 | Icon                   | 16, 20, 24                                      | Metadata 16; ordinary controls 20; navigation/player 24                              |
 | Control minimum height | 36 compact, 40 standard, 48 touch               | Compact is desktop-only; touch hit regions at least 48 × 48                          |
-| Motion duration        | 100, 150, 200 ms                                | Press 100; hover/focus 150; panels/theme 200                                         |
+| Motion duration        | 100, 150, 200, 360 ms; media 450/700 ms, 9 s    | Press 100; hover/focus 150; panels/theme 200; content entry 360; media rules below   |
 
 Use 8 between related inline items, 12–16 within groups, 24–32 between groups, and 48 between major sections. Panels use 24 padding; dense rows use 12 vertical and 16 horizontal. App content has 24 horizontal gutters on larger layouts and 16 on compact layouts. The 96/128 steps are reserved for exceptional feature openings, not routine lists or empty states.
 
@@ -118,7 +118,7 @@ Starting shadow recipes use `(offsetX, offsetY, blur, spread, black opacity)` in
 
 Provide a small typed `SurfaceDepth` vocabulary (`base`, `panel`, `raised`, `inset`, `floating`) and theme-owned resolved styles containing fill, edge treatment and shadow stack. Shared surface widgets render those styles. Where Flutter's component theme cannot express edge lighting or inset shading, use a shared decorator or painter consuming the typed style. Feature screens choose the role; they do not compose their own shadows or gradients. Avoid combining automatic Material elevation with the explicit shadow stack. Disable automatic colored surface tint.
 
-Maintain readable depth through grouping and spacing. Show no more than three persistent planes in a typical region (canvas → panel → child control); a temporary overlay may add the floating plane. Add a containing surface for a meaningful group, not around every label or row. Dense lists remain on one plane with dividers. Leave space for shadows, and clip artwork independently so panel shadows are not cut off.
+Maintain readable depth through grouping and spacing. Show no more than three persistent planes in a typical region (canvas → panel → child control); a temporary overlay may add the floating plane. From 600 wide, navigation sits on the canvas and pages sit on one panel inset 8 from the window; groups inside a page are therefore raised, not panels. Compact layouts put pages directly on surface. Add a containing surface for a meaningful group, not around every label or row. Dense lists remain on one plane with dividers. Leave space for shadows, and clip artwork independently so panel shadows are not cut off.
 
 Hover on an already raised control may increase its edge highlight; pressing retains only the first contact-shadow layer of the raised recipe and uses statePressed. No translation, layout shift or scale bounce. Flat/ghost controls remain flat. Selection adds a check or indicator rather than a larger shadow. Focus remains an independent high-contrast ring. Neutral surface gradients are allowed only for these theme-owned lighting/inset treatments; saturated decorative gradients stay outside app chrome.
 
@@ -133,16 +133,17 @@ Hover on an already raised control may increase its edge highlight; pressing ret
 
 ### Composition and artwork
 
-- At available width below 600, use compact navigation and stacked details; 600–959 may use a navigation rail and two-column details when content fits; 960 and above may use the full desktop shell. Layouts respond to local constraints, not platform names.
+- At available width below 600, use compact navigation and stacked details; from 600 use the navigation rail at every width, giving the space to content; 600–959 may use two-column details when content fits, and 960 and above the full desktop layout. Layouts respond to local constraints, not platform names.
 - Keep normal content centered with a maximum width of 1400. Player and artwork backdrops may fill available space. Reading prose caps at 720.
 - Catalog poster grids choose their column count from available width, with nominal tile widths of 160–220 and 16 gaps; smaller layouts may use two columns if titles and targets still fit. Never fix a desktop column count on mobile.
 - Posters use a 2:3 frame; backdrops and video previews use 16:9. Crop posters/backdrops appropriately; preserve the video's actual aspect ratio with letterboxing rather than cropping playback.
 - Put media title and metadata below posters. Detail pages may put titles over artwork using the image-overlay roles below. Artwork stays in its original colors; surrounding chrome stays neutral.
 - Selection uses a neutral fill plus a visible indicator or check. Hover uses surface and border changes, with no card lift, scale bounce or new glow.
+- Media exception (approved 2 October 2026): on hover or focus a media tile's frame stays fixed while its artwork zooms up to 6% inside the clip over 450 ms, with an overlay of play/info glyphs fading in over a bottom artwork fade. Neighbours and layout never move. Reduced motion skips the zoom.
 - Keep torrent rows aligned by information: filename, quality, size, availability and action. Technical information uses the technical role; the primary action remains visually obvious.
 - Empty, loading and error states retain the same layout rhythm. Use neutral skeletons without decorative shimmer by default. Explain errors and offer the next action in plain language.
 
-Gradients serve artwork legibility and the theme-owned depth lighting described above. The initial app does not need marketing mesh gradients, ambient glows, glass panels, gradient buttons or colored heading text. Keep any future marketing treatment separate from these app components.
+Gradients serve artwork legibility and the theme-owned depth lighting described above. The home spotlight may wash the top of the page with its own artwork, blurred, veiled by the `ambientVeil` role and faded into surface; it drifts slower than scroll and is the only ambient artwork treatment. The initial app does not need marketing mesh gradients, other ambient glows, glass panels, gradient buttons or colored heading text. Keep any future marketing treatment separate from these app components.
 
 ### Playback and image overlays
 
@@ -165,12 +166,27 @@ These are implementation requirements as components are introduced, not a reques
 | Checkbox / radio / switch | action + onAction when selected; borderControl otherwise                                                             | Selected state has shape/check/thumb position, not color alone; visible focus                                           |
 | Surface / panel           | surface, panel depth, radius 16, padding 24                                                                          | Group related content; decorative border is not an interaction boundary                                                 |
 | Dialog / menu / toast     | surfaceRaised, borderStrong, floating depth                                                                          | Dialog radius 16/padding 24; menus radius 8/padding 8; toast radius 12/padding 16; correct focus/announcement semantics |
-| Navigation item / tab     | foregroundSecondary idle; selection + foreground active; radius 8                                                    | label plus icon as needed; active indicator 2; selected semantics                                                       |
+| Navigation item / tab     | foregroundSecondary idle; selection + foreground active; radius 8                                                    | From 600 wide, an 80-unit rail: 56-unit targets with the icon over a short label; the selected item uses the filled icon and one raised pill that glides between items; no dot indicator; selected semantics |
 | Chip / filter             | surfaceInset + foregroundSecondary; radius 6; label; padding 4 vertical/8 horizontal                                 | Selected uses selection + foreground and a check or clear affordance; inflate touch region                              |
 | Media tile                | surfaceControl frame, raised depth where framed, radius 12; title bodySmall weight 500; metadata caption             | Poster first, text below; keyboard activation and visible focus; neutral placeholder                                    |
 | Torrent / episode row     | Transparent idle; stateHover/statePressed; selection when selected; borderSubtle divider                             | bodySmall + technical values; grow with text scaling; no independent card around every cell                             |
 | Status / progress         | Paired status roles for status, action for ordinary progress; surfaceInset track with inset depth                    | Label and icon express state; determinate progress when known; buffering is explicit                                    |
 | Player control            | Overlay roles and geometry above                                                                                     | Behavior follows playback requirements; keyboard and touch controls remain discoverable                                 |
+
+### Media card contracts
+
+Each home row uses a card built for its purpose, so a viewer can tell what a click will do before reading. Cards share `ArtworkFrame` (raised frame, artwork zoom on hover/focus, persistent `decorations`, hover overlay) and `card_parts.dart` (`CardTitle`, `CardEyebrow`, icon-led `MetaLine`). Code: `lib/ui/components/cards/`.
+
+| Card | Purpose | Anatomy, in reading order | Notes |
+| --- | --- | --- | --- |
+| `PosterCard` | Browse a title | 2:3 artwork with rating chip (star, mono) top-right, optional badge top-left, optional `PosterRibbon`; title (label 600); facts: kind icon + kind, year, first genre | Hover shows play and info glyphs. Acclaim rows swap facts for rating and vote count |
+| `RankedPosterCard` | A chart position | Outlined numeral (display, stroke foregroundMuted) the poster overlaps, then a `PosterCard` | Trending only; the rank is spoken in the card label |
+| `PosterRibbon` | What is new about a title | Solid overlay band across the poster foot: subtitle-sized announcement ("Season 4"), one fact ("8 episodes") | Solid, so poster lettering never competes |
+| `ResumeCard` | Pick up playback | 16:9 still as a paused player: kind chip; play control, "Resume", mono clock `position / runtime`, mono time-left stamp; scrubber with thumb; then title (body 600) and facts | Reads as a player before it is clicked |
+| `EpisodeCard` | Play a specific episode | 16:9 still stamped with mono `S4 E8` code, "New" badge, mono duration; series eyebrow; episode name (body 600); aired date and rating; two-line synopsis | The episode, not the series, is the subject |
+| `SectionHeader` | Name a row | Raised 40 icon tile, subtitle-sized title, optional mono count chip, one-line explanation | Icons name purpose: history, bolt, layers, trending, award, genre glyphs |
+
+Typography inside cards: titles are 600 weight; descriptive prose (synopses, row explanations) uses foregroundMuted, or the overlay `foregroundMuted` over artwork, one step quieter than facts; facts are caption with a leading 14 icon; numbers people compare (ratings, clocks, codes, counts) use the technical role, words do not. Metadata lines are single rich-text runs that ellipsize only at the end.
 
 Apply these shared state rules centrally:
 
@@ -178,7 +194,8 @@ Apply these shared state rules centrally:
 - **Disabled:** surfaceInset and foregroundDisabled; no hover/pressed feedback or activation. Disabled contrast does not define normal text contrast.
 - **Loading:** preserve the control's width and action context, show a progress indicator and prevent duplicate activation; announce busy state.
 - **Error:** error foreground on errorSurface or canvas/surface/control, with text explaining what to do. Color alone is insufficient.
-- **Motion:** use ease-out for entry and ease-in-out for state changes. Respect reduced motion by removing nonessential animation and using immediate state changes. No perpetual decorative animation.
+- **Fading fills:** animate a fill to its own clear version (`color.clear`), never `Colors.transparent`, which is transparent black and grays light fills midway.
+- **Motion:** use ease-out for entry and ease-in-out for state changes. Respect reduced motion by removing nonessential animation and using immediate state changes. No perpetual decorative animation, with one approved exception: the home spotlight advances every 9 s with a 700 ms crossfade and a slow artwork push-in, pauses while hovered or focused, shows its countdown in the active pager dot, and does not advance under reduced motion. Content entering view (tiles, spotlight copy) rises 12 units while fading in, staggered, ease-out.
 
 Normal text must reach 4.5:1 contrast; large text 3:1; essential control boundaries, indicators and focus 3:1 against adjacent colors. Decorative hairlines are intentionally quieter and cannot be the sole cue for an interactive control. Check actual composition, especially images, overlays and pressed states. Support keyboard traversal/activation and text scaling without hiding actions. These are acceptance requirements, not claims that an unbuilt UI has passed them.
 

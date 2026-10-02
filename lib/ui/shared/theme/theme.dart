@@ -34,7 +34,7 @@ ThemeData buildSentorrTheme(Brightness brightness) {
   return ThemeData(
     brightness: brightness,
     colorScheme: scheme,
-    fontFamily: FontFamilies.sans,
+    fontFamily: SentorrType.face.text,
     scaffoldBackgroundColor: c.canvas,
     textTheme: type.toTextTheme(c.foreground),
     splashFactory: NoSplash.splashFactory,

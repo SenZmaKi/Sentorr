@@ -12,6 +12,9 @@ abstract final class Space {
   static const double s40 = 40;
   static const double s48 = 48;
   static const double s64 = 64;
+
+  // Exceptional feature openings only, e.g. a hero; never routine lists.
+  static const double s96 = 96;
 }
 
 abstract final class Radii {
@@ -43,10 +46,24 @@ abstract final class Motion {
   static const Duration press = Duration(milliseconds: 100);
   static const Duration hover = Duration(milliseconds: 150);
   static const Duration panel = Duration(milliseconds: 200);
+
+  /// Content entering view: tiles, rows and spotlight copy.
+  static const Duration reveal = Duration(milliseconds: 360);
+
+  /// Media-only: artwork zoom inside a fixed tile frame.
+  static const Duration artwork = Duration(milliseconds: 450);
+
+  /// Media-only: crossfade between spotlight titles.
+  static const Duration spotlightFade = Duration(milliseconds: 700);
+
+  /// Media-only: how long each spotlight title holds before advancing.
+  static const Duration spotlightHold = Duration(seconds: 9);
+
+  static const Curve enter = Curves.easeOutCubic;
+  static const Curve change = Curves.easeInOutCubic;
 }
 
 abstract final class FontFamilies {
-  static const String sans = 'Geist';
   static const String mono = 'GeistMono';
 }
 

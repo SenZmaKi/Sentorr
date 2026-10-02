@@ -1,0 +1,4 @@
+# The binding has process-wide registries. Each test file has its own owner
+# isolate, so native test files run sequentially; session concurrency is tested
+# explicitly through the package's shared worker within lifecycle_test.dart.
+concurrency: 1

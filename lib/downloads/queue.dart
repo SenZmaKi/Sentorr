@@ -32,6 +32,7 @@ class DownloadQueue {
   Future<void> _tail = Future.value();
   int _sequence = 0;
   bool _disposed = false;
+  Future<void>? _shutdown;
 
   List<DownloadItem> get items => List.unmodifiable(_items);
   Stream<List<DownloadItem>> get changes => _changes.stream;
@@ -334,9 +335,14 @@ class DownloadQueue {
   String _name(DownloadItem item) => '${item.job.title} (${item.id})';
 
   /// Saves the queue; torrents stay in the engine for it to close.
-  Future<void> dispose() async {
+  Future<void> dispose() => _shutdown ??= _dispose();
+
+  Future<void> _dispose() async {
     _disposed = true;
     await flush();
-    await _changes.close();
+    // A paused UI subscription cannot deliver done until it resumes or is
+    // cancelled. Bootstrap disposes those subscribers after closing the queue,
+    // so waiting for them here would deadlock application shutdown.
+    unawaited(_changes.close());
   }
 }

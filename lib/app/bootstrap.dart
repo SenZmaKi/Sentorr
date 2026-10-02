@@ -138,7 +138,10 @@ class AppRuntime with WidgetsBindingObserver {
     } catch (error, stack) {
       log.warning('Launch at login unavailable', error, stack);
     }
-    await runtime.tray.initialize(quit: runtime.quit);
+    await runtime.tray.initialize(
+      quit: runtime.quit,
+      prepareToQuit: runtime.dispose,
+    );
     await runtime.window.configureCloseHandler(() async {
       final preferences = container.read(settingsProvider).window;
       if (preferences.closeToTray && runtime.tray.canHideWindow) {
@@ -200,6 +203,9 @@ class AppRuntime with WidgetsBindingObserver {
     window.dispose();
     await network.close();
     await AppImageCache.dispose();
+    // Unmount consumers before releasing their provider container.
+    runApp(const SizedBox.shrink());
+    await WidgetsBinding.instance.endOfFrame;
     container.dispose();
     // An open player saves where it stopped as the container disposes it.
     await history.store.flushed;

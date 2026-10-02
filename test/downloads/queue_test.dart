@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sentorr/downloads/manager.dart';
 import 'package:sentorr/downloads/models.dart';
 import 'package:sentorr/downloads/queue.dart';
 import 'package:sentorr/downloads/repository.dart';
@@ -47,6 +49,32 @@ void main() {
   tearDown(() async {
     await queue.dispose();
     await root.delete(recursive: true);
+  });
+
+  test('shutdown completes before download providers are disposed', () async {
+    final container = ProviderContainer(
+      overrides: [downloadQueueProvider.overrideWithValue(queue)],
+    );
+    final observer = container.listen(downloadsProvider, (_, _) {});
+    try {
+      await settle();
+      observer.pause();
+      await settle();
+      await queue.dispose().timeout(const Duration(milliseconds: 200));
+    } finally {
+      observer.close();
+      container.dispose();
+    }
+  });
+
+  test('shutdown completes with a paused download observer', () async {
+    final subscription = queue.changes.listen((_) {});
+    subscription.pause();
+    try {
+      await queue.dispose().timeout(const Duration(milliseconds: 200));
+    } finally {
+      await subscription.cancel();
+    }
   });
 
   test('chooses files, renames them and fills slots in order', () async {

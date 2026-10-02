@@ -18,13 +18,12 @@ class DesktopTrayController {
   static const termination = MethodChannel('sentorr/app_termination');
   static const reopen = MethodChannel('sentorr/window_reopen');
 
-  Future<void> initialize({required Future<void> Function() quit}) async {
+  Future<void> initialize({
+    required Future<void> Function() quit,
+    required Future<void> Function() prepareToQuit,
+  }) async {
     if (!supportsWindowCustomization) return;
-    termination.setMethodCallHandler((call) async {
-      if (call.method != 'requestQuit') throw MissingPluginException();
-      await quit();
-      return true;
-    });
+    configureTerminationHandler(prepareToQuit);
     reopen.setMethodCallHandler((call) async {
       if (call.method != 'restoreWindow') throw MissingPluginException();
       await WindowManager.getInstance().focus();
@@ -48,6 +47,19 @@ class DesktopTrayController {
       Logger('sentorr.tray').warning('Tray disabled', error, stack);
       dispose();
     }
+  }
+
+  /// Native termination asks for cleanup and approval, never another quit.
+  static void configureTerminationHandler(
+    Future<void> Function() prepareToQuit,
+  ) {
+    termination.setMethodCallHandler((call) async {
+      if (call.method != 'requestQuit') throw MissingPluginException();
+      // macOS is already terminating. Calling quit here would request native
+      // termination again and wait on the approval we are currently handling.
+      await prepareToQuit();
+      return true;
+    });
   }
 
   void _addItem(String label, Future<void> Function() action) {

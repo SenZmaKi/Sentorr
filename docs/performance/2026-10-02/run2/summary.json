@@ -1,0 +1,130 @@
+{
+  "startup": {
+    "seconds": 2.0,
+    "meanCpuPercent": 19.93,
+    "peakOneSecondCpuPercent": 39.83,
+    "medianRssMiB": 29.5,
+    "peakRssMiB": 58.9,
+    "endRssMiB": 58.9
+  },
+  "home_cold": {
+    "seconds": 34.1,
+    "meanCpuPercent": 37.77,
+    "peakOneSecondCpuPercent": 73.63,
+    "medianRssMiB": 92.0,
+    "peakRssMiB": 359.9,
+    "endRssMiB": 89.5
+  },
+  "home_idle": {
+    "seconds": 19.1,
+    "meanCpuPercent": 12.48,
+    "peakOneSecondCpuPercent": 18.99,
+    "medianRssMiB": 62.5,
+    "peakRssMiB": 76.4,
+    "endRssMiB": 51.9
+  },
+  "home_scroll": {
+    "seconds": 12.0,
+    "meanCpuPercent": 23.15,
+    "peakOneSecondCpuPercent": 42.78,
+    "medianRssMiB": 88.8,
+    "peakRssMiB": 109.4,
+    "endRssMiB": 95.3
+  },
+  "title_details": {
+    "seconds": 25.1,
+    "meanCpuPercent": 29.11,
+    "peakOneSecondCpuPercent": 82.65,
+    "medianRssMiB": 112.0,
+    "peakRssMiB": 160.0,
+    "endRssMiB": 87.0
+  },
+  "search_pagination": {
+    "seconds": 11.0,
+    "meanCpuPercent": 1.36,
+    "peakOneSecondCpuPercent": 11.95,
+    "medianRssMiB": 93.0,
+    "peakRssMiB": 96.9,
+    "endRssMiB": 59.8
+  },
+  "download": {
+    "seconds": 24.1,
+    "meanCpuPercent": 3.11,
+    "peakOneSecondCpuPercent": 5.99,
+    "medianRssMiB": 47.8,
+    "peakRssMiB": 81.1,
+    "endRssMiB": 48.5
+  },
+  "download_paused": {
+    "seconds": 10.0,
+    "meanCpuPercent": 4.29,
+    "peakOneSecondCpuPercent": 24.9,
+    "medianRssMiB": 41.5,
+    "peakRssMiB": 81.5,
+    "endRssMiB": 81.5
+  },
+  "stream_start": {
+    "seconds": 17.1,
+    "meanCpuPercent": 6.56,
+    "peakOneSecondCpuPercent": 21.91,
+    "medianRssMiB": 109.4,
+    "peakRssMiB": 118.3,
+    "endRssMiB": 103.3
+  },
+  "stream_playing": {
+    "seconds": 24.1,
+    "meanCpuPercent": 24.91,
+    "peakOneSecondCpuPercent": 40.83,
+    "medianRssMiB": 71.5,
+    "peakRssMiB": 104.7,
+    "endRssMiB": 54.4
+  },
+  "stream_seek": {
+    "seconds": 14.0,
+    "meanCpuPercent": 17.51,
+    "peakOneSecondCpuPercent": 21.89,
+    "medianRssMiB": 56.8,
+    "peakRssMiB": 78.6,
+    "endRssMiB": 55.8
+  },
+  "post_close": {
+    "seconds": 24.7,
+    "meanCpuPercent": 4.41,
+    "peakOneSecondCpuPercent": 51.86,
+    "medianRssMiB": 46.6,
+    "peakRssMiB": 92.2,
+    "endRssMiB": 45.8
+  },
+  "home_return": {
+    "seconds": 14.1,
+    "meanCpuPercent": 17.78,
+    "peakOneSecondCpuPercent": 44.77,
+    "medianRssMiB": 75.0,
+    "peakRssMiB": 83.2,
+    "endRssMiB": 77.4
+  },
+  "home_tickers_disabled": {
+    "seconds": 19.1,
+    "meanCpuPercent": 0.94,
+    "peakOneSecondCpuPercent": 1.99,
+    "medianRssMiB": 42.0,
+    "peakRssMiB": 106.0,
+    "endRssMiB": 39.5
+  },
+  "blank_ui": {
+    "seconds": 19.1,
+    "meanCpuPercent": 1.05,
+    "peakOneSecondCpuPercent": 1.99,
+    "medianRssMiB": 34.7,
+    "peakRssMiB": 48.8,
+    "endRssMiB": 28.4
+  },
+  "shutdown": {
+    "seconds": 97.4,
+    "meanCpuPercent": 1.41,
+    "peakOneSecondCpuPercent": 22.88,
+    "medianRssMiB": 20.4,
+    "peakRssMiB": 51.6,
+    "endRssMiB": 38.5
+  }
+}

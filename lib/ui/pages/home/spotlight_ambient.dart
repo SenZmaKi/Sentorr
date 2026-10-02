@@ -10,6 +10,7 @@ import '../../../imdb/providers.dart';
 import '../../components/app_image.dart';
 import '../../shared/theme/theme.dart';
 import 'spotlight_state.dart';
+import 'featured_artwork.dart';
 
 /// The spotlight's artwork, blurred and veiled, washing the top of the page
 /// so the hero reads as lit by its own picture. Drifts at a slower rate
@@ -39,13 +40,12 @@ class SpotlightAmbient extends ConsumerWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  for (final (n, t) in titles.indexed)
-                    AnimatedOpacity(
-                      opacity: n == index ? 1 : 0,
-                      duration: Motion.spotlightFade,
-                      curve: Motion.change,
-                      child: _Wash(title: t),
+                  SpotlightCrossfade(
+                    child: _Wash(
+                      key: ValueKey(titles[index].id),
+                      title: titles[index],
                     ),
+                  ),
                   ColoredBox(color: c.ambientVeil),
                   // Pages sit on surface, so fading into it leaves no edge.
                   DecoratedBox(
@@ -69,7 +69,7 @@ class SpotlightAmbient extends ConsumerWidget {
 }
 
 class _Wash extends ConsumerWidget {
-  const _Wash({required this.title});
+  const _Wash({super.key, required this.title});
 
   final ImdbTitle title;
 
@@ -86,6 +86,7 @@ class _Wash extends ConsumerWidget {
       imageFilter: ImageFilter.blur(sigmaX: 64, sigmaY: 64),
       child: AppImage(
         url: imdbImageUrl(image.url, width: 360),
+        decodeWidth: 360,
         placeholder: false,
       ),
     );

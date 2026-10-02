@@ -36,6 +36,7 @@ class TitleArtwork extends StatelessWidget {
         }
         return AppImage(
           url: imdbImageUrl(image.url, width: width * dpr),
+          decodeWidth: (width * dpr).clamp(1, 2560).ceil(),
           alignment: alignment,
           width: box.maxWidth,
           height: box.hasBoundedHeight ? box.maxHeight : null,

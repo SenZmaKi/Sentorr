@@ -23,6 +23,9 @@ class WindowManager with WindowListener {
   Completer<void>? _saveCompletion;
   bool _saveAgain = false;
   bool _mobileFullScreen = false;
+
+  /// The window starts hidden until startup has applied its preferences.
+  final visible = ValueNotifier<bool>(!supportsWindowCustomization);
   WindowStateRepository? _stateRepository;
 
   /// While set, moves and resizes are temporary (e.g. the pop-out player)
@@ -101,8 +104,24 @@ class WindowManager with WindowListener {
   Future<void> focus() async {
     if (!supportsWindowCustomization) return;
     await windowManager.show();
+    visible.value = true;
     await windowManager.focus();
   }
+
+  Future<void> hide() async {
+    if (!supportsWindowCustomization) return;
+    await windowManager.hide();
+    visible.value = false;
+  }
+
+  @override
+  void onWindowMinimize() => visible.value = false;
+
+  @override
+  void onWindowRestore() => visible.value = true;
+
+  @override
+  void onWindowFocus() => visible.value = true;
 
   Future<void> configureCloseHandler(Future<void> Function() onClose) async {
     if (!supportsWindowCustomization) return;

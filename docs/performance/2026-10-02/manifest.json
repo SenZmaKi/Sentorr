@@ -1,0 +1,110 @@
+{
+  "commit": "22d0f214afd072a59f5ad086cb34eb74323ef3e0",
+  "fixtureBytes": 63263485,
+  "fixtureSha256": "47f05b1cd987897025865189d7c154cc6254a301cf620677384083e4da1b9e12",
+  "fixture": {
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "h264",
+        "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+        "profile": "High",
+        "codec_type": "video",
+        "codec_tag_string": "avc1",
+        "codec_tag": "0x31637661",
+        "mime_codec_string": "avc1.64002a",
+        "width": 1920,
+        "height": 1080,
+        "coded_width": 1920,
+        "coded_height": 1080,
+        "has_b_frames": 2,
+        "sample_aspect_ratio": "1:1",
+        "display_aspect_ratio": "16:9",
+        "pix_fmt": "yuv420p",
+        "level": 42,
+        "chroma_location": "left",
+        "field_order": "progressive",
+        "is_avc": "true",
+        "nal_length_size": "4",
+        "id": "0x1",
+        "r_frame_rate": "60/1",
+        "avg_frame_rate": "60/1",
+        "time_base": "1/15360",
+        "start_pts": 0,
+        "start_time": "0.000000",
+        "duration_ts": 1843712,
+        "duration": "120.033333",
+        "bit_rate": "4211750",
+        "bits_per_raw_sample": "8",
+        "nb_frames": "7202",
+        "extradata_size": 48,
+        "disposition": {
+          "default": 1,
+          "dub": 0,
+          "original": 0,
+          "comment": 0,
+          "lyrics": 0,
+          "karaoke": 0,
+          "forced": 0,
+          "hearing_impaired": 0,
+          "visual_impaired": 0,
+          "clean_effects": 0,
+          "attached_pic": 0,
+          "timed_thumbnails": 0,
+          "non_diegetic": 0,
+          "captions": 0,
+          "descriptions": 0,
+          "metadata": 0,
+          "dependent": 0,
+          "still_image": 0,
+          "multilayer": 0
+        },
+        "tags": {
+          "language": "und",
+          "handler_name": "VideoHandler"
+        }
+      }
+    ],
+    "format": {
+      "nb_streams": 1,
+      "nb_programs": 0,
+      "nb_stream_groups": 0,
+      "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+      "format_long_name": "QuickTime / MOV",
+      "start_time": "0.000000",
+      "duration": "120.033333",
+      "size": "63263485",
+      "bit_rate": "4216394",
+      "probe_score": 100,
+      "tags": {
+        "major_brand": "isom",
+        "minor_version": "512",
+        "compatible_brands": "isomiso2avc1mp41",
+        "encoder": "Lavf62.12.100"
+      }
+    }
+  },
+  "isolatedBuildSha256": {
+    "Contents/MacOS/Sentorr": "1049980953310643c938346a0f5c5a23f3a8d613d884e6681d1b0d1c81b15805",
+    "Contents/Frameworks/App.framework/Versions/A/App": "7b1ee546cf39c45d3b892e64d4eac02c3ff9eae6e6fab1e1a109ca710212eed7",
+    "Contents/Frameworks/Mpv.framework/Versions/A/Mpv": "07798b406023dc8de54d5f7f9abea57a646372df1517d7e0fb855dc5482f9c8c",
+    "Contents/Frameworks/torrent-rasterbar.framework/Versions/A/torrent-rasterbar": "7a3abe3ff36cb76173b17647e7748ac6d19ab56d5eb1bbf3651ed0e72d152b0b"
+  },
+  "staticBuildAppFrameworkSha256": "120c2d6c827cbee2bf0df0129b6174861c523c2b003026289866aea6921783a8",
+  "run2Notes": "Complete transfer/playback workload; ticker-disable comparison remounted UI and is excluded from causal analysis. Shutdown was terminated after about 97 recorded seconds.",
+  "run3Notes": "Stable ValueListenableBuilder/TickerMode tree; same home page before disable and after resume; static workload only. Workloads finished; process terminated after approximately 149 recorded seconds of shutdown waiting.",
+  "run2HarnessSha256": {
+    "tool/performance/run.py": "7f6148376b311b0297d05852753ed4f3afce7a3bb17885a0c4f1c6fa8d669f7a",
+    "tool/performance/seed.dart": "57f4225b589e1be9cae2b55a31dd5a2062b9795e62a9269bbc5a4107a12909cd",
+    "tool/performance/summarize.py": "c726faa19e0285f0588e73d83aff85fefd6bf23d5e940f30af872f7fee53ae83",
+    "tool/performance/README.md": "4b03ff2f2f586de19a0d0f8c128883a5e44f0604b64127af7c3a3c7bd473f377",
+    "tool/performance/audit.dart": "7500697f137c2c46eba0f6f89cea6879d5b76d7daf4bb343947ba36cb941d052"
+  },
+  "currentHarnessSha256": {
+    "tool/performance/run.py": "eaaf2df37e8b8236b70cdd418980d31b6d364d2d29db17d1332449486ec95527",
+    "tool/performance/seed.dart": "57f4225b589e1be9cae2b55a31dd5a2062b9795e62a9269bbc5a4107a12909cd",
+    "tool/performance/summarize.py": "c726faa19e0285f0588e73d83aff85fefd6bf23d5e940f30af872f7fee53ae83",
+    "tool/performance/README.md": "8e6542043b41f03bb1c8e0c4b1045c88ba4cdaaa8a1aae9aee625b7a98d5b82d",
+    "tool/performance/audit.dart": "8957f9a00817c8b361f3f7a751c9509090fc3e465e66ad97bad1ceed773c94a7"
+  }
+}

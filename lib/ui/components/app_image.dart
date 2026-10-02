@@ -16,12 +16,17 @@ class AppImage extends ConsumerWidget {
     this.alignment = Alignment.center,
     this.semanticLabel,
     this.placeholder = true,
+    this.decodeWidth,
   });
   final String url;
   final double? width, height;
   final BoxFit fit;
   final Alignment alignment;
   final String? semanticLabel;
+
+  /// Physical pixels needed for a cover fit; bounds decode even if the CDN
+  /// ignores its rendition URL or snaps it to a larger size.
+  final int? decodeWidth;
 
   /// Decorative uses (e.g. blurred washes) stay empty instead.
   final bool placeholder;
@@ -32,6 +37,7 @@ class AppImage extends ConsumerWidget {
     child: CachedNetworkImage(
       imageUrl: url,
       cacheManager: ref.watch(imageCacheProvider),
+      memCacheWidth: decodeWidth,
       width: width,
       height: height,
       fit: fit,

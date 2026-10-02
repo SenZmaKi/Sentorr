@@ -1,0 +1,90 @@
+{
+  "startup": {
+    "seconds": 3.1,
+    "meanCpuPercent": 42.18,
+    "peakOneSecondCpuPercent": 52.06,
+    "medianRssMiB": 59.7,
+    "peakRssMiB": 92.5,
+    "endRssMiB": 92.5
+  },
+  "home_cold": {
+    "seconds": 34.3,
+    "meanCpuPercent": 37.24,
+    "peakOneSecondCpuPercent": 80.3,
+    "medianRssMiB": 73.2,
+    "peakRssMiB": 207.0,
+    "endRssMiB": 60.4
+  },
+  "home_idle": {
+    "seconds": 20.1,
+    "meanCpuPercent": 29.37,
+    "peakOneSecondCpuPercent": 40.86,
+    "medianRssMiB": 66.3,
+    "peakRssMiB": 72.8,
+    "endRssMiB": 70.1
+  },
+  "title_details": {
+    "seconds": 24.1,
+    "meanCpuPercent": 33.61,
+    "peakOneSecondCpuPercent": 86.63,
+    "medianRssMiB": 113.1,
+    "peakRssMiB": 170.7,
+    "endRssMiB": 74.6
+  },
+  "search_pagination": {
+    "seconds": 11.0,
+    "meanCpuPercent": 1.0,
+    "peakOneSecondCpuPercent": 8.95,
+    "medianRssMiB": 30.6,
+    "peakRssMiB": 65.5,
+    "endRssMiB": 30.4
+  },
+  "download": {
+    "seconds": 24.1,
+    "meanCpuPercent": 4.15,
+    "peakOneSecondCpuPercent": 34.91,
+    "medianRssMiB": 42.9,
+    "peakRssMiB": 104.5,
+    "endRssMiB": 36.6
+  },
+  "download_paused": {
+    "seconds": 10.0,
+    "meanCpuPercent": 2.99,
+    "peakOneSecondCpuPercent": 9.97,
+    "medianRssMiB": 36.3,
+    "peakRssMiB": 53.8,
+    "endRssMiB": 53.8
+  },
+  "stream_start": {
+    "seconds": 3.0,
+    "meanCpuPercent": 43.86,
+    "peakOneSecondCpuPercent": 64.68,
+    "medianRssMiB": 87.7,
+    "peakRssMiB": 116.5,
+    "endRssMiB": 79.2
+  },
+  "stream_playing": {
+    "seconds": 24.1,
+    "meanCpuPercent": 20.02,
+    "peakOneSecondCpuPercent": 38.83,
+    "medianRssMiB": 45.3,
+    "peakRssMiB": 88.7,
+    "endRssMiB": 50.7
+  },
+  "stream_seek": {
+    "seconds": 15.1,
+    "meanCpuPercent": 16.54,
+    "peakOneSecondCpuPercent": 24.92,
+    "medianRssMiB": 67.8,
+    "peakRssMiB": 132.7,
+    "endRssMiB": 83.7
+  },
+  "post_close": {
+    "seconds": 24.1,
+    "meanCpuPercent": 4.9,
+    "peakOneSecondCpuPercent": 55.97,
+    "medianRssMiB": 36.7,
+    "peakRssMiB": 137.2,
+    "endRssMiB": 40.8
+  }
+}

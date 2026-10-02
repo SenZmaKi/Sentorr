@@ -113,7 +113,11 @@ class _KenBurnsState extends State<KenBurns>
   }
 
   void _sync({required bool restart}) {
-    if (!widget.active || reduceMotion(context)) return;
+    if (!widget.active || reduceMotion(context)) {
+      _controller.stop();
+      if (reduceMotion(context)) _controller.value = 0;
+      return;
+    }
     if (restart) {
       _controller.forward(from: 0);
     } else if (!_controller.isAnimating && !_controller.isCompleted) {

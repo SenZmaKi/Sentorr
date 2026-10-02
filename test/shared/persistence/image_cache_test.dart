@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/painting.dart';
 import 'package:sentorr/shared/persistence/app_paths.dart';
 import 'package:sentorr/shared/persistence/app_image_cache.dart';
 
@@ -56,6 +57,10 @@ void main() {
       try {
         final paths = await AppPaths.initialize(rootDirectory: root);
         AppImageCache.initialize(paths, maxSizeBytes: 4);
+        expect(
+          PaintingBinding.instance.imageCache.maximumSizeBytes,
+          64 * 1024 * 1024,
+        );
         final manager = AppImageCache.manager;
         await manager.putFile(
           'https://example.invalid/old.png',

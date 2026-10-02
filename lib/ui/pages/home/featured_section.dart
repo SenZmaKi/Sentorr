@@ -3,13 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../home/catalog_rows.dart';
 import '../../../imdb/models.dart';
-import '../../../imdb/providers.dart';
 import '../../../titles/pick_up.dart';
 import '../../components/interactive.dart';
 import '../../components/hero_frame.dart';
 import '../../components/load_error.dart';
 import '../../components/motion.dart';
-import '../../components/title_artwork.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import '../../components/cards/card_parts.dart';
@@ -17,6 +15,7 @@ import '../../shared/title_icons.dart';
 import '../../shared/title_route.dart';
 import '../../shared/play_route.dart';
 import 'featured_hero.dart';
+import 'featured_artwork.dart';
 import 'spotlight_state.dart';
 
 /// Spotlight over the top trending titles. Advances on its own, pausing
@@ -70,10 +69,6 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
   void _start(List<ImdbTitle> titles) {
     if (_count == titles.length) return;
     _count = titles.length;
-    // Load every spotlight backdrop up front so changes are pure crossfades.
-    for (final t in titles) {
-      ref.read(titleDetailsProvider(t.id).future).ignore();
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _setPause();
     });
@@ -106,30 +101,16 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
                   synopsis: t.plot ?? '',
                   badge: '#${i + 1} trending this week',
                   badgeIcon: Icons.trending_up_rounded,
-                  artwork: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      for (final (n, title) in titles.indexed)
-                        AnimatedOpacity(
-                          opacity: n == i ? 1 : 0,
-                          duration: Motion.spotlightFade,
-                          curve: Motion.change,
-                          child: KenBurns(
-                            active: n == i,
-                            duration:
-                                Motion.spotlightHold + Motion.spotlightFade,
-                            child: TitleBackdrop(title: title),
-                          ),
-                        ),
-                    ],
-                  ),
+                  artwork: FeaturedArtwork(titles: titles, index: i),
                   pager: titles.length < 2
                       ? null
-                      : _Pager(
-                          titles: titles,
-                          index: i,
-                          progress: _hold,
-                          onSelect: _show,
+                      : RepaintBoundary(
+                          child: _Pager(
+                            titles: titles,
+                            index: i,
+                            progress: _hold,
+                            onSelect: _show,
+                          ),
                         ),
                   onPlay: () => ref.playFrom(t, pick),
                   playLabel: pickUpLabel(pick),

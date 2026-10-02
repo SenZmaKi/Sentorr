@@ -55,7 +55,7 @@ class AppRuntime with WidgetsBindingObserver {
   Future<void>? _shutdown;
   Future<void>? _quit;
 
-  static Future<AppRuntime> initialize() async {
+  static Future<AppRuntime> initialize({Directory? rootDirectory}) async {
     WidgetsFlutterBinding.ensureInitialized();
     // The native video plugin links this framework. Loading another copy via
     // an environment override or framework search can pass an incompatible
@@ -72,7 +72,7 @@ class AppRuntime with WidgetsBindingObserver {
     ErrorReports.install();
     final log = Logger('sentorr.app');
     final clock = Stopwatch()..start();
-    final paths = await AppPaths.initialize();
+    final paths = await AppPaths.initialize(rootDirectory: rootDirectory);
     await configureFileLogging(paths.logsDirectory);
     log.info(
       'Starting on ${Platform.operatingSystem} '
@@ -146,7 +146,7 @@ class AppRuntime with WidgetsBindingObserver {
       final preferences = container.read(settingsProvider).window;
       if (preferences.closeToTray && runtime.tray.canHideWindow) {
         await runtime.flush();
-        await windowManager.hide();
+        await runtime.window.hide();
       } else {
         await runtime.quit();
       }

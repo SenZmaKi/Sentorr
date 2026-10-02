@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/painting.dart';
+
 import 'package:file/file.dart' as file;
 import 'package:file/local.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -9,6 +11,10 @@ import 'package:sentorr/shared/persistence/app_paths.dart';
 class AppImageCache {
   static const _cacheKey = 'sentorrImageCache';
   static const defaultMaxCacheSizeBytes = 100 * 1024 * 1024;
+
+  /// Decoded keep-alive images, separate from the user-controlled disk budget.
+  /// Mounted images and GPU resources are additional to this limit.
+  static const decodedMaxSizeBytes = 64 * 1024 * 1024;
   static int _maxCacheSizeBytes = defaultMaxCacheSizeBytes;
   static CacheManager? _manager;
 
@@ -27,6 +33,7 @@ class AppImageCache {
     int maxSizeBytes = defaultMaxCacheSizeBytes,
   }) {
     _maxCacheSizeBytes = maxSizeBytes;
+    PaintingBinding.instance.imageCache.maximumSizeBytes = decodedMaxSizeBytes;
     _manager ??= CacheManager(
       Config(
         _cacheKey,

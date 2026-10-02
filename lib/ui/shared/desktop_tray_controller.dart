@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 import 'package:tray_manager/tray_manager.dart';
-import 'package:window_manager/window_manager.dart' show windowManager;
 
 import 'window_manager.dart';
 
@@ -38,7 +37,7 @@ class DesktopTrayController {
       _icon!.icon = _image;
       _icon!.setTooltip('Sentorr');
       _addItem('Show', WindowManager.getInstance().focus);
-      if (!Platform.isLinux) _addItem('Hide', windowManager.hide);
+      if (!Platform.isLinux) _addItem('Hide', WindowManager.getInstance().hide);
       _menu!.addSeparator();
       _addItem('Quit', quit);
       _icon!.setContextMenu(_menu!);

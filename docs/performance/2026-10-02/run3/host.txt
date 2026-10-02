@@ -1,0 +1,28 @@
+ProductName:		macOS
+ProductVersion:		27.0
+BuildVersion:		26A428
+machdep.cpu.brand_string: Apple M1
+hw.memsize: 8589934592
+Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages free:                                     4170.
+Pages active:                                 137771.
+Pages inactive:                               136071.
+Pages speculative:                               896.
+Pages throttled:                                   0.
+Pages wired down:                             117217.
+Pages purgeable:                                 609.
+"Translation faults":                     6763437162.
+Pages copy-on-write:                       539395002.
+Pages zero filled:                        1638618239.
+Pages reactivated:                        2019162067.
+Pages purged:                               89445532.
+File-backed pages:                             69374.
+Anonymous pages:                              205364.
+Pages stored in compressor:                   214971.
+Pages occupied by compressor:                  92492.
+Decompressions:                           2074937319.
+Compressions:                             2257028704.
+Pageins:                                   323054509.
+Pageouts:                                    2676468.
+Swapins:                                    41913734.
+Swapouts:                                   46495797.

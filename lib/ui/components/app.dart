@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../settings/notifier.dart';
-import '../../shared/app_lifecycle.dart';
+import '../shared/app_activity.dart';
 import '../pages/downloads/downloads_page.dart';
 import '../pages/home/home_page.dart';
 import '../pages/launch/launch_host.dart';
@@ -20,7 +20,6 @@ class SentorrApp extends ConsumerWidget {
   const SentorrApp({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(AppLifecycleNotifier.provider);
     return MaterialApp(
       title: 'Sentorr',
       debugShowCheckedModeBanner: false,
@@ -29,8 +28,10 @@ class SentorrApp extends ConsumerWidget {
       themeMode: ref.watch(
         settingsProvider.select((settings) => settings.themeMode),
       ),
-      builder: (context, child) => DesktopIconSync(
-        child: NotificationTaps(child: ErrorToasts(child: child!)),
+      builder: (context, child) => AppActivity(
+        child: DesktopIconSync(
+          child: NotificationTaps(child: ErrorToasts(child: child!)),
+        ),
       ),
       home: LaunchHost(
         child: PlayerHost(

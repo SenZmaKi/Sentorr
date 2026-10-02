@@ -1,0 +1,42 @@
+{
+  "startup": {
+    "seconds": 2.0,
+    "meanCpuPercent": 12.95,
+    "peakOneSecondCpuPercent": 23.88,
+    "medianRssMiB": 27.2,
+    "peakRssMiB": 53.8,
+    "endRssMiB": 53.8
+  },
+  "home_cold": {
+    "seconds": 34.1,
+    "meanCpuPercent": 0.23,
+    "peakOneSecondCpuPercent": 1.99,
+    "medianRssMiB": 33.2,
+    "peakRssMiB": 203.4,
+    "endRssMiB": 31.3
+  },
+  "home_idle": {
+    "seconds": 19.1,
+    "meanCpuPercent": 0.1,
+    "peakOneSecondCpuPercent": 1.0,
+    "medianRssMiB": 30.1,
+    "peakRssMiB": 33.5,
+    "endRssMiB": 33.4
+  },
+  "home_tickers_disabled": {
+    "seconds": 19.1,
+    "meanCpuPercent": 1.15,
+    "peakOneSecondCpuPercent": 8.95,
+    "medianRssMiB": 83.7,
+    "peakRssMiB": 88.2,
+    "endRssMiB": 58.3
+  },
+  "home_tickers_resumed": {
+    "seconds": 14.1,
+    "meanCpuPercent": 13.88,
+    "peakOneSecondCpuPercent": 52.72,
+    "medianRssMiB": 151.3,
+    "peakRssMiB": 210.2,
+    "endRssMiB": 117.7
+  }
+}

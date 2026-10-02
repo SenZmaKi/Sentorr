@@ -235,6 +235,13 @@ Normal text must reach 4.5:1 contrast; large text 3:1; essential control boundar
 
 ## Theme layers
 
+Brand assets follow the same ownership rule: `SentorrBrand` in
+`lib/ui/shared/theme/brand.dart` resolves matching light and dark artwork.
+Navigation consumes the resolved logo without branching on brightness. Running
+desktop icons follow that resolved theme where supported (tray, macOS Dock,
+Windows window/taskbar); installed launcher assets keep the dark variant.
+Unsupported or failed live updates retain or fall back to the dark icon.
+
 Resolve appearance in this direction:
 
 `theme identity + brightness → primitives → semantic roles → component styles → widgets`

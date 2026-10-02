@@ -23,5 +23,27 @@ The Android manifest, macOS asset catalogs, Windows resource files and Flutter
 asset directory already reference these locations. Linux installs its own
 packaging icon through CMake. The source artwork is not bundled at runtime.
 
-Only the macOS build has been verified on this host; Windows, Android and Linux
-assets require their respective platform builds to verify native integration.
+## Light variant and live switching
+
+`sentorr-icon-light-source.png` is the matching ImageGen edit: graphite ribbon
+on a pale neutral background, with the same silhouette and play cutout.
+
+Edit prompt: Preserve the folded S ribbon silhouette, negative-space play
+triangle, geometry, framing and padding. Replace the charcoal background with
+neutral off-white (#F3F3F3), and the ivory ribbon with graphite folded shading
+and subtle edge highlights. Grayscale only; no added elements, text or outer
+rounding. Matching light companion, not a redesign.
+
+`SentorrBrand` resolves assets centrally from the app theme. The navigation
+logo, desktop tray, running macOS Dock icon and Windows window/taskbar icon
+follow light/dark/system settings live. The macOS channel uses AppKit's
+`applicationIconImage`; Windows uses `window_manager.setIcon`. Linux's installed
+launcher and Android's launcher retain the dark artwork. Finder, shortcuts and
+other installed launcher resources also retain dark artwork; running icon
+updates do not modify the app bundle. Failed light updates attempt dark fallback.
+
+The generator includes both runtime variants (PNG for logo/tray/Dock and ICO
+for Windows), while preserving dark build-time platform assets.
+
+Windows, Android and Linux require their respective platform builds to verify
+native integration on those platforms.

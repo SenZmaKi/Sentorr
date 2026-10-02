@@ -15,16 +15,17 @@ import '../shared/persistence/app_image_cache.dart';
 import '../shared/persistence/json_file_store.dart';
 import '../shared/persistence/window_state_repository.dart';
 import '../ui/shared/desktop_tray_controller.dart';
+import '../ui/shared/desktop_icon_controller.dart';
 import '../ui/shared/launch_at_startup_manager.dart';
 import '../ui/shared/window_manager.dart';
 import 'services.dart';
 
 class AppRuntime with WidgetsBindingObserver {
-  AppRuntime._(this.container, this.network, this.repository);
+  AppRuntime._(this.container, this.network, this.repository, this.tray);
   final ProviderContainer container;
   final NetworkClient network;
   final SettingsRepository repository;
-  final tray = DesktopTrayController();
+  final DesktopTrayController tray;
   final window = WindowManager.getInstance();
   bool _quitting = false;
   Future<void>? _shutdown;
@@ -51,15 +52,19 @@ class AppRuntime with WidgetsBindingObserver {
     final network = NetworkClient(
       cacheDirectory: paths.networkCacheDirectory.path,
     );
+    final tray = DesktopTrayController();
     final container = ProviderContainer(
       overrides: [
         appPathsProvider.overrideWithValue(paths),
         settingsRepositoryProvider.overrideWithValue(repository),
         initialSettingsProvider.overrideWithValue(settings),
         networkClientProvider.overrideWithValue(network),
+        desktopIconControllerProvider.overrideWithValue(
+          DesktopIconController(tray: tray),
+        ),
       ],
     );
-    final runtime = AppRuntime._(container, network, repository);
+    final runtime = AppRuntime._(container, network, repository, tray);
     await runtime.window.init(
       settings.window,
       WindowStateRepository(store: JsonFileStore(paths.windowStateFile)),

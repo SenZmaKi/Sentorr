@@ -28,7 +28,7 @@ class SideNav extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(Radii.control),
             child: Image.asset(
-              'assets/images/sentorr-icon.png',
+              context.brand.logo,
               width: 32,
               height: 32,
               semanticLabel: 'Sentorr',

@@ -60,6 +60,15 @@ class DesktopTrayController {
     _menu!.addItem(item);
   }
 
+  void updateIcon(String asset) {
+    if (_icon == null) return;
+    final image = ImageAsset.fromAsset(asset);
+    if (image == null) throw StateError('Tray icon unavailable: $asset');
+    _icon!.icon = image;
+    _image?.dispose();
+    _image = image;
+  }
+
   void dispose() {
     _icon?.setVisible(false);
     _icon?.dispose();

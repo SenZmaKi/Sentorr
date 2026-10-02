@@ -9,8 +9,8 @@ SOURCE = ROOT / "assets/branding/sentorr-icon-source.png"
 ICON = Image.open(SOURCE).convert("RGB").resize((1024, 1024), Image.Resampling.LANCZOS)
 
 
-def save_png(path: Path, size: int, *, rounded: bool = False) -> None:
-    image = ICON.convert("RGBA")
+def save_png(path: Path, size: int, *, rounded: bool = False, source=ICON) -> None:
+    image = source.convert("RGBA")
     if rounded:
         mask = Image.new("L", image.size)
         ImageDraw.Draw(mask).rounded_rectangle((0, 0, 1023, 1023), radius=220, fill=255)
@@ -26,6 +26,15 @@ def save_png(path: Path, size: int, *, rounded: bool = False) -> None:
 
 save_png(ROOT / "assets/images/sentorr-icon.png", 1024)
 save_png(ROOT / "assets/images/tray.png", 64, rounded=True)
+
+light = Image.open(ROOT / "assets/branding/sentorr-icon-light-source.png").convert("RGB")
+light = light.resize((1024, 1024), Image.Resampling.LANCZOS)
+save_png(ROOT / "assets/images/sentorr-icon-light.png", 1024, source=light)
+for name, source in (("dark", ICON), ("light", light)):
+    save_png(ROOT / f"assets/images/tray-{name}.png", 64, rounded=True, source=source)
+    save_png(ROOT / f"assets/images/dock-{name}.png", 1024, rounded=True, source=source)
+    source.save(ROOT / f"assets/images/window-{name}.ico",
+                sizes=[(size, size) for size in (16, 24, 32, 48, 64, 128, 256)])
 
 for app in (ROOT, ROOT / "tool/design_demo", ROOT / "tool/codec_lab"):
     mac_icons = app / "macos/Runner/Assets.xcassets/AppIcon.appiconset"

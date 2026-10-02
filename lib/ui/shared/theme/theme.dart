@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'colors.dart';
+import 'brand.dart';
 import 'depth.dart';
 import 'player_colors.dart';
 import 'typography.dart';
 import 'tokens.dart';
 
 export 'colors.dart';
+export 'brand.dart';
 export 'depth.dart';
 export 'player_colors.dart';
 export 'tokens.dart';
@@ -68,6 +70,7 @@ ThemeData buildSentorrTheme(Brightness brightness) {
       ),
     ),
     extensions: [
+      brightness == Brightness.dark ? SentorrBrand.dark : SentorrBrand.light,
       c,
       SentorrDepth.resolve(c, brightness),
       type,
@@ -77,6 +80,7 @@ ThemeData buildSentorrTheme(Brightness brightness) {
 }
 
 extension SentorrThemeContext on BuildContext {
+  SentorrBrand get brand => Theme.of(this).extension<SentorrBrand>()!;
   SentorrColors get colors => Theme.of(this).extension<SentorrColors>()!;
   SentorrDepth get depth => Theme.of(this).extension<SentorrDepth>()!;
   SentorrType get type => Theme.of(this).extension<SentorrType>()!;

@@ -58,6 +58,24 @@ class MainFlutterWindow: NSWindow {
     )
     (NSApp.delegate as? AppDelegate)?.setWindowReopenChannel(windowReopenChannel)
 
+    // Theme-driven running Dock icon. The bundle's launcher remains dark.
+    FlutterMethodChannel(
+      name: "sentorr/app_icon", binaryMessenger: flutterViewController.engine.binaryMessenger
+    )
+    .setMethodCallHandler { (call: FlutterMethodCall, result: @escaping FlutterResult) in
+      guard call.method == "setIcon" else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      guard let bytes = call.arguments as? FlutterStandardTypedData,
+            let icon = NSImage(data: bytes.data) else {
+        result(FlutterError(code: "invalid_icon", message: "Expected PNG icon data.", details: nil))
+        return
+      }
+      NSApp.applicationIconImage = icon
+      result(nil)
+    }
+
     FlutterMethodChannel(
       name: "sentorr/menu_bar_mode", binaryMessenger: flutterViewController.engine.binaryMessenger
     )

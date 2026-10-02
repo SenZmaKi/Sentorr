@@ -33,7 +33,7 @@ class PlayerActions {
   void togglePlay({bool acknowledge = true}) {
     final playing = _player.state.playing;
     // Replay from the end rather than resuming a finished item.
-    if (_player.state.completed) unawaited(_player.seek(Duration.zero));
+    if (_player.state.completed) unawaited(engine.seek(Duration.zero));
     unawaited(_player.playOrPause());
     if (acknowledge) {
       ui.flash(
@@ -60,7 +60,7 @@ class PlayerActions {
   void seekToFraction(double fraction) {
     final duration = _player.state.duration;
     if (duration <= Duration.zero) return;
-    unawaited(_player.seek(duration * fraction.clamp(0, 1)));
+    unawaited(engine.seek(duration * fraction.clamp(0, 1)));
   }
 
   /// [volume] is 0–100.
@@ -135,7 +135,7 @@ class PlayerActions {
   /// Restarts the current item when past its opening, else goes back one.
   void previous() {
     if (engine.pastStart || session.queue?.previous == null) {
-      unawaited(_player.seek(Duration.zero));
+      unawaited(engine.seek(Duration.zero));
     } else {
       session.previous();
     }

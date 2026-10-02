@@ -14,6 +14,9 @@ class AppPaths {
       File(path.join(rootDirectory.path, 'state', 'window.json'));
   Directory get networkCacheDirectory => directory('cache/http');
   Directory get imageCacheDirectory => directory('cache/images');
+
+  /// Torrent streaming sessions keep their pieces in children of this.
+  Directory get streamCacheDirectory => directory('cache/streams');
   File get imageCacheMetadataFile =>
       File(path.join(rootDirectory.path, 'cache', 'metadata', 'images.json'));
   Directory get logsDirectory => directory('logs');
@@ -34,6 +37,7 @@ class AppPaths {
       'cache/http',
       'cache/images',
       'cache/metadata',
+      'cache/streams',
       'logs',
     ]) {
       await paths.directory(name).create(recursive: true);

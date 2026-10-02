@@ -31,8 +31,8 @@ class PlayerSession {
   /// The rest of the queue (or the next season) is being fetched.
   final bool resolving;
 
-  /// The torrent chosen for each item, by item ID. Playback does not stream
-  /// them yet; items still play sample media.
+  /// The torrent the viewer chose for an item, by item ID. Items without
+  /// one stream the best torrent found when they start.
   final Map<String, TorrentCandidate> torrents;
 
   PlaybackItem? get current => queue?.current;

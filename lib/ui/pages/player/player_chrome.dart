@@ -67,6 +67,7 @@ class PlayerChrome extends StatelessWidget {
               child: TopBar(
                 item: session.current,
                 fallbackTitle: session.request.subject.title,
+                stream: engine.streaming.status,
                 onBack: actions.minimize,
                 onClose: actions.close,
               ),

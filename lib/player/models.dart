@@ -4,7 +4,6 @@ import '../imdb/models.dart';
 class PlaybackItem {
   const PlaybackItem({
     required this.title,
-    required this.source,
     this.series,
     this.season,
     this.episode,
@@ -12,9 +11,6 @@ class PlaybackItem {
 
   /// The movie, or the episode's own title record.
   final ImdbTitle title;
-
-  /// Where the media bytes come from. Torrent streams will supply this.
-  final Uri source;
 
   /// The series an episode belongs to; null for movies.
   final ImdbTitle? series;

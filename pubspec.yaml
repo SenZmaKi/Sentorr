@@ -32,6 +32,14 @@ dependencies:
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.7
   anitomy_dart: ^1.0.1
+  torrent_stream:
+    path: packages/torrent_stream
+
+# torrent_stream needs the binding's streaming symbols, which only a local
+# checkout rebuilt with packages/torrent_stream/tool/build_native.py has.
+dependency_overrides:
+  libtorrent_dart:
+    path: ../libtorrent_dart
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,6 @@
 # Reusable torrent playback engine
 
-Status: core implemented in `packages/torrent_stream`, based on the Streaming Lab audit. MediaKit adaptation, app wiring and torrent resolution are outside this change.
+Status: core implemented in `packages/torrent_stream`, based on the Streaming Lab audit. Sentorr wires it to MediaKit in `lib/player/stream/`: `TorrentPlayback` owns one session per item (resolving a torrent when the queue item has none, then choosing its file), `MediaKitTorrentAdapter` applies the player policy below and routes seeks through `prepareSeek`.
 
 ## Module placement
 

@@ -1,6 +1,6 @@
 # torrent_stream
 
-A pure Dart playback-delivery package: **libtorrent → verified pieces → loopback HTTP ranges**. It has no Sentorr, Flutter, MediaKit, Riverpod, catalog or app-directory dependency. It is implemented but deliberately unwired from Sentorr. The Streaming Lab remains a separate audit reference.
+A pure Dart playback-delivery package: **libtorrent → verified pieces → loopback HTTP ranges**. It has no Sentorr, Flutter, MediaKit, Riverpod, catalog or app-directory dependency. Sentorr plays through it from `lib/player/stream/`, whose `MediaKitTorrentAdapter` applies the player policy below. The Streaming Lab remains a separate audit reference.
 
 ## Use
 

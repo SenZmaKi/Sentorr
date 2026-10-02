@@ -64,7 +64,7 @@ class BottomBar extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Space.s8),
-              child: _Scrubber(player: player, ui: ui),
+              child: _Scrubber(player: player, actions: actions, ui: ui),
             ),
             // While the player animates to or from its docked size the row
             // is briefly too wide; clip it rather than overflow. The box is
@@ -193,9 +193,14 @@ String itemLabel(PlaybackItem item) => item.isEpisode
     : item.name;
 
 class _Scrubber extends StatelessWidget {
-  const _Scrubber({required this.player, required this.ui});
+  const _Scrubber({
+    required this.player,
+    required this.actions,
+    required this.ui,
+  });
 
   final Player player;
+  final PlayerActions actions;
   final PlayerUi ui;
 
   @override
@@ -214,7 +219,7 @@ class _Scrubber extends StatelessWidget {
             position: position,
             duration: duration,
             buffer: buffer,
-            onSeek: player.seek,
+            onSeek: actions.engine.seek,
             onScrubbing: (on) => ui.hovering = on,
           ),
         ),

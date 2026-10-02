@@ -5,24 +5,41 @@ import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../app/services.dart';
+import '../settings/notifier.dart';
+import '../torrents/providers.dart';
+import '../torrents/resolution_models.dart';
 import 'models.dart';
 import 'session.dart';
+import 'stream/torrent_playback.dart';
+import 'torrent_lookup.dart';
 
 final _log = Logger('sentorr.player');
 
 /// The native player for one open session. Volume, speed and track choices
 /// carry across queue items because the same player opens each of them.
+/// Every item streams from a torrent through [streaming].
 class PlaybackEngine {
-  PlaybackEngine()
+  PlaybackEngine({required String cacheDirectory, required TorrentFinder find})
     : player = Player(
-        configuration: const PlayerConfiguration(title: 'Sentorr'),
+        configuration: const PlayerConfiguration(
+          title: 'Sentorr',
+          bufferSize: 64 * 1024 * 1024,
+        ),
       ) {
+    streaming = TorrentPlayback(
+      player: player,
+      cacheDirectory: cacheDirectory,
+      find: find,
+      outputReady: () => video.platform.future,
+    );
     _errors = player.stream.error.listen(
       (error) => _log.warning('Playback error: $error'),
     );
   }
 
   final Player player;
+  late final TorrentPlayback streaming;
   late final VideoController video = VideoController(player);
   String? _opened;
   late final StreamSubscription<String> _errors;
@@ -30,18 +47,22 @@ class PlaybackEngine {
   PlayerState get state => player.state;
   PlayerStream get stream => player.stream;
 
-  Future<void> open(PlaybackItem item) async {
+  /// Streams [item] from [torrent], the release the viewer chose, or one
+  /// found for it.
+  Future<void> open(PlaybackItem item, {TorrentCandidate? torrent}) async {
     if (item.id == _opened) return;
     _opened = item.id;
-    _log.info('Opening ${item.name} from ${item.source}');
-    await player.open(Media(item.source.toString()));
+    await streaming.play(item, torrent: torrent);
   }
 
-  /// Opens [item] again after a failure.
+  /// Opens [item] again after a failure, from the torrent it last used.
   Future<void> reopen(PlaybackItem item) {
     _opened = null;
-    return open(item);
+    return open(item, torrent: streaming.status.value?.torrent);
   }
+
+  /// Seeks through the torrent so obsolete reads are dropped first.
+  Future<void> seek(Duration position) => streaming.seek(position);
 
   /// Restart when past the opening seconds, as a Previous press would.
   bool get pastStart => player.state.position > const Duration(seconds: 3);
@@ -49,7 +70,7 @@ class PlaybackEngine {
   Future<void> seekBy(Duration delta) {
     final s = player.state;
     final target = s.position + delta;
-    return player.seek(
+    return seek(
       target < Duration.zero
           ? Duration.zero
           : (s.duration > Duration.zero && target > s.duration
@@ -64,17 +85,34 @@ class PlaybackEngine {
 
   Future<void> dispose() async {
     await _errors.cancel();
+    await streaming.close();
+    streaming.dispose();
     await player.dispose();
   }
 }
 
 /// Lives while the player page is mounted and follows the session's current
-/// item. Torrent streaming will resolve [PlaybackItem.source] before opening.
+/// item, streaming the torrent chosen for it or the best one found.
 final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
-  final engine = PlaybackEngine();
+  final engine = PlaybackEngine(
+    cacheDirectory: ref.read(appPathsProvider).streamCacheDirectory.path,
+    find: (item, cancel) async {
+      final settings = ref.read(settingsProvider).torrents;
+      final resolution = await ref
+          .read(torrentResolverProvider)
+          .resolve(
+            torrentQueryFor(item, languages: settings.languages),
+            preferences: torrentPreferencesFor(settings),
+            cancelToken: cancel,
+          );
+      return resolution.best;
+    },
+  );
   ref.onDispose(engine.dispose);
   ref.listen(playerSessionProvider.select((s) => s?.current), (_, item) {
-    if (item != null) unawaited(engine.open(item));
+    if (item == null) return;
+    final chosen = ref.read(playerSessionProvider)?.torrents[item.id];
+    unawaited(engine.open(item, torrent: chosen));
   }, fireImmediately: true);
   return engine;
 });

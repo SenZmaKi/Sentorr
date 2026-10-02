@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import '../imdb/models.dart';
 import '../imdb/repository.dart';
 import 'models.dart';
-import 'sample_media.dart';
 
 /// What the viewer asked to play.
 sealed class PlayRequest {
@@ -159,25 +158,11 @@ class QueueBuilder {
   int? _after(List<int> seasons, int season) =>
       seasons.where((s) => s > season).firstOrNull;
 
-  PlaybackItem _movie(ImdbTitle title) =>
-      PlaybackItem(title: title, source: sampleSource(_stableKey(title.id)));
+  PlaybackItem _movie(ImdbTitle title) => PlaybackItem(title: title);
 
   PlaybackItem _episode(ImdbTitle series, ImdbEpisode e, int? season) {
     final s = e.seasonNumber ?? season;
     final n = e.episodeNumber;
-    return PlaybackItem(
-      title: e.title,
-      series: series,
-      season: s,
-      episode: n,
-      // Consecutive episodes map to consecutive samples, so Next visibly
-      // changes the video.
-      source: sampleSource(
-        n == null ? _stableKey(e.title.id) : (s ?? 0) * 7 + n,
-      ),
-    );
+    return PlaybackItem(title: e.title, series: series, season: s, episode: n);
   }
-
-  // String.hashCode is not stable across runs; this is.
-  int _stableKey(String id) => id.codeUnits.fold(0, (a, b) => a + b);
 }

@@ -1,23 +1,29 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../player/models.dart';
+import '../../../player/stream/torrent_playback.dart';
 import '../../components/artwork_frame.dart';
 import '../../components/player_control.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'player_ui.dart';
+import 'torrent_stats.dart';
 
 /// Back, then what is playing: the series over the episode, or the movie.
+/// The live torrent behind it trails, beside close.
 class TopBar extends StatelessWidget {
   const TopBar({
     super.key,
     required this.item,
     required this.fallbackTitle,
+    required this.stream,
     required this.onBack,
     required this.onClose,
   });
 
   final PlaybackItem? item;
+  final ValueListenable<StreamStatus?> stream;
 
   /// Shown while the first item is still being resolved.
   final String fallbackTitle;
@@ -92,6 +98,14 @@ class TopBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: Space.s16),
+            SizedBox(
+              height: PlayerMetrics.control,
+              child: TorrentStats(
+                status: stream,
+                compact: MediaQuery.sizeOf(context).width < 720,
+              ),
+            ),
+            const SizedBox(width: Space.s8),
             _BarButton(
               icon: Icons.close_rounded,
               tooltip: 'Stop and close',

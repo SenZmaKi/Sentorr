@@ -4,14 +4,11 @@ import 'package:sentorr/player/models.dart';
 import 'package:sentorr/player/torrent_lookup.dart';
 import 'package:sentorr/settings/models.dart';
 
-final _source = Uri.parse('https://example.com/a.mp4');
-
 void main() {
   test('a movie searches its title, year and IMDb identity', () {
     final query = torrentQueryFor(
       PlaybackItem(
         title: ImdbTitle(id: 'tt1', title: 'Movie', releaseYear: 2020),
-        source: _source,
       ),
       languages: {'en'},
     );
@@ -28,7 +25,6 @@ void main() {
         series: ImdbTitle(id: 'tt2', title: 'Show', releaseYear: 2005),
         season: 1,
         episode: 3,
-        source: _source,
       ),
     );
     expect(query.searchText, 'Show S01E03');
@@ -41,7 +37,6 @@ void main() {
     final query = torrentQueryFor(
       PlaybackItem(
         title: ImdbTitle(id: 'tt1', title: 'Movie'),
-        source: _source,
       ),
       title: 'Film',
     );
@@ -53,7 +48,6 @@ void main() {
     final movie = torrentQueryFor(
       PlaybackItem(
         title: ImdbTitle(id: 'local', title: 'Movie'),
-        source: _source,
       ),
     );
     expect(movie.imdbId, isNull);
@@ -63,7 +57,6 @@ void main() {
           title: ImdbTitle(id: 'tt9', title: 'Special'),
           series: ImdbTitle(id: 'tt2', title: 'Show'),
           season: 1,
-          source: _source,
         ),
       ),
       throwsFormatException,

@@ -424,6 +424,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  libtorrent_dart:
+    dependency: "direct overridden"
+    description:
+      path: "../libtorrent_dart"
+      relative: true
+    source: path
+    version: "1.0.1"
   lints:
     dependency: "direct dev"
     description:
@@ -949,6 +956,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.18"
+  torrent_stream:
+    dependency: "direct main"
+    description:
+      path: "packages/torrent_stream"
+      relative: true
+    source: path
+    version: "0.1.0"
   tray_manager:
     dependency: "direct main"
     description:

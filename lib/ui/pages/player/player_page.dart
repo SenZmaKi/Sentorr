@@ -8,6 +8,7 @@ import '../../../player/engine.dart';
 import '../../../player/queue_builder.dart';
 import '../../../player/session.dart';
 import '../../../player/sleep_timer.dart';
+import '../../../player/stream/torrent_playback.dart';
 import '../../shared/player_view.dart';
 import 'captions_view.dart';
 import 'center_feedback.dart';
@@ -19,6 +20,7 @@ import 'player_input.dart';
 import 'player_ui.dart';
 import 'player_value.dart';
 import 'stage_states.dart';
+import 'torrent_stats.dart';
 
 /// The full-window player: picture, captions and feedback beneath chrome
 /// that hides while watching, with the end screen and failures on top.
@@ -85,7 +87,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
   void _replay() {
     setState(() => _ended = false);
-    unawaited(_engine.player.seek(Duration.zero));
+    unawaited(_engine.seek(Duration.zero));
     unawaited(_engine.player.play());
   }
 
@@ -166,25 +168,31 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                         BufferingIndicator(buffering: buffering && !_ended),
                   ),
                   if (full) const CenterFeedback(),
-                  PlayerValue(
-                    stream: p.stream.duration,
-                    initial: p.state.duration,
-                    builder: (context, duration) => AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 450),
-                      child: duration == Duration.zero && _error == null
-                          ? IgnorePointer(
-                              child: OpeningCover(
-                                subject:
-                                    session.current?.title ??
-                                    session.request.subject,
-                                label: !full
-                                    ? ''
-                                    : queue == null && session.error == null
-                                    ? _resolvingLabel(session.request)
-                                    : null,
-                              ),
-                            )
-                          : const SizedBox.shrink(),
+                  ValueListenableBuilder(
+                    valueListenable: _engine.streaming.status,
+                    builder: (context, stream, _) => PlayerValue(
+                      stream: p.stream.duration,
+                      initial: p.state.duration,
+                      builder: (context, duration) => AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 450),
+                        child:
+                            duration == Duration.zero &&
+                                _error == null &&
+                                stream?.stage != StreamStage.failed
+                            ? IgnorePointer(
+                                child: OpeningCover(
+                                  subject:
+                                      session.current?.title ??
+                                      session.request.subject,
+                                  label: !full
+                                      ? ''
+                                      : queue == null && session.error == null
+                                      ? _resolvingLabel(session.request)
+                                      : streamLabel(stream),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
                     ),
                   ),
                   if (!full)
@@ -211,18 +219,25 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                       actions: _actions,
                       ended: _ended,
                     ),
-                  if (_problem(session) case final message? when full)
-                    PlaybackProblem(
-                      message: message,
-                      onBack: _actions.close,
-                      onSkip: next == null ? null : _actions.next,
-                      onRetry: queue == null
-                          ? _retry
-                          : () {
-                              final item = session.current!;
-                              setState(() => _error = null);
-                              unawaited(_engine.reopen(item));
-                            },
+                  if (full)
+                    ValueListenableBuilder(
+                      valueListenable: _engine.streaming.status,
+                      builder: (context, stream, _) =>
+                          switch (_problem(session, stream)) {
+                            final message? => PlaybackProblem(
+                              message: message,
+                              onBack: _actions.close,
+                              onSkip: next == null ? null : _actions.next,
+                              onRetry: queue == null
+                                  ? _retry
+                                  : () {
+                                      final item = session.current!;
+                                      setState(() => _error = null);
+                                      unawaited(_engine.reopen(item));
+                                    },
+                            ),
+                            null => const SizedBox.shrink(),
+                          },
                     ),
                 ],
               ),
@@ -235,11 +250,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
   void _retry() => ref.read(playerSessionProvider.notifier).retry();
 
-  String? _problem(PlayerSession session) {
+  String? _problem(PlayerSession session, StreamStatus? stream) {
     if (session.queue == null && session.error != null) {
       return "Couldn't find what to play for ${session.request.subject.title}. "
           'Check your connection and try again.';
     }
+    if (stream?.stage == StreamStage.failed) return stream!.problem;
     if (_error != null) {
       return "This video couldn't be played. It may be unavailable or in a "
           'format this device does not support.';

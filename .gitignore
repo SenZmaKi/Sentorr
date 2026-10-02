@@ -19,3 +19,13 @@ test.sh
 crap.ts
 electron.vite.config.*.mjs
 
+.dart_tool/
+
+*.iml
+.flutter-plugins-dependencies
+android/local.properties
+android/.gradle/
+android/key.properties
+macos/Flutter/ephemeral/
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/

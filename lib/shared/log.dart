@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -42,7 +43,7 @@ extension LoggerExtensions on Logger {
 String _getColorForLevel(Level level) => switch (level) {
   Level.SEVERE => '❌ \x1B[31m', // Red
   Level.WARNING => '⚠️ \x1B[33m', // Yellow
-  Level.FINE => '✅ \x1B[32m', // Green
+  Level.FINE => '\x1B[90m', // Grey: request timings and traces
   _ => '\x1B[37m', // White (default)
 };
 
@@ -153,12 +154,66 @@ class _AsyncLogWriter {
   }
 }
 
+/// The newest log lines, oldest first, attached to copied error reports so
+/// they carry what led up to the failure.
+const _recentLineCount = 80;
+final _recent = Queue<String>();
+
+List<String> recentLogLines() => List.unmodifiable(_recent);
+
+void _remember(String line) {
+  _recent.add(line);
+  if (_recent.length > _recentLineCount) _recent.removeFirst();
+}
+
+// Info traces what the app did (searches, torrents, playback stages) so a
+// release log explains a failure; fine adds per-request timings.
+final _rootLevel = kDebugMode ? Level.FINE : Level.INFO;
+
+/// Key of a forwarded record in a worker isolate's messages.
+const forwardedLogKey = 'log';
+
+/// For a worker isolate: sends its records to [port] as
+/// `{forwardedLogKey: ...}` messages, so the main isolate writes them to
+/// the one log file. Pass each message to [writeForwardedLog].
+void forwardLogsTo(SendPort port) {
+  Logger.root.level = _rootLevel;
+  Logger.root.onRecord.listen((r) {
+    port.send({
+      forwardedLogKey: [
+        r.level.value,
+        r.loggerName,
+        r.message,
+        r.error?.toString(),
+        r.stackTrace?.toString(),
+      ],
+    });
+  });
+}
+
+/// Logs a record a worker sent with [forwardLogsTo]; false when [message]
+/// is something else.
+bool writeForwardedLog(Object? message) {
+  if (message is! Map || message[forwardedLogKey] is! List) return false;
+  final [int level, String name, String text, String? error, String? stack] =
+      message[forwardedLogKey] as List;
+  final value = Level.LEVELS.firstWhere(
+    (l) => l.value == level,
+    orElse: () => Level(level.toString(), level),
+  );
+  Logger(name).log(
+    value,
+    text,
+    error,
+    stack == null ? null : StackTrace.fromString(stack),
+  );
+  return true;
+}
+
 void setupLogger() {
   if (_isLoggerConfigured) return;
   _isLoggerConfigured = true;
-  // Fine-grained call-by-call traces are better represented by DevTools
-  // timeline spans. Keep production logs focused on actionable failures.
-  Logger.root.level = kDebugMode ? Level.INFO : Level.WARNING;
+  Logger.root.level = _rootLevel;
   Logger.root.onRecord.listen((record) {
     final color = _getColorForLevel(record.level);
     const reset = '\x1B[0m';
@@ -167,11 +222,14 @@ void setupLogger() {
 
     final lines =
         '${record.message}${record.error == null ? '' : ' (${record.error})'}${record.stackTrace == null ? '' : '\n${record.stackTrace}'}'
+            .trimRight()
             .split('\n');
     for (final line in lines) {
       debugPrint('$color${record.level.name} $loggerName: $line$reset');
       _writeLog('$timestamp ${record.level.name} $loggerName: $line');
     }
+    // One line per record; the report carries its own stack trace.
+    _remember('$timestamp ${record.level.name} $loggerName: ${lines.first}');
   });
 }
 

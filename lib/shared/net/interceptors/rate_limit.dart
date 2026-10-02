@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:logging/logging.dart';
 
 import '../cache.dart';
 
@@ -12,6 +13,7 @@ class RateLimitInterceptor extends Interceptor {
   final Dio dio;
   final Duration maxWait;
   static const _retriedKey = 'sentorr.rateLimitRetried';
+  static final _log = Logger('sentorr.net');
 
   @override
   Future<void> onError(
@@ -46,6 +48,9 @@ class RateLimitInterceptor extends Interceptor {
       return;
     }
     if (wait.isNegative) wait = Duration.zero;
+    _log.info(
+      'Rate limited by ${options.uri.host}, retrying in ${wait.inSeconds}s',
+    );
     try {
       final delay = Completer<void>();
       final actualTimer = Timer(wait, delay.complete);

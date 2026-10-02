@@ -12,6 +12,7 @@ import '../pages/title/title_page.dart';
 import '../shared/theme/theme.dart';
 import 'app_shell.dart';
 import 'desktop_icon_sync.dart';
+import 'error_toasts.dart';
 
 class SentorrApp extends ConsumerWidget {
   const SentorrApp({super.key});
@@ -26,7 +27,8 @@ class SentorrApp extends ConsumerWidget {
       themeMode: ref.watch(
         settingsProvider.select((settings) => settings.themeMode),
       ),
-      builder: (context, child) => DesktopIconSync(child: child!),
+      builder: (context, child) =>
+          DesktopIconSync(child: ErrorToasts(child: child!)),
       home: LaunchHost(
         child: PlayerHost(
           child: AppShell(

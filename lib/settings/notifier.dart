@@ -1,10 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 
 import '../app/services.dart';
 import '../shared/persistence/app_image_cache.dart';
 import '../ui/shared/launch_at_startup_manager.dart';
 import '../ui/shared/window_manager.dart';
 import 'models.dart';
+
+final _log = Logger('sentorr.settings');
 
 final settingsProvider = NotifierProvider<SettingsNotifier, AppSettings>(
   SettingsNotifier.new,
@@ -41,9 +44,12 @@ class SettingsNotifier extends Notifier<AppSettings> {
       }
       await ref.read(settingsRepositoryProvider).save(next);
       AppImageCache.applyMaxSizeBytes(next.imageCacheMaxBytes);
+      _log.info('Saved settings: ${_changed(state.toJson(), next.toJson())}');
       state = next;
     });
-    _tail = operation.catchError((Object _) {});
+    _tail = operation.catchError((Object error, StackTrace stack) {
+      _log.warning('Could not apply settings', error, stack);
+    });
     return operation;
   }
 
@@ -53,4 +59,13 @@ class SettingsNotifier extends Notifier<AppSettings> {
       update((current) => AppSettings(themeMode: current.themeMode));
 
   Future<void> get flushed => _tail;
+}
+
+/// The top-level sections that differ, e.g. `streaming, torrents`.
+String _changed(Map<String, dynamic> before, Map<String, dynamic> after) {
+  final keys = {
+    ...before.keys,
+    ...after.keys,
+  }.where((k) => before[k].toString() != after[k].toString());
+  return keys.isEmpty ? 'no changes' : keys.join(', ');
 }

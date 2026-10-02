@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
@@ -9,12 +10,14 @@ import 'package:window_manager/window_manager.dart' show windowManager;
 import '../downloads/manager.dart';
 import '../settings/notifier.dart';
 import '../settings/repository.dart';
+import '../shared/errors/error_reports.dart';
 import '../shared/log.dart';
 import '../shared/net/net.dart';
 import '../shared/persistence/app_paths.dart';
 import '../shared/persistence/app_image_cache.dart';
 import '../shared/persistence/json_file_store.dart';
 import '../shared/persistence/window_state_repository.dart';
+import '../shared/provider_log_observer.dart';
 import '../ui/shared/desktop_tray_controller.dart';
 import '../ui/shared/desktop_icon_controller.dart';
 import '../ui/shared/launch_at_startup_manager.dart';
@@ -45,29 +48,29 @@ class AppRuntime with WidgetsBindingObserver {
     WidgetsFlutterBinding.ensureInitialized();
     MediaKit.ensureInitialized();
     setupLogger();
+    ErrorReports.install();
     final log = Logger('sentorr.app');
-    FlutterError.onError = (details) {
-      FlutterError.presentError(details);
-      log.severe(details.exceptionAsString(), details.exception, details.stack);
-    };
-    PlatformDispatcher.instance.onError = (error, stack) {
-      log.severe('Unhandled application error', error, stack);
-      return true;
-    };
+    final clock = Stopwatch()..start();
     final paths = await AppPaths.initialize();
     await configureFileLogging(paths.logsDirectory);
+    log.info(
+      'Starting on ${Platform.operatingSystem} '
+      '${Platform.operatingSystemVersion}, data in ${paths.rootDirectory.path}',
+    );
     final repository = SettingsRepository(JsonFileStore(paths.settingsFile));
     final settings = await repository.load();
     final history = WatchHistoryRepository(
       JsonFileStore(paths.watchHistoryFile),
     );
     final watched = await history.load();
+    log.info('Loaded settings and ${watched.length} watch history entries');
     AppImageCache.initialize(paths, maxSizeBytes: settings.imageCacheMaxBytes);
     final network = NetworkClient(
       cacheDirectory: paths.networkCacheDirectory.path,
     );
     final tray = DesktopTrayController();
     final container = ProviderContainer(
+      observers: const [ProviderLogObserver()],
       overrides: [
         appPathsProvider.overrideWithValue(paths),
         settingsRepositoryProvider.overrideWithValue(repository),
@@ -110,7 +113,7 @@ class AppRuntime with WidgetsBindingObserver {
     });
     await container.read(downloadRuntimeProvider).initialize();
     WidgetsBinding.instance.addObserver(runtime);
-    log.info('Application services ready');
+    log.info('Application services ready in ${clock.elapsedMilliseconds}ms');
     return runtime;
   }
 
@@ -144,6 +147,7 @@ class AppRuntime with WidgetsBindingObserver {
 
   Future<void> _dispose() async {
     _quitting = true;
+    Logger('sentorr.app').info('Shutting down');
     await flush();
     await container.read(downloadRuntimeProvider).dispose();
     WidgetsBinding.instance.removeObserver(this);

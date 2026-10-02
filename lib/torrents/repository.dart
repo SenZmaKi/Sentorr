@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:logging/logging.dart';
 
 import 'models.dart';
 import 'diagnostics.dart';
@@ -6,6 +7,8 @@ import 'sources/bitsearch.dart';
 import 'sources/pirate_bay.dart';
 import 'sources/source.dart';
 import 'sources/yts.dart';
+
+final _log = Logger('sentorr.torrents');
 
 class TorrentRepository {
   TorrentRepository(Iterable<TorrentSource> sources)
@@ -26,6 +29,7 @@ class TorrentRepository {
     CancelToken? cancelToken,
   }) async {
     if (cancelToken?.isCancelled ?? false) throw cancelToken!.cancelError!;
+    final clock = Stopwatch()..start();
     final batches = await Future.wait(
       sources.map((source) async {
         if (!source.supports(query)) {
@@ -51,6 +55,11 @@ class TorrentRepository {
                       rejected.update(reason, (n) => n + 1, ifAbsent: () => 1),
                 )
               : await source.search(query, cancelToken: cancelToken);
+          _log.fine(
+            '${source.id.name}: ${releases.length} accepted'
+            '${rejected.isEmpty ? '' : ', rejected ${describeRejections(rejected)}'} '
+            'for "${query.searchText}"',
+          );
           return TorrentSearchResult(
             releases,
             [],
@@ -79,6 +88,10 @@ class TorrentRepository {
             searchText: query.searchText,
           );
         }
+        _log.warning(
+          '${source.id.name} failed for "${query.searchText}": '
+          '${failure.message}',
+        );
         return TorrentSearchResult(
           [],
           [failure],
@@ -107,6 +120,11 @@ class TorrentRepository {
         final seedOrder = b.seeders.compareTo(a.seeders);
         return seedOrder == 0 ? a.infoHash.compareTo(b.infoHash) : seedOrder;
       });
+    _log.info(
+      'Searched "${query.searchText}": ${releases.length} releases from '
+      '${sources.where((s) => s.supports(query)).length} sources '
+      'in ${clock.elapsedMilliseconds}ms',
+    );
     return TorrentSearchResult(
       releases,
       batches.expand((b) => b.failures),

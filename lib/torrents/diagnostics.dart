@@ -34,3 +34,8 @@ enum TorrentRejection {
     resolutionMismatch => 'Different resolution from the required preference',
   };
 }
+
+/// Compact counts for logs, e.g. `titleMismatch 4, noSeeders 2`.
+String describeRejections(Map<TorrentRejection, int> counts) =>
+    [for (final MapEntry(:key, :value) in counts.entries) '${key.name} $value']
+        .join(', ');

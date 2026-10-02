@@ -34,6 +34,7 @@ class TorrentCache {
         final evicted = entries.skip(keep).toList();
         entries.removeRange(keep.clamp(0, entries.length), entries.length);
         for (final e in evicted) {
+          _log.info('Evicting kept torrent ${e.hash} from ${e.root}');
           await _delete(e.directory);
         }
         await _write(entries);
@@ -51,7 +52,9 @@ class TorrentCache {
 
   /// Deletes every kept torrent and leftover under [roots].
   Future<void> clear(Iterable<String> roots) => _serial(() async {
-    for (final d in await _folders(roots)) {
+    final folders = await _folders(roots);
+    _log.info('Clearing ${folders.length} kept torrent folders');
+    for (final d in folders) {
       await _delete(d);
     }
     await _write(const []);

@@ -67,6 +67,7 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
   /// Finds a torrent for [request]. An exact match plays at once when the
   /// viewer has turned review off; anything else waits for [play].
   void start(PlayRequest request) {
+    _log.info('Launching ${request.subject.title} (${request.subject.id})');
     final cancel = _restart();
     _prepared = null;
     state = PlaybackLaunch(
@@ -89,6 +90,9 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
       query: s.query,
     );
     final name = title?.trim();
+    _log.info(
+      'Retrying search for ${s.item}${name == null ? '' : ' as "$name"'}',
+    );
     _run(cancel, title: name == null || name.isEmpty ? null : name);
   }
 
@@ -97,6 +101,7 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     final s = state;
     if (s == null || s.item == null) return;
     final queue = _prepared;
+    _log.info('Playing ${s.item} from ${torrent.release.name}');
     cancel();
     ref
         .read(playerSessionProvider.notifier)
@@ -136,6 +141,13 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
           .resolve(query, preferences: preferences, cancelToken: cancel);
       if (cancel != _cancel) return;
       final match = TorrentMatch.of(resolution, preferences);
+      _log.info(
+        match == null
+            ? 'No torrent found for $item'
+            : '${match.exact ? 'Exact' : 'Close'} match for $item: '
+                  '${match.candidate.release.name}'
+                  '${match.concerns.isEmpty ? '' : ' (${match.concerns.map((c) => c.name).join(', ')})'}',
+      );
       state = PlaybackLaunch(
         request: state!.request,
         preferences: preferences,
@@ -148,7 +160,7 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
       if (match != null && match.exact && !review) play(match.candidate);
     } catch (error, stack) {
       if (cancel != _cancel || _cancelled(error)) return;
-      _log.warning('Could not find a torrent', error, stack);
+      _log.warning('Could not find a torrent for ${state?.item}', error, stack);
       final s = state!;
       state = PlaybackLaunch(
         request: s.request,

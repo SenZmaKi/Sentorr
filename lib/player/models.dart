@@ -25,6 +25,11 @@ class PlaybackItem {
   Duration? get runtime => title.runtimeSeconds == null
       ? null
       : Duration(seconds: title.runtimeSeconds!);
+
+  /// How logs name the item, e.g. `Severance S1E2 (tt11280740)`.
+  @override
+  String toString() =>
+      isEpisode ? '${series!.title} S${season}E$episode ($id)' : '$name ($id)';
 }
 
 /// Why the queue holds what it holds, so the UI can name it.

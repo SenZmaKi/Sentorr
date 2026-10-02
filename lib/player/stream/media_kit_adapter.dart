@@ -29,6 +29,7 @@ class MediaKitTorrentAdapter {
 
   /// Cancels the engine's obsolete reads before mpv asks for [position].
   Future<void> seek(TorrentStreamSession? session, Duration position) async {
+    _log.fine('Seeking to $position');
     try {
       await session?.prepareSeek();
     } on TorrentStreamException catch (error) {

@@ -120,6 +120,9 @@ class TorrentPlayback {
   }) {
     final s = status.value;
     final position = _player.state.position;
+    _log.info(
+      'Viewer switched ${_item ?? 'item'} to ${candidate.release.name}',
+    );
     _autoSwitches = 0;
     return _switch(
       candidate,
@@ -214,6 +217,7 @@ class TorrentPlayback {
       generation,
       (s) => s.copyWith(stage: StreamStage.connecting, torrent: candidate),
     );
+    final clock = Stopwatch()..start();
     await outputReady();
     if (_stale(generation)) return;
     final config = await configFor(candidate.release);
@@ -223,9 +227,15 @@ class TorrentPlayback {
       (transfer) => _update(generation, (s) => s.copyWith(transfer: transfer)),
     );
     final release = candidate.release;
-    _log.info('Streaming ${item.name} from ${release.name}');
+    _log.info(
+      'Streaming $item from ${release.name} '
+      '(${release.infoHash}, ${release.seeders} seeders)',
+    );
     final files = await session.open(TorrentSource.magnet(release.magnet));
     if (_stale(generation)) return;
+    _log.info(
+      'Metadata: ${files.length} files in ${clock.elapsedMilliseconds}ms',
+    );
     final file = playableFile(
       files,
       item,
@@ -233,17 +243,23 @@ class TorrentPlayback {
       seriesPack: release.isSeriesPack,
     );
     if (file == null) {
+      _log.info(
+        'No playable file among: '
+        '${files.map((f) => f.path).take(20).join(', ')}',
+      );
       throw _Problem(
         item.isEpisode
             ? "This torrent doesn't contain the episode."
             : "This torrent doesn't contain a playable video.",
       );
     }
+    _log.info('Chose ${file.path} (${_mib(file.length)})');
     _update(generation, (s) => s.copyWith(stage: StreamStage.preparing));
     final stream = await session.prepareFile(file.index);
     if (_stale(generation)) return;
     await _adapter.open(stream, start: resume);
     _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
+    _log.info('Playing $item after ${clock.elapsedMilliseconds}ms');
   }
 
   /// Marks [candidate] failed and queues the next untried torrent, unless
@@ -276,10 +292,19 @@ class TorrentPlayback {
               .where((c) => !failed.contains(c.release.infoHash))
               .firstOrNull;
     if (next == null || _autoSwitches >= maxAutoSwitches) {
+      _log.info(
+        next == null
+            ? 'No untried torrents left for $item'
+            : 'Automatic switches spent; waiting for the viewer',
+      );
       status.value = stopped;
       return;
     }
     _autoSwitches++;
+    _log.info(
+      'Switching to ${next.release.name} in ${switchDelay.inSeconds}s '
+      '($_autoSwitches/$maxAutoSwitches)',
+    );
     status.value = stopped.switching(next, DateTime.now().add(switchDelay));
     _switchTimer = Timer(switchDelay, () {
       if (!_stale(generation)) unawaited(_switch(next));
@@ -330,11 +355,19 @@ class TorrentPlayback {
   };
 }
 
+String _mib(int bytes) => '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MiB';
+
 class _Problem implements Exception {
   const _Problem(this.message);
   final String message;
+
+  @override
+  String toString() => message;
 }
 
 class _Unplayable implements Exception {
   const _Unplayable();
+
+  @override
+  String toString() => 'The player could not decode the stream';
 }

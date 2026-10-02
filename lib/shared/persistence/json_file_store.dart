@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:logging/logging.dart';
 
+final _log = Logger('sentorr.persistence');
+
 /// One writer per file. Failed saves do not poison subsequent operations.
 class JsonFileStore {
   JsonFileStore(this.file);
@@ -25,8 +27,7 @@ class JsonFileStore {
       await file.rename(
         '${file.path}.${DateTime.now().microsecondsSinceEpoch}.corrupt',
       );
-      Logger('sentorr.persistence')
-          .warning('Preserved corrupt ${file.path}', error, stack);
+      _log.warning('Preserved corrupt ${file.path}', error, stack);
       return null;
     }
   }
@@ -44,7 +45,9 @@ class JsonFileStore {
         if (await temporary.exists()) await temporary.delete();
       }
     });
-    _tail = operation.catchError((Object _) {});
+    _tail = operation.catchError((Object error, StackTrace stack) {
+      _log.warning('Could not save ${file.path}', error, stack);
+    });
     return operation;
   }
 }

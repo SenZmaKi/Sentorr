@@ -177,6 +177,10 @@ Play anywhere (cards, previews, title page, the episodes panel) first finds a to
 
 Name the data provider nowhere in the interface; rows, errors and labels describe what the viewer gets, not where it comes from.
 
+### Toasts
+
+Transient notices that need no decision; anything blocking uses a dialog. `Toast` (`lib/ui/components/toast.dart`) is the floating surface with borderStrong, radius 12, padding 16 (8 trailing beside the 40 dismiss control): a 20 status icon in the tone's foreground (info, success, warning, error), title in label, optional message in bodySmall foregroundSecondary (four lines), then ghost actions. It is a live region. `ErrorToasts` hosts uncaught errors from `ErrorReports` top-right, newest first, at most three, revealed with the standard rise; each closes after 8 s unless pointed at, and Copy details puts the error, stack trace, platform and recent log on the clipboard, confirming in place as Copied.
+
 ## Fundamental component contracts
 
 These are implementation requirements as components are introduced, not a request to prebuild every widget.

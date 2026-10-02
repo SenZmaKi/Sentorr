@@ -2,10 +2,13 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
+import 'package:logging/logging.dart';
 
 import '../shared/net/cache.dart';
 import 'models.dart';
 import 'website.dart';
+
+final _log = Logger('sentorr.imdb');
 
 class ImdbClient {
   ImdbClient(this.dio, {this.endpoint = imdbGraphqlUrl});
@@ -19,6 +22,7 @@ class ImdbClient {
     Duration ttl = const Duration(hours: 1),
     bool refresh = false,
   }) async {
+    final clock = Stopwatch()..start();
     final response = await dio.post<Object?>(
       endpoint,
       data: {
@@ -49,6 +53,10 @@ class ImdbClient {
     final errors = json['errors'];
     if (errors is List && errors.isNotEmpty) {
       final maps = errors.whereType<Map>().toList();
+      _log.warning(
+        '$operation returned ${maps.length} GraphQL errors: '
+        '${maps.map((e) => e['message']).join('; ')}',
+      );
       throw ImdbException(
         '$operation failed: '
         '${maps.map((e) => e['message']).join('; ')}',
@@ -66,10 +74,21 @@ class ImdbClient {
       );
     }
     if (json['data'] is! Map<String, dynamic>) {
+      _log.warning('$operation returned no GraphQL data');
       throw const ImdbException('IMDb returned no GraphQL data.');
     }
+    // Cache hits return in a few milliseconds; the network logs the rest.
+    _log.fine(
+      '$operation ${_describe(variables)} ${clock.elapsedMilliseconds}ms',
+    );
     return json['data'] as Map<String, dynamic>;
   }
+
+  /// The identifying variables, without the query constraints' bulk.
+  static String _describe(Map<String, Object?> variables) => [
+    for (final key in const ['id', 'season', 'first', 'after'])
+      if (variables[key] != null) '$key=${variables[key]}',
+  ].join(' ');
 
   static Map<String, dynamic> decodeJson(Object? value) {
     try {

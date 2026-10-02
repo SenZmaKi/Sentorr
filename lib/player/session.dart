@@ -97,6 +97,10 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
   }) {
     final cancel = _restart();
     final first = queue ?? _builder.immediate(request);
+    _log.info(
+      'Opening player on ${first?.current ?? request.subject.title}'
+      '${torrent == null ? '' : ' with ${torrent.release.name}'}',
+    );
     state = PlayerSession(
       request: request,
       queue: first,
@@ -152,6 +156,9 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
     final s = state, queue = s?.queue;
     if (s == null || queue == null || index == queue.index) return;
     final moved = queue.at(index);
+    _log.info(
+      'Queue moved to ${moved.current} (${index + 1}/${queue.items.length})',
+    );
     state = s.copyWith(queue: moved, resolving: s.resolving);
     // Fetch the next season while the last loaded episode plays.
     if (moved.next == null && moved.canExtend && !s.resolving) {
@@ -160,6 +167,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
   }
 
   void close() {
+    if (state != null) _log.info('Closing player');
     _restart();
     state = null;
   }
@@ -180,6 +188,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
       final at = playing == null
           ? queue.index
           : queue.items.indexWhere((i) => i.id == playing);
+      _log.info('Queue ready: ${queue.items.length} ${queue.kind.name}');
       state = s.copyWith(
         queue: queue.at(at < 0 ? queue.index : at),
         resolving: false,
@@ -202,6 +211,9 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
       if (cancel != _cancel || s?.queue == null) return;
       final current = s!.queue!.index;
       final next = extended.at(current);
+      _log.info(
+        'Queue extended by ${extended.items.length - queue.items.length} items',
+      );
       state = s.copyWith(queue: next, resolving: false);
       if (thenAdvance && next.next != null) jump(current + 1);
     } catch (error, stack) {

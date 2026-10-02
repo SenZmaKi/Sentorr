@@ -20,13 +20,15 @@ final _log = Logger('sentorr.player');
 /// carry across queue items because the same player opens each of them.
 /// Every item streams from a torrent through [streaming].
 class PlaybackEngine {
-  PlaybackEngine({required SessionConfig configFor, required TorrentFinder find})
-    : player = Player(
-        configuration: const PlayerConfiguration(
-          title: 'Sentorr',
-          bufferSize: 64 * 1024 * 1024,
-        ),
-      ) {
+  PlaybackEngine({
+    required SessionConfig configFor,
+    required TorrentFinder find,
+  }) : player = Player(
+         configuration: const PlayerConfiguration(
+           title: 'Sentorr',
+           bufferSize: 64 * 1024 * 1024,
+         ),
+       ) {
     streaming = TorrentPlayback(
       player: player,
       configFor: configFor,
@@ -36,6 +38,11 @@ class PlaybackEngine {
     _errors = player.stream.error.listen(
       (error) => _log.warning('Playback error: $error'),
     );
+    // libmpv's own error-level lines: demuxer and decoder failures that
+    // never reach the error stream, e.g. an unsupported codec.
+    _native = player.stream.log.listen(
+      (line) => _log.info('mpv/${line.prefix}: ${line.text.trim()}'),
+    );
   }
 
   final Player player;
@@ -43,6 +50,7 @@ class PlaybackEngine {
   late final VideoController video = VideoController(player);
   String? _opened;
   late final StreamSubscription<String> _errors;
+  late final StreamSubscription<PlayerLog> _native;
 
   PlayerState get state => player.state;
   PlayerStream get stream => player.stream;
@@ -57,6 +65,7 @@ class PlaybackEngine {
   }) async {
     if (item.id == _opened) return;
     _opened = item.id;
+    _log.info('Opening $item${start == null ? '' : ' at ${_clock(start)}'}');
     await streaming.play(
       item,
       torrent: torrent,
@@ -67,6 +76,7 @@ class PlaybackEngine {
 
   /// Opens [item] again after a failure, from the torrent it last used.
   Future<void> reopen(PlaybackItem item) {
+    _log.info('Reopening $item');
     final torrent = streaming.status.value?.torrent;
     if (torrent != null && item.id == _opened) {
       return streaming.switchTo(torrent);
@@ -99,11 +109,15 @@ class PlaybackEngine {
 
   Future<void> dispose() async {
     await _errors.cancel();
+    await _native.cancel();
     await streaming.close();
     streaming.dispose();
     await player.dispose();
   }
 }
+
+String _clock(Duration d) =>
+    '${d.inMinutes}:${(d.inSeconds % 60).toString().padLeft(2, '0')}';
 
 /// Lives while the player page is mounted and follows the session's current
 /// item, streaming the torrent chosen for it or the best one found.

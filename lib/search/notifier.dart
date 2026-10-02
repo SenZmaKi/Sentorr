@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 
 import '../app/services.dart';
 import '../imdb/models.dart';
 import 'models.dart';
+
+final _log = Logger('sentorr.search');
 
 final searchProvider = NotifierProvider<SearchNotifier, SearchState>(
   SearchNotifier.new,
@@ -89,6 +92,10 @@ class SearchNotifier extends Notifier<SearchState> {
             cancelToken: cancel,
           );
       if (cancel != _cancel) return;
+      _log.fine(
+        '"${query.term.trim()}"${more ? ' (more)' : ''}: '
+        '${page.items.length} of ${page.total ?? '?'} titles',
+      );
       // Pages can overlap when IMDb's ranking shifts between requests.
       final seen = {for (final t in previous.items) t.id};
       _setResults(
@@ -100,9 +107,10 @@ class SearchNotifier extends Notifier<SearchState> {
           nextCursor: page.nextCursor,
         ),
       );
-    } catch (error) {
+    } catch (error, stack) {
       final cancelled = error is DioException && CancelToken.isCancel(error);
       if (cancel != _cancel || cancelled) return;
+      _log.warning('Search for "${query.term.trim()}" failed', error, stack);
       _setResults(
         SearchResults(
           items: more ? previous.items : const [],

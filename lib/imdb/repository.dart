@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
+import 'package:logging/logging.dart';
 
 import '../shared/net/cache.dart';
 import 'client.dart';
@@ -31,7 +32,9 @@ class ImdbRepository {
       return action();
     } on ImdbException {
       rethrow;
-    } catch (_) {
+    } catch (error, stack) {
+      // The schema is unofficial; this names the field that moved.
+      Logger('sentorr.imdb').warning('Unexpected response shape', error, stack);
       throw const ImdbException('Unexpected IMDb response shape.');
     }
   }

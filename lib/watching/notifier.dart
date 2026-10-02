@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 
 import '../player/models.dart';
 import 'models.dart';
 import 'repository.dart';
+
+final _log = Logger('sentorr.watching');
 
 final watchHistoryRepositoryProvider = Provider<WatchHistoryRepository>(
   (ref) => throw StateError(
@@ -53,6 +56,7 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
     final entry = WatchEntry.of(item, position: position, duration: duration);
     final known = _entries.any((e) => e.id == item.id);
     if (entry.finished) {
+      if (known) _log.info('Finished $item; removing it from history');
       return known ? _commit(_without((e) => e.id == item.id)) : Future.value();
     }
     if (!known && position < minimumWatched) return Future.value();
@@ -70,9 +74,15 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
   }
 
   /// Forgets a movie, or every episode of a series, by [WatchEntry.key].
-  Future<void> remove(String key) => _commit(_without((e) => e.key == key));
+  Future<void> remove(String key) {
+    _log.info('Removing $key from watch history');
+    return _commit(_without((e) => e.key == key));
+  }
 
-  Future<void> clear() => _commit(const []);
+  Future<void> clear() {
+    _log.info('Clearing watch history');
+    return _commit(const []);
+  }
 
   List<WatchEntry> _without(bool Function(WatchEntry) test) => [
     for (final e in _entries)

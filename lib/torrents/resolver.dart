@@ -1,12 +1,15 @@
 import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
+import 'package:logging/logging.dart';
 
 import 'models.dart';
 import 'diagnostics.dart';
 import 'parsing.dart';
 import 'repository.dart';
 import 'resolution_models.dart';
+
+final _log = Logger('sentorr.torrents');
 
 /// Resolves video search intent to ranked magnets; does not start transfers.
 /// Source adapters own identity validation, including provider-attested IMDb IDs.
@@ -47,6 +50,12 @@ class TorrentResolver {
         }
       }
       failures.addAll(result.failures);
+      if (rejected.isNotEmpty) {
+        _log.fine(
+          '${stage.name} "${intent.searchText}": ${candidates.length} '
+          'eligible, preferences rejected ${describeRejections(rejected)}',
+        );
+      }
       attempts.add(
         TorrentResolutionAttempt(
           query: intent,
@@ -119,9 +128,18 @@ class TorrentResolver {
       }
     }
     if (cancelToken?.isCancelled ?? false) throw cancelToken!.cancelError!;
+    final ranked = rank(byHash.values, prefs);
+    final best = ranked.firstOrNull?.release;
+    _log.info(
+      'Resolved "${query.searchText}": ${ranked.length} candidates from '
+      '${attempts.length} searches'
+      '${failures.isEmpty ? '' : ', ${failures.length} source failures'}'
+      '${best == null ? '' : '; best ${best.name} '
+                '(${best.resolution ?? '?'}p, ${best.seeders} seeders)'}',
+    );
     return TorrentResolution(
       query: query,
-      candidates: rank(byHash.values, prefs),
+      candidates: ranked,
       failures: failures,
       attempts: attempts,
     );

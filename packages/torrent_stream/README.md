@@ -1,13 +1,33 @@
 # torrent_stream
 
-A pure Dart playback-delivery package: **libtorrent → verified pieces → loopback HTTP ranges**. It has no Sentorr, Flutter, MediaKit, Riverpod, catalog or app-directory dependency. Sentorr plays through it from `lib/player/stream/`, whose `MediaKitTorrentAdapter` applies the player policy below. The Streaming Lab remains a separate audit reference.
+A pure Dart torrent engine: **one libtorrent session → verified pieces → loopback HTTP ranges**, plus full downloads. It has no Sentorr, Flutter, MediaKit, Riverpod, catalog or app-directory dependency. Sentorr plays through it from `lib/player/stream/` and downloads through it from `lib/downloads/`.
 
-## Use
+## Engine
+
+`TorrentEngine` owns one native session in the package's worker isolate. The binding has process-wide registries, so every native call stays on that worker; create one engine per app.
+
+- Torrents are shared by info hash between **owners** the caller names (`download:42`, `stream:7`). The last `release` removes the torrent.
+- `want(hash, owner, files)` downloads files in full at normal priority; the torrent fetches the union of its owners' wants and nothing else.
+- `stream(hash, owner, index)` serves a file over loopback HTTP. Reads raise priority and set deadlines just ahead of themselves, then return pieces to their base priority, so streaming a file that is downloading only adds urgency.
+- Storage ranks `temporary < cached < kept`. Adding an owner with longer-lasting storage moves the torrent there (`moveStorage`); temporary folders are deleted when emptied or when the torrent leaves.
+- A torrent pauses only when every owner pauses it.
+- `configure` changes session-wide limits, transport and discovery while running.
 
 ```dart
-import 'package:torrent_stream/torrent_stream.dart';
+final engine = TorrentEngine();
+final hash = await engine.add(source, owner: 'download:1',
+    directory: downloads, storage: TorrentStorage.kept);
+final files = await engine.metadata(hash);
+await engine.want(hash, 'download:1', {files.first.index});
+```
 
+## Stream sessions
+
+`TorrentStreamSession` is one owner streaming one file, the player's view of the engine:
+
+```dart
 final session = TorrentStreamSession(
+  engine: engine,
   config: TorrentStreamConfig(cacheDirectory: applicationCacheRoot),
 );
 try {
@@ -24,11 +44,13 @@ try {
 }
 ```
 
-`player` above is illustrative; no player interface is imposed by this package. Any local HTTP range client can use the endpoint. A client that does not coordinate seeks still benefits from disconnect cancellation. The optional `peers` argument to `open`, or `addPeers`, accepts explicit discovered IP/port peers without restarting a session. Sources can also be a `.torrent` file or copied torrent metadata bytes.
+`player` above is illustrative; no player interface is imposed by this package. Any local HTTP range client can use the endpoint. A client that does not coordinate seeks still benefits from disconnect cancellation. The optional `peers` argument to `open`, or `addPeers`, accepts explicit discovered IP/port peers. Sources can also be a `.torrent` file or copied torrent metadata bytes.
 
-Create the session **before** starting `open`: `close` must remain available while metadata or initial bytes are pending. Open once, prepare one file, close idempotently. Use another session to change source/file. `state` provides a current immutable snapshot; `states` is a broadcast stream of subsequent changes. It describes transfer state, not player buffering or decoded readiness. `setTransferPaused` pauses downloading independently of player pause.
+Create the session **before** starting `open`: `close` must remain available while metadata or initial bytes are pending. Open once, prepare one file, close idempotently. Use another session to change source/file. `state` provides a current immutable snapshot; `states` is a broadcast stream of subsequent changes. It describes transfer state, not player buffering or decoded readiness. `setTransferPaused` pauses this session's hold; another owner may keep the torrent running.
 
-The caller supplies an absolute cache root. The package owns only a unique child folder and deletes it on close. Completed data is retained on disk for the session; there is no persistence, rolling disk quota, background foreground-service runtime or automatic file selection.
+Without `retainedDirectory` a session saves into a temporary child of the cache root, deleted on close; with it, into that named child, kept. Closing releases only the session's hold, so a download of the same torrent continues. There is no rolling disk quota, background foreground-service runtime or automatic file selection.
+
+After a real pause libtorrent waits before reconnecting peers it dropped (five seconds per failure here); torrents with trackers or DHT also reannounce on resume. Rate limits follow libtorrent's defaults and do not throttle peers on the local network.
 
 ## Player telemetry
 

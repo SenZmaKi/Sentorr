@@ -47,12 +47,10 @@ Future<TorrentStreamConfig> sessionConfigFor(
       .use(root, release.infoHash, keep: s.keepRecentTorrents);
   return TorrentStreamConfig(
     cacheDirectory: root,
-    downloadBytesPerSecond: s.downloadLimitBytesPerSecond,
     readAheadBytes: s.readAheadBytes,
     pieceCacheBytes: s.pieceCacheBytes,
     metadataTimeout: Duration(seconds: s.metadataTimeoutSeconds),
     pieceTimeout: Duration(seconds: s.pieceTimeoutSeconds),
-    transport: s.utp ? TorrentTransport.mixedTcpUtp : TorrentTransport.tcpOnly,
     retainedDirectory: retained,
   );
 }

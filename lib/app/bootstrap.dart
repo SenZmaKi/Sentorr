@@ -8,6 +8,8 @@ import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart' show windowManager;
 
 import '../downloads/manager.dart';
+import '../downloads/models.dart';
+import '../torrents/engine.dart';
 import '../following/models.dart';
 import '../following/notifier.dart';
 import '../following/release_alerts.dart';
@@ -142,14 +144,16 @@ class AppRuntime with WidgetsBindingObserver {
     });
     await container.read(notificationServiceProvider).initialize();
     container.read(releaseAlertsProvider).start();
-    await container.read(downloadRuntimeProvider).initialize();
+    await container
+        .read(downloadQueueProvider)
+        .initialize(const DownloadSettings());
     WidgetsBinding.instance.addObserver(runtime);
     log.info('Application services ready in ${clock.elapsedMilliseconds}ms');
     return runtime;
   }
 
   Future<void> flush() async {
-    await container.read(downloadRuntimeProvider).flush();
+    await container.read(downloadQueueProvider).flush();
     await container.read(settingsProvider.notifier).flushed;
     await repository.store.flushed;
     await history.store.flushed;
@@ -181,7 +185,8 @@ class AppRuntime with WidgetsBindingObserver {
     _quitting = true;
     Logger('sentorr.app').info('Shutting down');
     await flush();
-    await container.read(downloadRuntimeProvider).dispose();
+    await container.read(downloadQueueProvider).dispose();
+    await container.read(torrentEngineProvider).close();
     WidgetsBinding.instance.removeObserver(this);
     tray.dispose();
     window.dispose();

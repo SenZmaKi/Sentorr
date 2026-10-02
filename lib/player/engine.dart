@@ -5,6 +5,9 @@ import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import 'package:torrent_stream/torrent_stream.dart';
+
+import '../torrents/engine.dart';
 import '../torrents/resolution_models.dart';
 import '../following/notifier.dart';
 import '../watching/notifier.dart';
@@ -22,6 +25,7 @@ final _log = Logger('sentorr.player');
 /// Every item streams from a torrent through [streaming].
 class PlaybackEngine {
   PlaybackEngine({
+    required TorrentEngine torrents,
     required SessionConfig configFor,
     required TorrentFinder find,
   }) : player = Player(
@@ -32,6 +36,7 @@ class PlaybackEngine {
        ) {
     streaming = TorrentPlayback(
       player: player,
+      engine: torrents,
       configFor: configFor,
       find: find,
       outputReady: () => video.platform.future,
@@ -124,6 +129,7 @@ String _clock(Duration d) =>
 /// item, streaming the torrent chosen for it or the best one found.
 final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
   final engine = PlaybackEngine(
+    torrents: ref.read(torrentEngineProvider),
     configFor: (release) => sessionConfigFor(ref, release),
     find: (item, cancel) =>
         ref.read(torrentSearchProvider)(item, cancel: cancel),

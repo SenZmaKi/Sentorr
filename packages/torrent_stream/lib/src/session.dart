@@ -1,105 +1,122 @@
 import 'dart:async';
-import 'dart:isolate';
 
 import 'config.dart';
+import 'engine.dart';
+import 'engine_models.dart';
 import 'models.dart';
 import 'source.dart';
-import 'wire.dart';
-import 'native_runtime.dart';
+import 'stream_state.dart';
 
-/// One resolved source and selected file. No player, resolver or app ownership.
+/// One source and selected file, held in [engine] as its own owner, so a
+/// torrent another owner holds (a download) keeps running after close.
 /// Create before open so close can cancel metadata acquisition/preparation.
 class TorrentStreamSession {
-  TorrentStreamSession({required this.config}) {
-    _messages.listen(_receive);
-    _runtime = NativeRuntime.acquire(_fail);
+  TorrentStreamSession({required this.engine, required this.config})
+    : owner = 'stream:${++_owners}' {
+    _engineStates = engine.states.listen(_observe, onError: _onEngineError);
+    if (engine.failure case final failure?) _fail(failure);
   }
+  static var _owners = 0;
+  final TorrentEngine engine;
   final TorrentStreamConfig config;
-  final _messages = ReceivePort();
-  late final NativeRuntime _runtime;
-  final _pending = <int, Completer<Object?>>{};
+
+  /// This session's owner name in [engine].
+  final String owner;
+  late final StreamSubscription<List<TorrentSnapshot>> _engineStates;
   final _states = StreamController<TorrentStreamState>.broadcast();
+  final _closing = Completer<void>();
   TorrentStreamState _state = const TorrentStreamState();
   TorrentStreamState get state => _state;
   Stream<TorrentStreamState> get states => _states.stream;
-  var _sequence = 0,
-      _opened = false,
-      _closing = false,
-      _closed = false,
-      _failed = false;
+  String? _hash;
+  Future<String?>? _adding;
+
+  /// The torrent's info hash once open.
+  String? get infoHash => _hash;
+  TorrentStreamFile? _file;
+
+  /// From open, which can return before the engine's next update has them.
+  List<TorrentStreamFile> _files = const [];
+  int? _stream;
+  var _opened = false, _paused = false, _failed = false, _closed = false;
   Future<void>? _shutdown;
+
   void _publish(TorrentStreamState value) {
     _state = value;
     if (!_states.isClosed) _states.add(value);
   }
 
+  void _at(TorrentStreamPhase phase) {
+    final torrent = _hash == null ? null : engine.torrent(_hash!);
+    _publish(
+      torrent == null
+          ? _state.atPhase(phase)
+          : streamStateOf(
+              torrent,
+              phase: phase,
+              transferPaused: _paused,
+              selectedFile: _file,
+              stream: _stream,
+              previous: _state,
+              files: _files,
+            ),
+    );
+  }
+
+  void _observe(List<TorrentSnapshot> torrents) {
+    if (_failed || _closed || _hash == null) return;
+    final torrent = torrents.where((t) => t.infoHash == _hash).firstOrNull;
+    if (torrent == null) return;
+    _publish(
+      streamStateOf(
+        torrent,
+        phase: _state.phase,
+        transferPaused: _paused,
+        selectedFile: _file,
+        stream: _stream,
+        previous: _state,
+        files: _files,
+      ),
+    );
+  }
+
+  void _onEngineError(Object error) {
+    if (error is TorrentStreamException) _fail(error);
+  }
+
   void _fail(TorrentStreamException error) {
-    if (_closed) return;
+    if (_closed || _failed) return;
     _failed = true;
     _publish(state.atPhase(TorrentStreamPhase.failed, failure: error));
-    for (final pending in _pending.values) {
-      if (!pending.isCompleted) pending.completeError(error);
-    }
-    _pending.clear();
   }
 
-  void _receive(dynamic raw) {
-    final message = raw as Map;
-    switch (message['kind']) {
-      case 'state':
-        if (!_failed && !_closed) {
-          _publish(decodeState(message['value'] as Map));
-        }
-      case 'fatal':
-        _fail(
-          TorrentStreamException(
-            TorrentStreamErrorCode.nativeFailure,
-            message['message'] as String,
-          ),
-        );
-      case 'reply':
-        final pending = _pending.remove(message['id']);
-        if (pending == null) return;
-        if (message.containsKey('code')) {
-          pending.completeError(
-            TorrentStreamException(
-              TorrentStreamErrorCode.values[message['code'] as int],
-              message['message'] as String,
-            ),
-          );
-        } else {
-          pending.complete(message['result']);
-        }
-    }
-  }
-
-  Future<Object?> _command(
-    String op,
-    Map<String, Object?> args, {
-    bool closing = false,
-  }) async {
-    if (_closed || (_closing && !closing) || (_failed && !closing)) {
+  void _check() {
+    if (_closed || _closing.isCompleted || _failed) {
       throw const TorrentStreamException(
         TorrentStreamErrorCode.invalidState,
         'Session is closed, closing or failed',
       );
     }
-    // Await startup before adding a completer: startup failure must not leave an
-    // unobserved pending-future error or a receive port alive.
-    if (_runtime.failure case final failure?) throw failure;
-    final port = await _runtime.ready;
-    if (_runtime.failure case final failure?) throw failure;
-    if (_closed || (_closing && !closing)) {
-      throw const TorrentStreamException(
+  }
+
+  /// [operation], unless close comes first.
+  Future<T> _guard<T>(Future<T> operation) async {
+    unawaited(operation.then((_) {}, onError: (Object _) {}));
+    final closed = _closing.future.then<T>(
+      (_) => throw const TorrentStreamException(
         TorrentStreamErrorCode.cancelled,
-        'Session closed during startup',
-      );
+        'Session closed',
+      ),
+    );
+    try {
+      return await Future.any([operation, closed]);
+    } on TorrentStreamException catch (error) {
+      if (error.code != TorrentStreamErrorCode.invalidState &&
+          !_closing.isCompleted) {
+        _fail(error);
+      }
+      rethrow;
     }
-    final id = ++_sequence;
-    final reply = Completer<Object?>();
-    _pending[id] = reply;
-    port.send({'host': _messages.sendPort, 'id': id, 'op': op, ...args});
-    return reply.future;
   }
 
   Future<List<TorrentStreamFile>> open(
@@ -112,31 +129,34 @@ class TorrentStreamSession {
         'Open once per session',
       );
     }
+    _check();
     _opened = true;
-    final data = switch (source) {
-      MagnetSource() => {'kind': 'magnet', 'value': source.uri.toString()},
-      TorrentFileSource() => {'kind': 'file', 'value': source.path},
-      TorrentMetadataSource() => {'kind': 'bytes', 'value': source.bytes},
-    };
-    try {
-      final result =
-          await _command('open', {
-                'config': encodeConfig(config),
-                'source': data,
-                'peers': peers
-                    .map((p) => {'address': p.address, 'port': p.port})
-                    .toList(),
-              })
-              as List;
-      return List.unmodifiable(result.map((f) => decodeFile(f as Map)));
-    } on TorrentStreamException catch (error) {
-      if (!_closing) _fail(error);
-      rethrow;
-    }
+    _at(TorrentStreamPhase.acquiringMetadata);
+    final retained = config.retainedDirectory;
+    final adding = engine.add(
+      source,
+      owner: owner,
+      directory: retained == null
+          ? config.cacheDirectory
+          : '${config.cacheDirectory}/$retained',
+      storage: retained == null
+          ? TorrentStorage.temporary
+          : TorrentStorage.cached,
+      peers: peers,
+    );
+    // Close may come while adding; the hold it creates is still released.
+    _adding = adding.then<String?>((hash) => hash, onError: (Object _) => null);
+    _hash = await _guard(adding);
+    final files = await _guard(
+      engine.metadata(_hash!, timeout: config.metadataTimeout),
+    );
+    _files = files;
+    _at(TorrentStreamPhase.metadataReady);
+    return files;
   }
 
   Future<TorrentStream> prepareFile(int index) async {
-    final file = state.files.where((f) => f.index == index).firstOrNull;
+    final file = _files.where((f) => f.index == index).firstOrNull;
     if (file == null ||
         file.isPadFile ||
         file.length == 0 ||
@@ -146,52 +166,49 @@ class TorrentStreamSession {
         'Select a nonempty non-pad file after metadata is ready',
       );
     }
-    try {
-      final uri = await _command('prepare', {'index': index}) as String;
-      return TorrentStream(uri: Uri.parse(uri), file: file);
-    } on TorrentStreamException catch (error) {
-      if (error.code != TorrentStreamErrorCode.invalidState && !_closing) {
-        _fail(error);
-      }
-      rethrow;
-    }
+    _check();
+    _file = file;
+    _at(TorrentStreamPhase.preparing);
+    final stream = await _guard(
+      engine.stream(_hash!, owner, index, options: config.streamOptions),
+    );
+    _stream = stream.id;
+    _at(TorrentStreamPhase.serving);
+    return TorrentStream(uri: stream.uri, file: file);
   }
 
   /// Supply newly discovered peers without restarting metadata or playback.
   Future<void> addPeers(List<TorrentPeer> peers) async {
-    await _command('peers', {
-      'peers': peers
-          .map((p) => {'address': p.address, 'port': p.port})
-          .toList(),
-    });
+    _check();
+    if (_hash case final hash?) await engine.addPeers(hash, peers);
   }
 
   Future<void> prepareSeek() async {
-    await _command('seek', {});
+    _check();
+    if (_stream case final stream?) await engine.prepareSeek(stream);
   }
 
+  /// Pauses this session's hold; another owner may keep the torrent going.
   Future<void> setTransferPaused(bool paused) async {
-    await _command('pause', {'paused': paused});
+    _check();
+    if (_hash case final hash?) {
+      await engine.setPaused(hash, owner, paused);
+      _paused = paused;
+      _at(state.phase);
+    }
   }
 
   /// Idempotent; endpoints become invalid. Never deletes the caller's cache root.
   Future<void> close() => _shutdown ??= _close();
   Future<void> _close() async {
-    _closing = true;
+    if (!_closing.isCompleted) _closing.complete();
     try {
-      await _command('close', {}, closing: true);
+      if (engine.failure case final failure?) throw failure;
+      final hash = _hash ?? await _adding;
+      if (hash != null) await engine.release(hash, owner);
     } finally {
       _closed = true;
-      _runtime.release(_fail);
-      final error = const TorrentStreamException(
-        TorrentStreamErrorCode.cancelled,
-        'Session closed',
-      );
-      for (final pending in _pending.values) {
-        if (!pending.isCompleted) pending.completeError(error);
-      }
-      _pending.clear();
-      _messages.close();
+      await _engineStates.cancel();
       _publish(state.atPhase(TorrentStreamPhase.closed));
       // A paused observer must not hold native/cache shutdown hostage.
       unawaited(_states.close());

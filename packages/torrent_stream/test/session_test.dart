@@ -6,6 +6,8 @@ import 'package:libtorrent_dart/libtorrent_dart.dart';
 import 'package:test/test.dart';
 import 'package:torrent_stream/torrent_stream.dart';
 
+import 'engine_support.dart';
+
 Future<Uint8List> range(HttpClient client, Uri uri, int start, int end) async {
   final request = await client.getUrl(uri);
   request.headers.set('Range', 'bytes=$start-$end');
@@ -82,10 +84,11 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 50));
       }
       final peer = TorrentPeer('127.0.0.1', native.listenPort);
+      final engine = loopbackEngine(downloadBytesPerSecond: 256 * 1024);
       final session = TorrentStreamSession(
+        engine: engine,
         config: TorrentStreamConfig(
           cacheDirectory: cache.path,
-          downloadBytesPerSecond: 256 * 1024,
           readAheadBytes: 512 * 1024,
           pieceTimeout: const Duration(seconds: 10),
           pieceCacheBytes: 1024 * 1024,
@@ -116,9 +119,6 @@ void main() {
         ]);
         expect(responses[0], fixture.sublist(fixture.length - 123));
         expect(responses[1], fixture.sublist(19, 100));
-        await session.setTransferPaused(true);
-        expect(session.state.transferPaused, true);
-        await session.setTransferPaused(false);
         seed.pause();
         await Future<void>.delayed(const Duration(milliseconds: 300));
         var completed = false;
@@ -145,10 +145,15 @@ void main() {
           fixture.sublist(3 * 1024 * 1024, 3 * 1024 * 1024 + 101),
         );
         await session.prepareSeek();
-        expect(
-          observations.any((s) => s.connectedPeers > 0 && s.connectedSeeds > 0),
-          true,
-        );
+        // Loopback peers are not rate limited, so transfers are brief;
+        // the seed stays connected, so a later snapshot shows it.
+        bool seeded(TorrentStreamState s) =>
+            s.connectedPeers > 0 && s.connectedSeeds > 0;
+        if (!observations.any(seeded)) {
+          await session.states
+              .firstWhere(seeded)
+              .timeout(const Duration(seconds: 10));
+        }
         expect(observations.any((s) => s.downloadBytesPerSecond > 0), true);
         expect(session.state.receivedBytes, greaterThan(0));
         expect(session.state.selectedFile!.index, files.single.index);
@@ -166,6 +171,11 @@ void main() {
         final received = session.state.receivedBytes;
         final served = session.state.servedBytes;
         expect(session.state.downloadedBytes, lessThan(fixture.length));
+        // Last: after a real pause libtorrent retries explicit-only peers
+        // slowly; real torrents reannounce to trackers and the DHT.
+        await session.setTransferPaused(true);
+        expect(session.state.transferPaused, true);
+        await session.setTransferPaused(false);
         await session.close();
         await session.close();
         expect(session.state.phase, TorrentStreamPhase.closed);
@@ -189,6 +199,7 @@ void main() {
         await subscription.cancel();
         client.close(force: true);
         await session.close();
+        await engine.close();
         native.close();
         await root.delete(recursive: true);
       }
@@ -201,7 +212,9 @@ void main() {
       final root = await Directory.systemTemp.createTemp(
         'torrent-stream-cancel-',
       );
+      final engine = loopbackEngine();
       final session = TorrentStreamSession(
+        engine: engine,
         config: TorrentStreamConfig(cacheDirectory: root.path),
       );
       try {
@@ -231,6 +244,7 @@ void main() {
         expect(await root.list().length, 0);
       } finally {
         await session.close();
+        await engine.close();
         await root.delete(recursive: true);
       }
     },

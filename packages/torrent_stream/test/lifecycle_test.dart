@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:libtorrent_dart/libtorrent_dart.dart';
 import 'package:test/test.dart';
 import 'package:torrent_stream/torrent_stream.dart';
+
+import 'engine_support.dart';
 import 'package:torrent_stream/src/native_runtime.dart';
 
 void main() {
@@ -25,8 +27,9 @@ void main() {
         cacheDirectory: cache.path,
         prepareContainer: false,
       );
-      final first = TorrentStreamSession(config: config),
-          second = TorrentStreamSession(config: config);
+      final engine = loopbackEngine();
+      final first = TorrentStreamSession(engine: engine, config: config),
+          second = TorrentStreamSession(engine: engine, config: config);
       final client = HttpClient();
       try {
         final files = await Future.wait([
@@ -53,6 +56,7 @@ void main() {
         client.close(force: true);
         await first.close();
         await second.close();
+        await engine.close();
         await root.delete(recursive: true);
       }
     },
@@ -71,7 +75,9 @@ void main() {
         pieceSize: 128 * 1024,
       );
       final cache = await Directory('${root.path}/cache').create();
+      final engine = loopbackEngine();
       final session = TorrentStreamSession(
+        engine: engine,
         config: TorrentStreamConfig(cacheDirectory: cache.path),
       );
       try {
@@ -96,6 +102,7 @@ void main() {
         expect(await input.exists(), true);
       } finally {
         await session.close();
+        await engine.close();
         await root.delete(recursive: true);
       }
     },
@@ -104,7 +111,9 @@ void main() {
     final root = await Directory.systemTemp.createTemp(
       'torrent-stream-observer-',
     );
+    final engine = loopbackEngine();
     final session = TorrentStreamSession(
+      engine: engine,
       config: TorrentStreamConfig(cacheDirectory: root.path),
     );
     final subscription = session.states.listen((_) {});
@@ -114,6 +123,7 @@ void main() {
       expect(session.state.phase, TorrentStreamPhase.closed);
     } finally {
       await subscription.cancel();
+      await engine.close();
       await root.delete(recursive: true);
     }
   });
@@ -123,7 +133,9 @@ void main() {
       final root = await Directory.systemTemp.createTemp(
         'torrent-stream-worker-exit-',
       );
+      final engine = loopbackEngine();
       final session = TorrentStreamSession(
+        engine: engine,
         config: TorrentStreamConfig(cacheDirectory: root.path),
       );
       final failed = Completer<TorrentStreamException>();

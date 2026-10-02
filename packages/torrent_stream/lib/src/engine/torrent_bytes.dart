@@ -8,23 +8,23 @@ import 'byte_source.dart';
 import 'cancellation.dart';
 import 'piece_scheduler.dart';
 
+/// One file's bytes for one stream, read through [scheduler], which other
+/// streams of the same torrent share.
 class TorrentBytes implements ByteSource {
   TorrentBytes(
     this.handle,
     this.file,
-    this.readPiece, {
+    this.readPiece,
+    this.scheduler, {
     int readAheadBytes = 16 * 1024 * 1024,
     this.maxCacheBytes = 24 * 1024 * 1024,
-  }) : scheduler = PieceScheduler(
-         handle,
-         lookahead: max(1, (readAheadBytes / handle.pieceLength).ceil() - 1),
-       ),
+  }) : lookahead = max(1, (readAheadBytes / handle.pieceLength).ceil() - 1),
        pieceLength = handle.pieceLength;
   final TorrentHandle handle;
   final TorrentFileEntry file;
   final Future<Uint8List> Function(int, Cancellation) readPiece;
   final PieceScheduler scheduler;
-  final int pieceLength;
+  final int pieceLength, lookahead;
   final _cache = <int, Uint8List>{};
   final _loading = <int, (Cancellation, Future<Uint8List>)>{};
   int _cachedBytes = 0;
@@ -53,6 +53,7 @@ class TorrentBytes implements ByteSource {
         cancellation,
         piece,
         (file.offset + length - 1) ~/ pieceLength,
+        lookahead,
       );
       final data = await cancellation.wait(_piece(piece));
       cancellation.check();
@@ -107,12 +108,12 @@ class TorrentBytes implements ByteSource {
   }
 
   void close() {
-    scheduler.clear();
     for (final loading in _loading.values) {
       loading.$1.cancel();
     }
     _loading.clear();
     _cache.clear();
     _cachedBytes = 0;
+    scheduler.prune();
   }
 }

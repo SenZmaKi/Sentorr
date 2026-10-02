@@ -38,6 +38,7 @@ typedef SessionConfig = Future<TorrentStreamConfig> Function(
 class TorrentPlayback {
   TorrentPlayback({
     required Player player,
+    required this.engine,
     required this.configFor,
     required this.find,
     required this.outputReady,
@@ -54,6 +55,9 @@ class TorrentPlayback {
 
   final Player _player;
   final MediaKitTorrentAdapter _adapter;
+
+  /// The app's torrent session; a download of the same torrent shares it.
+  final TorrentEngine engine;
   final SessionConfig configFor;
   final TorrentFinder find;
 
@@ -221,7 +225,10 @@ class TorrentPlayback {
     if (_stale(generation)) return;
     final config = await configFor(candidate.release);
     if (_stale(generation)) return;
-    final session = _session = TorrentStreamSession(config: config);
+    final session = _session = TorrentStreamSession(
+      engine: engine,
+      config: config,
+    );
     _transfer = session.states.listen(
       (transfer) => _update(generation, (s) => s.copyWith(transfer: transfer)),
     );

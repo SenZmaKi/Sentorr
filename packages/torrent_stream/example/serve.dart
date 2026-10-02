@@ -14,7 +14,9 @@ Future<void> main(List<String> args) async {
   final cache = await Directory.systemTemp.createTemp(
     'torrent-stream-example-',
   );
+  final engine = TorrentEngine();
   final session = TorrentStreamSession(
+    engine: engine,
     config: TorrentStreamConfig(cacheDirectory: cache.path),
   );
   final telemetry = session.states.listen((state) {
@@ -41,6 +43,7 @@ Future<void> main(List<String> args) async {
     await stdin.first;
   } finally {
     await session.close();
+    await engine.close();
     await telemetry.cancel();
     await cache.delete(recursive: true);
   }

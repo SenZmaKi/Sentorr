@@ -1,71 +1,64 @@
-# Torrent download engine
+# Download queue
 
-`lib/downloads/` adapts Senpwai's torrent runtime, without its HTTP transfers,
-app updater, anime planners, widgets, or toast dependencies. Native libtorrent
-work runs in a dedicated isolate, independently of player streaming sessions.
-App bootstrap restores the queue; lifecycle flush and shutdown await its writes.
+`lib/downloads/` is download policy over the shared torrent engine
+(`packages/torrent_stream`, see its README and
+[ARCHITECTURE.md](ARCHITECTURE.md)). It runs on the main isolate; the engine
+isolate does every native call. App bootstrap restores the queue; lifecycle
+flush and shutdown await its writes, then close the engine.
 
 ## Entry points
 
-Read `downloadRuntimeProvider` for commands, and `downloadsProvider` for snapshots.
-The runtime can also be constructed directly with a state file and initial limits.
+Read `downloadQueueProvider` for commands and `downloadsProvider` for snapshots.
 
 ```dart
-final runtime = ref.read(downloadRuntimeProvider);
-final id = await runtime.enqueue(TorrentDownloadJob(
+final queue = ref.read(downloadQueueProvider);
+final id = await queue.enqueue(TorrentDownloadJob(
   title: 'Movie',
-  torrentData: metadataBytes,
+  magnet: release.magnet,
   destinationDirectory: destination,
   selectedFileIndices: [0],
+  renamedFiles: {0: 'Movie (2024).mkv'},
 ));
-await runtime.pause(id);
-await runtime.resume(id);
+await queue.pause(id);
+await queue.resume(id);
 ```
 
-Like Senpwai's `PreparedTorrentDownloadJob`, enqueue accepts resolved `.torrent`
-metadata. Source discovery, magnet metadata resolution, destination picking, and
-review UI belong to callers. Empty selection downloads all non-padding files.
-Renames must stay inside the destination. Invalid selections are rejected before
-starting the transfer. Duplicate torrents in the session are rejected rather than
-sharing a handle between jobs.
+A job takes a magnet or `.torrent` metadata. It is **preparing** until metadata
+arrives; then its selection is validated (empty means every non-padding file),
+renames are applied inside the destination and its files are wanted. Invalid
+selections fail the download and release its hold.
 
-Queue order controls which torrents run. Pausing frees a slot; resuming returns a
-job to its existing queue position. `reorder(id, newIndex)` uses the final zero-based
-position. `cancel` preserves files unless `deleteFiles: true` is requested while
-the job is active. Completion and failure release download slots. Failed jobs can
-be retried with `resume`. `clearHistory` removes terminal records, preserving files.
-Progress counts selected files, not skipped content; libtorrent may still fetch
-pieces overlapping selected and skipped files.
+Each download holds its torrent as owner `download:<id>`. A stream of the same
+torrent shares it: the download is never paused while watched, and the stream
+keeps running if the download is paused or cancelled. While anything streams,
+other downloads wait (`pauseWhileStreaming`, on by default).
 
-`configure(DownloadSettings(...))` changes concurrency, bandwidth, connection and
-discovery limits in the running session. Seed slots are separate from download
-slots. Seeding can be disabled (default), indefinite, or limited by both ratio and
-elapsed time, following Senpwai's policy. Settings are supplied by the caller and
-are not saved in the queue file. Defaults are used at app startup until a settings
-consumer is connected.
+Queue order controls which downloads run. Pausing frees a slot; resuming
+returns a job to its queue position. `reorder(id, newIndex)` uses the final
+zero-based position. `cancel` preserves files unless `deleteFiles: true`.
+Completion and failure release slots and holds. Failed jobs retry with
+`resume`. `clearHistory` removes terminal records, preserving files. Seeding
+can be disabled (default), indefinite, or limited by both ratio and time, with
+its own slots. Bandwidth, connections and discovery are engine settings,
+shared with streaming.
 
-Queue state lives in Sentorr's own `state/downloads.json`. It contains metadata,
-selection, renames, status, seed start time, byte counts and terminal history.
-Active jobs return to the queue on restart; explicit pauses remain paused. Existing
-pieces are checked by libtorrent before downloading again. This intentionally does
-not trust saved byte counts or use native fast-resume data. Upload totals survive
-restart for seed-ratio accounting. Data files stay in the caller's destination,
-independently of the player's evictable cache.
+Queue state lives in `state/downloads.json`: job, info hash, status, seed start,
+byte counts, upload total and history. Unfinished downloads are re-added on
+restart and libtorrent rechecks existing pieces; paused and finished ones stay
+out of the engine. No native fast-resume data is used.
 
-The runtime survives navigation and desktop close-to-tray. A Dart isolate does not
-provide an Android foreground service or keep downloading after the process exits.
-No download UI, notification bridge, or playback handoff is included.
+The queue survives navigation and desktop close-to-tray. It does not keep
+downloading after the process exits or provide an Android foreground service.
 
 ## Validation
 
 ```sh
-dart test test/downloads
-flutter analyze --no-pub lib/downloads test/downloads
+flutter test test/downloads
+(cd packages/torrent_stream && dart test)
 ```
 
-Queue tests cover promotion, pause/resume, reorder, cancellation, seeding slots,
-retry, dynamic limits and restart persistence. Native tests transfer a fixture over
-loopback from a separate libtorrent session, compare exact saved bytes, validate
-selection/path rejection, and exercise the background isolate across restoration
-and shutdown. These tests require the existing local libtorrent native asset.
-They do not rely on public trackers or external peers.
+Queue tests cover file choice, renames, slots, pause/resume, reorder,
+cancellation, seeding, yielding to playback, failures and restoration. Native
+tests download exact bytes from a loopback libtorrent peer, share a torrent
+between a stream and a download, and reject bad selections and escaping names.
+They need the local libtorrent native asset, not public trackers or peers.

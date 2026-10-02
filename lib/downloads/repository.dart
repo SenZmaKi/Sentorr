@@ -5,6 +5,7 @@ class DownloadRepository {
   DownloadRepository(this.store);
   final JsonFileStore store;
 
+  /// Unfinished downloads come back preparing; their torrents are re-added.
   Future<List<DownloadItem>> load() async {
     final json = await store.read();
     if (json == null) return [];
@@ -21,7 +22,8 @@ class DownloadRepository {
       job: TorrentDownloadJob.fromJson(json['job'] as Map<String, dynamic>),
       status: status.isTerminal || status == DownloadStatus.paused
           ? status
-          : DownloadStatus.queued,
+          : DownloadStatus.preparing,
+      infoHash: json['hash'] as String?,
       seedingStartedAt: DateTime.tryParse(json['seedStarted'] as String? ?? ''),
       error: json['error'] as String?,
       uploadedBytes: json['uploaded'] as int? ?? 0,
@@ -38,13 +40,14 @@ class DownloadRepository {
   }
 
   Future<void> save(List<DownloadItem> items) => store.write({
-    'version': 1,
+    'version': 2,
     'items': [
       for (final i in items)
         {
           'id': i.id,
           'job': i.job.toJson(),
           'status': i.status.name,
+          'hash': i.infoHash,
           'seedStarted': i.seedingStartedAt?.toIso8601String(),
           'uploaded': i.uploadedBytes,
           'error': i.error,

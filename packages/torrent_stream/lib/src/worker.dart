@@ -1,55 +1,25 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'config.dart';
 import 'engine/cancellation.dart';
-import 'engine/native_host.dart';
+import 'engine/core.dart';
+import 'engine_models.dart';
 import 'models.dart';
-import 'wire.dart';
 
+/// Hosts one [EngineCore] per client engine. Commands run concurrently: a
+/// stream waiting on pieces must not hold up another torrent's pause.
 void torrentWorker(SendPort host) {
   final inbox = ReceivePort();
   host.send(inbox.sendPort);
-  final clients = <SendPort, _WorkerClient>{};
+  final cores = <SendPort, EngineCore>{};
   inbox.listen((dynamic raw) {
     final message = raw as Map;
-    final clientPort = message['host'] as SendPort;
-    final client = clients.putIfAbsent(clientPort, _WorkerClient.new);
-    final host = clientPort;
-    if (message['op'] == 'close') {
-      client.stopping = true;
-      client.engine?.lifetime.cancel();
-    }
-    client.queue = client.queue.then((_) async {
+    final client = message['host'] as SendPort;
+    unawaited(() async {
       try {
-        Object? result;
-        if (client.stopping && message['op'] != 'close') {
-          throw const ReadCancelled();
-        }
-        switch (message['op']) {
-          case 'open':
-            client.engine = NativeHost(
-              decodeConfig(message['config'] as Map),
-              host.send,
-            );
-            result = await client.engine!.open(
-              message['source'] as Map,
-              message['peers'] as List,
-            );
-          case 'prepare':
-            result = await client.engine!.prepare(message['index'] as int);
-          case 'peers':
-            client.engine!.addPeers(message['peers'] as List);
-          case 'seek':
-            client.engine?.server?.cancelReads();
-          case 'pause':
-            client.engine!.pause(message['paused'] as bool);
-          case 'close':
-            await client.engine?.close();
-            clients.remove(clientPort);
-          default:
-            throw StateError('Unknown operation');
-        }
-        host.send({'kind': 'reply', 'id': message['id'], 'result': result});
+        final result = await _run(cores, client, message);
+        client.send({'kind': 'reply', 'id': message['id'], 'result': result});
       } catch (error) {
         final code = switch (error) {
           ReadCancelled() => TorrentStreamErrorCode.cancelled,
@@ -58,19 +28,85 @@ void torrentWorker(SendPort host) {
           StateError() => TorrentStreamErrorCode.invalidState,
           _ => TorrentStreamErrorCode.nativeFailure,
         };
-        host.send({
+        client.send({
           'kind': 'reply',
           'id': message['id'],
           'code': code.index,
           'message': '$error',
         });
       }
-    });
+    }());
   });
 }
 
-class _WorkerClient {
-  NativeHost? engine;
-  bool stopping = false;
-  Future<void> queue = Future.value();
+Future<Object?> _run(
+  Map<SendPort, EngineCore> cores,
+  SendPort client,
+  Map message,
+) async {
+  final op = message['op'] as String;
+  if (op == 'start') {
+    final settings = message['settings'] as TorrentEngineSettings;
+    final known = cores[client];
+    if (known != null) {
+      known.configure(settings);
+    } else {
+      cores[client] = EngineCore(settings, client.send);
+    }
+    return null;
+  }
+  final core = cores[client] ?? (throw StateError('Engine not started'));
+  String hash() => message['hash'] as String;
+  String owner() => message['owner'] as String;
+  switch (op) {
+    case 'configure':
+      core.configure(message['settings'] as TorrentEngineSettings);
+    case 'add':
+      return core.add(
+        message['source'] as Map,
+        owner: owner(),
+        directory: message['directory'] as String,
+        storage: message['storage'] as TorrentStorage,
+        peers: message['peers'] as List,
+      );
+    case 'metadata':
+      return core.metadata(hash(), message['timeout'] as Duration?);
+    case 'want':
+      await core.want(hash(), owner(), (message['files'] as Set).cast<int>());
+    case 'pause':
+      core.pause(hash(), owner(), message['paused'] as bool);
+    case 'rename':
+      await core.rename(hash(), (message['names'] as Map).cast<int, String>());
+    case 'move':
+      await core.move(
+        hash(),
+        message['directory'] as String,
+        message['storage'] as TorrentStorage,
+      );
+    case 'peers':
+      core.addPeers(hash(), message['peers'] as List);
+    case 'stream':
+      return core.stream(
+        hash(),
+        owner(),
+        message['index'] as int,
+        message['options'] as StreamOptions,
+      );
+    case 'seek':
+      core.seek(message['stream'] as int);
+    case 'closeStream':
+      await core.closeStream(message['stream'] as int);
+    case 'release':
+      await core.release(
+        hash(),
+        owner(),
+        deleteFiles: message['delete'] as bool,
+      );
+    case 'close':
+      cores.remove(client);
+      await core.close();
+    default:
+      throw StateError('Unknown operation');
+  }
+  return null;
 }

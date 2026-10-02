@@ -8,12 +8,12 @@ import '../config.dart';
 
 /// Own the native session and its single alert pump in the engine isolate.
 class NativeSession {
-  NativeSession({bool local = false, required TorrentStreamConfig config})
-    : _config = config {
+  NativeSession(TorrentEngineSettings settings) {
+    settings.validate();
     session = createSessionFromTags([
       LibtorrentTagItem.settingsString(
         LibtorrentSettingsTag.listenInterfaces,
-        local ? '127.0.0.1:0' : '0.0.0.0:0',
+        settings.listenInterfaces,
       ),
       LibtorrentTagItem.intValue(
         LibtorrentTag.sesAlertMask,
@@ -25,36 +25,33 @@ class NativeSession {
         LibtorrentSettingsTag.closeRedundantConnections,
         false,
       ),
-      if (config.transport == TorrentTransport.tcpOnly) ...[
-        LibtorrentTagItem.settingsBool(
-          LibtorrentSettingsTag.enableOutgoingUtp,
-          false,
-        ),
-        LibtorrentTagItem.settingsBool(
-          LibtorrentSettingsTag.enableIncomingUtp,
-          false,
-        ),
-      ],
-      // Known peers and tracker/DHT discovery avoid self-discovery on loopback.
-      LibtorrentTagItem.settingsBool(LibtorrentSettingsTag.enableLsd, false),
-      if (local) ...[
-        LibtorrentTagItem.settingsInt(
-          LibtorrentSettingsTag.minReconnectTime,
-          1,
-        ),
-        LibtorrentTagItem.settingsBool(LibtorrentSettingsTag.enableDht, false),
-        LibtorrentTagItem.settingsBool(LibtorrentSettingsTag.enableLsd, false),
-        LibtorrentTagItem.settingsBool(LibtorrentSettingsTag.enableUpnp, false),
-        LibtorrentTagItem.settingsBool(
-          LibtorrentSettingsTag.enableNatpmp,
-          false,
-        ),
-      ],
+      // A paused or briefly unreachable peer is retried after this many
+      // seconds per failure, instead of libtorrent's minute: playback waits.
+      LibtorrentTagItem.settingsInt(LibtorrentSettingsTag.minReconnectTime, 5),
     ]);
+    configure(settings);
     _timer = Timer.periodic(const Duration(milliseconds: 20), (_) => _pump());
   }
-  final TorrentStreamConfig _config;
   late final Session session;
+
+  void configure(TorrentEngineSettings settings) {
+    settings.validate();
+    final utp = settings.transport == TorrentTransport.mixedTcpUtp;
+    session.applyConfig(
+      SessionConfig(
+        downloadRateLimit: settings.downloadBytesPerSecond,
+        uploadRateLimit: settings.uploadBytesPerSecond,
+        connectionsLimit: settings.maxConnections,
+        enableIncomingUtp: utp,
+        enableOutgoingUtp: utp,
+      ),
+    );
+    session.setDhtEnabled(settings.enableDht);
+    session.setLsdEnabled(settings.enableLsd);
+    session.setUpnpEnabled(settings.enableUpnp);
+    session.setNatPmpEnabled(settings.enableNatPmp);
+  }
+
   Timer? _timer;
   final _reads = <(int, int), Completer<Uint8List>>{};
   final _readFutures = <(int, int), Future<Uint8List>>{};
@@ -93,14 +90,16 @@ class NativeSession {
   Future<Uint8List> read(
     TorrentHandle torrent,
     int piece,
-    Cancellation cancellation,
-  ) async {
+    Cancellation cancellation, {
+    required Duration pieceTimeout,
+    required Duration readTimeout,
+  }) async {
     final watch = Stopwatch()..start();
     while (true) {
       _lifetime.check();
       cancellation.check();
       if (torrent.havePiece(piece)) break;
-      if (watch.elapsed > _config.pieceTimeout) {
+      if (watch.elapsed > pieceTimeout) {
         throw TimeoutException('Waiting for torrent piece $piece');
       }
       await _lifetime.wait(
@@ -115,12 +114,10 @@ class NativeSession {
     if (shared == null) {
       final completer = Completer<Uint8List>();
       _reads[key] = completer;
-      shared = completer.future.timeout(_config.nativeReadTimeout).whenComplete(
-        () {
-          if (_reads[key] == completer) _reads.remove(key);
-          _readFutures.remove(key);
-        },
-      );
+      shared = completer.future.timeout(readTimeout).whenComplete(() {
+        if (_reads[key] == completer) _reads.remove(key);
+        _readFutures.remove(key);
+      });
       _readFutures[key] = shared;
       try {
         torrent.readPiece(piece);

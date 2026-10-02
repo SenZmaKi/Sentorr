@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:torrent_stream/torrent_stream.dart';
+
 enum DownloadStatus {
+  /// Waiting for the torrent's metadata.
+  preparing,
   queued,
   downloading,
   seeding,
@@ -18,27 +22,41 @@ extension DownloadStatusTerminal on DownloadStatus {
       this == DownloadStatus.cancelled;
 }
 
-/// Prepared torrent metadata, matching Senpwai's torrent enqueue boundary.
+/// What to download: a magnet or torrent metadata, and which of its files.
 /// File indices are in torrent order; an empty selection means all files.
+/// Renames are relative to [destinationDirectory].
 class TorrentDownloadJob {
   TorrentDownloadJob({
     required this.title,
-    required Uint8List torrentData,
     required this.destinationDirectory,
+    this.magnet,
+    Uint8List? torrentData,
     List<int> selectedFileIndices = const [],
     Map<int, String> renamedFiles = const {},
-  }) : torrentData = Uint8List.fromList(torrentData),
+  }) : torrentData = torrentData == null
+           ? null
+           : Uint8List.fromList(torrentData),
        selectedFileIndices = List.unmodifiable(selectedFileIndices),
-       renamedFiles = Map.unmodifiable(renamedFiles);
+       renamedFiles = Map.unmodifiable(renamedFiles) {
+    if ((magnet == null) == (torrentData == null)) {
+      throw ArgumentError('A download needs a magnet or torrent metadata');
+    }
+  }
   final String title;
-  final Uint8List torrentData;
+  final Uri? magnet;
+  final Uint8List? torrentData;
   final String destinationDirectory;
   final List<int> selectedFileIndices;
   final Map<int, String> renamedFiles;
 
+  TorrentSource get source => magnet != null
+      ? TorrentSource.magnet(magnet!)
+      : TorrentSource.metadata(torrentData!);
+
   Map<String, dynamic> toJson() => {
     'title': title,
-    'torrent': base64Encode(torrentData),
+    if (magnet != null) 'magnet': magnet.toString(),
+    if (torrentData != null) 'torrent': base64Encode(torrentData!),
     'directory': destinationDirectory,
     'selection': selectedFileIndices,
     'renames': {for (final e in renamedFiles.entries) '${e.key}': e.value},
@@ -46,7 +64,14 @@ class TorrentDownloadJob {
   factory TorrentDownloadJob.fromJson(Map<String, dynamic> json) =>
       TorrentDownloadJob(
         title: json['title'] as String,
-        torrentData: base64Decode(json['torrent'] as String),
+        magnet: switch (json['magnet']) {
+          final String m => Uri.parse(m),
+          _ => null,
+        },
+        torrentData: switch (json['torrent']) {
+          final String t => base64Decode(t),
+          _ => null,
+        },
         destinationDirectory: json['directory'] as String,
         selectedFileIndices: (json['selection'] as List).cast<int>(),
         renamedFiles: (json['renames'] as Map<String, dynamic>).map(
@@ -72,7 +97,8 @@ class DownloadItem {
   DownloadItem({
     required this.id,
     required this.job,
-    this.status = DownloadStatus.queued,
+    this.status = DownloadStatus.preparing,
+    this.infoHash,
     this.files = const [],
     this.downloadBytesPerSecond = 0,
     this.uploadBytesPerSecond = 0,
@@ -85,6 +111,9 @@ class DownloadItem {
   final String id;
   final TorrentDownloadJob job;
   final DownloadStatus status;
+
+  /// Known once the torrent is in the engine.
+  final String? infoHash;
   final List<DownloadFileProgress> files;
   final double downloadBytesPerSecond;
   final double uploadBytesPerSecond;
@@ -93,62 +122,94 @@ class DownloadItem {
   final int seeds;
   final String? error;
   final DateTime? seedingStartedAt;
+
+  /// The engine owner name for this download.
+  String get owner => 'download:$id';
   int get totalBytes => files.fold(0, (sum, f) => sum + f.totalBytes);
   int get downloadedBytes => files.fold(0, (sum, f) => sum + f.downloadedBytes);
   double get progress =>
       totalBytes == 0 ? 0 : (downloadedBytes / totalBytes).clamp(0, 1);
+  bool get isDone =>
+      files.isNotEmpty && files.every((f) => f.downloadedBytes >= f.totalBytes);
 
-  DownloadItem withStatus(DownloadStatus value, {String? error}) =>
-      DownloadItem(
-        id: id,
-        job: job,
-        status: value,
-        files: files,
-        uploadedBytes: uploadedBytes,
-        peers: peers,
-        seeds: seeds,
-        error: error,
-        seedingStartedAt: seedingStartedAt,
-      );
+  DownloadItem copyWith({
+    DownloadStatus? status,
+    String? infoHash,
+    List<DownloadFileProgress>? files,
+    double? downloadBytesPerSecond,
+    double? uploadBytesPerSecond,
+    int? uploadedBytes,
+    int? peers,
+    int? seeds,
+    DateTime? seedingStartedAt,
+    String? error,
+    bool clearError = false,
+  }) => DownloadItem(
+    id: id,
+    job: job,
+    status: status ?? this.status,
+    infoHash: infoHash ?? this.infoHash,
+    files: files ?? this.files,
+    downloadBytesPerSecond:
+        downloadBytesPerSecond ?? this.downloadBytesPerSecond,
+    uploadBytesPerSecond: uploadBytesPerSecond ?? this.uploadBytesPerSecond,
+    uploadedBytes: uploadedBytes ?? this.uploadedBytes,
+    peers: peers ?? this.peers,
+    seeds: seeds ?? this.seeds,
+    seedingStartedAt: seedingStartedAt ?? this.seedingStartedAt,
+    error: clearError ? null : error ?? this.error,
+  );
+
+  /// At [value], with transfer rates cleared unless still transferring.
+  DownloadItem withStatus(DownloadStatus value, {String? error}) {
+    final moving =
+        value == DownloadStatus.downloading || value == DownloadStatus.seeding;
+    return DownloadItem(
+      id: id,
+      job: job,
+      status: value,
+      infoHash: infoHash,
+      files: files,
+      downloadBytesPerSecond: moving ? downloadBytesPerSecond : 0,
+      uploadBytesPerSecond: moving ? uploadBytesPerSecond : 0,
+      uploadedBytes: uploadedBytes,
+      peers: moving ? peers : 0,
+      seeds: moving ? seeds : 0,
+      error: error,
+      seedingStartedAt: seedingStartedAt,
+    );
+  }
 }
 
 enum SeedingMode { disabled, limited, indefinitely }
 
-/// Limits apply to this download session, independently of playback.
+/// Queue policy. Bandwidth, connections and discovery belong to the torrent
+/// engine, shared with streaming.
 class DownloadSettings {
   const DownloadSettings({
     this.maxActiveDownloads = 2,
     this.maxActiveSeeds = 2,
-    this.downloadBytesPerSecond = 0,
-    this.uploadBytesPerSecond = 0,
-    this.maxConnections = 200,
     this.seedingMode = SeedingMode.disabled,
     this.seedRatio = 1,
     this.seedTime = const Duration(minutes: 30),
-    this.enableDht = true,
-    this.enableLsd = true,
-    this.enableUpnp = true,
-    this.enableNatPmp = true,
+    this.pauseWhileStreaming = true,
   });
   final int maxActiveDownloads;
   final int maxActiveSeeds;
-  final int downloadBytesPerSecond;
-  final int uploadBytesPerSecond;
-  final int maxConnections;
   final SeedingMode seedingMode;
   final double seedRatio;
   final Duration seedTime;
-  final bool enableDht, enableLsd, enableUpnp, enableNatPmp;
+
+  /// Leave the bandwidth to playback: downloads other than the one being
+  /// watched wait while anything streams.
+  final bool pauseWhileStreaming;
   void validate() {
     if (maxActiveDownloads < 1 ||
         maxActiveSeeds < 1 ||
-        downloadBytesPerSecond < 0 ||
-        uploadBytesPerSecond < 0 ||
-        maxConnections < 1 ||
         !seedRatio.isFinite ||
         seedRatio < 0 ||
         seedTime.isNegative) {
-      throw ArgumentError('Invalid torrent download limits');
+      throw ArgumentError('Invalid download queue limits');
     }
   }
 }

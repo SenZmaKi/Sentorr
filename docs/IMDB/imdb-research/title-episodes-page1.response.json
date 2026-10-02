@@ -1,0 +1,104 @@
+{
+  "data": {
+    "title": {
+      "episodes": {
+        "seasons": [
+          {
+            "number": 1
+          },
+          {
+            "number": 2
+          },
+          {
+            "number": 3
+          },
+          {
+            "number": 4
+          },
+          {
+            "number": 5
+          }
+        ],
+        "episodes": {
+          "total": 13,
+          "edges": [
+            {
+              "node": {
+                "id": "tt1232244",
+                "titleText": {
+                  "text": "Seven Thirty-Seven"
+                },
+                "primaryImage": {
+                  "url": "https://m.media-amazon.com/images/M/MV5BM2IzZmFmMmMtNDdhMC00OWE5LThlOTUtOTliMzFhMmY4OTU2XkEyXkFqcGc@._V1_.jpg"
+                },
+                "plot": {
+                  "plotText": {
+                    "plainText": "As Walt sets a daunting financial target for his family, he and Jesse scramble to protect themselves from their increasingly volatile distributor, while Skyler grows alarmed by Walt's erratic behavior."
+                  }
+                },
+                "ratingsSummary": {
+                  "aggregateRating": 8.6,
+                  "voteCount": 53327
+                },
+                "releaseDate": {
+                  "year": 2009,
+                  "month": 3,
+                  "day": 8
+                },
+                "series": {
+                  "episodeNumber": {
+                    "seasonNumber": 2,
+                    "episodeNumber": 1
+                  }
+                }
+              }
+            },
+            {
+              "node": {
+                "id": "tt1232249",
+                "titleText": {
+                  "text": "Grilled"
+                },
+                "primaryImage": {
+                  "url": "https://m.media-amazon.com/images/M/MV5BMTk1NzM2ODg0Ml5BMl5BanBnXkFtZTgwNDc2MDU5NTM@._V1_.jpg"
+                },
+                "plot": {
+                  "plotText": {
+                    "plainText": "Walt and Jesse are held at the mercy of their increasingly paranoid distributor and desperately seek an escape, while Hank pursues a lead in Walt's disappearance."
+                  }
+                },
+                "ratingsSummary": {
+                  "aggregateRating": 9.3,
+                  "voteCount": 61504
+                },
+                "releaseDate": {
+                  "year": 2009,
+                  "month": 3,
+                  "day": 15
+                },
+                "series": {
+                  "episodeNumber": {
+                    "seasonNumber": 2,
+                    "episodeNumber": 2
+                  }
+                }
+              }
+            }
+          ],
+          "pageInfo": {
+            "endCursor": "dHQxMjMyMjQ5",
+            "hasNextPage": true
+          }
+        }
+      }
+    }
+  },
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#",
+    "experimentalFields": {
+      "janet": [],
+      "markdown": [],
+      "ratings": []
+    }
+  }
+}

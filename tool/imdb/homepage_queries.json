@@ -1,0 +1,42 @@
+{
+  "observedOn": "2026-10-02",
+  "sourcePage": "https://www.imdb.com/",
+  "discovery": "Captured IMDb's own GET requests after reloading and scrolling the live homepage. These are query identifiers, not credentials.",
+  "queries": [
+    {
+      "operationName": "BatchPage_HomeMain",
+      "endpoint": "https://api.graphql.imdb.com/",
+      "sha256Hash": "f6ccf12469ab9e9f3faed4718a6c0c447065d8db21afe7ce18f05488424c3bd1",
+      "variables": {
+        "fanPicksFirst": 30,
+        "locale": "en-US",
+        "placement": "home",
+        "topPicksFirst": 30,
+        "topTenFirst": 10
+      },
+      "browserVerification": "HTTP 200, no GraphQL errors; 30 recommendations, 10 trending titles, 30 fan favorites, 50 interests",
+      "dartVerification": "HTTP 200; 10 trending titles; recommendations and fan favorites require x-amzn-sessionid"
+    },
+    {
+      "operationName": "HomepageStreamingPicks",
+      "endpoint": "https://caching.graphql.imdb.com/",
+      "sha256Hash": "bd2b08a0a17bc61eb7456118672adc99a78f32d9221db9ec3417271369b4a6c8",
+      "variables": {"includeUserPreferredServices": false, "locale": "en-US"},
+      "browserVerification": "HTTP 200 observed; response schema not migrated"
+    },
+    {
+      "operationName": "TopBoxOfficeDataSet",
+      "endpoint": "https://caching.graphql.imdb.com/",
+      "sha256Hash": "077a60fe2499c41e18e8f46fe165a94cf1d315eab53c9a8dcdfa7fe579b03688",
+      "variables": {"limit": 10, "locale": "en-US"},
+      "browserVerification": "HTTP 200 observed; response schema not migrated"
+    },
+    {
+      "operationName": "EpisodeRatings_SeasonDetail",
+      "endpoint": "https://caching.graphql.imdb.com/",
+      "sha256Hash": "976af4c7da8fd73a9afc9119cc7694c8ea10b45ed694bd2c0cd25731ba87ea7e",
+      "variables": {"id": "tt26545992", "locale": "en-US", "seasons": ["1"]},
+      "browserVerification": "HTTP 200 observed on reload, served from browser cache; not a migration of Electron's episodes endpoint"
+    }
+  ]
+}

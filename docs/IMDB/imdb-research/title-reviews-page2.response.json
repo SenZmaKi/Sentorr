@@ -1,0 +1,70 @@
+{
+  "data": {
+    "title": {
+      "reviews": {
+        "total": 4723,
+        "edges": [
+          {
+            "node": {
+              "id": "rw6444640",
+              "author": {
+                "nickName": "xNecRosex"
+              },
+              "authorRating": 10,
+              "summary": {
+                "originalText": "The timeless classic."
+              },
+              "text": {
+                "originalText": {
+                  "plainText": "This film doesn't age, it will be contemporary even in 2030 or 2040. Wachowski's best one, by far."
+                }
+              },
+              "submissionDate": "2021-01-04",
+              "helpfulness": {
+                "upVotes": 252,
+                "downVotes": 22
+              },
+              "spoiler": false
+            }
+          },
+          {
+            "node": {
+              "id": "rw0509571",
+              "author": {
+                "nickName": "mambubukid"
+              },
+              "authorRating": 10,
+              "summary": {
+                "originalText": "The benchmark for all sci-fi films to come"
+              },
+              "text": {
+                "originalText": {
+                  "plainText": "The story of a reluctant Christ-like protagonist set against a baroque, MTV backdrop, The Matrix is the definitive hybrid of technical wizardry and contextual excellence that should be the benchmark for all sci-fi films to come.\n\nHollywood has had some problems combining form and matter in the sci-fi genre.  There have been a lot of visually stunning works but nobody cared about the hero. (Or nobody simply cared about anything.)  There a few, though, which aroused interest and intellect but nobody 'ooh'-ed or 'aah'-ed at the special effects.  With The Matrix, both elements are perfectly en sync.  Not only did we want to cheer on the heroes to victory, we wanted them to bludgeon the opposition.  Not only did we sit in awe as Neo evaded those bullets in limbo-rock fashion, we salivated.\n\nBut what makes The Matrix several cuts above the rest of the films in its genre is that there are simply no loopholes.  The script, written by the Wachowski brothers is intelligent but carefully not geeky.  The kung-fu sequences were deftly shot -- something even Bruce Lee would've been proud of.  The photography was breathtaking.  (I bet if you had to cut every frame on the reel and had it developed and printed, every single frame would stand on its own.)  And the acting?  Maybe not the best Keanu Reeves but name me an actor who has box-office appeal but could portray the uneasy and vulnerable protagonist, Neo, to a T the way Reeves did.  But, come to think of it, if you pit any actor beside Laurence Fishburne, you're bound to confuse that actor for bad acting.  As Morpheus, Mr. Fishburne is simply wicked!  Shades of his mentor-role in Higher Learning, nobody exudes that aura of quiet intensity than Mr. Fishburne.  His character, battle-scarred but always composed Morpheus, is given an extra dose of mortality (He loves Neo to a fault.) only Mr. Fishburne can flesh out.\n\nPeople will say what they want to say about how good The Matrix is but the bottomline is this: finally there's a philosophical film that has cut through this generation.  My generation. The Wachowski brothers probably scribbled a little P.S. note when they finished the script saying: THINK FOR A MOMENT ABOUT YOUR EXISTENCE.  What is the Matrix, you ask?  Something that's closer to reality than you think.\n\nEither that or it's my personal choice for best film of all-time."
+                }
+              },
+              "submissionDate": "2000-09-19",
+              "helpfulness": {
+                "upVotes": 1220,
+                "downVotes": 248
+              },
+              "spoiler": false
+            }
+          }
+        ],
+        "pageInfo": {
+          "endCursor": "g4u77dbqqywdazad7gthhnjsrxum6aj33qktvzh6iwdpuv3bmeqkudcjdx6agchbo6cuvv2c6dlmry7uzo7q",
+          "hasNextPage": true
+        }
+      }
+    }
+  },
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#",
+    "experimentalFields": {
+      "janet": [],
+      "ratings": [],
+      "markdown": [],
+      "identity": []
+    }
+  }
+}

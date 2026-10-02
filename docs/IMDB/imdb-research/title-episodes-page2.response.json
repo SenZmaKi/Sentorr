@@ -1,0 +1,104 @@
+{
+  "data": {
+    "title": {
+      "episodes": {
+        "seasons": [
+          {
+            "number": 1
+          },
+          {
+            "number": 2
+          },
+          {
+            "number": 3
+          },
+          {
+            "number": 4
+          },
+          {
+            "number": 5
+          }
+        ],
+        "episodes": {
+          "total": 13,
+          "edges": [
+            {
+              "node": {
+                "id": "tt1232250",
+                "titleText": {
+                  "text": "Bit by a Dead Bee"
+                },
+                "primaryImage": {
+                  "url": "https://m.media-amazon.com/images/M/MV5BOTczZTBiNjQtYmQwNS00NzU1LWI5ODYtOTlhNGIyMTczM2Y0XkEyXkFqcGc@._V1_.jpg"
+                },
+                "plot": {
+                  "plotText": {
+                    "plainText": "Walt and Jesse devise elaborate cover stories to explain their disappearances and evade suspicion, while Hank struggles with the aftermath of his ordeal and Skyler questions Walt's account."
+                  }
+                },
+                "ratingsSummary": {
+                  "aggregateRating": 8.3,
+                  "voteCount": 51276
+                },
+                "releaseDate": {
+                  "year": 2009,
+                  "month": 3,
+                  "day": 22
+                },
+                "series": {
+                  "episodeNumber": {
+                    "seasonNumber": 2,
+                    "episodeNumber": 3
+                  }
+                }
+              }
+            },
+            {
+              "node": {
+                "id": "tt1232251",
+                "titleText": {
+                  "text": "Down"
+                },
+                "primaryImage": {
+                  "url": "https://m.media-amazon.com/images/M/MV5BYWI4Yjk3NjItMDA0Yi00ZWZkLThiZTctOTUyZTEwNGJlMmQ0XkEyXkFqcGc@._V1_.jpg"
+                },
+                "plot": {
+                  "plotText": {
+                    "plainText": "As Walt struggles to reconnect with his family while Skyler grows increasingly distant, Jesse is forced from his home and desperately searches for shelter and stability."
+                  }
+                },
+                "ratingsSummary": {
+                  "aggregateRating": 8.2,
+                  "voteCount": 51332
+                },
+                "releaseDate": {
+                  "year": 2009,
+                  "month": 3,
+                  "day": 29
+                },
+                "series": {
+                  "episodeNumber": {
+                    "seasonNumber": 2,
+                    "episodeNumber": 4
+                  }
+                }
+              }
+            }
+          ],
+          "pageInfo": {
+            "endCursor": "dHQxMjMyMjUx",
+            "hasNextPage": true
+          }
+        }
+      }
+    }
+  },
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#",
+    "experimentalFields": {
+      "janet": [],
+      "markdown": [],
+      "ratings": []
+    }
+  }
+}

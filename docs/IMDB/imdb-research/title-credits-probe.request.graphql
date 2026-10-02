@@ -1,0 +1,1 @@
+{ title(id:"tt0133093"){ credits(first:2){edges{node{__typename}}} principalCredits{category{id text} credits{__typename}} primaryVideos(first:1){edges{node{id name{value} description{value} primaryImage{url}}}} } }

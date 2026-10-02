@@ -1,0 +1,9 @@
+query SentorrBackdropCandidates($id: ID!) {
+ title(id: $id) {
+  id
+  primaryImage { url width height }
+  images(first: 5) {
+   edges { node { id url width height type } }
+  }
+ }
+}

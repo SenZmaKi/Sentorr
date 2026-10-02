@@ -1,0 +1,4 @@
+{
+  "query": "{ title(id:\"tt0133093\"){ reviews(first:2){ total edges{node{id author{nickName} authorRating summary{originalText} text{originalText{plainText}} submissionDate helpfulness{upVotes downVotes} spoiler}} pageInfo{endCursor hasNextPage}} } }",
+  "variables": {}
+}

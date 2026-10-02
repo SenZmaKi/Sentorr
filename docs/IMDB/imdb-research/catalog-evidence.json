@@ -1,0 +1,41 @@
+{
+  "observedOn": "2026-10-02",
+  "endpoint": "https://api.graphql.imdb.com/",
+  "transport": "Native JSON POST, public headers, no session or cookies",
+  "introspection": {
+    "status": 500,
+    "error": "Unauthorized introspection request. Token is invalid or missing"
+  },
+  "search": {
+    "status": 200,
+    "variables": {
+      "first": 2,
+      "term": "matrix"
+    },
+    "total": 51,
+    "titleIds": [
+      "tt0133093",
+      "tt0234215"
+    ],
+    "hasNextPage": true
+  },
+  "secondPage": {
+    "status": 200,
+    "titleIds": [
+      "tt10838180",
+      "tt0242653"
+    ],
+    "errors": null
+  },
+  "filteredSearch": {
+    "status": 200,
+    "total": 4,
+    "errors": null
+  },
+  "entitlementSignal": {
+    "fields": {
+      "Query.advancedTitleSearch": "DENY"
+    },
+    "inUse": true
+  }
+}

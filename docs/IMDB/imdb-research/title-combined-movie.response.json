@@ -1,0 +1,291 @@
+{
+  "data": {
+    "title": {
+      "id": "tt0133093",
+      "titleText": {
+        "text": "The Matrix"
+      },
+      "originalTitleText": {
+        "text": "The Matrix"
+      },
+      "primaryImage": {
+        "url": "https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_.jpg",
+        "width": 2100,
+        "height": 3156
+      },
+      "titleType": {
+        "id": "movie",
+        "text": "Movie",
+        "canHaveEpisodes": false
+      },
+      "releaseYear": {
+        "year": 1999,
+        "endYear": null
+      },
+      "releaseDate": {
+        "year": 1999,
+        "month": 3,
+        "day": 31
+      },
+      "ratingsSummary": {
+        "aggregateRating": 8.7,
+        "voteCount": 2282627
+      },
+      "plot": {
+        "plotText": {
+          "plainText": "A computer hacker discovers that his life is nothing more than an elaborate simulation run by an evil AI."
+        }
+      },
+      "runtime": {
+        "seconds": 8160
+      },
+      "titleGenres": {
+        "genres": [
+          {
+            "genre": {
+              "text": "Action"
+            }
+          },
+          {
+            "genre": {
+              "text": "Sci-Fi"
+            }
+          }
+        ]
+      },
+      "certificate": {
+        "rating": "R"
+      },
+      "meterRanking": {
+        "currentRank": 154
+      },
+      "productionStatus": {
+        "currentProductionStage": {
+          "text": "Released"
+        }
+      },
+      "moreLikeThisTitles": {
+        "edges": [
+          {
+            "node": {
+              "id": "tt0234215",
+              "titleText": {
+                "text": "The Matrix Reloaded"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "tt0242653",
+              "titleText": {
+                "text": "The Matrix Revolutions"
+              }
+            }
+          }
+        ],
+        "pageInfo": {
+          "endCursor": null,
+          "hasNextPage": false
+        }
+      },
+      "episodes": null,
+      "credits": {
+        "edges": [
+          {
+            "node": {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0000206",
+                "nameText": {
+                  "text": "Keanu Reeves"
+                },
+                "primaryImage": {
+                  "url": "https://m.media-amazon.com/images/M/MV5BNDEzOTdhNDUtY2EyMy00YTNmLWE5MjItZmRjMmQzYTRlMGRkXkEyXkFqcGc@._V1_.jpg"
+                }
+              },
+              "category": {
+                "id": "actor",
+                "text": "Actor"
+              },
+              "characters": [
+                {
+                  "name": "Neo"
+                }
+              ]
+            }
+          },
+          {
+            "node": {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0000401",
+                "nameText": {
+                  "text": "Laurence Fishburne"
+                },
+                "primaryImage": {
+                  "url": "https://m.media-amazon.com/images/M/MV5BMTc0NjczNDc1MV5BMl5BanBnXkFtZTYwMDU0Mjg1._V1_.jpg"
+                }
+              },
+              "category": {
+                "id": "actor",
+                "text": "Actor"
+              },
+              "characters": [
+                {
+                  "name": "Morpheus"
+                }
+              ]
+            }
+          }
+        ],
+        "pageInfo": {
+          "endCursor": "bm0wMDAwNDAxL3R0MDEzMzA5My9hY3Rvcg==",
+          "hasNextPage": true
+        }
+      },
+      "principalCredits": [
+        {
+          "category": {
+            "id": "director",
+            "text": "Directors"
+          },
+          "credits": [
+            {
+              "__typename": "Crew",
+              "name": {
+                "id": "nm0905154",
+                "nameText": {
+                  "text": "Lana Wachowski"
+                }
+              }
+            },
+            {
+              "__typename": "Crew",
+              "name": {
+                "id": "nm0905152",
+                "nameText": {
+                  "text": "Lilly Wachowski"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "category": {
+            "id": "writer",
+            "text": "Writers"
+          },
+          "credits": [
+            {
+              "__typename": "Crew",
+              "name": {
+                "id": "nm0905152",
+                "nameText": {
+                  "text": "Lilly Wachowski"
+                }
+              }
+            },
+            {
+              "__typename": "Crew",
+              "name": {
+                "id": "nm0905154",
+                "nameText": {
+                  "text": "Lana Wachowski"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "category": {
+            "id": "cast",
+            "text": "Stars"
+          },
+          "credits": [
+            {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0000206",
+                "nameText": {
+                  "text": "Keanu Reeves"
+                }
+              }
+            },
+            {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0000401",
+                "nameText": {
+                  "text": "Laurence Fishburne"
+                }
+              }
+            },
+            {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0005251",
+                "nameText": {
+                  "text": "Carrie-Anne Moss"
+                }
+              }
+            },
+            {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0915989",
+                "nameText": {
+                  "text": "Hugo Weaving"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "primaryVideos": {
+        "edges": [
+          {
+            "node": {
+              "id": "vi1032782617",
+              "name": {
+                "value": "Theatrical Trailer"
+              },
+              "description": {
+                "value": "A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers. "
+              },
+              "thumbnail": {
+                "url": "https://m.media-amazon.com/images/M/MV5BNDQ4NTRmN2ItYjgzMS00MzY3LWEwNmYtYmE2ODllZDdhNGI1XkEyXkFqcGdeQXdvbmtpbQ@@._V1_.jpg"
+              },
+              "playbackURLs": [
+                {
+                  "url": "https://imdb-video.media-imdb.com/vi1032782617/1434659454657-dx9ykf-1606954147857.mp4?Expires=1790998436&Signature=DldlQH1BqLJ8rYsuLDvDXZ2I82YaUkLQOo6roJIyThhi6cEAowxDjN0VWEjDudOqWu1Es4AmIQ5mBlS9BKCxlRkFx8N85IcSTma-Mhmue27BaGK2rvKvePtVS4B1SGdGiHA6CaPFLQS3snw1~-SEeLi~DLgMqJC~FUhtIsDpPTSsX4vcxyRSxX4PxnJEzeEvVyY7BTh1d692~iZBIb1DMflOreLAWO5sjtMkusS9-88EkJguM1mdfhwze89Ns2rhnOY7oqeXQjPRTJFVsCKSB1u1jLrcgbOUiRAxUPriiqmd~XAa4LqBtwwEue5qSQSCZVSGFUFy20sr2eyp7X--YA__&Key-Pair-Id=APKAIFLZBVQZ24NQH3KA",
+                  "mimeType": "video/mp4"
+                },
+                {
+                  "url": "https://imdb-video.media-imdb.com/vi1032782617/hls-1606954147857-master.m3u8?Expires=1790998436&Signature=XxGN02NS3l~qSEn1s~yQdob2AFzKTzC1gzKGjU~IAnw6QeectWqQnlZQR06zG1jAquYkx0waV8uRdwYm50azJe9Vf6bIV5BUjdeczmacF8OQtcOg1z-ld6TTLsbeK2rA7lFumXNn1QpTTYvCN2nNQ4aN5xw3z0lD~ZMZBRZvneVRPlSVyLcuf7siR~yncOElnd1FM9j7Gwlg12ICsWs1e2nmubczojt6H4YPp~Rfoqiwf2ImfS8Mbl3z9jTRulA8Z2yl2JBlWEbuicBBBnKCR6o-Pl~ndH2OT5wPgyiemh493piiJ9MB8-b9TENM4kGwSBcNSb1sC1kfuzj92rGvNw__&Key-Pair-Id=APKAIFLZBVQZ24NQH3KA",
+                  "mimeType": "application/x-mpegurl"
+                },
+                {
+                  "url": "https://imdb-video.media-imdb.com/vi1032782617/1434659607842-pgv4ql-1606954147857.mp4?Expires=1790998436&Signature=leGlIbTAObcEFFD3t1K12B6ehrEZxRttouvZuIO3G21OU9VhYcL3WiBWi4UaJynekeDgZvakuf9x6L5ICWh8xBLEg6mm8gE3qL9ydud7oeHx9uvSFSwk5H~ZAqtKaW8eY1rO-AlqKhn2hfUJOi6423Ad9kdvIkVNRKSDzpr5qS7yqF3VSUmbne71F~AIPZ~UD9C2MEDhiwED5t4eHw5MDnke~dRisXal6z42APOfIbT5nctTJZoZ6YvrG1oo7~tlsm8kMocjfU2DrX5lsw5q29Vio6Sqm9DdZ89wQqRR6e7mfvPexxutoRd7kiasO9T5WIyfmTU9PXn8IZSbJQZLhQ__&Key-Pair-Id=APKAIFLZBVQZ24NQH3KA",
+                  "mimeType": "video/mp4"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#",
+    "experimentalFields": {
+      "janet": []
+    },
+    "entitlements": {
+      "fields": {
+        "Title.meterRanking": "DENY",
+        "Title.productionStatus": "DENY"
+      },
+      "inUse": true
+    }
+  }
+}

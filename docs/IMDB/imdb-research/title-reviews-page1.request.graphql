@@ -1,0 +1,1 @@
+query($id:ID!,$after:ID){title(id:$id){reviews(first:2,after:$after,filter:{spoiler:EXCLUDE},sort:{by:HELPFULNESS_SCORE,order:DESC}){total edges{node{id author{nickName} authorRating summary{originalText} text{originalText{plainText}} submissionDate helpfulness{upVotes downVotes} spoiler}} pageInfo{endCursor hasNextPage}}}}

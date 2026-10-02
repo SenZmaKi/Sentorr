@@ -1,0 +1,5 @@
+query SentorrSearch($first: Int!, $after: String, $term: String!) {
+ advancedTitleSearch(first:$first,after:$after,constraints:{genreConstraint:{allGenreIds:["Action"]},releaseDateConstraint:{releaseDateRange:{start:"1990-01-01",end:"2026-10-02"}},runtimeConstraint:{runtimeRangeMinutes:{min:60,max:240}},userRatingsConstraint:{aggregateRatingRange:{min:5,max:10},ratingsCountRange:{min:1000}},titleTextConstraint:{searchTerm:$term},titleTypeConstraint:{anyTitleTypeIds:["movie","tvSeries","tvMiniSeries"]}},sort:{sortBy:POPULARITY,sortOrder:ASC}) {
+ total pageInfo {hasNextPage endCursor} edges {node {title { id titleText{text} titleType{id text canHaveEpisodes} primaryImage{url width height} releaseYear{year endYear} ratingsSummary{aggregateRating voteCount} plot{plotText{plainText}} runtime{seconds} titleGenres{genres{genre{id text}}} }}}
+ }
+}

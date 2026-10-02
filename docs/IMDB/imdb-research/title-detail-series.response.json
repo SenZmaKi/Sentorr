@@ -1,0 +1,169 @@
+{
+  "data": {
+    "title": {
+      "id": "tt0903747",
+      "titleText": {
+        "text": "Breaking Bad"
+      },
+      "originalTitleText": {
+        "text": "Breaking Bad"
+      },
+      "primaryImage": {
+        "url": "https://m.media-amazon.com/images/M/MV5BMzU5ZGYzNmQtMTdhYy00OGRiLTg0NmQtYjVjNzliZTg1ZGE4XkEyXkFqcGc@._V1_.jpg",
+        "width": 2000,
+        "height": 3000
+      },
+      "titleType": {
+        "id": "tvSeries",
+        "text": "TV Series",
+        "canHaveEpisodes": true
+      },
+      "releaseYear": {
+        "year": 2008,
+        "endYear": 2013
+      },
+      "releaseDate": {
+        "year": 2008,
+        "month": 1,
+        "day": 20
+      },
+      "ratingsSummary": {
+        "aggregateRating": 9.5,
+        "voteCount": 2684314
+      },
+      "plot": {
+        "plotText": {
+          "plainText": "A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine with a former student to secure his family's future."
+        }
+      },
+      "runtime": {
+        "seconds": 2880
+      },
+      "titleGenres": {
+        "genres": [
+          {
+            "genre": {
+              "text": "Crime"
+            }
+          },
+          {
+            "genre": {
+              "text": "Drama"
+            }
+          },
+          {
+            "genre": {
+              "text": "Thriller"
+            }
+          }
+        ]
+      },
+      "certificate": {
+        "rating": "TV-MA"
+      },
+      "meterRanking": {
+        "currentRank": 21
+      },
+      "productionStatus": {
+        "currentProductionStage": {
+          "text": "Released"
+        }
+      },
+      "moreLikeThisTitles": {
+        "edges": [
+          {
+            "node": {
+              "id": "tt3032476",
+              "titleText": {
+                "text": "Better Call Saul"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "tt0944947",
+              "titleText": {
+                "text": "Game of Thrones"
+              }
+            }
+          }
+        ],
+        "pageInfo": {
+          "endCursor": null,
+          "hasNextPage": false
+        }
+      },
+      "episodes": {
+        "seasons": [
+          {
+            "number": 1
+          },
+          {
+            "number": 2
+          },
+          {
+            "number": 3
+          },
+          {
+            "number": 4
+          },
+          {
+            "number": 5
+          }
+        ],
+        "episodes": {
+          "total": 62,
+          "edges": [
+            {
+              "node": {
+                "id": "tt0959621",
+                "titleText": {
+                  "text": "Pilot"
+                },
+                "series": {
+                  "episodeNumber": {
+                    "seasonNumber": 1,
+                    "episodeNumber": 1
+                  }
+                }
+              }
+            },
+            {
+              "node": {
+                "id": "tt1054724",
+                "titleText": {
+                  "text": "Cat's in the Bag..."
+                },
+                "series": {
+                  "episodeNumber": {
+                    "seasonNumber": 1,
+                    "episodeNumber": 2
+                  }
+                }
+              }
+            }
+          ],
+          "pageInfo": {
+            "endCursor": "dHQxMDU0NzI0",
+            "hasNextPage": true
+          }
+        }
+      }
+    }
+  },
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#",
+    "experimentalFields": {
+      "janet": [],
+      "ranking": [],
+      "ratings": []
+    },
+    "entitlements": {
+      "fields": {
+        "Title.meterRanking": "DENY",
+        "Title.productionStatus": "DENY"
+      },
+      "inUse": true
+    }
+  }
+}

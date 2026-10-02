@@ -1,0 +1,70 @@
+{
+  "data": {
+    "title": {
+      "reviews": {
+        "total": 5322,
+        "edges": [
+          {
+            "node": {
+              "id": "rw5968077",
+              "author": {
+                "nickName": "coasterdude44"
+              },
+              "authorRating": 10,
+              "summary": {
+                "originalText": "Ah yes. My first existential crisis."
+              },
+              "text": {
+                "originalText": {
+                  "plainText": "I have an interesting history and relationship with this film. Never before has a film made me question the nature of reality before. At first glance, The Matrix at the surface might have looked like a really good action movie with some cutting edge special effects with a kinetic and engaging story, and it definitely has that, but on my first viewing of this movie back in 2006 when I was 9 years old and slid this DVD into my small box TV at the end of my bed. I had absolutely no idea what I was in for and what I was about to experience.\n\nThis movie is actually more disturbing and honestly terrifying than many would let on, especially to a young child when this movie drops some major psychological and philosophical themes in it's first act. The first 40 minutes of The Matrix is frankly terrifying and suspenseful in all the best and right ways.\n\nThe surreal bugging scene with that crazy bug with the long tendrils swirling around in what looks like a higher frame rate than the rest of the shot around it, followed by the mirror scream and the metallic drowning scream followed by the waking up in the pod of human entrails scene, followed by the highly messed up \"How do you define 'real'\" Where the concept of reality literally goes up in quotation marks and flies away, where the movie sets the tone that 'reality is simply electrical signals interpreted by your brain' is the most we humans can make of our surroundings - almost makes the concept of The Matrix scarily plausible - and also in a way kind of timely of how the Internet has evolved leaps and bounds since 1999 and the plausibility of VR at the moment (I mean have you seen Half-Life Alyx)\n\nAnd of course you have the explanation of the matrix that follows. Truly one of the heaviest exposition scenes in cinema history.\n\nAnd that's about as far as I survived my first viewing of this movie all those years ago. As a kid's first viewing, this movie successfully found it's way inside my head and left my mind shattered literally unable to watch any more. You would think that would be a terrible thing to say about a movie, but not here. The Matrix is an unparalleled and unprecedented movie experience as humanity is at the core of this movie.\n\nThe first act plays as a setup for such a hopeless notion as the nature of the matrix is revealed, only to have this notion flipped on it's head when the matrix itself starts being a fun place to be in the eyes of Neo and the evolution of his character aswell as the rebels that he meets that teach him of the humanity that underlies every person trapped inside it under the oppression of the inhuman controllers.\n\nOnce the true nature of the matrix is revealed. You can bend it to your will and then you can do whatever you want. The Matrix is the ultimate story and parable of humanity overcoming and opressive and dystopian scenario, being controlled by machines, and is masterful in it's writing and direction. The casting was very well thought out with Keanu Reeves killing it as Neo, aswell as Laurence Fishburne and Carrie Anne-Moss as great supporting roles, with Hugo Weaving as an extremley strong Sci-Fi villan as the cold, sociopathic AI Villan Agent Smith.\n\nWith Neo as the embodiment of humanity against Smith which is devoid of such, follows an unforgettable experience of human over machine. A classic and terrifyingly brilliant film which may cause you to have an internal existential crisis, but that's just the power of this film."
+                }
+              },
+              "submissionDate": "2020-08-05",
+              "helpfulness": {
+                "upVotes": 181,
+                "downVotes": 10
+              },
+              "spoiler": true
+            }
+          },
+          {
+            "node": {
+              "id": "rw5228002",
+              "author": {
+                "nickName": "acedj"
+              },
+              "authorRating": 10,
+              "summary": {
+                "originalText": "Just wow"
+              },
+              "text": {
+                "originalText": {
+                  "plainText": "When this came out, I was living with a roommate. He went out and saw it, came home and said, \"Dude, you have to go see The Matrix.\" So we left and he sat through it a second time. This movie is splendidly done. The mystery about what the Matrix is, unravels and you see a dystopian future unlike any we as a race would want. I have watched this over and over and never tire of it. Everyone does a great job acting in this, the special effects are above par and the story is engaging."
+                }
+              },
+              "submissionDate": "2019-11-01",
+              "helpfulness": {
+                "upVotes": 343,
+                "downVotes": 26
+              },
+              "spoiler": false
+            }
+          }
+        ],
+        "pageInfo": {
+          "endCursor": "g4xp7dbqqywd4yab7oxxxnbxr7tmscj23mpddzh6iwdp6uddmas22d2jdxc27zs2daiwr2q4bjtu5bnir3iq",
+          "hasNextPage": true
+        }
+      }
+    }
+  },
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#",
+    "experimentalFields": {
+      "janet": [],
+      "ratings": [],
+      "markdown": [],
+      "identity": []
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "query": "query($id:ID!,$season:String!,$after:ID){title(id:$id){episodes{seasons{number} episodes(first:2,after:$after,filter:{includeSeasons:[$season]}){total edges{node{id titleText{text} primaryImage{url} plot{plotText{plainText}} ratingsSummary{aggregateRating voteCount} releaseDate{year month day} series{episodeNumber{seasonNumber episodeNumber}}}} pageInfo{endCursor hasNextPage}}}}}",
+  "variables": {
+    "id": "tt0903747",
+    "season": "2",
+    "after": "dHQxMjMyMjQ5"
+  }
+}

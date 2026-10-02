@@ -1,0 +1,47 @@
+{
+  "errors": [
+    {
+      "message": "Cannot query field \"cast\" on type \"Title\".",
+      "locations": [
+        {
+          "line": 1,
+          "column": 406
+        }
+      ],
+      "extensions": {
+        "code": "GRAPHQL_VALIDATION_FAILED",
+        "errorType": "CLIENT",
+        "isRetryable": false,
+        "locations": [
+          {
+            "line": 1,
+            "column": 406
+          }
+        ]
+      }
+    },
+    {
+      "message": "Cannot query field \"totalEpisodes\" on type \"Episodes\". Did you mean \"episodes\"?",
+      "locations": [
+        {
+          "line": 1,
+          "column": 643
+        }
+      ],
+      "extensions": {
+        "code": "GRAPHQL_VALIDATION_FAILED",
+        "errorType": "CLIENT",
+        "isRetryable": false,
+        "locations": [
+          {
+            "line": 1,
+            "column": 643
+          }
+        ]
+      }
+    }
+  ],
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#"
+  }
+}

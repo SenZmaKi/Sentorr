@@ -1,0 +1,322 @@
+{
+  "data": {
+    "title": {
+      "id": "tt0903747",
+      "titleText": {
+        "text": "Breaking Bad"
+      },
+      "originalTitleText": {
+        "text": "Breaking Bad"
+      },
+      "primaryImage": {
+        "url": "https://m.media-amazon.com/images/M/MV5BMzU5ZGYzNmQtMTdhYy00OGRiLTg0NmQtYjVjNzliZTg1ZGE4XkEyXkFqcGc@._V1_.jpg",
+        "width": 2000,
+        "height": 3000
+      },
+      "titleType": {
+        "id": "tvSeries",
+        "text": "TV Series",
+        "canHaveEpisodes": true
+      },
+      "releaseYear": {
+        "year": 2008,
+        "endYear": 2013
+      },
+      "releaseDate": {
+        "year": 2008,
+        "month": 1,
+        "day": 20
+      },
+      "ratingsSummary": {
+        "aggregateRating": 9.5,
+        "voteCount": 2684314
+      },
+      "plot": {
+        "plotText": {
+          "plainText": "A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine with a former student to secure his family's future."
+        }
+      },
+      "runtime": {
+        "seconds": 2880
+      },
+      "titleGenres": {
+        "genres": [
+          {
+            "genre": {
+              "text": "Crime"
+            }
+          },
+          {
+            "genre": {
+              "text": "Drama"
+            }
+          },
+          {
+            "genre": {
+              "text": "Thriller"
+            }
+          }
+        ]
+      },
+      "certificate": {
+        "rating": "TV-MA"
+      },
+      "meterRanking": {
+        "currentRank": 21
+      },
+      "productionStatus": {
+        "currentProductionStage": {
+          "text": "Released"
+        }
+      },
+      "moreLikeThisTitles": {
+        "edges": [
+          {
+            "node": {
+              "id": "tt3032476",
+              "titleText": {
+                "text": "Better Call Saul"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "tt0944947",
+              "titleText": {
+                "text": "Game of Thrones"
+              }
+            }
+          }
+        ],
+        "pageInfo": {
+          "endCursor": null,
+          "hasNextPage": false
+        }
+      },
+      "episodes": {
+        "seasons": [
+          {
+            "number": 1
+          },
+          {
+            "number": 2
+          },
+          {
+            "number": 3
+          },
+          {
+            "number": 4
+          },
+          {
+            "number": 5
+          }
+        ],
+        "episodes": {
+          "total": 62,
+          "edges": [
+            {
+              "node": {
+                "id": "tt0959621",
+                "titleText": {
+                  "text": "Pilot"
+                },
+                "series": {
+                  "episodeNumber": {
+                    "seasonNumber": 1,
+                    "episodeNumber": 1
+                  }
+                }
+              }
+            },
+            {
+              "node": {
+                "id": "tt1054724",
+                "titleText": {
+                  "text": "Cat's in the Bag..."
+                },
+                "series": {
+                  "episodeNumber": {
+                    "seasonNumber": 1,
+                    "episodeNumber": 2
+                  }
+                }
+              }
+            }
+          ],
+          "pageInfo": {
+            "endCursor": "dHQxMDU0NzI0",
+            "hasNextPage": true
+          }
+        }
+      },
+      "credits": {
+        "edges": [
+          {
+            "node": {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0186505",
+                "nameText": {
+                  "text": "Bryan Cranston"
+                },
+                "primaryImage": {
+                  "url": "https://m.media-amazon.com/images/M/MV5BMTA2NjEyMTY4MTVeQTJeQWpwZ15BbWU3MDQ5NDAzNDc@._V1_.jpg"
+                }
+              },
+              "category": {
+                "id": "actor",
+                "text": "Actor"
+              },
+              "characters": [
+                {
+                  "name": "Walter White"
+                }
+              ]
+            }
+          },
+          {
+            "node": {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0348152",
+                "nameText": {
+                  "text": "Anna Gunn"
+                },
+                "primaryImage": {
+                  "url": "https://m.media-amazon.com/images/M/MV5BMTU0NTk3MDQ3OV5BMl5BanBnXkFtZTcwNDY3NzQ4Mg@@._V1_.jpg"
+                }
+              },
+              "category": {
+                "id": "actress",
+                "text": "Actress"
+              },
+              "characters": [
+                {
+                  "name": "Skyler White"
+                }
+              ]
+            }
+          }
+        ],
+        "pageInfo": {
+          "endCursor": "bm0wMzQ4MTUyL3R0MDkwMzc0Ny9hY3RyZXNz",
+          "hasNextPage": true
+        }
+      },
+      "principalCredits": [
+        {
+          "category": {
+            "id": "creator",
+            "text": "Creator"
+          },
+          "credits": [
+            {
+              "__typename": "Crew",
+              "name": {
+                "id": "nm0319213",
+                "nameText": {
+                  "text": "Vince Gilligan"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "category": {
+            "id": "cast",
+            "text": "Stars"
+          },
+          "credits": [
+            {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0186505",
+                "nameText": {
+                  "text": "Bryan Cranston"
+                }
+              }
+            },
+            {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0666739",
+                "nameText": {
+                  "text": "Aaron Paul"
+                }
+              }
+            },
+            {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm0348152",
+                "nameText": {
+                  "text": "Anna Gunn"
+                }
+              }
+            },
+            {
+              "__typename": "Cast",
+              "name": {
+                "id": "nm1336827",
+                "nameText": {
+                  "text": "Betsy Brandt"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "primaryVideos": {
+        "edges": [
+          {
+            "node": {
+              "id": "vi338798873",
+              "name": {
+                "value": "\"Say My Name\""
+              },
+              "description": {
+                "value": "Here's a look at the final eight episodes of Breaking Bad, which premieres on Sunday, August 11 at 9/8c"
+              },
+              "thumbnail": {
+                "url": "https://m.media-amazon.com/images/M/MV5BMTJiMzgwZTktYzZhZC00YzhhLWEzZDUtMGM2NTE4MzQ4NGFmXkEyXkFqcGdeQWpybA@@._V1_.jpg"
+              },
+              "playbackURLs": [
+                {
+                  "url": "https://imdb-video.media-imdb.com/vi338798873/hls-1616202355945-master.m3u8?Expires=1790998470&Signature=g76RBxqEwj0PTNHcN2CrXBaFgixsUX8qBbF238naqUQkZvg6KUqi7pCx2pBJPmTazbIsJoIY395ptJiyY~bZiTmYY4v2BCnB2giP8ojUpJGjYlsWZ9w6OVrfn~NPdB5CY46ia1P5rjJjdGpIvSVzfRxP0VOZX3byMTbuWZwnPc87NQvbMYOX9JzNtBvBeiU2y3krJC39IogrGbg1oOSuOR1~xVP7ZEVfoZjw~vWVhTdCV9CFpD6uVIcr6QLCuTZVjW2qkhfi7kEUsvwqJT0SUSzoyuiw3bbYWjQ4kfvNDWAJGer6qtCnFK3BUrme9PDAiWWMDrfy4NT3bGDHDEEi~g__&Key-Pair-Id=APKAIFLZBVQZ24NQH3KA",
+                  "mimeType": "application/x-mpegurl"
+                },
+                {
+                  "url": "https://imdb-video.media-imdb.com/vi338798873/1434659454657-dx9ykf-1616202355945.mp4?Expires=1790998470&Signature=XjYYI-EGmJdSK0ExTicxX9koIe028LI44mNlR~92TDK7ai1ECBxx7SpRS6pDLIRPM2h1R78BtvnlGvJV5nTsqpm3rDMXquxlnLzXplEQhtSVWoEYTiWZ8n76wjdjefxT26TIJ1zUnsRmd9Q4~U1Q79gXLdJawiHPtnRCrcCbU0vFa0IUAiozOepxuWZ-TshOc2qthev4a2CZC0wOfzgo6seL6Wb3IjGjjVIf6xTxTrx-IVPSUcAW5a5xuDoijZgnx0Dq0RW0K7J8AAggVnZjr3UXE-tIvzw7HD2ZZBcy6GPoXpWMstMu7Ly-WqhwRZzU~~FhPQzaKfNFX6R7Epe5Vw__&Key-Pair-Id=APKAIFLZBVQZ24NQH3KA",
+                  "mimeType": "video/mp4"
+                },
+                {
+                  "url": "https://imdb-video.media-imdb.com/vi338798873/1434659379400-8cjq25-1616202355945.mp4?Expires=1790998470&Signature=IHB3mo42uOMvySMRX7nel2JUNnK2oytKr3sv5PP1Q9OsHFngODAXIZeT-SmUjdZVLwHHrBQPKxz4RIvJH8lv5VewPR4b3TFUdqUJQn5DofD7ggxo4mtSoxVNpK-PJUFGut28huz6XrqVsfbKIkhwP2WNgKe1VrTj8wKLrYNke7rOftZ6ZRFYmVxRHpscPuwlt4jd9dpCA0-GN467SWSMkg3vX2WHJmtfu4UWrVdrZSbU9uEaC6x8M7rfOoewYc7Ga8vZq6QBeiN8UMxgTTRPtKdZZfTpeYTNv0dJUadLO5VesUxgfSTkYxuwZB7~p~nOzYabQwM7r9oFy8Sfun-Y3Q__&Key-Pair-Id=APKAIFLZBVQZ24NQH3KA",
+                  "mimeType": "video/mp4"
+                },
+                {
+                  "url": "https://imdb-video.media-imdb.com/vi338798873/1434659607842-pgv4ql-1616202355944.mp4?Expires=1790998470&Signature=aJ9WA5icjBkyDw0Ut0pWf-w6EKWDt6WUMLFiqrWG8rsqFYvKdSkAM0MGiHvL7c6gPh56q6nLQzdYYKq9OQEekxp5o9eEOxzho5-fJoQN~kq1HKreLr3ASTD3vANMfjl26OFbS4T2KkEfErN4pYRzZ8dNN1qc~gAbqeSIPF1y2XJtBmsyt8ZKHfroA0n~msUgUCTxmuwlYLwSUiOlNno3PGePxbrEgIeCyrSHwxwlP4ll-8HatTOleBrJq7joDfM6NFtTlPmiogqL5Gxoi8hzdK7OTwkdoRB1fQ8Pv~rKEvN3Wcp5u0vCFKfIuVmqojKlQzPvl4-n20s-WJbd3XudvQ__&Key-Pair-Id=APKAIFLZBVQZ24NQH3KA",
+                  "mimeType": "video/mp4"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#",
+    "experimentalFields": {
+      "janet": [],
+      "video": [],
+      "videoPlayback": []
+    },
+    "entitlements": {
+      "fields": {
+        "Title.meterRanking": "DENY",
+        "Title.productionStatus": "DENY"
+      },
+      "inUse": true
+    }
+  }
+}

@@ -1,0 +1,5 @@
+query SentorrSearch($first: Int!, $after: String, $term: String!) {
+ advancedTitleSearch(first:$first,after:$after,constraints:{titleTextConstraint:{searchTerm:$term},titleTypeConstraint:{anyTitleTypeIds:["movie","tvSeries","tvMiniSeries"]}},sort:{sortBy:POPULARITY,sortOrder:ASC}) {
+ total pageInfo {hasNextPage endCursor} edges {node {title { id titleText{text} titleType{id text canHaveEpisodes} primaryImage{url width height} releaseYear{year endYear} ratingsSummary{aggregateRating voteCount} plot{plotText{plainText}} runtime{seconds} titleGenres{genres{genre{id text}}} }}}
+ }
+}

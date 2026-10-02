@@ -1,0 +1,135 @@
+{
+  "observedOn": "2026-10-02",
+  "results": [
+    {
+      "titleId": "tt0903747",
+      "httpStatus": 200,
+      "errors": null,
+      "primaryImage": {
+        "url": "https://m.media-amazon.com/images/M/MV5BMzU5ZGYzNmQtMTdhYy00OGRiLTg0NmQtYjVjNzliZTg1ZGE4XkEyXkFqcGc@._V1_.jpg",
+        "width": 2000,
+        "height": 3000
+      },
+      "images": {
+        "edges": [
+          {
+            "node": {
+              "id": "rm4224482560",
+              "url": "https://m.media-amazon.com/images/M/MV5BMjE1OTMwNTA5NV5BMl5BanBnXkFtZTgwMDkzOTA1NjM@._V1_.jpg",
+              "width": 2048,
+              "height": 1365,
+              "type": "still_frame"
+            }
+          },
+          {
+            "node": {
+              "id": "rm1867138048",
+              "url": "https://m.media-amazon.com/images/M/MV5BMTczNjY0NDQ4MF5BMl5BanBnXkFtZTgwNTQ2MTU5NTM@._V1_.jpg",
+              "width": 2048,
+              "height": 1365,
+              "type": "still_frame"
+            }
+          },
+          {
+            "node": {
+              "id": "rm1850360832",
+              "url": "https://m.media-amazon.com/images/M/MV5BMzQwODMxOTg5MF5BMl5BanBnXkFtZTgwNjQ2MTU5NTM@._V1_.jpg",
+              "width": 2048,
+              "height": 1363,
+              "type": "still_frame"
+            }
+          },
+          {
+            "node": {
+              "id": "rm1833583616",
+              "url": "https://m.media-amazon.com/images/M/MV5BMTAwNDI2OTczNzFeQTJeQWpwZ15BbWU4MDc0NjE1OTUz._V1_.jpg",
+              "width": 2048,
+              "height": 1360,
+              "type": "still_frame"
+            }
+          },
+          {
+            "node": {
+              "id": "rm457851904",
+              "url": "https://m.media-amazon.com/images/M/MV5BMTYxOTk1MTY0NF5BMl5BanBnXkFtZTgwMzI2MTU5NTM@._V1_.jpg",
+              "width": 2048,
+              "height": 1365,
+              "type": "still_frame"
+            }
+          }
+        ]
+      },
+      "entitlements": {
+        "fields": {
+          "Title.images": "DENY"
+        },
+        "inUse": true
+      }
+    },
+    {
+      "titleId": "tt0133093",
+      "httpStatus": 200,
+      "errors": null,
+      "primaryImage": {
+        "url": "https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_.jpg",
+        "width": 2100,
+        "height": 3156
+      },
+      "images": {
+        "edges": [
+          {
+            "node": {
+              "id": "rm3470144001",
+              "url": "https://m.media-amazon.com/images/M/MV5BMDEwMGVlODAtYmU5Zi00OGM3LTg1N2YtMjEyNDMxYWY1ZGY2XkEyXkFqcGc@._V1_.jpg",
+              "width": 3072,
+              "height": 2048,
+              "type": "still_frame"
+            }
+          },
+          {
+            "node": {
+              "id": "rm2182820864",
+              "url": "https://m.media-amazon.com/images/M/MV5BMjQ1NDAwMzI4Nl5BMl5BanBnXkFtZTgwMDkwMTEyMjI@._V1_.jpg",
+              "width": 1600,
+              "height": 835,
+              "type": "still_frame"
+            }
+          },
+          {
+            "node": {
+              "id": "rm3441835264",
+              "url": "https://m.media-amazon.com/images/M/MV5BNzM4OTkzMjcxOF5BMl5BanBnXkFtZTgwMTkxMjI1MTI@._V1_.jpg",
+              "width": 1920,
+              "height": 798,
+              "type": "still_frame"
+            }
+          },
+          {
+            "node": {
+              "id": "rm2182645504",
+              "url": "https://m.media-amazon.com/images/M/MV5BMTMxMDg1MjY4OF5BMl5BanBnXkFtZTcwMTU3MTIxNA@@._V1_.jpg",
+              "width": 1710,
+              "height": 1130,
+              "type": "still_frame"
+            }
+          },
+          {
+            "node": {
+              "id": "rm2165868288",
+              "url": "https://m.media-amazon.com/images/M/MV5BMjQ4NTAzNTE2OV5BMl5BanBnXkFtZTcwMjU3MTIxNA@@._V1_.jpg",
+              "width": 1710,
+              "height": 787,
+              "type": "still_frame"
+            }
+          }
+        ]
+      },
+      "entitlements": {
+        "fields": {
+          "Title.images": "DENY"
+        },
+        "inUse": true
+      }
+    }
+  ]
+}

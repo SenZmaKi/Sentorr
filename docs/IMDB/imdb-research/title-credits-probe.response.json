@@ -1,0 +1,27 @@
+{
+  "errors": [
+    {
+      "message": "Cannot query field \"primaryImage\" on type \"Video\". Did you mean \"primaryTitle\" or \"primaryLanguage\"?",
+      "locations": [
+        {
+          "line": 1,
+          "column": 192
+        }
+      ],
+      "extensions": {
+        "code": "GRAPHQL_VALIDATION_FAILED",
+        "errorType": "CLIENT",
+        "isRetryable": false,
+        "locations": [
+          {
+            "line": 1,
+            "column": 192
+          }
+        ]
+      }
+    }
+  ],
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#"
+  }
+}

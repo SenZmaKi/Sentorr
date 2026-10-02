@@ -1,0 +1,109 @@
+{
+  "data": {
+    "title": {
+      "id": "tt0133093",
+      "titleText": {
+        "text": "The Matrix"
+      },
+      "originalTitleText": {
+        "text": "The Matrix"
+      },
+      "primaryImage": {
+        "url": "https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_.jpg",
+        "width": 2100,
+        "height": 3156
+      },
+      "titleType": {
+        "id": "movie",
+        "text": "Movie",
+        "canHaveEpisodes": false
+      },
+      "releaseYear": {
+        "year": 1999,
+        "endYear": null
+      },
+      "releaseDate": {
+        "year": 1999,
+        "month": 3,
+        "day": 31
+      },
+      "ratingsSummary": {
+        "aggregateRating": 8.7,
+        "voteCount": 2282627
+      },
+      "plot": {
+        "plotText": {
+          "plainText": "A computer hacker discovers that his life is nothing more than an elaborate simulation run by an evil AI."
+        }
+      },
+      "runtime": {
+        "seconds": 8160
+      },
+      "titleGenres": {
+        "genres": [
+          {
+            "genre": {
+              "text": "Action"
+            }
+          },
+          {
+            "genre": {
+              "text": "Sci-Fi"
+            }
+          }
+        ]
+      },
+      "certificate": {
+        "rating": "R"
+      },
+      "meterRanking": {
+        "currentRank": 154
+      },
+      "productionStatus": {
+        "currentProductionStage": {
+          "text": "Released"
+        }
+      },
+      "moreLikeThisTitles": {
+        "edges": [
+          {
+            "node": {
+              "id": "tt0234215",
+              "titleText": {
+                "text": "The Matrix Reloaded"
+              }
+            }
+          },
+          {
+            "node": {
+              "id": "tt0242653",
+              "titleText": {
+                "text": "The Matrix Revolutions"
+              }
+            }
+          }
+        ],
+        "pageInfo": {
+          "endCursor": null,
+          "hasNextPage": false
+        }
+      },
+      "episodes": null
+    }
+  },
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#",
+    "experimentalFields": {
+      "janet": [],
+      "ranking": [],
+      "ratings": []
+    },
+    "entitlements": {
+      "fields": {
+        "Title.meterRanking": "DENY",
+        "Title.productionStatus": "DENY"
+      },
+      "inUse": true
+    }
+  }
+}

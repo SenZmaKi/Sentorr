@@ -1,0 +1,70 @@
+{
+  "data": {
+    "title": {
+      "reviews": {
+        "total": 4723,
+        "edges": [
+          {
+            "node": {
+              "id": "rw5228002",
+              "author": {
+                "nickName": "acedj"
+              },
+              "authorRating": 10,
+              "summary": {
+                "originalText": "Just wow"
+              },
+              "text": {
+                "originalText": {
+                  "plainText": "When this came out, I was living with a roommate. He went out and saw it, came home and said, \"Dude, you have to go see The Matrix.\" So we left and he sat through it a second time. This movie is splendidly done. The mystery about what the Matrix is, unravels and you see a dystopian future unlike any we as a race would want. I have watched this over and over and never tire of it. Everyone does a great job acting in this, the special effects are above par and the story is engaging."
+                }
+              },
+              "submissionDate": "2019-11-01",
+              "helpfulness": {
+                "upVotes": 343,
+                "downVotes": 26
+              },
+              "spoiler": false
+            }
+          },
+          {
+            "node": {
+              "id": "rw6139973",
+              "author": {
+                "nickName": "suryanmukul"
+              },
+              "authorRating": 10,
+              "summary": {
+                "originalText": "Benchmark forever."
+              },
+              "text": {
+                "originalText": {
+                  "plainText": "The Matrix - 1999\n\nThis was a real change in filmmaking. Like watching it again in 2020, i.e. after 21 years and it still feels fresh. Iconic scenes are still having benchmarks setting up.\n\nIf we say it sci-fi at its best, it won't be wrong. The hype was real, it is still not easy to match the level of Matrix where we experience the connection of humans and science, that too with amazing action fight and chase scenes, not just normal scenes they were, multiple exposures, slow motion 3D moves, Oh My God, and it's understandable as well like what are the characters up to and what storyline they are entering into. The script was very well written and executed otherwise it could have been a mess. A special appreciation in managing the theme with those black color costumes and a scientific zone with unimaginable equipment and props doing unbelievable things in the two worlds created. No spoilers, but the action scenes in the climax where the protagonist goes to save someone from agents are really breathtaking. The technology used at its best.\n\nA salute to Wachowski Brothers and the team for creating this masterpiece. It will be a great competition and motivation as well for many films coming in the future."
+                }
+              },
+              "submissionDate": "2020-10-01",
+              "helpfulness": {
+                "upVotes": 255,
+                "downVotes": 18
+              },
+              "spoiler": false
+            }
+          }
+        ],
+        "pageInfo": {
+          "endCursor": "g4x77dbqqywd4yyh72wx3obvrxr44azs3qmt5zh6iwdpyu3cmewkudsjdu3toabyy2oatbchzmb3cihrkxia",
+          "hasNextPage": true
+        }
+      }
+    }
+  },
+  "extensions": {
+    "disclaimer": "Public, commercial, and/or non-private use of the IMDb data provided by this API is not allowed. For limited non-commercial use of IMDb data and the associated requirements see https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX#",
+    "experimentalFields": {
+      "janet": [],
+      "ratings": [],
+      "markdown": [],
+      "identity": []
+    }
+  }
+}

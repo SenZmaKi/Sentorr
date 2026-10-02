@@ -103,7 +103,7 @@ install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
 # Bundle desktop identity alongside the relocatable app for Linux packaging.
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/com.sentorr.sentorr.desktop"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications" COMPONENT Runtime)
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png"
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/com.sentorr.sentorr.png"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/512x512/apps"
   RENAME "com.sentorr.sentorr.png" COMPONENT Runtime)
 

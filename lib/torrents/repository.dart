@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'models.dart';
+import 'diagnostics.dart';
 import 'sources/bitsearch.dart';
 import 'sources/pirate_bay.dart';
 import 'sources/source.dart';
@@ -24,26 +25,71 @@ class TorrentRepository {
     TorrentQuery query, {
     CancelToken? cancelToken,
   }) async {
+    if (cancelToken?.isCancelled ?? false) throw cancelToken!.cancelError!;
     final batches = await Future.wait(
-      sources.where((s) => s.supports(query)).map((source) async {
+      sources.map((source) async {
+        if (!source.supports(query)) {
+          return TorrentSearchResult(
+            [],
+            [],
+            diagnostics: [
+              SourceSearchDiagnostics(
+                source: source.id,
+                status: SourceSearchStatus.unsupported,
+              ),
+            ],
+          );
+        }
+        final rejected = <TorrentRejection, int>{};
+        SourceFailure? failure;
         try {
-          final releases = await source.search(query, cancelToken: cancelToken);
-          return TorrentSearchResult(releases, []);
+          final releases = source is DiagnosticTorrentSource
+              ? await source.searchWithDiagnostics(
+                  query,
+                  cancelToken: cancelToken,
+                  onRejected: (reason) =>
+                      rejected.update(reason, (n) => n + 1, ifAbsent: () => 1),
+                )
+              : await source.search(query, cancelToken: cancelToken);
+          return TorrentSearchResult(
+            releases,
+            [],
+            diagnostics: [
+              SourceSearchDiagnostics(
+                source: source.id,
+                status: SourceSearchStatus.succeeded,
+                acceptedCount: releases.length,
+                rejected: rejected,
+              ),
+            ],
+          );
         } on DioException catch (error) {
           if (CancelToken.isCancel(error)) rethrow;
-          return TorrentSearchResult([], [
-            SourceFailure(
-              source.id,
-              error.response == null
-                  ? 'Network ${error.type.name}'
-                  : 'HTTP ${error.response!.statusCode}',
-            ),
-          ]);
+          failure = SourceFailure(
+            source.id,
+            error.response == null
+                ? 'Network ${error.type.name}'
+                : 'HTTP ${error.response!.statusCode}',
+            searchText: query.searchText,
+          );
         } on SourceException catch (error) {
-          return TorrentSearchResult([], [
-            SourceFailure(source.id, error.message),
-          ]);
+          failure = SourceFailure(
+            source.id,
+            error.message,
+            searchText: query.searchText,
+          );
         }
+        return TorrentSearchResult(
+          [],
+          [failure],
+          diagnostics: [
+            SourceSearchDiagnostics(
+              source: source.id,
+              status: SourceSearchStatus.failed,
+              failure: failure,
+            ),
+          ],
+        );
       }),
     );
     if (cancelToken?.isCancelled ?? false) {
@@ -61,6 +107,10 @@ class TorrentRepository {
         final seedOrder = b.seeders.compareTo(a.seeders);
         return seedOrder == 0 ? a.infoHash.compareTo(b.infoHash) : seedOrder;
       });
-    return TorrentSearchResult(releases, batches.expand((b) => b.failures));
+    return TorrentSearchResult(
+      releases,
+      batches.expand((b) => b.failures),
+      diagnostics: batches.expand((b) => b.diagnostics),
+    );
   }
 }

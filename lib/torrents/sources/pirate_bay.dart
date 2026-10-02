@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 
 import '../models.dart';
+import '../diagnostics.dart';
 import '../parsing.dart';
 import 'source.dart';
 
-class PirateBaySource implements TorrentSource {
+class PirateBaySource implements DiagnosticTorrentSource {
   PirateBaySource(Dio dio, {this.endpoint = 'https://apibay.org/q.php'})
     : client = SourceClient(dio);
   final SourceClient client;
@@ -17,6 +18,17 @@ class PirateBaySource implements TorrentSource {
   Future<List<TorrentRelease>> search(
     TorrentQuery query, {
     CancelToken? cancelToken,
+  }) async => searchWithDiagnostics(
+    query,
+    cancelToken: cancelToken,
+    onRejected: (_) {},
+  );
+
+  @override
+  Future<List<TorrentRelease>> searchWithDiagnostics(
+    TorrentQuery query, {
+    CancelToken? cancelToken,
+    required void Function(TorrentRejection) onRejected,
   }) async {
     final data = await client.get(
       Uri.parse(endpoint)
@@ -27,20 +39,34 @@ class PirateBaySource implements TorrentSource {
       throw const SourceException('Unexpected Pirate Bay response');
     }
     final results = <TorrentRelease>[];
-    for (final row in data.whereType<Map>()) {
+    for (final row in data) {
+      if (row is! Map) {
+        onRejected(TorrentRejection.invalidMetadata);
+        continue;
+      }
+      if (row['name'] == 'No results returned' &&
+          row['info_hash'] == '0' * 40) {
+        continue;
+      }
       final category = integer(row['category']);
       final hash = infoHash(row['info_hash']);
       final name = row['name'];
       final seeds = integer(row['seeders']), size = integer(row['size']);
       if (category == null ||
-          category < 200 ||
-          category >= 300 ||
           hash == null ||
           name is! String ||
           seeds == null ||
-          seeds <= 0 ||
           size == null ||
           size <= 0) {
+        onRejected(TorrentRejection.invalidMetadata);
+        continue;
+      }
+      if (category < 200 || category >= 300) {
+        onRejected(TorrentRejection.nonVideo);
+        continue;
+      }
+      if (seeds <= 0) {
+        onRejected(TorrentRejection.noSeeders);
         continue;
       }
       final imdb = row['imdb'];
@@ -52,9 +78,16 @@ class PirateBaySource implements TorrentSource {
           imdb.isNotEmpty &&
           query.imdbId != null &&
           !knownIdentity) {
+        onRejected(TorrentRejection.identityMismatch);
         continue;
       }
-      if (!matchesRelease(query, name, trustedIdentity: knownIdentity)) {
+      final rejection = releaseRejection(
+        query,
+        name,
+        trustedIdentity: knownIdentity,
+      );
+      if (rejection != null) {
+        onRejected(rejection);
         continue;
       }
       results.add(

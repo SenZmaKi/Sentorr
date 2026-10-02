@@ -1,4 +1,6 @@
 import 'models.dart';
+import 'diagnostics.dart';
+import 'release_metadata.dart';
 
 int? integer(Object? value) => int.tryParse('$value');
 String? infoHash(Object? value) {
@@ -43,7 +45,7 @@ int? resolutionOf(String text) {
   final m = RegExp(
     r'(?:^|[^\d])(2160|1080|720|576|540|480)p\b',
     caseSensitive: false,
-  ).firstMatch(text.replaceAll('.', ' '));
+  ).firstMatch(text.replaceAll(RegExp(r'[._]'), ' '));
   if (m != null) return int.parse(m[1]!);
   return RegExp(r'\b(?:4k|uhd)\b', caseSensitive: false).hasMatch(text)
       ? 2160
@@ -75,15 +77,21 @@ double titleSimilarity(String left, String right) {
 }
 
 final _season = RegExp(
-  r'\b(?:s(\d{1,2})|season\s*(\d{1,2}))(?:\s*(?:e|episode\s*)(\d{1,3})(?!\d))?\b',
+  r'\b(?:(?:s(\d{1,2})|season\s*(\d{1,2}))(?:\s*(?:e|episode\s*)(\d{1,3})(?!\d))?|(\d{1,2})x(\d{1,3}))\b',
   caseSensitive: false,
 );
 final _marker = RegExp(
-  r'\b(?:s\d{1,2}(?:e\d{1,3})?|season\s*\d{1,2}|(?:19|20)\d{2}|2160p|1080p|720p|480p|4k|uhd|bluray|brrip|bdrip|webrip|web-dl|hdtv|x264|x265)\b',
+  r'\b(?:s\d{1,2}(?:e\d{1,3})?|season\s*\d{1,2}|\d{1,2}x\d{1,3}|(?:19|20)\d{2}|2160p|1080p|720p|480p|4k|uhd|bluray|brrip|bdrip|webrip|web-dl|hdtv|x264|x265)\b',
   caseSensitive: false,
 );
 
 bool matchesRelease(
+  TorrentQuery query,
+  String name, {
+  bool trustedIdentity = false,
+}) => releaseRejection(query, name, trustedIdentity: trustedIdentity) == null;
+
+TorrentRejection? releaseRejection(
   TorrentQuery query,
   String name, {
   bool trustedIdentity = false,
@@ -94,22 +102,35 @@ bool matchesRelease(
       .trim();
   final seasons = _season.allMatches(clean).toList();
   if (query.isSeries) {
+    final metadata = ReleaseMetadata.parse(name);
     // Multi-season/range/multi-episode releases need a richer parser; fail closed.
     if (seasons.length != 1 ||
         RegExp(
           r'\b(?:s\d+|e\d+)\s*[-–]\s*(?:s|e)?\d+|e\d+e\d+',
           caseSensitive: false,
         ).hasMatch(clean)) {
-      return false;
+      return TorrentRejection.ambiguousEpisodes;
     }
     final s = seasons.single;
-    if (int.parse(s[1] ?? s[2]!) != query.season) return false;
-    final episode = integer(s[3]);
+    // Reject ranges and additional episode markers even in long-form names.
+    if (RegExp(
+      r'^\s*(?:[-–]\s*(?:s|e|episode\s*)?\d|(?:e|episode\s*)\d|\d{1,2}x\d)',
+      caseSensitive: false,
+    ).hasMatch(clean.substring(s.end))) {
+      return TorrentRejection.ambiguousEpisodes;
+    }
+    if (metadata.seasons.length > 1 || metadata.episodes.length > 1) {
+      return TorrentRejection.ambiguousEpisodes;
+    }
+    if (metadata.seasons.singleOrNull != query.season) {
+      return TorrentRejection.seasonMismatch;
+    }
+    final episode = metadata.episodes.singleOrNull;
     if (query.isSeasonPack ? episode != null : episode != query.episode) {
-      return false;
+      return TorrentRejection.episodeMismatch;
     }
   } else if (seasons.isNotEmpty) {
-    return false;
+    return TorrentRejection.seasonMismatch;
   }
   if (!query.isSeries &&
       RegExp(
@@ -120,7 +141,7 @@ bool matchesRelease(
           .any(
             (m) => !query.title.toLowerCase().contains(m[0]!.toLowerCase()),
           )) {
-    return false;
+    return TorrentRejection.titleMismatch;
   }
   final years = RegExp(r'\b((?:19|20)\d{2})\b')
       .allMatches(clean)
@@ -131,7 +152,7 @@ bool matchesRelease(
       );
   final year = years.isEmpty ? null : years.first;
   if (query.year != null && year != null && integer(year[1]) != query.year) {
-    return false;
+    return TorrentRejection.yearMismatch;
   }
   if (!trustedIdentity) {
     final markers = _marker
@@ -155,27 +176,48 @@ bool matchesRelease(
     final digits = RegExp(r'\d+');
     if (digits.allMatches(title).map((m) => m[0]).join(',') !=
         digits.allMatches(query.title).map((m) => m[0]).join(',')) {
-      return false;
+      return TorrentRejection.titleMismatch;
     }
     final exact = _normalize(title) == _normalize(query.title);
     if (!exact &&
         (RegExp(r'\d').hasMatch(query.title) ||
             _normalize(query.title).length < 8 ||
             titleSimilarity(query.title, title) < .88)) {
-      return false;
+      return TorrentRejection.titleMismatch;
     }
   }
   if (query.languages.isNotEmpty) {
-    final lower = clean.toLowerCase();
+    // Keep bracketed language hints, but never count language words in titles.
+    final raw = name.replaceAll(RegExp(r'[._]'), ' ');
+    final metadata = _marker
+        .allMatches(raw)
+        .where(
+          (m) => !_normalize(query.title).startsWith(
+            _normalize(
+              raw.substring(0, m.end).replaceAll(RegExp(r'\[[^\]]*\]'), ''),
+            ),
+          ),
+        )
+        .firstOrNull;
+    if (metadata == null) return TorrentRejection.languageUnconfirmed;
+    // A subtitles-only marker cannot establish the preferred audio language.
+    final lower = raw
+        .substring(metadata.start)
+        .toLowerCase()
+        .replaceAll(
+          RegExp(r'\b(?:subs?|subtitles|subbed)\b\s*[:=-]?\s*\w+\b'),
+          '',
+        )
+        .replaceAll(RegExp(r'\b\w+\s+(?:subs?|subtitles|subbed)\b'), '');
     if (!query.languages.any(
       (language) => RegExp(
         '\\b(?:${languageTokens(language).map(RegExp.escape).join('|')})\\b',
       ).hasMatch(lower),
     )) {
-      return false;
+      return TorrentRejection.languageUnconfirmed;
     }
   }
-  return true;
+  return null;
 }
 
 DateTime? unixDate(Object? value) {
@@ -184,16 +226,17 @@ DateTime? unixDate(Object? value) {
   return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true);
 }
 
-String normalizeLanguage(String language) => switch (language.toLowerCase()) {
-  'english' || 'eng' => 'en',
-  'french' || 'fre' || 'fra' => 'fr',
-  'spanish' || 'spa' => 'es',
-  'german' || 'ger' || 'deu' => 'de',
-  'japanese' || 'jpn' => 'ja',
-  'hindi' || 'hin' => 'hi',
-  'italian' || 'ita' => 'it',
-  _ => language.toLowerCase(),
-};
+String normalizeLanguage(String language) =>
+    switch (language.trim().toLowerCase()) {
+      'english' || 'eng' => 'en',
+      'french' || 'fre' || 'fra' => 'fr',
+      'spanish' || 'spa' => 'es',
+      'german' || 'ger' || 'deu' => 'de',
+      'japanese' || 'jpn' => 'ja',
+      'hindi' || 'hin' => 'hi',
+      'italian' || 'ita' => 'it',
+      _ => language.trim().toLowerCase(),
+    };
 List<String> languageTokens(String language) =>
     switch (normalizeLanguage(language)) {
       'en' => ['english', 'eng', 'en'],
@@ -203,5 +246,5 @@ List<String> languageTokens(String language) =>
       'ja' => ['japanese', 'jpn', 'ja'],
       'hi' => ['hindi', 'hin', 'hi'],
       'it' => ['italian', 'ita', 'it'],
-      _ => [language.toLowerCase()],
+      _ => [normalizeLanguage(language)],
     };

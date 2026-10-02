@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 
 import '../models.dart';
+import '../diagnostics.dart';
 import '../parsing.dart';
 import 'source.dart';
 
-class YtsSource implements TorrentSource {
+class YtsSource implements DiagnosticTorrentSource {
   YtsSource(
     Dio dio, {
     this.endpoint = 'https://movies-api.accel.li/api/v2/list_movies.json',
@@ -19,6 +20,17 @@ class YtsSource implements TorrentSource {
   Future<List<TorrentRelease>> search(
     TorrentQuery query, {
     CancelToken? cancelToken,
+  }) async => searchWithDiagnostics(
+    query,
+    cancelToken: cancelToken,
+    onRejected: (_) {},
+  );
+
+  @override
+  Future<List<TorrentRelease>> searchWithDiagnostics(
+    TorrentQuery query, {
+    CancelToken? cancelToken,
+    required void Function(TorrentRejection) onRejected,
   }) async {
     if (!supports(query)) return [];
     final json = await client.get(
@@ -35,9 +47,17 @@ class YtsSource implements TorrentSource {
     if (movies == null && integer(data['movie_count']) == 0) return [];
     if (movies is! List) throw const SourceException('Missing YTS movies');
     final results = <TorrentRelease>[];
-    for (final movie in movies.whereType<Map>()) {
-      if (movie['imdb_code'] != query.imdbId ||
-          (query.year != null && integer(movie['year']) != query.year)) {
+    for (final movie in movies) {
+      if (movie is! Map) {
+        onRejected(TorrentRejection.invalidMetadata);
+        continue;
+      }
+      if (movie['imdb_code'] != query.imdbId) {
+        onRejected(TorrentRejection.identityMismatch);
+        continue;
+      }
+      if (query.year != null && integer(movie['year']) != query.year) {
+        onRejected(TorrentRejection.yearMismatch);
         continue;
       }
       if (query.languages.isNotEmpty &&
@@ -46,18 +66,27 @@ class YtsSource implements TorrentSource {
                 normalizeLanguage(l) ==
                 normalizeLanguage('${movie['language']}'),
           )) {
+        onRejected(TorrentRejection.languageUnconfirmed);
         continue;
       }
       final torrents = movie['torrents'];
-      if (torrents is! List) continue;
-      for (final row in torrents.whereType<Map>()) {
+      if (torrents is! List) {
+        onRejected(TorrentRejection.invalidMetadata);
+        continue;
+      }
+      for (final row in torrents) {
+        if (row is! Map) {
+          onRejected(TorrentRejection.invalidMetadata);
+          continue;
+        }
         final hash = infoHash(row['hash']);
         final seeds = integer(row['seeds']), size = integer(row['size_bytes']);
-        if (hash == null ||
-            seeds == null ||
-            seeds <= 0 ||
-            size == null ||
-            size <= 0) {
+        if (hash == null || seeds == null || size == null || size <= 0) {
+          onRejected(TorrentRejection.invalidMetadata);
+          continue;
+        }
+        if (seeds <= 0) {
+          onRejected(TorrentRejection.noSeeders);
           continue;
         }
         final name =

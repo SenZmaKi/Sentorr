@@ -1,0 +1,435 @@
+{
+  "checkedAt": "2026-10-02T11:38:31.492693Z",
+  "scope": "Metadata discovery, matching, ranking and diagnostics only",
+  "results": [
+    {
+      "query": "Breaking Bad S01E01",
+      "year": null,
+      "languages": [],
+      "status": "resolved",
+      "message": "Found 18 matching torrents.",
+      "candidates": 18,
+      "attempts": [
+        {
+          "stage": "primary",
+          "search": "Breaking Bad S01E01",
+          "releases": 18,
+          "eligible": 18,
+          "sources": [
+            {
+              "source": "pirateBay",
+              "status": "succeeded",
+              "accepted": 9,
+              "rejections": {
+                "identityMismatch": 6,
+                "titleMismatch": 5,
+                "noSeeders": 11
+              }
+            },
+            {
+              "source": "yts",
+              "status": "unsupported",
+              "accepted": 0,
+              "rejections": {}
+            },
+            {
+              "source": "bitsearch",
+              "status": "succeeded",
+              "accepted": 10,
+              "rejections": {
+                "titleMismatch": 10
+              }
+            }
+          ],
+          "preferenceRejections": {}
+        }
+      ],
+      "sample": [
+        {
+          "name": "Breaking.Bad.S01E01.Pilot.1080p.HEVC.x265-MeGusta",
+          "source": "pirateBay",
+          "seeders": 38,
+          "bytes": 1193049621,
+          "resolution": 1080,
+          "score": 0.9066572576363887,
+          "requiresFileSelection": false
+        },
+        {
+          "name": "Breaking.Bad.S01E01.Pilot.720p.HEVC.x265-MeGusta",
+          "source": "pirateBay",
+          "seeders": 63,
+          "bytes": 674775939,
+          "resolution": 720,
+          "score": 0.7703349853397803,
+          "requiresFileSelection": false
+        },
+        {
+          "name": "Breaking.Bad.S01E01.2008.WEB-DL.1080p-Dual-Lat",
+          "source": "bitsearch",
+          "seeders": 5,
+          "bytes": 2888365507,
+          "resolution": 1080,
+          "score": 0.7351900730557743,
+          "requiresFileSelection": false
+        }
+      ],
+      "recoverySuggestions": [],
+      "elapsedMs": 1504
+    },
+    {
+      "query": "The Office S02E03",
+      "year": 2005,
+      "languages": [],
+      "status": "resolved",
+      "message": "Found 3 matching torrents.",
+      "candidates": 3,
+      "attempts": [
+        {
+          "stage": "primary",
+          "search": "The Office S02E03",
+          "releases": 3,
+          "eligible": 3,
+          "sources": [
+            {
+              "source": "pirateBay",
+              "status": "succeeded",
+              "accepted": 1,
+              "rejections": {
+                "titleMismatch": 5,
+                "identityMismatch": 1,
+                "noSeeders": 4
+              }
+            },
+            {
+              "source": "yts",
+              "status": "unsupported",
+              "accepted": 0,
+              "rejections": {}
+            },
+            {
+              "source": "bitsearch",
+              "status": "succeeded",
+              "accepted": 2,
+              "rejections": {
+                "titleMismatch": 7,
+                "noSeeders": 3,
+                "nonVideo": 3
+              }
+            }
+          ],
+          "preferenceRejections": {}
+        }
+      ],
+      "sample": [
+        {
+          "name": "The.Office.S02E03.2005.WEB-DL.1080p-Dual-Lat",
+          "source": "bitsearch",
+          "seeders": 4,
+          "bytes": 1632087572,
+          "resolution": 1080,
+          "score": 0.7257244850936214,
+          "requiresFileSelection": false
+        },
+        {
+          "name": "The.Office.S02E03.2005.1080p-Dual-Lat",
+          "source": "bitsearch",
+          "seeders": 1,
+          "bytes": 371164447,
+          "resolution": 1080,
+          "score": 0.6560989754627732,
+          "requiresFileSelection": false
+        },
+        {
+          "name": "The Office S02E03 Office Olympics 720p h264-CtrlHD",
+          "source": "pirateBay",
+          "seeders": 13,
+          "bytes": 716313929,
+          "resolution": 720,
+          "score": 0.638251043010156,
+          "requiresFileSelection": false
+        }
+      ],
+      "recoverySuggestions": [],
+      "elapsedMs": 1083
+    },
+    {
+      "query": "Chernobyl S01E01",
+      "year": 2019,
+      "languages": [],
+      "status": "resolved",
+      "message": "Found 18 matching torrents.",
+      "candidates": 18,
+      "attempts": [
+        {
+          "stage": "primary",
+          "search": "Chernobyl S01E01",
+          "releases": 18,
+          "eligible": 18,
+          "sources": [
+            {
+              "source": "pirateBay",
+              "status": "succeeded",
+              "accepted": 11,
+              "rejections": {
+                "identityMismatch": 8,
+                "titleMismatch": 39,
+                "noSeeders": 14
+              }
+            },
+            {
+              "source": "yts",
+              "status": "unsupported",
+              "accepted": 0,
+              "rejections": {}
+            },
+            {
+              "source": "bitsearch",
+              "status": "succeeded",
+              "accepted": 9,
+              "rejections": {
+                "titleMismatch": 10,
+                "nonVideo": 1
+              }
+            }
+          ],
+          "preferenceRejections": {}
+        }
+      ],
+      "sample": [
+        {
+          "name": "Chernobyl 2019 S01E01 1080p BluRay x265 SDR DDP 5 1 English DarQ-HONE",
+          "source": "pirateBay",
+          "seeders": 23,
+          "bytes": 3211979479,
+          "resolution": 1080,
+          "score": 0.8540537122257377,
+          "requiresFileSelection": false
+        },
+        {
+          "name": "Chernobyl 2019 - S01E01 (1080p) Acesse o ORIGINAL WWW.BLUDV.TV",
+          "source": "bitsearch",
+          "seeders": 14,
+          "bytes": 1159641170,
+          "resolution": 1080,
+          "score": 0.8240811933221903,
+          "requiresFileSelection": false
+        },
+        {
+          "name": "chernobyl.s01e01.720p.webrip.x264-tbs[eztv].mkv",
+          "source": "bitsearch",
+          "seeders": 55,
+          "bytes": 1825361101,
+          "resolution": 720,
+          "score": 0.7506381627618834,
+          "requiresFileSelection": false
+        }
+      ],
+      "recoverySuggestions": [],
+      "elapsedMs": 1305
+    },
+    {
+      "query": "Doctor Who S00E01",
+      "year": 2005,
+      "languages": [],
+      "status": "resolved",
+      "message": "Found 1 matching torrents.",
+      "candidates": 1,
+      "attempts": [
+        {
+          "stage": "primary",
+          "search": "Doctor Who S00E01",
+          "releases": 1,
+          "eligible": 1,
+          "sources": [
+            {
+              "source": "pirateBay",
+              "status": "succeeded",
+              "accepted": 0,
+              "rejections": {
+                "yearMismatch": 1
+              }
+            },
+            {
+              "source": "yts",
+              "status": "unsupported",
+              "accepted": 0,
+              "rejections": {}
+            },
+            {
+              "source": "bitsearch",
+              "status": "succeeded",
+              "accepted": 1,
+              "rejections": {
+                "yearMismatch": 3,
+                "ambiguousEpisodes": 1
+              }
+            }
+          ],
+          "preferenceRejections": {}
+        }
+      ],
+      "sample": [
+        {
+          "name": "Doctor Who (2005) - S00E01 - Children in Need- Born Again HDTV-720p.mp4",
+          "source": "bitsearch",
+          "seeders": 1,
+          "bytes": 109481820,
+          "resolution": 720,
+          "score": 0.475500005093745,
+          "requiresFileSelection": false
+        }
+      ],
+      "recoverySuggestions": [],
+      "elapsedMs": 1596
+    },
+    {
+      "query": "Planet Earth S01",
+      "year": 2006,
+      "languages": [],
+      "status": "noMatch",
+      "message": "Searches completed, but releases did not match the request or preferences.",
+      "candidates": 0,
+      "attempts": [
+        {
+          "stage": "primary",
+          "search": "Planet Earth S01",
+          "releases": 0,
+          "eligible": 0,
+          "sources": [
+            {
+              "source": "pirateBay",
+              "status": "succeeded",
+              "accepted": 0,
+              "rejections": {
+                "identityMismatch": 13,
+                "titleMismatch": 2,
+                "ambiguousEpisodes": 1,
+                "episodeMismatch": 3,
+                "noSeeders": 7,
+                "yearMismatch": 1
+              }
+            },
+            {
+              "source": "yts",
+              "status": "unsupported",
+              "accepted": 0,
+              "rejections": {}
+            },
+            {
+              "source": "bitsearch",
+              "status": "succeeded",
+              "accepted": 0,
+              "rejections": {
+                "ambiguousEpisodes": 6,
+                "titleMismatch": 9,
+                "yearMismatch": 2,
+                "episodeMismatch": 3
+              }
+            }
+          ],
+          "preferenceRejections": {}
+        },
+        {
+          "stage": "alternate",
+          "search": "Planet Earth Season 1",
+          "releases": 0,
+          "eligible": 0,
+          "sources": [
+            {
+              "source": "pirateBay",
+              "status": "succeeded",
+              "accepted": 0,
+              "rejections": {
+                "ambiguousEpisodes": 2,
+                "titleMismatch": 1,
+                "noSeeders": 3
+              }
+            },
+            {
+              "source": "yts",
+              "status": "unsupported",
+              "accepted": 0,
+              "rejections": {}
+            },
+            {
+              "source": "bitsearch",
+              "status": "succeeded",
+              "accepted": 0,
+              "rejections": {
+                "ambiguousEpisodes": 8,
+                "yearMismatch": 4,
+                "episodeMismatch": 8
+              }
+            }
+          ],
+          "preferenceRejections": {}
+        }
+      ],
+      "sample": [],
+      "recoverySuggestions": [
+        "Check the title or use an alternate title."
+      ],
+      "elapsedMs": 2444
+    },
+    {
+      "query": "Breaking Bad S01E01",
+      "year": null,
+      "languages": [
+        "en"
+      ],
+      "status": "resolved",
+      "message": "Found 1 matching torrents.",
+      "candidates": 1,
+      "attempts": [
+        {
+          "stage": "primary",
+          "search": "Breaking Bad S01E01",
+          "releases": 1,
+          "eligible": 1,
+          "sources": [
+            {
+              "source": "pirateBay",
+              "status": "succeeded",
+              "accepted": 0,
+              "rejections": {
+                "languageUnconfirmed": 9,
+                "identityMismatch": 6,
+                "titleMismatch": 5,
+                "noSeeders": 11
+              }
+            },
+            {
+              "source": "yts",
+              "status": "unsupported",
+              "accepted": 0,
+              "rejections": {}
+            },
+            {
+              "source": "bitsearch",
+              "status": "succeeded",
+              "accepted": 1,
+              "rejections": {
+                "titleMismatch": 10,
+                "languageUnconfirmed": 9
+              }
+            }
+          ],
+          "preferenceRejections": {}
+        }
+      ],
+      "sample": [
+        {
+          "name": "Breaking Bad (2008) - S01E01 [1080p WEBDL][EAC3 DD+ 5.1 English-Spanish]{tt0903747}-Sharerr.mkv",
+          "source": "bitsearch",
+          "seeders": 2,
+          "bytes": 1385126953,
+          "resolution": 1080,
+          "score": 0.6830256969144674,
+          "requiresFileSelection": false
+        }
+      ],
+      "recoverySuggestions": [],
+      "elapsedMs": 897
+    }
+  ]
+}

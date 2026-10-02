@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import '../models.dart';
+import '../diagnostics.dart';
 
 abstract interface class TorrentSource {
   TorrentSourceId get id;
@@ -10,6 +11,15 @@ abstract interface class TorrentSource {
   Future<List<TorrentRelease>> search(
     TorrentQuery query, {
     CancelToken? cancelToken,
+  });
+}
+
+/// Optional reporting seam for adapters; retains the simple search API.
+abstract interface class DiagnosticTorrentSource implements TorrentSource {
+  Future<List<TorrentRelease>> searchWithDiagnostics(
+    TorrentQuery query, {
+    CancelToken? cancelToken,
+    required void Function(TorrentRejection) onRejected,
   });
 }
 

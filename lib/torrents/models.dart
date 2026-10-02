@@ -1,4 +1,8 @@
+import 'diagnostics.dart';
+
 enum TorrentSourceId { pirateBay, yts, bitsearch }
+
+enum TorrentSearchStyle { scene, longForm, crossForm }
 
 /// Search intent is separate from release metadata. Episode zero is a valid special.
 class TorrentQuery {
@@ -9,6 +13,7 @@ class TorrentQuery {
     this.year,
     this.season,
     this.episode,
+    this.searchStyle = TorrentSearchStyle.scene,
     Set<String> languages = const {},
   }) : languages = Set.unmodifiable(languages) {
     if (title.trim().isEmpty ||
@@ -26,17 +31,35 @@ class TorrentQuery {
   final String title;
   final String? imdbId, episodeImdbId;
   final int? year, season, episode;
+  final TorrentSearchStyle searchStyle;
 
   /// Empty means unrestricted. Unknown languages never satisfy an explicit filter.
   final Set<String> languages;
   bool get isSeries => season != null;
   bool get isSeasonPack => isSeries && episode == null;
-  String get searchText =>
-      '$title${isSeries
-          ? ' S${season.toString().padLeft(2, '0')}${episode != null ? 'E${episode.toString().padLeft(2, '0')}' : ''}'
-          : year != null
-          ? ' $year'
-          : ''}';
+  String get searchText {
+    if (!isSeries) return '$title${year != null ? ' $year' : ''}';
+    final s = season.toString().padLeft(2, '0');
+    final e = episode?.toString().padLeft(2, '0');
+    return switch (searchStyle) {
+      TorrentSearchStyle.scene => '$title S$s${e == null ? '' : 'E$e'}',
+      TorrentSearchStyle.longForm =>
+        '$title Season $season${episode == null ? '' : ' Episode $episode'}',
+      TorrentSearchStyle.crossForm =>
+        e == null ? '$title Season $season' : '$title ${season}x$e',
+    };
+  }
+
+  TorrentQuery withSearchStyle(TorrentSearchStyle style) => TorrentQuery(
+    title: title,
+    imdbId: imdbId,
+    episodeImdbId: episodeImdbId,
+    year: year,
+    season: season,
+    episode: episode,
+    languages: languages,
+    searchStyle: style,
+  );
 }
 
 class TorrentRelease {
@@ -61,21 +84,42 @@ class TorrentRelease {
 }
 
 class SourceFailure {
-  const SourceFailure(this.source, this.message);
+  const SourceFailure(this.source, this.message, {this.searchText});
   final TorrentSourceId source;
   final String message;
+  final String? searchText;
 }
 
 class TorrentSearchResult {
   TorrentSearchResult(
     Iterable<TorrentRelease> releases,
-    Iterable<SourceFailure> failures,
-  ) : releases = List.unmodifiable(releases),
-      failures = List.unmodifiable(failures);
+    Iterable<SourceFailure> failures, {
+    Iterable<SourceSearchDiagnostics> diagnostics = const [],
+  }) : releases = List.unmodifiable(releases),
+       failures = List.unmodifiable(failures),
+       diagnostics = List.unmodifiable(diagnostics);
   final List<TorrentRelease> releases;
 
   /// A failed source is distinct from a successful search with no matches.
   final List<SourceFailure> failures;
+  final List<SourceSearchDiagnostics> diagnostics;
+}
+
+enum SourceSearchStatus { succeeded, failed, unsupported }
+
+class SourceSearchDiagnostics {
+  SourceSearchDiagnostics({
+    required this.source,
+    required this.status,
+    this.acceptedCount = 0,
+    Map<TorrentRejection, int> rejected = const {},
+    this.failure,
+  }) : rejected = Map.unmodifiable(rejected);
+  final TorrentSourceId source;
+  final SourceSearchStatus status;
+  final int acceptedCount;
+  final Map<TorrentRejection, int> rejected;
+  final SourceFailure? failure;
 }
 
 class SourceException implements Exception {

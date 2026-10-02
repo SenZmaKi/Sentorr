@@ -69,8 +69,8 @@ queries. Unsupported sources are skipped without issuing a request.
   explicit year, or movie collection checks.
 - Movie collections and ambiguous multi-season/multi-episode ranges are rejected.
   Scene `SxxExxx` and `Season x Episode y` forms are supported. This is a focused
-  movie/TV matcher, not the anime-oriented Anitomy wrapper from Senpwai;
-  that sibling package was inspected and no dependency on it is needed here.
+  movie/TV validator around Anitomy season/episode extraction. See the
+  [parser evaluation](../parser-evaluation.md) for compatibility adaptations.
 - Year and language information can be absent. An explicit year rejects
   conflicting metadata when present; it cannot prove identity when absent.
   Language filters require an explicit filename hint or YTS language metadata.
@@ -83,8 +83,9 @@ queries. Unsupported sources are skipped without issuing a request.
 - Bitsearch's current search container is required. Challenge pages and layout
   changes fail visibly rather than masquerading as no results. Its HTML adapter
   uses the `html` package and never executes remote scripts.
-- No ranking by preferred resolution, release-file selection, or streaming
-  validation is included: those belong to later torrent/backend work.
+- Source adapters do not rank releases. The [resolution engine](../TORRENT_RESOLUTION.md)
+  adds preference ranking, bounded fallback and diagnostics. File selection and
+  streaming validation remain separate work.
 
 ## Validation
 

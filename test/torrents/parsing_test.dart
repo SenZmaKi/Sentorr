@@ -4,6 +4,9 @@ import 'package:test/test.dart';
 
 const hash = '0123456789abcdef0123456789abcdef01234567';
 void main() {
+  test('resolution accepts underscore-delimited release names', () {
+    expect(resolutionOf('big_buck_bunny_1080p_h264.mov'), 1080);
+  });
   final movie = TorrentQuery(title: 'Big Buck Bunny', year: 2008);
 
   test('series year disambiguates reboots when present', () {

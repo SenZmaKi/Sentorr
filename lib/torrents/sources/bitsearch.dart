@@ -2,11 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as html;
 
 import '../models.dart';
+import '../diagnostics.dart';
 import '../parsing.dart';
 import 'source.dart';
 
 /// Bitsearch metadata search. No scripts or download links run.
-class BitsearchSource implements TorrentSource {
+class BitsearchSource implements DiagnosticTorrentSource {
   BitsearchSource(Dio dio, {this.endpoint = 'https://bitsearch.eu/search'})
     : client = SourceClient(dio);
   final SourceClient client;
@@ -19,6 +20,17 @@ class BitsearchSource implements TorrentSource {
   Future<List<TorrentRelease>> search(
     TorrentQuery query, {
     CancelToken? cancelToken,
+  }) async => searchWithDiagnostics(
+    query,
+    cancelToken: cancelToken,
+    onRejected: (_) {},
+  );
+
+  @override
+  Future<List<TorrentRelease>> searchWithDiagnostics(
+    TorrentQuery query, {
+    CancelToken? cancelToken,
+    required void Function(TorrentRejection) onRejected,
   }) async {
     final page = await client.get(
       Uri.parse(endpoint)
@@ -66,20 +78,31 @@ class BitsearchSource implements TorrentSource {
       if (name == null ||
           hash == null ||
           seeds == null ||
-          seeds <= 0 ||
           size == null ||
           size <= 0 ||
-          category == null ||
-          !{
-            'movies',
-            'tv',
-            'other/video',
-            'video',
-            'anime',
-          }.contains(category)) {
+          category == null) {
+        onRejected(TorrentRejection.invalidMetadata);
         continue;
       }
-      if (!matchesRelease(query, name)) continue;
+      if (!{
+        'movies',
+        'tv',
+        'other/video',
+        'video',
+        'anime',
+      }.contains(category)) {
+        onRejected(TorrentRejection.nonVideo);
+        continue;
+      }
+      if (seeds <= 0) {
+        onRejected(TorrentRejection.noSeeders);
+        continue;
+      }
+      final rejection = releaseRejection(query, name);
+      if (rejection != null) {
+        onRejected(rejection);
+        continue;
+      }
       // Site dates are locale-ambiguous; unknown is more honest than guessing UTC.
       results.add(
         TorrentRelease(

@@ -17,6 +17,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "13.3.0"
+  anitomy_dart:
+    dependency: "direct main"
+    description:
+      name: anitomy_dart
+      sha256: c86b53d9a1a2c99dca7694d1d45b039ddd0133109f50f28727b78ecf8f51c9ff
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   archive:
     dependency: transitive
     description:

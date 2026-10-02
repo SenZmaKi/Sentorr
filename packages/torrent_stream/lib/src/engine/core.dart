@@ -7,10 +7,9 @@ import 'package:libtorrent_dart/libtorrent_dart.dart';
 import '../config.dart';
 import '../engine_models.dart';
 import 'cancellation.dart';
-import 'media_bootstrap.dart';
-import 'media_server.dart';
+import 'files.dart';
 import 'native_session.dart';
-import 'torrent_bytes.dart';
+import 'stream_host.dart';
 import 'torrent_entry.dart';
 
 /// The engine isolate's one session and every torrent in it. Commands may
@@ -75,7 +74,7 @@ class EngineCore {
     required List peers,
   }) async {
     lifetime.check();
-    final hash = await _hashOf(source);
+    final hash = await infoHashOf(source);
     final known = _torrents[hash];
     if (known != null) {
       known.owners.putIfAbsent(owner, TorrentOwner.new);
@@ -131,7 +130,7 @@ class EngineCore {
     _addPeers(entry, peers);
     // Owners wait for metadata through [metadata]; failures surface there.
     unawaited(
-      entry.prepare((ready) => _until(entry.lifetime, ready)).catchError((
+      entry.prepare((ready) => waitUntil(entry.lifetime, ready)).catchError((
         Object error,
         StackTrace stack,
       ) {
@@ -178,7 +177,7 @@ class EngineCore {
     holder.wanted
       ..clear()
       ..addAll(files);
-    await entry.applyWanted((ready) => _until(entry.lifetime, ready));
+    await entry.applyWanted((ready) => waitUntil(entry.lifetime, ready));
     publish();
   }
 
@@ -226,29 +225,9 @@ class EngineCore {
     final left = [...entry.temporary];
     entry.temporary.clear();
     for (final folder in left) {
-      unawaited(_deleteWhenEmptied(folder));
+      unawaited(deleteWhenEmptied(folder));
     }
     publish();
-  }
-
-  /// libtorrent moves files on its own thread; a temporary folder goes once
-  /// no files remain in it.
-  Future<void> _deleteWhenEmptied(Directory folder) async {
-    final watch = Stopwatch()..start();
-    while (watch.elapsed < const Duration(minutes: 10)) {
-      try {
-        if (!await folder.exists()) return;
-        final files = await folder
-            .list(recursive: true)
-            .where((e) => e is File)
-            .isEmpty;
-        if (files) {
-          await folder.delete(recursive: true);
-          return;
-        }
-      } on FileSystemException catch (_) {}
-      await Future<void>.delayed(const Duration(milliseconds: 250));
-    }
   }
 
   void addPeers(String hash, List peers) => _addPeers(_entry(hash), peers);
@@ -273,34 +252,12 @@ class EngineCore {
       throw ArgumentError('Select a nonempty, non-pad file');
     }
     final id = ++_streamIds;
-    late final StreamHost host;
-    final bytes = TorrentBytes(
-      entry.handle,
-      file,
-      (piece, cancel) => native.read(
-        entry.handle,
-        piece,
-        cancel,
-        pieceTimeout: options.pieceTimeout,
-        readTimeout: options.nativeReadTimeout,
-      ),
-      entry.scheduler!,
-      readAheadBytes: options.readAheadBytes,
-      maxCacheBytes: options.pieceCacheBytes,
-    );
-    host = StreamHost(id, owner, file, bytes);
+    final host = StreamHost.open(id, owner, entry, file, native, options);
     entry.streams[id] = host;
     _streams[id] = entry;
     publish();
     try {
-      if (options.prepareContainer) {
-        await bootstrapMedia(bytes, host.lifetime, (_) {});
-      }
-      host.lifetime.check();
-      final server = host.server = MediaServer(bytes);
-      await server.start();
-      host.lifetime.check();
-      return [id, server.uri.toString()];
+      return [id, await host.start(options.prepareContainer)];
     } catch (_) {
       await closeStream(id);
       rethrow;
@@ -334,7 +291,7 @@ class EngineCore {
     entry.owners.remove(owner);
     if (entry.owners.isNotEmpty) {
       entry.applyPause();
-      await entry.applyWanted((ready) => _until(entry.lifetime, ready));
+      await entry.applyWanted((ready) => waitUntil(entry.lifetime, ready));
       publish();
       return;
     }
@@ -359,19 +316,7 @@ class EngineCore {
       // A failed handle is already gone from libtorrent's point of view.
     }
     for (final folder in entry.temporary) {
-      await _deleteSoon(folder);
-    }
-  }
-
-  /// libtorrent removes torrents on its own thread, so a late write can
-  /// recreate a folder just deleted.
-  Future<void> _deleteSoon(Directory folder) async {
-    for (var attempt = 0; attempt < 10; attempt++) {
-      try {
-        if (await folder.exists()) await folder.delete(recursive: true);
-      } on FileSystemException catch (_) {}
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      if (!await folder.exists()) return;
+      await deleteSoon(folder);
     }
   }
 
@@ -384,40 +329,5 @@ class EngineCore {
     _closed = true;
     _timer.cancel();
     await native.close();
-  }
-
-  Future<void> _until(Cancellation lifetime, bool Function() ready) async {
-    while (!ready()) {
-      lifetime.check();
-      await lifetime.wait(
-        Future<void>.delayed(const Duration(milliseconds: 100)),
-      );
-    }
-    lifetime.check();
-  }
-
-  /// Lowercase hex info hash of [source], before it is added.
-  Future<String> _hashOf(Map source) async {
-    switch (source['kind']) {
-      case 'magnet':
-        return parseMagnetUri(
-          source['value'] as String,
-        ).infohashHex.toLowerCase();
-      case 'file':
-        return loadTorrentFile(
-          source['value'] as String,
-        ).infohashHex.toLowerCase();
-      case 'bytes':
-        final folder = await Directory.systemTemp.createTemp('torrent-hash-');
-        try {
-          final file = File('${folder.path}${Platform.pathSeparator}t.torrent');
-          await file.writeAsBytes(source['value'] as Uint8List);
-          return loadTorrentFile(file.path).infohashHex.toLowerCase();
-        } finally {
-          await folder.delete(recursive: true);
-        }
-      default:
-        throw ArgumentError('Unsupported torrent source');
-    }
   }
 }

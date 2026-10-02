@@ -12,6 +12,7 @@ import 'package:sentorr/torrents/models.dart';
 import 'package:sentorr/torrents/providers.dart';
 import 'package:sentorr/torrents/repository.dart';
 
+import '../support/fake_library.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_torrents.dart';
 
@@ -30,6 +31,7 @@ ProviderContainer _container(
 }) {
   final container = ProviderContainer(
     overrides: [
+      ...libraryOverrides(),
       initialSettingsProvider.overrideWithValue(
         AppSettings(torrents: torrents),
       ),

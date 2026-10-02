@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:torrent_stream/torrent_stream.dart';
 
 import '../../app/services.dart';
+import '../../library/notifier.dart';
 import '../../settings/notifier.dart';
 import '../../shared/persistence/json_file_store.dart';
 import '../../torrents/models.dart';
@@ -42,9 +43,15 @@ Future<TorrentStreamConfig> sessionConfigFor(
 ) async {
   final s = ref.read(settingsProvider).streaming;
   final root = ref.read(torrentDirectoryProvider);
-  final retained = await ref
-      .read(torrentCacheProvider)
-      .use(root, release.infoHash, keep: s.keepRecentTorrents);
+  // A download keeps its own files; the cache would only hold a copy.
+  final downloaded = ref
+      .read(libraryProvider)
+      .any((e) => e.infoHash == release.infoHash);
+  final retained = downloaded
+      ? null
+      : await ref
+            .read(torrentCacheProvider)
+            .use(root, release.infoHash, keep: s.keepRecentTorrents);
   return TorrentStreamConfig(
     cacheDirectory: root,
     readAheadBytes: s.readAheadBytes,

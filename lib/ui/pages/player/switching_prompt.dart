@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../player/stream/torrent_playback.dart';
 import '../../components/buttons.dart';
-import '../../components/countdown_track.dart';
+import '../../components/progress_track.dart';
 import '../../shared/theme/theme.dart';
 import 'menu_rows.dart';
 
@@ -122,7 +122,7 @@ class _SwitchingPromptState extends State<SwitchingPrompt>
                     style: type.technical.copyWith(color: c.foregroundMuted),
                   ),
                   const SizedBox(height: Space.s16),
-                  CountdownTrack(progress: _countdown),
+                  ProgressTrack(progress: _countdown),
                   const SizedBox(height: Space.s24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,

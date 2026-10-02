@@ -35,6 +35,7 @@ class StreamStatus {
     this.failed = const {},
     this.next,
     this.retryAt,
+    this.localFile,
   });
 
   final StreamStage stage;
@@ -53,6 +54,9 @@ class StreamStatus {
   /// While [StreamStage.switching]: the torrent tried next, and when.
   final TorrentCandidate? next;
   final DateTime? retryAt;
+
+  /// The downloaded file playing instead of a torrent.
+  final String? localFile;
 
   bool get starting =>
       stage == StreamStage.finding ||
@@ -78,6 +82,7 @@ class StreamStatus {
       // Only a switch carries these; leaving it drops them.
       next: resolved == StreamStage.switching ? next : null,
       retryAt: resolved == StreamStage.switching ? retryAt : null,
+      localFile: localFile,
     );
   }
 

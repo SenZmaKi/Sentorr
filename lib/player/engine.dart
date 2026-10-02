@@ -7,6 +7,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:torrent_stream/torrent_stream.dart';
 
+import '../library/playback.dart';
 import '../torrents/engine.dart';
 import '../torrents/resolution_models.dart';
 import '../following/notifier.dart';
@@ -14,6 +15,7 @@ import '../watching/notifier.dart';
 import 'models.dart';
 import 'progress_tracker.dart';
 import 'session.dart';
+import 'stream/offline_source.dart';
 import 'stream/session_config.dart';
 import 'stream/torrent_playback.dart';
 import 'torrent_search.dart';
@@ -28,6 +30,7 @@ class PlaybackEngine {
     required TorrentEngine torrents,
     required SessionConfig configFor,
     required TorrentFinder find,
+    OfflineLookup? offline,
   }) : player = Player(
          configuration: const PlayerConfiguration(
            title: 'Sentorr',
@@ -39,6 +42,7 @@ class PlaybackEngine {
       engine: torrents,
       configFor: configFor,
       find: find,
+      offline: offline,
       outputReady: () => video.platform.future,
     );
     _errors = player.stream.error.listen(
@@ -133,6 +137,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     configFor: (release) => sessionConfigFor(ref, release),
     find: (item, cancel) =>
         ref.read(torrentSearchProvider)(item, cancel: cancel),
+    offline: (item) => offlineSourceFor(ref, item),
   );
   final history = ref.read(watchHistoryProvider.notifier);
   final following = ref.read(followedSeriesProvider.notifier);

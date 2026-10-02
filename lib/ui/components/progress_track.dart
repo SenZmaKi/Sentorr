@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import '../shared/theme/theme.dart';
 import 'surface.dart';
 
-/// How long until something happens on its own, e.g. an exact match
-/// playing: an inset track the action fill crosses.
-class CountdownTrack extends StatelessWidget {
-  const CountdownTrack({super.key, required this.progress});
+/// How far along something is, e.g. a download, or how long until it
+/// happens on its own, e.g. an exact match playing: an inset track the
+/// action fill crosses. [ProgressTrack.value] for a fixed amount.
+class ProgressTrack extends StatelessWidget {
+  const ProgressTrack({super.key, required this.progress});
+
+  ProgressTrack.value(double value, {super.key})
+    : progress = AlwaysStoppedAnimation(value.clamp(0, 1));
 
   final Animation<double> progress;
 

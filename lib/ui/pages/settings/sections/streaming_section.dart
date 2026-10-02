@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../settings/models.dart';
 import '../../../../settings/notifier.dart';
-import '../../../components/toggle.dart';
 import '../settings_controls.dart';
 import '../settings_group.dart';
 import 'torrent_files_group.dart';
@@ -20,40 +19,6 @@ class StreamingSection extends ConsumerWidget {
     int mb(int bytes) => (bytes / megabyte).round();
     return Column(
       children: [
-        SettingsGroup(
-          title: 'Network',
-          description: 'Applies to the next torrent that starts',
-          children: [
-            SettingsTile(
-              icon: Icons.speed_rounded,
-              title: 'Download limit',
-              subtitle: 'Per torrent',
-              keywords: 'speed bandwidth',
-              trailing: LimitField(
-                value: mb(s.downloadLimitBytesPerSecond),
-                presets: const {0: 'Unlimited'},
-                customDefault: 10,
-                min: 1,
-                unit: 'MB/s',
-                semanticLabel: 'Download limit',
-                onChanged: (n) => edit(
-                  (s) => s.copyWith(downloadLimitBytesPerSecond: n * megabyte),
-                ),
-              ),
-            ),
-            SettingsTile(
-              icon: Icons.hub_outlined,
-              title: 'Connect over uTP',
-              subtitle: 'Reach more peers, including those behind routers',
-              keywords: 'transport utp tcp peers',
-              trailing: SToggle(
-                value: s.utp,
-                semanticLabel: 'Connect over uTP',
-                onChanged: (v) => edit((s) => s.copyWith(utp: v)),
-              ),
-            ),
-          ],
-        ),
         SettingsGroup(
           title: 'Buffering',
           description: 'How the engine keeps ahead of the video',

@@ -50,10 +50,30 @@ out of the engine. No native fast-resume data is used.
 The queue survives navigation and desktop close-to-tray. It does not keep
 downloading after the process exits or provide an Android foreground service.
 
+## Library
+
+`lib/library/` turns "download this movie or episode" into a queued download
+and remembers it by IMDb id in `state/library.json`. `downloadPlannerProvider`
+finds a torrent (exact matches only for automatic downloads), holds it briefly
+to read its metadata, picks the item's file as playback does, and queues it
+renamed into the readable layout under the downloads folder (default
+`~/Downloads/Sentorr`; the macOS sandbox has the downloads entitlement):
+
+- `Movie (2024)/Movie (2024).mkv`
+- `Series (2019)/Season 01/Series S01E03.mkv`
+
+`offlineStateProvider(id)` joins an entry with its download for buttons:
+not downloaded, planning, downloading (with progress), downloaded or failed.
+Launch skips the torrent search for anything in the library; the player plays
+a finished file from disk and streams a download in progress from its own
+torrent and file, sharing the transfer. Removing an entry cancels its download
+and deletes its file and emptied folders itself, since the engine's file
+deletion would also remove other episodes downloaded from the same pack.
+
 ## Validation
 
 ```sh
-flutter test test/downloads
+flutter test test/downloads test/library
 (cd packages/torrent_stream && dart test)
 ```
 
@@ -61,4 +81,6 @@ Queue tests cover file choice, renames, slots, pause/resume, reorder,
 cancellation, seeding, yielding to playback, failures and restoration. Native
 tests download exact bytes from a loopback libtorrent peer, share a torrent
 between a stream and a download, and reject bad selections and escaping names.
+The planner test downloads an episode from a loopback seed into the library
+layout, resolves it to a local file and removes it with its folders.
 They need the local libtorrent native asset, not public trackers or peers.

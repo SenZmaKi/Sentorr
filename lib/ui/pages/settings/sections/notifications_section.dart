@@ -53,6 +53,20 @@ class NotificationsSection extends ConsumerWidget {
                 : null,
           ),
         ),
+        SettingsTile(
+          icon: Icons.download_done_rounded,
+          title: 'Downloads ready',
+          subtitle: 'When an episode that downloaded on its own can be watched',
+          keywords: 'auto download finished offline',
+          enabled: n.enabled,
+          trailing: SToggle(
+            value: n.downloadsReady,
+            semanticLabel: 'Download ready notifications',
+            onChanged: n.enabled
+                ? (v) => edit(v, (n) => n.copyWith(downloadsReady: v))
+                : null,
+          ),
+        ),
       ],
     );
   }

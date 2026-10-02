@@ -20,6 +20,7 @@ import 'package:sentorr/ui/shared/theme/theme.dart';
 import 'package:sentorr/ui/shared/title_route.dart';
 
 import '../support/fake_following.dart';
+import '../support/fake_library.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 
@@ -52,6 +53,7 @@ Future<ProviderContainer> _pump(
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
       ...followedSeriesOverrides(),
+      ...libraryOverrides(),
       ...watchHistoryOverrides(),
       imdbRepositoryProvider.overrideWithValue(_imdb),
     ],

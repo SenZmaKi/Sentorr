@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'download_settings.dart';
+import 'following_settings.dart';
 import 'json.dart';
 import 'notification_settings.dart';
 import 'streaming_settings.dart';
 import 'torrent_settings.dart';
 
+export 'download_settings.dart';
+export 'following_settings.dart';
 export 'notification_settings.dart';
 export 'streaming_settings.dart';
 export 'torrent_settings.dart';
@@ -62,6 +66,9 @@ class AppSettings {
     this.sources = const SourceSettings(),
     this.streaming = const StreamingSettings(),
     this.notifications = const NotificationSettings(),
+    this.downloads = const DownloadPreferences(),
+    this.network = const NetworkSettings(),
+    this.following = const FollowingSettings(),
   });
 
   static const defaultImageCacheMaxBytes = 100 * 1024 * 1024;
@@ -75,6 +82,9 @@ class AppSettings {
   final SourceSettings sources;
   final StreamingSettings streaming;
   final NotificationSettings notifications;
+  final DownloadPreferences downloads;
+  final NetworkSettings network;
+  final FollowingSettings following;
 
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -84,6 +94,9 @@ class AppSettings {
     SourceSettings? sources,
     StreamingSettings? streaming,
     NotificationSettings? notifications,
+    DownloadPreferences? downloads,
+    NetworkSettings? network,
+    FollowingSettings? following,
   }) => AppSettings(
     themeMode: themeMode ?? this.themeMode,
     window: window ?? this.window,
@@ -92,6 +105,9 @@ class AppSettings {
     sources: sources ?? this.sources,
     streaming: streaming ?? this.streaming,
     notifications: notifications ?? this.notifications,
+    downloads: downloads ?? this.downloads,
+    network: network ?? this.network,
+    following: following ?? this.following,
   );
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -107,6 +123,12 @@ class AppSettings {
     notifications: NotificationSettings.fromJson(
       jsonObject(json['notifications']),
     ),
+    downloads: DownloadPreferences.fromJson(jsonObject(json['downloads'])),
+    network: NetworkSettings.fromJson(
+      jsonObject(json['network']),
+      legacy: jsonObject(json['streaming']),
+    ),
+    following: FollowingSettings.fromJson(jsonObject(json['following'])),
   );
 
   Map<String, dynamic> toJson() => {
@@ -118,5 +140,8 @@ class AppSettings {
     'sources': sources.toJson(),
     'streaming': streaming.toJson(),
     'notifications': notifications.toJson(),
+    'downloads': downloads.toJson(),
+    'network': network.toJson(),
+    'following': following.toJson(),
   };
 }

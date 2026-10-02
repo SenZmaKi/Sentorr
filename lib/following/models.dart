@@ -19,6 +19,9 @@ class FollowedSeries {
     required this.progress,
     required this.watchedAt,
     this.notified,
+    this.notify = true,
+    this.autoDownload,
+    this.manual = false,
   });
 
   /// Watched this much of an episode, the viewer has seen it; the rest is
@@ -39,6 +42,16 @@ class FollowedSeries {
   /// The episode the viewer was last told aired, by IMDb id.
   final String? notified;
 
+  /// Tell the viewer when a new episode airs.
+  final bool notify;
+
+  /// Download new episodes on their own; null follows the settings default.
+  final bool? autoDownload;
+
+  /// Followed from its page rather than by watching: [reached] is the
+  /// latest episode when it was followed, so only later ones are new.
+  final bool manual;
+
   String get id => series.id;
 
   /// Whether the viewer has seen [episode] or something after it.
@@ -52,21 +65,34 @@ class FollowedSeries {
   FollowedSeries watched(EpisodeNumber at, double fraction, DateTime now) {
     final order = compareEpisodes(at, reached);
     if (order < 0) return this;
-    return FollowedSeries(
-      series: series,
+    return copyWith(
       reached: at,
       progress: order == 0 && progress > fraction ? progress : fraction,
       watchedAt: now,
-      notified: notified,
+      manual: false,
     );
   }
 
-  FollowedSeries notifiedOf(String episodeId) => FollowedSeries(
+  FollowedSeries notifiedOf(String episodeId) => copyWith(notified: episodeId);
+
+  FollowedSeries copyWith({
+    EpisodeNumber? reached,
+    double? progress,
+    DateTime? watchedAt,
+    String? notified,
+    bool? notify,
+    bool? autoDownload,
+    bool resetAutoDownload = false,
+    bool? manual,
+  }) => FollowedSeries(
     series: series,
-    reached: reached,
-    progress: progress,
-    watchedAt: watchedAt,
-    notified: episodeId,
+    reached: reached ?? this.reached,
+    progress: progress ?? this.progress,
+    watchedAt: watchedAt ?? this.watchedAt,
+    notified: notified ?? this.notified,
+    notify: notify ?? this.notify,
+    autoDownload: resetAutoDownload ? null : autoDownload ?? this.autoDownload,
+    manual: manual ?? this.manual,
   );
 
   /// [item]'s episode number, or null when it is not a numbered episode.
@@ -104,6 +130,9 @@ class FollowedSeries {
     'progress': progress,
     'watchedAt': watchedAt.toUtc().toIso8601String(),
     'notified': notified,
+    'notify': notify,
+    'autoDownload': autoDownload,
+    'manual': manual,
   };
 
   /// Null when [json] is not a record, so one bad record is skipped.
@@ -126,6 +155,9 @@ class FollowedSeries {
       progress: progress.toDouble().clamp(0, 1),
       watchedAt: at.toLocal(),
       notified: json['notified'] as String?,
+      notify: json['notify'] != false,
+      autoDownload: json['autoDownload'] as bool?,
+      manual: json['manual'] == true,
     );
   }
 }

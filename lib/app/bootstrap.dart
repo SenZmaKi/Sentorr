@@ -8,12 +8,14 @@ import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart' show windowManager;
 
 import '../downloads/manager.dart';
-import '../downloads/models.dart';
 import '../torrents/engine.dart';
+import '../following/auto_downloads.dart';
 import '../following/models.dart';
 import '../following/notifier.dart';
 import '../following/release_alerts.dart';
 import '../following/repository.dart';
+import '../library/notifier.dart';
+import '../library/repository.dart';
 import '../notifications/notification_service.dart';
 import '../settings/notifier.dart';
 import '../settings/repository.dart';
@@ -88,9 +90,11 @@ class AppRuntime with WidgetsBindingObserver {
     // Before following was saved, series came from the watch history.
     final followed =
         await following.load() ?? FollowedSeries.fromHistory(watched);
+    final library = LibraryRepository(JsonFileStore(paths.libraryFile));
+    final downloaded = await library.load();
     log.info(
-      'Loaded settings, ${watched.length} watch history entries and '
-      '${followed.length} followed series',
+      'Loaded settings, ${watched.length} watch history entries, '
+      '${followed.length} followed series and ${downloaded.length} downloads',
     );
     AppImageCache.initialize(paths, maxSizeBytes: settings.imageCacheMaxBytes);
     final network = NetworkClient(
@@ -107,6 +111,8 @@ class AppRuntime with WidgetsBindingObserver {
         initialWatchHistoryProvider.overrideWithValue(watched),
         followedSeriesRepositoryProvider.overrideWithValue(following),
         initialFollowedSeriesProvider.overrideWithValue(followed),
+        libraryRepositoryProvider.overrideWithValue(library),
+        initialLibraryProvider.overrideWithValue(downloaded),
         networkClientProvider.overrideWithValue(network),
         desktopIconControllerProvider.overrideWithValue(
           DesktopIconController(tray: tray),
@@ -146,7 +152,8 @@ class AppRuntime with WidgetsBindingObserver {
     container.read(releaseAlertsProvider).start();
     await container
         .read(downloadQueueProvider)
-        .initialize(const DownloadSettings());
+        .initialize(container.read(settingsProvider).downloads.queue);
+    container.read(autoDownloadsProvider).start();
     WidgetsBinding.instance.addObserver(runtime);
     log.info('Application services ready in ${clock.elapsedMilliseconds}ms');
     return runtime;
@@ -158,6 +165,7 @@ class AppRuntime with WidgetsBindingObserver {
     await repository.store.flushed;
     await history.store.flushed;
     await following.store.flushed;
+    await container.read(libraryRepositoryProvider).store.flushed;
     if (supportsWindowCustomization) await window.flush();
     await flushLogs();
   }

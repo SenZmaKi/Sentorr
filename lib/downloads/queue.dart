@@ -5,6 +5,7 @@ import 'package:torrent_stream/torrent_stream.dart';
 
 import 'models.dart';
 import 'repository.dart';
+import 'rules.dart';
 import 'torrents.dart';
 
 final _log = Logger('sentorr.downloads');
@@ -79,7 +80,7 @@ class DownloadQueue {
         });
         if (!current) return;
         final files = await torrents.metadata(hash);
-        final chosen = _choose(job, files);
+        final chosen = chooseFiles(job, files);
         if (job.renamedFiles.isNotEmpty) {
           await torrents.rename(hash, job.renamedFiles);
         }
@@ -117,25 +118,6 @@ class DownloadQueue {
         });
       }
     }());
-  }
-
-  static Map<int, TorrentStreamFile> _choose(
-    TorrentDownloadJob job,
-    List<TorrentStreamFile> files,
-  ) {
-    final byIndex = {for (final f in files) f.index: f};
-    final indices = job.selectedFileIndices.isEmpty
-        ? [
-            for (final f in files)
-              if (!f.isPadFile) f.index,
-          ]
-        : job.selectedFileIndices;
-    if (indices.isEmpty ||
-        indices.any((i) => byIndex[i] == null || byIndex[i]!.isPadFile) ||
-        job.renamedFiles.keys.any((i) => byIndex[i] == null)) {
-      throw ArgumentError('Invalid torrent file selection');
-    }
-    return {for (final i in indices) i: byIndex[i]!};
   }
 
   Future<void> pause(String id) => _serial(() async {
@@ -222,7 +204,11 @@ class DownloadQueue {
         changed = true;
         continue;
       }
-      var next = _progress(previous, torrent);
+      var next = progressOf(
+        previous,
+        torrent,
+        uploadedBefore: _uploadBefore[id] ?? 0,
+      );
       if (next.isDone && previous.status != DownloadStatus.paused) {
         next = await _finish(next);
       }
@@ -242,42 +228,10 @@ class DownloadQueue {
     }
   });
 
-  DownloadItem _progress(DownloadItem item, TorrentSnapshot torrent) {
-    final moving =
-        item.status == DownloadStatus.downloading ||
-        item.status == DownloadStatus.seeding;
-    return item.copyWith(
-      files: [
-        for (final f in item.files)
-          DownloadFileProgress(
-            f.index,
-            f.path,
-            f.totalBytes,
-            torrent.bytesOf(f.index),
-          ),
-      ],
-      downloadBytesPerSecond: moving
-          ? torrent.downloadBytesPerSecond.toDouble()
-          : 0,
-      uploadBytesPerSecond: moving
-          ? torrent.uploadBytesPerSecond.toDouble()
-          : 0,
-      uploadedBytes: (_uploadBefore[item.id] ?? 0) + torrent.uploadedBytes,
-      peers: moving ? torrent.peers : 0,
-      seeds: moving ? torrent.seeds : 0,
-    );
-  }
-
   /// Seeds when settings ask, then completes and lets the torrent go.
   Future<DownloadItem> _finish(DownloadItem item) async {
     final started = item.seedingStartedAt ?? DateTime.now();
-    final done = switch (settings.seedingMode) {
-      SeedingMode.disabled => true,
-      SeedingMode.indefinitely => false,
-      SeedingMode.limited =>
-        item.uploadedBytes >= item.totalBytes * settings.seedRatio &&
-            DateTime.now().difference(started) >= settings.seedTime,
-    };
+    final done = seedingDone(item, settings, started);
     if (!done) {
       return item.copyWith(
         status: item.seedingStartedAt == null

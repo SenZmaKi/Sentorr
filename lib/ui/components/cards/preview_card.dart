@@ -26,6 +26,7 @@ class PreviewCard extends StatelessWidget {
     this.primaryIcon = Icons.play_arrow_rounded,
     this.onPrimary,
     this.openLabel = 'More info',
+    this.extraAction,
   });
 
   final String title;
@@ -49,6 +50,9 @@ class PreviewCard extends StatelessWidget {
 
   /// The secondary action's label; null leaves only the primary action.
   final String? openLabel;
+
+  /// Another action after the secondary one, e.g. a download button.
+  final Widget? extraAction;
 
   @override
   Widget build(BuildContext context) {
@@ -144,6 +148,7 @@ class PreviewCard extends StatelessWidget {
                             icon: Icons.info_outline_rounded,
                             onPressed: onOpen,
                           ),
+                        ?extraAction,
                       ],
                     ),
                     if (genres.isNotEmpty) ...[

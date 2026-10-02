@@ -7,9 +7,8 @@ import 'package:libtorrent_dart/libtorrent_dart.dart';
 import '../engine_models.dart';
 import '../models.dart';
 import 'cancellation.dart';
-import 'media_server.dart';
 import 'piece_scheduler.dart';
-import 'torrent_bytes.dart';
+import 'stream_host.dart';
 
 /// Normal libtorrent priority for files downloaded in full.
 const wantedPriority = 4;
@@ -17,22 +16,6 @@ const wantedPriority = 4;
 class TorrentOwner {
   final wanted = <int>{};
   bool paused = false;
-}
-
-class StreamHost {
-  StreamHost(this.id, this.owner, this.file, this.bytes);
-  final int id;
-  final String owner;
-  final TorrentFileEntry file;
-  final TorrentBytes bytes;
-  final lifetime = Cancellation();
-  MediaServer? server;
-
-  Future<void> close() async {
-    lifetime.cancel();
-    await server?.close();
-    bytes.close();
-  }
 }
 
 /// One torrent in the shared session and everyone holding it. Native calls

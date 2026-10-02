@@ -13,6 +13,7 @@ class SButton extends StatelessWidget {
     this.onPressed,
     this.variant = ButtonVariant.secondary,
     this.icon,
+    this.leading,
     this.loading = false,
   });
 
@@ -22,7 +23,8 @@ class SButton extends StatelessWidget {
     this.onPressed,
     this.icon,
     this.loading = false,
-  }) : variant = ButtonVariant.primary;
+  }) : variant = ButtonVariant.primary,
+       leading = null;
 
   const SButton.ghost({
     super.key,
@@ -30,7 +32,8 @@ class SButton extends StatelessWidget {
     this.onPressed,
     this.icon,
     this.loading = false,
-  }) : variant = ButtonVariant.ghost;
+  }) : variant = ButtonVariant.ghost,
+       leading = null;
 
   const SButton.destructive({
     super.key,
@@ -38,12 +41,16 @@ class SButton extends StatelessWidget {
     this.onPressed,
     this.icon,
     this.loading = false,
-  }) : variant = ButtonVariant.destructive;
+  }) : variant = ButtonVariant.destructive,
+       leading = null;
 
   final String label;
   final VoidCallback? onPressed;
   final ButtonVariant variant;
   final IconData? icon;
+
+  /// Drawn in place of [icon], e.g. a progress ring; sized as an icon.
+  final Widget? leading;
   final bool loading;
 
   @override
@@ -118,9 +125,12 @@ class SButton extends StatelessWidget {
                   dimension: IconSizes.metadata,
                   child: CircularProgressIndicator(strokeWidth: 2, color: fg),
                 )
+              else if (leading != null)
+                SizedBox.square(dimension: IconSizes.control, child: leading)
               else if (icon != null)
                 Icon(icon, size: IconSizes.control, color: fg),
-              if (loading || icon != null) const SizedBox(width: Space.s8),
+              if (loading || icon != null || leading != null)
+                const SizedBox(width: Space.s8),
               Text(label, style: context.type.label.copyWith(color: fg)),
             ],
           ),
@@ -138,9 +148,13 @@ class SIconButton extends StatelessWidget {
     required this.tooltip,
     this.onPressed,
     this.selected = false,
+    this.glyph,
   });
 
   final IconData icon;
+
+  /// Drawn in place of [icon], e.g. a progress ring; sized as an icon.
+  final Widget? glyph;
   final String tooltip;
   final VoidCallback? onPressed;
   final bool selected;
@@ -168,10 +182,14 @@ class SIconButton extends StatelessWidget {
                 : c.stateHover.clear,
             borderRadius: BorderRadius.circular(Radii.control),
           ),
-          child: Icon(
-            icon,
-            size: IconSizes.control,
-            color: s.enabled ? c.foreground : c.foregroundDisabled,
+          child: Center(
+            child:
+                glyph ??
+                Icon(
+                  icon,
+                  size: IconSizes.control,
+                  color: s.enabled ? c.foreground : c.foregroundDisabled,
+                ),
           ),
         ),
       ),

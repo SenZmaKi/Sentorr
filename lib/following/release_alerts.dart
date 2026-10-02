@@ -7,6 +7,7 @@ import '../app/services.dart';
 import '../home/series_updates.dart';
 import '../notifications/notification_service.dart';
 import '../settings/notifier.dart';
+import 'auto_downloads.dart';
 import 'latest_episode.dart';
 import 'models.dart';
 import 'notifier.dart';
@@ -61,6 +62,8 @@ class ReleaseAlerts {
     ];
     if (followed.isEmpty) {
       _log.fine('No airing series to check');
+      // Ended series may still have episodes left to download.
+      await _ref.read(autoDownloadsProvider).checkAll();
       return;
     }
     final clock = Stopwatch()..start();
@@ -81,6 +84,7 @@ class ReleaseAlerts {
     );
     // The shelf reads the responses just cached.
     if (_ref.mounted) _ref.invalidate(seriesUpdatesProvider);
+    if (_ref.mounted) await _ref.read(autoDownloadsProvider).checkAll();
   }
 
   /// Whether the viewer was told about [update].
@@ -92,7 +96,9 @@ class ReleaseAlerts {
       '${update.aired.toIso8601String().split('T').first}, '
       'viewer reached S${followed.reached.season}E${followed.reached.episode}',
     );
-    if (!settings.notifyNewEpisodes || !shouldNotify(followed, update)) {
+    if (!settings.notifyNewEpisodes ||
+        !followed.notify ||
+        !shouldNotify(followed, update)) {
       return false;
     }
     await _ref

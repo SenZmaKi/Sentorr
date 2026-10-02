@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -11,6 +12,7 @@ import '../../torrents/resolution_models.dart';
 import '../models.dart';
 import 'file_choice.dart';
 import 'media_kit_adapter.dart';
+import 'offline_source.dart';
 import 'stream_status.dart';
 
 export 'stream_status.dart';
@@ -42,7 +44,9 @@ class TorrentPlayback {
     required this.configFor,
     required this.find,
     required this.outputReady,
-  }) : _player = player,
+    OfflineLookup? offline,
+  }) : offline = offline ?? ((_) => null),
+       _player = player,
        _adapter = MediaKitTorrentAdapter(player);
 
   /// How long a failed torrent's replacement waits; as long as an exact
@@ -61,6 +65,9 @@ class TorrentPlayback {
   final SessionConfig configFor;
   final TorrentFinder find;
 
+  /// The item's download, played or shared before any search.
+  final OfflineLookup offline;
+
   /// Completes once the video output's render context exists, so torrent
   /// preparation and playback start with the renderer ready.
   final Future<void> Function() outputReady;
@@ -75,6 +82,9 @@ class TorrentPlayback {
   StreamSubscription<TorrentStreamState>? _transfer;
   CancelToken? _cancel;
   Future<void>? _closing;
+
+  /// A downloaded file is open in the player instead of a session.
+  bool _local = false;
   Timer? _switchTimer;
   int _generation = 0, _autoSwitches = 0;
 
@@ -91,6 +101,29 @@ class TorrentPlayback {
     _item = item;
     _start = start;
     _autoSwitches = 0;
+    final saved = torrent == null && options == null ? offline(item) : null;
+    if (saved is LocalFile && File(saved.path).existsSync()) {
+      return _playLocal(generation, item, saved.path, start);
+    }
+    if (saved is DownloadTorrent) {
+      _log.info('Streaming $item from its download');
+      status.value = StreamStatus(
+        stage: StreamStage.connecting,
+        torrent: saved.torrent,
+      );
+      try {
+        await _stream(
+          generation,
+          item,
+          saved.torrent,
+          resume: start,
+          fileIndex: saved.fileIndex,
+        );
+      } catch (error, stack) {
+        _fail(generation, item, saved.torrent, error, stack);
+      }
+      return;
+    }
     status.value = StreamStatus(
       stage: torrent == null && options == null
           ? StreamStage.finding
@@ -155,7 +188,16 @@ class TorrentPlayback {
   bool unplayable() {
     final s = status.value, item = _item;
     if (s?.stage != StreamStage.streaming || item == null) return false;
-    _fail(_generation, item, s!.torrent, const _Unplayable(), null);
+    if (s!.localFile != null) {
+      status.value = s.copyWith(
+        stage: StreamStage.failed,
+        problem:
+            "This video couldn't be played. It may be in a format this "
+            'device does not support.',
+      );
+      return true;
+    }
+    _fail(_generation, item, s.torrent, const _Unplayable(), null);
     return true;
   }
 
@@ -210,11 +252,29 @@ class TorrentPlayback {
     return generation;
   }
 
+  /// Plays the downloaded file at [path]; no torrent is involved.
+  Future<void> _playLocal(
+    int generation,
+    PlaybackItem item,
+    String path,
+    Duration? start,
+  ) async {
+    _log.info('Playing $item from $path');
+    status.value = StreamStatus(stage: StreamStage.preparing, localFile: path);
+    await outputReady();
+    if (_stale(generation)) return;
+    _local = true;
+    await _player.open(Media(Uri.file(path).toString(), start: start));
+    _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
+  }
+
+  /// Streams [candidate], choosing [fileIndex] when the download knows it.
   Future<void> _stream(
     int generation,
     PlaybackItem item,
     TorrentCandidate candidate, {
     Duration? resume,
+    int? fileIndex,
   }) async {
     _update(
       generation,
@@ -242,12 +302,14 @@ class TorrentPlayback {
     _log.info(
       'Metadata: ${files.length} files in ${clock.elapsedMilliseconds}ms',
     );
-    final file = playableFile(
-      files,
-      item,
-      pack: candidate.requiresFileSelection,
-      seriesPack: release.isSeriesPack,
-    );
+    final file =
+        files.where((f) => f.index == fileIndex).firstOrNull ??
+        playableFile(
+          files,
+          item,
+          pack: candidate.requiresFileSelection,
+          seriesPack: release.isSeriesPack,
+        );
     if (file == null) {
       _log.info(
         'No playable file among: '
@@ -328,6 +390,14 @@ class TorrentPlayback {
   Future<void> _release() {
     _cancel?.cancel();
     _cancel = null;
+    if (_local) {
+      _local = false;
+      final earlier = _closing;
+      _closing = () async {
+        await earlier;
+        await _player.stop();
+      }();
+    }
     final session = _session, transfer = _transfer;
     _session = null;
     _transfer = null;

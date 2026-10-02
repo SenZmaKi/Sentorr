@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
+import '../app/services.dart';
+import '../imdb/models.dart';
 import '../player/models.dart';
 import '../watching/notifier.dart';
+import 'latest_episode.dart';
 import 'models.dart';
 import 'repository.dart';
 
@@ -77,6 +80,43 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
     ]);
   }
 
+  /// Follows [series] without watching it: the latest aired episode counts
+  /// as reached, so only episodes after it are new.
+  Future<void> follow(ImdbTitle series) async {
+    if (_series.any((s) => s.id == series.id)) return;
+    final latest = await latestEpisode(
+      ref.read(imdbRepositoryProvider),
+      series.id,
+    );
+    if (!ref.mounted || _series.any((s) => s.id == series.id)) return;
+    _log.info('Following ${series.title} (${series.id}) from its page');
+    await _commit([
+      FollowedSeries(
+        series: latest?.series ?? series,
+        reached: latest?.number ?? (season: 1, episode: 0),
+        progress: 1,
+        watchedAt: DateTime.now(),
+        notified: latest?.episode.title.id,
+        manual: true,
+      ),
+      ..._series,
+    ]);
+  }
+
+  Future<void> setNotify(String seriesId, bool on) =>
+      _change(seriesId, (s) => s.copyWith(notify: on));
+
+  /// [on] null returns the series to the settings default.
+  Future<void> setAutoDownload(String seriesId, bool? on) => _change(
+    seriesId,
+    (s) => s.copyWith(autoDownload: on, resetAutoDownload: on == null),
+  );
+
+  Future<void> _change(
+    String seriesId,
+    FollowedSeries Function(FollowedSeries) change,
+  ) => _commit([for (final s in _series) s.id == seriesId ? change(s) : s]);
+
   /// Stops looking for new episodes of [seriesId] until it is watched again.
   Future<void> unfollow(String seriesId) {
     _log.info('Unfollowing $seriesId');
@@ -96,3 +136,12 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
     return _repository.save(series);
   }
 }
+
+/// [seriesId]'s record, or null when it is not followed.
+final followedProvider = Provider.family<FollowedSeries?, String>(
+  (ref, seriesId) => ref.watch(
+    followedSeriesProvider.select(
+      (all) => all.where((s) => s.id == seriesId).firstOrNull,
+    ),
+  ),
+);

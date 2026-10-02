@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shared/theme/theme.dart';
 import 'interactive.dart';
+import 'menu.dart';
 import 'surface.dart';
 
 /// Dropdown in the input contract: a raised trigger showing the choice, and
@@ -39,10 +40,6 @@ class SSelect<T> extends StatelessWidget {
   final String placeholder;
   final IconData? icon;
 
-  // Room around the menu for its floating shadow, which the menu's own
-  // scroll viewport would otherwise clip.
-  static const _bleed = Space.s16;
-
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -53,32 +50,26 @@ class SSelect<T> extends StatelessWidget {
     final value = chosen.isEmpty ? null : chosen.join(', ');
     return LayoutBuilder(
       builder: (context, box) => MenuAnchor(
-        alignmentOffset: const Offset(-_bleed, Space.s4 - _bleed),
-        style: const MenuStyle(
-          backgroundColor: WidgetStatePropertyAll(Colors.transparent),
-          shadowColor: WidgetStatePropertyAll(Colors.transparent),
-          surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
-          elevation: WidgetStatePropertyAll(0),
-          padding: WidgetStatePropertyAll(EdgeInsets.zero),
-        ),
+        alignmentOffset: const Offset(-menuBleed, Space.s4 - menuBleed),
+        style: menuAnchorStyle,
         menuChildren: [
           Padding(
-            padding: const EdgeInsets.all(_bleed),
-            child: _MenuPanel(
+            padding: const EdgeInsets.all(menuBleed),
+            child: MenuPanel(
               minWidth: box.hasBoundedWidth ? box.maxWidth : 0,
               children: [
                 if (onClear != null)
-                  _option(
-                    context,
-                    placeholder,
+                  MenuOption(
+                    label: placeholder,
                     checked: selected.isEmpty,
+                    closeOnActivate: !multiple,
                     onPressed: onClear!,
                   ),
                 for (final o in options)
-                  _option(
-                    context,
-                    (optionLabelOf ?? labelOf)(o),
+                  MenuOption(
+                    label: (optionLabelOf ?? labelOf)(o),
                     checked: selected.contains(o),
+                    closeOnActivate: !multiple,
                     onPressed: () => onSelected(o),
                   ),
               ],
@@ -133,90 +124,4 @@ class SSelect<T> extends StatelessWidget {
       ),
     );
   }
-
-  Widget _option(
-    BuildContext context,
-    String label, {
-    required bool checked,
-    required VoidCallback onPressed,
-  }) {
-    final c = context.colors;
-    WidgetStateProperty<V> by<V>(V Function(Set<WidgetState> s) f) =>
-        WidgetStateProperty.resolveWith(f);
-    return MenuItemButton(
-      onPressed: onPressed,
-      closeOnActivate: !multiple,
-      // Hover alone must not draw the keyboard focus ring.
-      requestFocusOnHover: false,
-      leadingIcon: SizedBox.square(
-        dimension: IconSizes.metadata,
-        child: checked
-            ? Icon(
-                Icons.check_rounded,
-                size: IconSizes.metadata,
-                color: c.foreground,
-              )
-            : null,
-      ),
-      style: ButtonStyle(
-        backgroundColor: by(
-          (s) => s.contains(WidgetState.pressed)
-              ? c.statePressed
-              : s.contains(WidgetState.hovered)
-              ? c.stateHover
-              : checked
-              ? c.selection
-              : c.stateHover.clear,
-        ),
-        foregroundColor: WidgetStatePropertyAll(c.foreground),
-        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-        textStyle: WidgetStatePropertyAll(context.type.bodySmall),
-        minimumSize: const WidgetStatePropertyAll(
-          Size(0, ControlHeights.compact),
-        ),
-        padding: const WidgetStatePropertyAll(
-          EdgeInsets.symmetric(horizontal: Space.s8),
-        ),
-        shape: const WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(Radii.chip)),
-          ),
-        ),
-        side: by(
-          (s) => s.contains(WidgetState.focused)
-              ? BorderSide(color: c.focus, width: Borders.focus)
-              : BorderSide.none,
-        ),
-      ),
-      child: Text(label, style: TextStyle(color: c.foreground)),
-    );
-  }
-}
-
-class _MenuPanel extends StatelessWidget {
-  const _MenuPanel({required this.minWidth, required this.children});
-
-  final double minWidth;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) => DepthBox(
-    style: context.depth.of(SurfaceDepth.floating),
-    radius: Radii.control,
-    border: Border.all(color: context.colors.borderStrong),
-    child: ConstrainedBox(
-      constraints: BoxConstraints(minWidth: minWidth, maxHeight: 360),
-      child: SingleChildScrollView(
-        // The menu already sits in a scroll view of its own.
-        primary: false,
-        padding: const EdgeInsets.all(Space.s8),
-        child: IntrinsicWidth(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
-          ),
-        ),
-      ),
-    ),
-  );
 }

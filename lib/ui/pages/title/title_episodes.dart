@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../imdb/models.dart';
 import '../../../titles/episodes.dart';
+import '../../../player/models.dart';
 import '../../components/buttons.dart';
+import '../../components/download_button.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_row.dart';
 import '../../components/cards/title_preview.dart';
@@ -200,6 +202,11 @@ class _EpisodeList extends ConsumerWidget {
       artwork: still,
       semanticLabel: 'Play $code, ${e.title}',
       onTap: play,
+      trailing: upcoming
+          ? null
+          : DownloadButton(
+              item: PlaybackItem.episode(series, episode, season: season),
+            ),
       preview: (_) => EpisodePreview(
         series: series,
         episode: episode,

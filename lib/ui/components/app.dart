@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../settings/notifier.dart';
 import '../../shared/app_lifecycle.dart';
+import '../pages/downloads/downloads_page.dart';
 import '../pages/home/home_page.dart';
 import '../pages/launch/launch_host.dart';
 import '../pages/player/player_host.dart';
@@ -37,6 +38,7 @@ class SentorrApp extends ConsumerWidget {
             pages: const {
               AppDestination.home: HomePage(),
               AppDestination.search: SearchPage(),
+              AppDestination.downloads: DownloadsPage(),
               AppDestination.settings: SettingsPage(),
             },
             titlePage: (route) => TitlePage(route: route),

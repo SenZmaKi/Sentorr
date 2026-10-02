@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../imdb/models.dart';
 import '../../../imdb/providers.dart';
+import '../../../player/models.dart';
+import '../../components/download_button.dart';
+import '../../components/follow_button.dart';
 import '../../components/load_error.dart';
 import '../../components/motion.dart';
 import '../../shared/theme/theme.dart';
@@ -89,6 +92,15 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                     onBack: _back,
                     onPlay: () => ref.playTitle(d?.title ?? _title),
                     onEpisodes: seasons.isEmpty ? null : _showEpisodes,
+                    actions: [
+                      if ((d?.title ?? _title).canHaveEpisodes == true)
+                        FollowButton(series: d?.title ?? _title)
+                      else if (d != null)
+                        DownloadButton(
+                          item: PlaybackItem(title: d.title),
+                          labelled: true,
+                        ),
+                    ],
                   ),
                 ),
                 if (details.hasError && d == null)

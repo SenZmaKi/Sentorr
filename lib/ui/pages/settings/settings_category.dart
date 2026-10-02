@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../shared/window_manager.dart';
 import 'sections/appearance_section.dart';
+import 'sections/downloads_section.dart';
 import 'sections/following_section.dart';
+import 'sections/network_section.dart';
 import 'sections/notifications_section.dart';
 import 'sections/playback_section.dart';
 import 'sections/sources_section.dart';
@@ -27,25 +29,39 @@ enum SettingsCategory {
     'Torrent sites to search',
     'torrent sources pirate bay yts bitsearch providers sites',
   ),
+  downloads(
+    'Downloads',
+    Icons.download_rounded,
+    'Folder, queue and sharing',
+    'download folder location simultaneous queue pause while watching '
+        'seeding sharing ratio upload',
+  ),
+  network(
+    'Network',
+    Icons.lan_outlined,
+    'Speed limits and finding peers',
+    'network download limit upload limit speed bandwidth connections utp dht '
+        'local peer discovery upnp nat port router',
+  ),
   streaming(
     'Streaming engine',
     Icons.hub_outlined,
-    'Speed, buffering and torrent files',
-    'network download limit utp buffering read ahead memory cache connection '
-        'timeout stall torrent files torrent folder keep recent torrents',
+    'Buffering and torrent files',
+    'buffering read ahead memory cache connection timeout stall torrent '
+        'files torrent folder keep recent torrents',
   ),
   watching(
     'Continue watching',
     Icons.history_rounded,
-    'Progress and followed series',
+    'Progress, followed series and auto-download',
     'in progress continue watching history resume clear following series '
-        'unfollow new episodes',
+        'unfollow new episodes auto download automatic keep episodes',
   ),
   notifications(
     'Notifications',
     Icons.notifications_outlined,
-    'New episodes',
-    'notifications alerts new episodes airing mute',
+    'New episodes and finished downloads',
+    'notifications alerts new episodes airing mute downloads ready',
   ),
   appearance(
     'Appearance',
@@ -83,6 +99,8 @@ enum SettingsCategory {
   Widget get content => switch (this) {
     playback => const PlaybackSection(),
     sources => const SourcesSection(),
+    downloads => const DownloadsSection(),
+    network => const NetworkSection(),
     streaming => const StreamingSection(),
     watching => const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

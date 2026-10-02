@@ -160,9 +160,6 @@ class QueueBuilder {
 
   PlaybackItem _movie(ImdbTitle title) => PlaybackItem(title: title);
 
-  PlaybackItem _episode(ImdbTitle series, ImdbEpisode e, int? season) {
-    final s = e.seasonNumber ?? season;
-    final n = e.episodeNumber;
-    return PlaybackItem(title: e.title, series: series, season: s, episode: n);
-  }
+  PlaybackItem _episode(ImdbTitle series, ImdbEpisode e, int? season) =>
+      PlaybackItem.episode(series, e, season: season);
 }

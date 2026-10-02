@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/services.dart';
 import '../shared/persistence/json_file_store.dart';
+import '../settings/notifier.dart';
 import '../torrents/engine.dart';
 import 'models.dart';
 import 'queue.dart';
@@ -18,6 +19,10 @@ final downloadQueueProvider = Provider<DownloadQueue>((ref) {
     DownloadRepository(
       JsonFileStore(ref.watch(appPathsProvider).downloadsFile),
     ),
+  );
+  ref.listen(
+    settingsProvider.select((s) => s.downloads),
+    (_, next) => unawaited(queue.configure(next.queue)),
   );
   final timer = Timer.periodic(
     const Duration(seconds: 1),

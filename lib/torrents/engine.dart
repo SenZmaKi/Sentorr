@@ -8,10 +8,16 @@ import '../settings/notifier.dart';
 
 /// Session-wide limits from settings, shared by streams and downloads.
 TorrentEngineSettings engineSettingsOf(AppSettings settings) {
-  final s = settings.streaming;
+  final n = settings.network;
   return TorrentEngineSettings(
-    downloadBytesPerSecond: s.downloadLimitBytesPerSecond,
-    transport: s.utp ? TorrentTransport.mixedTcpUtp : TorrentTransport.tcpOnly,
+    downloadBytesPerSecond: n.downloadLimitBytesPerSecond,
+    uploadBytesPerSecond: n.uploadLimitBytesPerSecond,
+    maxConnections: n.maxConnections,
+    transport: n.utp ? TorrentTransport.mixedTcpUtp : TorrentTransport.tcpOnly,
+    enableDht: n.dht,
+    enableLsd: n.lsd,
+    enableUpnp: n.upnp,
+    enableNatPmp: n.natPmp,
   );
 }
 
@@ -22,8 +28,10 @@ final torrentEngineProvider = Provider<TorrentEngine>((ref) {
     settings: engineSettingsOf(ref.read(settingsProvider)),
   );
   ref.listen(
-    settingsProvider.select(engineSettingsOf),
-    (_, next) => unawaited(engine.configure(next)),
+    settingsProvider.select((s) => s.network),
+    (_, _) => unawaited(
+      engine.configure(engineSettingsOf(ref.read(settingsProvider))),
+    ),
   );
   ref.onDispose(() => unawaited(engine.close()));
   return engine;

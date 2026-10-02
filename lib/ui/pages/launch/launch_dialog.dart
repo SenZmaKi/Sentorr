@@ -5,7 +5,7 @@ import '../../../player/launch.dart';
 import '../../../settings/notifier.dart';
 import '../../../torrents/resolution_models.dart';
 import '../../components/buttons.dart';
-import '../../components/countdown_track.dart';
+import '../../components/progress_track.dart';
 import '../../components/surface.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
@@ -146,7 +146,7 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
                   Flexible(child: _body(launch)),
                   const SizedBox(height: Space.s24),
                   if (_counting) ...[
-                    CountdownTrack(progress: _countdown),
+                    ProgressTrack(progress: _countdown),
                     const SizedBox(height: Space.s16),
                   ],
                   // Rebuilt as the countdown ticks, for its seconds label.

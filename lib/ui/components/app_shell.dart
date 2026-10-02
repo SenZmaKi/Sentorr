@@ -15,6 +15,7 @@ import 'surface.dart';
 enum AppDestination {
   home(Icons.home_outlined, Icons.home_rounded, 'Home'),
   search(Icons.search, Icons.search, 'Search'),
+  downloads(Icons.download_outlined, Icons.download_rounded, 'Downloads'),
   settings(Icons.settings_outlined, Icons.settings_rounded, 'Settings');
 
   const AppDestination(this.icon, this.selectedIcon, this.label);

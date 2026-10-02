@@ -1,7 +1,7 @@
 # Downloads, streaming and following
 
-Status: agreed with the owner on 2 October 2026. Implementation proceeds in the
-phases at the end; update this file when a decision changes.
+Status: agreed with the owner on 2 October 2026 and implemented in all five
+phases below; update this file when a decision changes.
 
 ## One torrent engine
 
@@ -58,18 +58,24 @@ series, and a Follow button follows or unfollows manually. Each followed series
 has notify and auto-download switches; auto-download defaults from settings.
 
 When auto-download is on, every aired episode after the furthest one watched
-downloads, oldest first, whether or not the viewer is caught up. A series
-followed without watching downloads only episodes airing after it was
-followed. Only exact torrent matches download automatically; others wait as
-"Needs review" on the Downloads page. A notification says when an episode is
-ready.
+downloads, oldest first, whether or not the viewer is caught up (up to 20 per
+check). A series followed without watching counts its latest aired episode as
+reached, so only episodes airing after it was followed download. Only exact
+torrent matches download automatically; others wait under "Needs your choice"
+on the Downloads page until downloaded or dismissed (dismissals last until
+restart). A notification says when an episode is ready, replacing that
+series' new-episode notice.
+
+Checks run with the new-episode check (a minute after start, then every three
+hours) and at once when a series' switch or the settings default turns on.
+Code: `lib/following/auto_downloads.dart`, `lib/following/due_episodes.dart`.
 
 ## Phases
 
 1. Engine: shared session, owners, wants, storage moves, streams on any torrent.
    The player and download queue move onto it; the download isolate goes away.
 2. Library and playback: IMDb-keyed downloads, readable layout, local playback.
-3. UI: download button (progress ring) on episode cards, rows, previews and the
+3. UI: download button (progress ring) on episode rows, previews and the
    title page; Downloads page.
 4. Settings: Network, Downloads and Following groups.
 5. Following: Follow button, per-series switches, auto-download and retention.

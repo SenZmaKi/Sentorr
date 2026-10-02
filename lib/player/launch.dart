@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
+import '../library/playback.dart';
 import '../settings/notifier.dart';
 import '../torrents/match.dart';
 import '../torrents/models.dart';
@@ -123,6 +124,15 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     try {
       final item = state!.item ?? await _item(state!.request, cancel);
       if (cancel != _cancel) return;
+      if (offlineSourceFor(ref, item) != null) {
+        // Downloaded or downloading: the player uses that, no search.
+        _log.info('Playing $item from its download');
+        final queue = _prepared;
+        final request = state!.request;
+        this.cancel();
+        ref.read(playerSessionProvider.notifier).play(request, queue: queue);
+        return;
+      }
       final languages = ref.read(settingsProvider).torrents.languages;
       final query = torrentQueryFor(
         item,

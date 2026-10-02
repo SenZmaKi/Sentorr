@@ -5,6 +5,8 @@ import '../../../imdb/models.dart';
 import '../../../imdb/providers.dart';
 import '../../shared/title_format.dart';
 import '../../shared/title_icons.dart';
+import '../../../player/models.dart';
+import '../download_button.dart';
 import '../title_artwork.dart';
 import 'card_parts.dart';
 import 'preview_card.dart';
@@ -44,6 +46,10 @@ class TitlePreview extends ConsumerWidget {
       primaryLabel: playLabel,
       onPrimary: onPlay,
       onOpen: onOpen,
+      // A series downloads by episode, from its episodes.
+      extraAction: t.canHaveEpisodes == true || onPlay == null
+          ? null
+          : DownloadButton(item: PlaybackItem(title: t), menu: false),
     );
   }
 }
@@ -94,6 +100,13 @@ class EpisodePreview extends StatelessWidget {
       onPrimary: onPlay,
       openLabel: openLabel,
       onOpen: onOpen,
+      // Nothing to download before it airs.
+      extraAction: onPlay == null
+          ? null
+          : DownloadButton(
+              item: PlaybackItem.episode(series, episode),
+              menu: false,
+            ),
     );
   }
 }

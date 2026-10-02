@@ -22,6 +22,7 @@ class EpisodeRow extends StatelessWidget {
     this.onTap,
     this.preview,
     this.selected = false,
+    this.trailing,
   });
 
   /// Mono stamp on the still, e.g. "S2 E4"; none for movies.
@@ -43,6 +44,9 @@ class EpisodeRow extends StatelessWidget {
   /// The episode now playing: selection fill and edge, a playing glyph on
   /// the still and a Now playing line above the name.
   final bool selected;
+
+  /// An action at the row's end, e.g. a download button.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +163,10 @@ class EpisodeRow extends StatelessWidget {
                   ],
                 ),
               ),
+              if (trailing != null) ...[
+                const SizedBox(width: Space.s8),
+                trailing!,
+              ],
             ],
           ),
         ),

@@ -9,6 +9,15 @@ class PlaybackItem {
     this.episode,
   });
 
+  /// [e] of [series], numbered within [season] when it lists none.
+  PlaybackItem.episode(ImdbTitle series, ImdbEpisode e, {int? season})
+    : this(
+        title: e.title,
+        series: series,
+        season: e.seasonNumber ?? season,
+        episode: e.episodeNumber,
+      );
+
   /// The movie, or the episode's own title record.
   final ImdbTitle title;
 

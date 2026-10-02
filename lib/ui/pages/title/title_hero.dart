@@ -23,6 +23,7 @@ class TitleHero extends StatelessWidget {
     this.details,
     this.onPlay,
     this.onEpisodes,
+    this.actions = const [],
   });
 
   final ImdbTitle title;
@@ -32,6 +33,9 @@ class TitleHero extends StatelessWidget {
 
   /// Series only: jumps to the episode list.
   final VoidCallback? onEpisodes;
+
+  /// Further actions after Play and Episodes, e.g. Download or Follow.
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -250,6 +254,7 @@ class _Copy extends StatelessWidget {
                 icon: Icons.video_library_outlined,
                 onPressed: hero.onEpisodes,
               ),
+            ...hero.actions,
           ],
         ),
       ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:sentorr/downloads/torrents.dart';
 import 'package:torrent_stream/torrent_stream.dart';
 
@@ -15,6 +17,7 @@ class FakeTorrent {
 class FakeTorrents implements DownloadTorrents {
   final byHash = <String, FakeTorrent>{};
   bool failMetadata = false;
+  Completer<void>? metadataGate;
 
   FakeTorrent operator [](String title) => byHash[title]!;
   bool running(String title) {
@@ -65,6 +68,7 @@ class FakeTorrents implements DownloadTorrents {
 
   @override
   Future<List<TorrentStreamFile>> metadata(String infoHash) async {
+    await metadataGate?.future;
     if (failMetadata) throw StateError('no metadata');
     return const [
       TorrentStreamFile(index: 0, path: 'a.nfo', length: 10, isPadFile: false),

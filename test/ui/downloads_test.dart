@@ -106,6 +106,23 @@ Future<FakePlanner> _pump(
 }
 
 void main() {
+  testWidgets('season controls group active and paused episodes', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const DownloadsPage(),
+      library: [_entry(_episode(2), 'd2'), _entry(_episode(1), 'd1')],
+      downloads: [
+        _download('d1', DownloadStatus.downloading),
+        _download('d2', DownloadStatus.paused),
+      ],
+    );
+    expect(find.text('Pause season'), findsOneWidget);
+    expect(find.text('Cancel season'), findsOneWidget);
+    expect(find.text('Resume season'), findsOneWidget);
+  });
+
   testWidgets('pressing download plans the item', (tester) async {
     final planner = await _pump(
       tester,

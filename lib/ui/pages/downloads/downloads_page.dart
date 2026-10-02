@@ -6,6 +6,7 @@ import '../../../downloads/models.dart';
 import '../../../following/models.dart';
 import '../../../library/models.dart';
 import '../../../library/notifier.dart';
+import '../../../library/season_download.dart';
 import '../../components/buttons.dart';
 import '../../components/section_header.dart';
 import '../../shared/open_folder.dart';
@@ -14,6 +15,7 @@ import '../../shared/title_format.dart';
 import '../page_scaffold.dart';
 import 'download_row.dart';
 import 'review_section.dart';
+import 'season_controls.dart';
 
 typedef _View = ({
   LibraryEntry entry,
@@ -34,6 +36,7 @@ class DownloadsPage extends ConsumerWidget {
         d.id: d,
     };
     final planning = ref.watch(planningProvider).length;
+    final planningSeasons = ref.watch(seasonDownloadsProvider);
     final views = <_View>[
       for (final e in entries)
         (
@@ -50,7 +53,7 @@ class DownloadsPage extends ConsumerWidget {
       for (final v in views)
         if (v.state is Downloaded) v,
     ];
-    final empty = views.isEmpty && planning == 0;
+    final empty = views.isEmpty && planning == 0 && planningSeasons.isEmpty;
     return LayoutBuilder(
       builder: (context, box) {
         final compact = box.maxWidth < 600;
@@ -72,7 +75,9 @@ class DownloadsPage extends ConsumerWidget {
           children: [
             const ReviewSection(),
             if (empty) const _Empty(),
-            if (active.isNotEmpty || planning > 0) ...[
+            if (active.isNotEmpty ||
+                planning > 0 ||
+                planningSeasons.isNotEmpty) ...[
               SectionHeader(
                 icon: Icons.downloading_rounded,
                 title: 'Downloading',
@@ -82,7 +87,28 @@ class DownloadsPage extends ConsumerWidget {
                 count: active.isEmpty ? null : '${active.length}',
               ),
               const SizedBox(height: Space.s12),
-              rows(active),
+              for (final key in planningSeasons)
+                if (!views.any(
+                  (v) =>
+                      v.entry.item.series?.id == key.$1 &&
+                      v.entry.item.season == key.$2,
+                ))
+                  SeasonControls(
+                    series: ref
+                        .read(seasonDownloadsProvider.notifier)
+                        .seriesFor(key),
+                    season: key.$2,
+                    downloads: const [],
+                  ),
+              for (final group in _seasons(active)) ...[
+                if (group.first.entry.item.series != null)
+                  SeasonControls(
+                    series: group.first.entry.item.series!,
+                    season: group.first.entry.item.season!,
+                    downloads: _seasonDownloads(group.first.entry, views),
+                  ),
+                rows(group),
+              ],
               const SizedBox(height: Space.s48),
             ],
             if (done.isNotEmpty) ...[
@@ -112,13 +138,50 @@ class DownloadsPage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                rows(group),
+                for (final season in _seasons(group)) ...[
+                  if (season.first.entry.item.series != null)
+                    SeasonControls(
+                      series: season.first.entry.item.series!,
+                      season: season.first.entry.item.season!,
+                      downloads: _seasonDownloads(season.first.entry, views),
+                    ),
+                  rows(season),
+                ],
               ],
             ],
           ],
         );
       },
     );
+  }
+
+  static List<DownloadItem> _seasonDownloads(
+    LibraryEntry entry,
+    List<_View> views,
+  ) => [
+    for (final v in views)
+      if (v.entry.item.series?.id == entry.item.series?.id &&
+          v.entry.item.season == entry.item.season &&
+          v.download != null)
+        v.download!,
+  ];
+
+  static List<List<_View>> _seasons(List<_View> views) {
+    final groups = <String, List<_View>>{};
+    for (final v in views) {
+      final item = v.entry.item;
+      final key = item.series == null
+          ? item.id
+          : '${item.series!.id}:season:${item.season}';
+      groups.putIfAbsent(key, () => []).add(v);
+    }
+    for (final group in groups.values) {
+      group.sort(
+        (a, b) =>
+            (a.entry.item.episode ?? 0).compareTo(b.entry.item.episode ?? 0),
+      );
+    }
+    return groups.values.toList();
   }
 
   static int _bytes(List<_View> views) =>

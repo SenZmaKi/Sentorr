@@ -86,7 +86,9 @@ void main() {
       EngineTorrents(engine),
       DownloadRepository(JsonFileStore(File('${root.path}/queue.json'))),
     );
-    await queue.initialize(const DownloadSettings());
+    await queue.initialize(
+      const DownloadSettings(seedingMode: SeedingMode.disabled),
+    );
   });
   tearDown(() async {
     await queue.dispose();
@@ -115,6 +117,48 @@ void main() {
     expect(item.status, DownloadStatus.completed, reason: item.error);
     return item;
   }
+
+  test('a multi-file season pack finishes preparing every episode', () async {
+    final pack = await Directory('${root.path}/pack').create();
+    for (var n = 1; n <= 3; n++) {
+      await File('${pack.path}/S01E0$n.bin')
+          .writeAsBytes(bytes.sublist(0, 100003));
+    }
+    final data = createTorrentData(
+      sourcePath: pack.path,
+      pieceSize: 128 * 1024,
+    );
+    final hash = await engine.add(
+      TorrentSource.metadata(data),
+      owner: 'plan',
+      directory: '${root.path}/pack-download',
+      storage: TorrentStorage.kept,
+    );
+    final files = await engine.metadata(
+      hash,
+      timeout: const Duration(seconds: 3),
+    );
+    for (final file in files.where((f) => !f.isPadFile)) {
+      await queue.enqueue(
+        TorrentDownloadJob(
+          title: file.path,
+          torrentData: data,
+          destinationDirectory: '${root.path}/pack-download',
+          batchId: 'season',
+          selectedFileIndices: [file.index],
+          renamedFiles: {file.index: 'Season 01/${file.index}.bin'},
+        ),
+      );
+    }
+    await engine.release(hash, 'plan').timeout(const Duration(seconds: 3));
+    await waitUntil(
+      () => queue.items.every((i) => i.status != DownloadStatus.preparing),
+    );
+    expect(
+      queue.items.where((i) => i.status == DownloadStatus.failed),
+      isEmpty,
+    );
+  });
 
   test(
     'downloads exact bytes under the renamed path, then leaves the engine',

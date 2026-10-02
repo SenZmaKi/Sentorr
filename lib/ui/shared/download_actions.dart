@@ -5,9 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../downloads/manager.dart';
+import '../../downloads/queue.dart';
 import '../../library/models.dart';
 import '../../library/notifier.dart';
 import '../../library/planner.dart';
+import '../../library/season_download.dart';
+import '../../imdb/models.dart';
 import '../../player/models.dart';
 import '../../shared/errors/error_reports.dart';
 import '../components/confirm_dialog.dart';
@@ -19,10 +22,42 @@ import 'title_format.dart';
 extension DownloadActions on WidgetRef {
   /// Finds a torrent and queues [item]; failures surface as error toasts.
   void download(PlaybackItem item) => unawaited(
-    read(downloadPlannerProvider).download(item).catchError((Object error) {
-      ErrorReports.report("Couldn't download ${itemLabel(item)}", error);
-    }),
+    read(downloadPlannerProvider)
+        .download(item)
+        .then<void>((_) {})
+        .catchError((Object error) {
+          ErrorReports.report("Couldn't download ${itemLabel(item)}", error);
+        }),
   );
+
+  /// Queues every aired episode of [series]' [season] not downloaded yet,
+  /// after asking, since a season can be many gigabytes.
+  Future<void> downloadSeason(
+    BuildContext context,
+    ImdbTitle series,
+    int season,
+  ) async {
+    if (!await confirm(
+      context,
+      title: 'Download season $season?',
+      message:
+          'Every aired episode of ${series.title} season $season that '
+          "isn't downloaded yet will be queued.",
+      confirmLabel: 'Download',
+    )) {
+      return;
+    }
+    try {
+      await read(downloadQueueProvider)
+          .startBatch('${series.id}:season:$season');
+      await read(seasonDownloadsProvider.notifier).download(series, season);
+    } catch (error) {
+      ErrorReports.report(
+        "Couldn't download ${series.title} season $season",
+        error,
+      );
+    }
+  }
 
   void pauseDownload(LibraryEntry entry) =>
       unawaited(read(downloadQueueProvider).pause(entry.downloadId));

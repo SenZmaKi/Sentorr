@@ -8,13 +8,21 @@ import 'repository.dart';
 import 'rules.dart';
 import 'torrents.dart';
 
+part 'batches.dart';
+part 'attachments.dart';
+
 final _log = Logger('sentorr.downloads');
 
 /// Download policy over the shared torrent engine: queue order and slots,
 /// seeding, pausing for playback and persistence. Each download holds its
 /// torrent as its own owner, so a stream of the same torrent shares it.
 class DownloadQueue {
-  DownloadQueue(this.torrents, this.repository);
+  DownloadQueue(
+    this.torrents,
+    this.repository, {
+    this.preparationTimeout = const Duration(seconds: 60),
+  });
+  final Duration preparationTimeout;
   final DownloadTorrents torrents;
   final DownloadRepository repository;
   final _items = <DownloadItem>[];
@@ -49,77 +57,22 @@ class DownloadQueue {
 
   Future<String> enqueue(TorrentDownloadJob job) => _serial(() async {
     final id = '${DateTime.now().microsecondsSinceEpoch}-${_sequence++}';
-    _items.add(DownloadItem(id: id, job: job));
+    if (repository.cancelledBatches.contains(job.batchId)) {
+      throw StateError('Season download cancelled');
+    }
+    final paused = repository.pausedBatches.contains(job.batchId);
+    _items.add(
+      DownloadItem(
+        id: id,
+        job: job,
+        status: paused ? DownloadStatus.paused : DownloadStatus.preparing,
+      ),
+    );
     _log.info('Queued ${job.title} ($id) to ${job.destinationDirectory}');
-    _attach(id);
+    if (!paused) _attach(id);
     await _commit();
     return id;
   });
-
-  /// Adds the torrent, waits for metadata and chooses its files, without
-  /// holding up other commands.
-  void _attach(String id) {
-    unawaited(() async {
-      String? hash;
-      try {
-        final job = _item(id).job;
-        _uploadBefore[id] = _item(id).uploadedBytes;
-        hash = await torrents.add(
-          job.source,
-          owner: _item(id).owner,
-          directory: job.destinationDirectory,
-        );
-        final current = await _serial(() async {
-          final item = _items.where((i) => i.id == id).firstOrNull;
-          if (item == null || item.status != DownloadStatus.preparing) {
-            // Paused, cancelled or cleared while adding.
-            await torrents.release(hash!, 'download:$id');
-            return false;
-          }
-          _replace(item.copyWith(infoHash: hash));
-          return true;
-        });
-        if (!current) return;
-        final files = await torrents.metadata(hash);
-        final chosen = chooseFiles(job, files);
-        if (job.renamedFiles.isNotEmpty) {
-          await torrents.rename(hash, job.renamedFiles);
-        }
-        await torrents.want(hash, _item(id).owner, chosen.keys.toSet());
-        await _serial(() async {
-          final item = _item(id);
-          if (item.status != DownloadStatus.preparing) return;
-          _attached.add(id);
-          _replace(
-            item.copyWith(
-              status: DownloadStatus.queued,
-              files: [
-                for (final f in chosen.values)
-                  DownloadFileProgress(
-                    f.index,
-                    job.renamedFiles[f.index] ?? f.path,
-                    f.length,
-                    0,
-                  ),
-              ],
-            ),
-          );
-          _reconcile();
-          await _commit();
-        });
-      } catch (error, stack) {
-        if (_disposed) return;
-        await _serial(() async {
-          final item = _items.where((i) => i.id == id).firstOrNull;
-          if (item == null || item.status != DownloadStatus.preparing) return;
-          _log.warning('Could not start ${item.job.title}', error, stack);
-          if (hash != null) await _release(item.copyWith(infoHash: hash));
-          _replace(item.withStatus(DownloadStatus.failed, error: '$error'));
-          await _commit();
-        });
-      }
-    }());
-  }
 
   Future<void> pause(String id) => _serial(() async {
     final item = _item(id);
@@ -297,7 +250,9 @@ class DownloadQueue {
     final hash = item.infoHash;
     if (hash == null) return;
     try {
-      await torrents.release(hash, item.owner, deleteFiles: deleteFiles);
+      await torrents
+          .release(hash, item.owner, deleteFiles: deleteFiles)
+          .timeout(const Duration(seconds: 5));
     } catch (error) {
       _log.warning('Could not release ${_name(item)}', error);
     }

@@ -7,10 +7,10 @@ class DownloadPreferences {
     this.directory,
     this.maxActive = 2,
     this.pauseWhileStreaming = true,
-    this.seeding = SeedingMode.disabled,
-    this.seedRatio = 1,
-    this.seedMinutes = 30,
-    this.maxSeeds = 2,
+    this.seeding = SeedingMode.limited,
+    this.seedRatio = 2,
+    this.seedMinutes = 1440,
+    this.maxSeeds = 5,
   });
 
   static const maxSlots = 10;

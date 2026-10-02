@@ -4,11 +4,17 @@ import 'models.dart';
 class DownloadRepository {
   DownloadRepository(this.store);
   final JsonFileStore store;
+  final cancelledBatches = <String>{};
+  final pausedBatches = <String>{};
 
   /// Unfinished downloads come back preparing; their torrents are re-added.
   Future<List<DownloadItem>> load() async {
     final json = await store.read();
     if (json == null) return [];
+    cancelledBatches.addAll(
+      (json['cancelledBatches'] as List? ?? []).cast<String>(),
+    );
+    pausedBatches.addAll((json['pausedBatches'] as List? ?? []).cast<String>());
     return [
       for (final raw in json['items'] as List)
         _decode(raw as Map<String, dynamic>),
@@ -40,7 +46,9 @@ class DownloadRepository {
   }
 
   Future<void> save(List<DownloadItem> items) => store.write({
-    'version': 2,
+    'version': 3,
+    'cancelledBatches': cancelledBatches.toList(),
+    'pausedBatches': pausedBatches.toList(),
     'items': [
       for (final i in items)
         {

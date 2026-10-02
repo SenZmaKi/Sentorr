@@ -142,7 +142,9 @@ void main() {
       try {
         await container
             .read(downloadQueueProvider)
-            .initialize(const DownloadSettings());
+            .initialize(
+              const DownloadSettings(seedingMode: SeedingMode.disabled),
+            );
         container.listen(downloadsProvider, (_, _) {});
         await container.read(downloadPlannerProvider).download(item);
         final entry = container.read(libraryProvider).single;

@@ -33,11 +33,10 @@ class DownloadRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final item = entry.item;
-    final done = state is Downloaded;
     return Interactive(
       borderRadius: Radii.card,
-      onTap: done ? () => ref.playDownload(entry) : null,
-      semanticLabel: '${itemLabel(item)}, ${_status(state, download).$2}',
+      onTap: () => ref.playDownload(entry),
+      semanticLabel: 'Play ${itemLabel(item)}, ${_status(state, download).$2}',
       builder: (context, s) => AnimatedContainer(
         duration: Motion.hover,
         curve: Motion.change,
@@ -45,7 +44,7 @@ class DownloadRow extends ConsumerWidget {
         decoration: BoxDecoration(
           color: s.pressed
               ? c.statePressed
-              : s.hovered && done
+              : s.hovered
               ? c.stateHover
               : c.stateHover.clear,
           borderRadius: BorderRadius.circular(Radii.card),
@@ -57,15 +56,16 @@ class DownloadRow extends ConsumerWidget {
               child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: ArtworkFrame(
-                  active: done && (s.hovered || s.focused),
+                  active: s.hovered || s.focused,
                   artwork: item.title.poster != null
                       ? TitleArtwork(image: item.title.poster)
                       : TitleBackdrop(title: item.series ?? item.title),
-                  hoverOverlay: done
-                      ? const Center(
-                          child: OverlayGlyph(Icons.play_arrow_rounded),
-                        )
-                      : null,
+                  hoverOverlay: const Center(
+                    child: OverlayGlyph(
+                      Icons.play_arrow_rounded,
+                      primary: true,
+                    ),
+                  ),
                   decorations: [
                     if (item.isEpisode)
                       Positioned(

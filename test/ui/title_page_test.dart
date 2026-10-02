@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +12,11 @@ import 'package:sentorr/player/models.dart';
 import 'package:sentorr/library/models.dart';
 import 'package:sentorr/downloads/models.dart';
 import 'package:sentorr/downloads/manager.dart';
+import 'package:sentorr/downloads/queue.dart';
+import 'package:sentorr/downloads/repository.dart';
+import 'package:sentorr/shared/persistence/json_file_store.dart';
 import 'package:sentorr/imdb/models.dart';
+import 'package:sentorr/library/planner.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/ui/components/app_shell.dart';
 import 'package:sentorr/ui/components/cards/episode_row.dart';
@@ -29,7 +35,16 @@ import '../support/fake_following.dart';
 import '../support/fake_library.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
+import '../support/fake_planner.dart';
+import '../support/fake_download_torrents.dart';
 import '../support/fake_torrents.dart';
+
+class _SeasonQueueRepository extends DownloadRepository {
+  _SeasonQueueRepository() : super(JsonFileStore(File('unused')));
+
+  @override
+  Future<void> save(List<DownloadItem> items) async {}
+}
 
 ImdbEpisode _episode(int season, int n) => ImdbEpisode(
   title: ImdbTitle(id: 'tt9$season$n', title: 'Episode $n', plot: 'Plot'),
@@ -144,6 +159,29 @@ void main() {
     await tester.tap(find.text('Season 2'));
     await tester.pumpAndSettle();
     expect(find.byType(EpisodeRow), findsOneWidget);
+  });
+
+  testWidgets('Download season queues the season after asking', (tester) async {
+    final planner = FakePlanner();
+    final queue = DownloadQueue(FakeTorrents(), _SeasonQueueRepository());
+    final container = await _pump(
+      tester,
+      state: [
+        ...followedSeriesOverrides(),
+        ...libraryOverrides(),
+        ...watchHistoryOverrides(),
+        downloadPlannerProvider.overrideWithValue(planner),
+        downloadQueueProvider.overrideWithValue(queue),
+      ],
+    );
+    container.read(titleRoutesProvider.notifier).open(_imdb.trending[1]);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Download season'));
+    await tester.pumpAndSettle();
+    expect(find.text('Download season 1?'), findsOneWidget);
+    await tester.tap(find.text('Download'));
+    await tester.pumpAndSettle();
+    expect(planner.planned, ['tt911', 'tt912']);
   });
 
   testWidgets('a recommendation stacks; Back and Escape unwind', (

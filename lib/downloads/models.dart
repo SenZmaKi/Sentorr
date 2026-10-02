@@ -29,6 +29,7 @@ class TorrentDownloadJob {
   TorrentDownloadJob({
     required this.title,
     required this.destinationDirectory,
+    this.batchId,
     this.magnet,
     Uint8List? torrentData,
     List<int> selectedFileIndices = const [],
@@ -43,6 +44,7 @@ class TorrentDownloadJob {
     }
   }
   final String title;
+  final String? batchId;
   final Uri? magnet;
   final Uint8List? torrentData;
   final String destinationDirectory;
@@ -55,6 +57,7 @@ class TorrentDownloadJob {
 
   Map<String, dynamic> toJson() => {
     'title': title,
+    if (batchId != null) 'batch': batchId,
     if (magnet != null) 'magnet': magnet.toString(),
     if (torrentData != null) 'torrent': base64Encode(torrentData!),
     'directory': destinationDirectory,
@@ -64,6 +67,7 @@ class TorrentDownloadJob {
   factory TorrentDownloadJob.fromJson(Map<String, dynamic> json) =>
       TorrentDownloadJob(
         title: json['title'] as String,
+        batchId: json['batch'] as String?,
         magnet: switch (json['magnet']) {
           final String m => Uri.parse(m),
           _ => null,
@@ -188,10 +192,10 @@ enum SeedingMode { disabled, limited, indefinitely }
 class DownloadSettings {
   const DownloadSettings({
     this.maxActiveDownloads = 2,
-    this.maxActiveSeeds = 2,
-    this.seedingMode = SeedingMode.disabled,
-    this.seedRatio = 1,
-    this.seedTime = const Duration(minutes: 30),
+    this.maxActiveSeeds = 5,
+    this.seedingMode = SeedingMode.limited,
+    this.seedRatio = 2,
+    this.seedTime = const Duration(hours: 24),
     this.pauseWhileStreaming = true,
   });
   final int maxActiveDownloads;

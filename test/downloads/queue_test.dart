@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,7 +45,12 @@ void main() {
     );
     torrents = FakeTorrents();
     queue = DownloadQueue(torrents, repository);
-    await queue.initialize(const DownloadSettings(maxActiveDownloads: 1));
+    await queue.initialize(
+      const DownloadSettings(
+        maxActiveDownloads: 1,
+        seedingMode: SeedingMode.disabled,
+      ),
+    );
   });
   tearDown(() async {
     await queue.dispose();
@@ -208,7 +214,12 @@ void main() {
     await queue.dispose();
     final again = FakeTorrents();
     final restored = DownloadQueue(again, repository);
-    await restored.initialize(const DownloadSettings(maxActiveDownloads: 1));
+    await restored.initialize(
+      const DownloadSettings(
+        maxActiveDownloads: 1,
+        seedingMode: SeedingMode.disabled,
+      ),
+    );
     await settle();
     expect(
       [for (final i in restored.items) i.status],
@@ -225,6 +236,114 @@ void main() {
     expect(again.byHash.keys, ['c']);
     await restored.dispose();
     queue = DownloadQueue(FakeTorrents(), repository);
+  });
+
+  test(
+    'season pause includes waiting and future episodes and survives restart',
+    () async {
+      TorrentDownloadJob episode(String name) => TorrentDownloadJob(
+        title: name,
+        magnet: Uri.parse('magnet:?xt=urn:btih:$name&dn=$name'),
+        destinationDirectory: root.path,
+        batchId: 'series:season:1',
+        selectedFileIndices: [1],
+      );
+      await queue.enqueue(episode('a'));
+      await queue.enqueue(episode('b'));
+      await settle();
+      await queue.pauseBatch('series:season:1');
+      await queue.enqueue(episode('c'));
+      await settle();
+      expect(statuses(), List.filled(3, DownloadStatus.paused));
+      expect(torrents.running('a'), false);
+      expect(torrents.running('b'), false);
+      await queue.dispose();
+      final again = DownloadQueue(FakeTorrents(), repository);
+      await again.initialize(const DownloadSettings(maxActiveDownloads: 1));
+      expect(again.batchPaused('series:season:1'), true);
+      expect(
+        again.items.every((i) => i.job.batchId == 'series:season:1'),
+        true,
+      );
+      await again.resumeBatch('series:season:1');
+      for (
+        var n = 0;
+        n < 100 && again.items.any((i) => i.status == DownloadStatus.preparing);
+        n++
+      ) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(again.items.map((i) => i.status), [
+        DownloadStatus.downloading,
+        DownloadStatus.queued,
+        DownloadStatus.queued,
+      ]);
+      await again.dispose();
+    },
+  );
+
+  test('season pause leaves other seasons and completed files alone', () async {
+    final a = await enqueue('a');
+    await queue.enqueue(
+      TorrentDownloadJob(
+        title: 'season',
+        magnet: Uri.parse('magnet:?xt=urn:btih:season&dn=season'),
+        destinationDirectory: root.path,
+        batchId: 'season',
+      ),
+    );
+    await settle();
+    await queue.pauseBatch('season');
+    expect(queue.items.first.id, a);
+    expect(queue.items.first.status, DownloadStatus.downloading);
+    expect(queue.items.last.status, DownloadStatus.paused);
+    await queue.resumeBatch('season');
+    await settle();
+    expect(queue.items.last.status, DownloadStatus.queued);
+  });
+
+  test('unresponsive metadata fails instead of remaining Preparing', () async {
+    torrents.metadataGate = Completer<void>();
+    queue = DownloadQueue(
+      torrents,
+      repository,
+      preparationTimeout: const Duration(milliseconds: 30),
+    );
+    await queue.initialize(const DownloadSettings());
+    await queue.enqueue(job('stalled'));
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(queue.items.single.status, DownloadStatus.failed);
+    expect(queue.items.single.error, contains('preparation'));
+    expect(torrents['stalled'].owners, isEmpty);
+    torrents.metadataGate!.complete();
+    await settle();
+    expect(queue.items.single.status, DownloadStatus.failed);
+  });
+
+  test('cancel season releases jobs and rejects late arrivals', () async {
+    TorrentDownloadJob episode(String n) => TorrentDownloadJob(
+      title: n,
+      magnet: Uri.parse('magnet:?xt=urn:btih:$n&dn=$n'),
+      destinationDirectory: root.path,
+      batchId: 'season',
+      selectedFileIndices: [1],
+    );
+    await queue.enqueue(episode('a'));
+    await queue.enqueue(episode('b'));
+    await settle();
+    await queue.cancelBatch('season');
+    expect(
+      queue.items.every((i) => i.status == DownloadStatus.cancelled),
+      true,
+    );
+    expect(torrents['a'].owners, isEmpty);
+    expect(torrents['b'].owners, isEmpty);
+    expect(torrents['a'].deleted, false);
+    await expectLater(queue.enqueue(episode('late')), throwsStateError);
+    await queue.startBatch('season');
+    await queue.enqueue(episode('retry'));
+    await settle();
+    expect(queue.items.last.status, DownloadStatus.downloading);
   });
 
   test('settings validate their limits', () {

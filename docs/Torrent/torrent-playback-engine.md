@@ -28,7 +28,7 @@ A caller creates a session before starting asynchronous acquisition, so Stop can
 - `addPeers(peers)` supplies explicit newly discovered peers without reopening the source.
 - `setTransferPaused(bool)` controls downloading independently of playback. A player pause can continue downloading; callers should not silently conflate the two.
 - `close()` is idempotent, interrupts pending open/preparation/read operations, shuts down the server/native session, deletes only the owned session cache directory, closes state delivery and releases its worker lease. The shared worker exits only after its final session closes.
-- `state` and a broadcast `states` stream expose current phase, metadata, selected file, peer/seed counts, transfer rate, downloaded/selected bytes and fatal typed failures. HTTP read failures are observed by the player through aborted sockets. New subscribers read `state` for the initial snapshot. This is transfer state; it contains no player time, duration, mute or buffering state.
+- `state` and a broadcast `states` stream expose current phase, metadata, selected file, connected peers/seeds, known peers and pending connections, download/upload payload rates and totals, native transfer activity, verified torrent/selected-file bytes and fatal typed failures. HTTP read failures are observed by the player through aborted sockets. New subscribers read `state` for the initial snapshot. This is transfer state; it contains no player time, duration, mute or buffering state.
 
 Do not choose the largest file inside the library. Multi-episode torrents require resolver/application intent; pad files and zero-length entries are rejected for selection. Open exactly once per session; use a new session for a different source. Select exactly one file for a prepared session initially; file switching should use another session until its lifetime is designed explicitly.
 
@@ -64,6 +64,8 @@ Sequence: create session → open source → choose file → prepare file → co
 
 MediaKit's shorter HTTP timeout caused cancelled reads and retries; the adapter restores 60 seconds so it exceeds the engine's 45-second piece wait. A different HTTP player needs an equivalent timeout. Bounded engine preparation reduces initial cold range reads, but every player must still parse its container. Custom libmpv IO is not needed for the audited design.
 
+Player controls or overlays subscribe directly to `session.states` with `session.state` as their initial snapshot. Torrent telemetry does not pass through MediaKit’s decoder. Speeds are bytes per second; selected-file progress is verified availability, not playable duration.
+
 Playback observation combines demuxer cache duration/cache-pause with position progression, rather than relying exclusively on MediaKit buffering events. Progress feedback belongs to the app: elapsed loading time, connected peers, verified bytes/cache duration, a slow-source explanation after thirty seconds, and cancellation. Never force playback merely because a wall-clock loading cap expired.
 
 ## Resolver/application integration later
@@ -88,4 +90,4 @@ The optional MediaKit adapter needs native release playback verification for mut
 
 ## Implemented verification
 
-The pure Dart package has a pinned binding dependency and explicit local-native-build instructions. Thirteen tests pass on macOS, including exact bytes from a real controlled seed, seed interruption/recovery, independent sessions sharing the native worker, close during metadata/container preparation, and caller/source-file preservation. Analysis is clean. Local-service discovery is disabled after controlled loopback peers were replaced by self-discovery; explicit peers and DHT/trackers remain supported. No app dependency or MediaKit adapter has been wired.
+The pure Dart package has a pinned binding dependency and explicit local-native-build instructions. Fourteen tests pass on macOS, including exact bytes from a real controlled seed, seed interruption/recovery, independent sessions sharing the native worker, close during metadata/container preparation, and caller/source-file preservation. Analysis is clean. Local-service discovery is disabled after controlled loopback peers were replaced by self-discovery; explicit peers and DHT/trackers remain supported. No app dependency or MediaKit adapter has been wired.

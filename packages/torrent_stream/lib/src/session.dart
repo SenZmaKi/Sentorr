@@ -36,13 +36,7 @@ class TorrentStreamSession {
   void _fail(TorrentStreamException error) {
     if (_closed) return;
     _failed = true;
-    _publish(
-      TorrentStreamState(
-        phase: TorrentStreamPhase.failed,
-        files: state.files,
-        failure: error,
-      ),
-    );
+    _publish(state.atPhase(TorrentStreamPhase.failed, failure: error));
     for (final pending in _pending.values) {
       if (!pending.isCompleted) pending.completeError(error);
     }
@@ -198,12 +192,7 @@ class TorrentStreamSession {
       }
       _pending.clear();
       _messages.close();
-      _publish(
-        TorrentStreamState(
-          phase: TorrentStreamPhase.closed,
-          files: state.files,
-        ),
-      );
+      _publish(state.atPhase(TorrentStreamPhase.closed));
       // A paused observer must not hold native/cache shutdown hostage.
       unawaited(_states.close());
     }

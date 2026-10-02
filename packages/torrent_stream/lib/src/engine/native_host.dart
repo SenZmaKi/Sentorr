@@ -21,6 +21,10 @@ class NativeHost {
   NativeSession? native;
   TorrentHandle? torrent;
   TorrentBytes? bytes;
+  TorrentStatus? _lastStatus;
+  TorrentFileEntry? _selectedFile;
+  int _selectedBytes = 0;
+  int _servedBytes = 0, _requests = 0;
   MediaServer? server;
   Directory? owned;
   Timer? timer;
@@ -52,23 +56,35 @@ class NativeHost {
     'pad': (f.flags & 1) != 0,
   };
   void snapshot() {
-    final status = torrent?.getStatus();
+    final live = torrent != null;
+    final status = live ? (_lastStatus = torrent!.getStatus()) : _lastStatus;
+    if (bytes != null && live) {
+      _selectedBytes = torrent!.getFileProgress()[bytes!.file.index];
+    }
+    _servedBytes = server?.servedBytes ?? _servedBytes;
+    _requests = server?.requestCount ?? _requests;
     send({
       'kind': 'state',
       'value': {
         'phase': phase.index,
         'files': files.map(fileMap).toList(),
         'paused': paused,
-        'rate': (status?.downloadPayloadRate ?? 0).round(),
+        'rate': live ? (status?.downloadPayloadRate ?? 0).round() : 0,
+        'uploadRate': live ? (status?.uploadPayloadRate ?? 0).round() : 0,
+        'received': status?.totalPayloadDownload ?? 0,
+        'uploaded': status?.totalPayloadUpload ?? 0,
+        'torrentState': live ? status?.state : null,
+        'knownPeers': status?.listPeers ?? 0,
+        'connections': live ? status?.numConnections ?? 0 : 0,
+        'candidates': live ? status?.connectCandidates ?? 0 : 0,
+        'selectedFile': _selectedFile == null ? null : fileMap(_selectedFile!),
         'downloaded': status?.totalDone ?? 0,
-        'selected': bytes == null
-            ? 0
-            : torrent!.getFileProgress()[bytes!.file.index],
-        'peers': status?.numPeers ?? 0,
-        'seeds': status?.numSeeds ?? 0,
+        'selected': _selectedBytes,
+        'peers': live ? status?.numPeers ?? 0 : 0,
+        'seeds': live ? status?.numSeeds ?? 0 : 0,
         'cached': bytes?.cachedBytes ?? 0,
-        'served': server?.servedBytes ?? 0,
-        'requests': server?.requestCount ?? 0,
+        'served': _servedBytes,
+        'requests': _requests,
       },
     });
   }
@@ -150,6 +166,7 @@ class NativeHost {
     if (file.size == 0 || (file.flags & 1) != 0) {
       throw ArgumentError('Select a nonempty, non-pad file');
     }
+    _selectedFile = file;
     phase = TorrentStreamPhase.preparing;
     snapshot();
     bytes = TorrentBytes(
@@ -200,6 +217,7 @@ class NativeHost {
     lifetime.cancel();
     timer?.cancel();
     phase = TorrentStreamPhase.closing;
+    snapshot();
     await server?.close();
     bytes?.close();
     await alerts?.cancel();

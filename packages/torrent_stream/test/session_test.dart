@@ -91,6 +91,8 @@ void main() {
           pieceCacheBytes: 1024 * 1024,
         ),
       );
+      final observations = <TorrentStreamState>[];
+      final subscription = session.states.listen(observations.add);
       final client = HttpClient();
       try {
         final files = await session.open(
@@ -143,10 +145,35 @@ void main() {
           fixture.sublist(3 * 1024 * 1024, 3 * 1024 * 1024 + 101),
         );
         await session.prepareSeek();
+        expect(
+          observations.any((s) => s.connectedPeers > 0 && s.connectedSeeds > 0),
+          true,
+        );
+        expect(observations.any((s) => s.downloadBytesPerSecond > 0), true);
+        expect(session.state.receivedBytes, greaterThan(0));
+        expect(session.state.selectedFile!.index, files.single.index);
+        expect(session.state.selectedProgress, greaterThan(0));
+        expect(session.state.selectedProgress, lessThan(1));
+        expect(session.state.uploadBytesPerSecond, greaterThanOrEqualTo(0));
+        expect(
+          session.state.knownPeers,
+          greaterThanOrEqualTo(session.state.connectedPeers),
+        );
+        expect(
+          session.state.connections,
+          greaterThanOrEqualTo(session.state.connectedPeers),
+        );
+        final received = session.state.receivedBytes;
+        final served = session.state.servedBytes;
         expect(session.state.downloadedBytes, lessThan(fixture.length));
         await session.close();
         await session.close();
         expect(session.state.phase, TorrentStreamPhase.closed);
+        expect(session.state.receivedBytes, greaterThanOrEqualTo(received));
+        expect(session.state.servedBytes, greaterThanOrEqualTo(served));
+        expect(session.state.connectedPeers, 0);
+        expect(session.state.downloadBytesPerSecond, 0);
+        expect(session.state.uploadBytesPerSecond, 0);
         expect(await sentinel.readAsString(), 'preserve');
         expect(
           await cache.list().length,
@@ -159,6 +186,7 @@ void main() {
           throwsA(isA<TorrentStreamException>()),
         );
       } finally {
+        await subscription.cancel();
         client.close(force: true);
         await session.close();
         native.close();

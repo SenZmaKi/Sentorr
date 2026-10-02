@@ -30,6 +30,31 @@ Create the session **before** starting `open`: `close` must remain available whi
 
 The caller supplies an absolute cache root. The package owns only a unique child folder and deletes it on close. Completed data is retained on disk for the session; there is no persistence, rolling disk quota, background foreground-service runtime or automatic file selection.
 
+## Player telemetry
+
+`session.state` and `session.states` expose download/upload payload speeds in **bytes per second**, cumulative received/uploaded payload bytes, connected peers/seeds, known peers, connections (including pending handshakes), eligible connection candidates, native transfer activity, selected file and verified selected-file progress. Updates arrive approximately every 500 ms and at lifecycle transitions. Connected seeds are a subset of connected peers; known peers can include disconnected or banned peers. These are local observations, not tracker estimates of the entire swarm.
+
+`verifiedBytes` (the existing `downloadedBytes`) measures available verified torrent data. `receivedBytes` measures network payload and can include retransmissions or bytes awaiting verification. `selectedProgress` measures the selected file, not playable seconds. Final totals remain available after close; active rates/connections become zero.
+
+A MediaKit player overlay subscribes directly to this stream. MediaKit continues to supply playback position/buffering; torrent statistics do not need to pass through its decoder. For example, in a Flutter consumer:
+
+```dart
+StreamBuilder<TorrentStreamState>(
+  stream: session.states,
+  initialData: session.state,
+  builder: (context, snapshot) {
+    final transfer = snapshot.data!;
+    return Text(
+      'Peers ${transfer.connectedPeers} · Seeds ${transfer.connectedSeeds} '
+      '↓ ${transfer.downloadBytesPerSecond} B/s '
+      '↑ ${transfer.uploadBytesPerSecond} B/s',
+    );
+  },
+)
+```
+
+Place this widget in the player controls/overlay; the core remains player independent. `example/serve.dart` demonstrates the same subscription without Flutter.
+
 ## Native prerequisite
 
 This incubation package pins the streaming binding source to `de9fc4b07ff63dd3f3433497c0fb48568c86f5af`. That source needs a **matching rebuilt native bridge**; the existing 1.0.1 release binaries do not establish compatibility with the added streaming symbols. It is not yet a published drop-in package.
@@ -68,6 +93,6 @@ Mute, video/audio tracks, subtitles, playback pause, time-based seeking, bufferi
 
 ## Evidence
 
-On macOS: clean analysis; thirteen passing tests including a real seeded torrent, exact HTTP bytes, download pause, seed interruption/recovery, metadata/preparation cancellation, independent sessions preservation of caller/source files, paused state observers and unexpected worker exit. Tests run native files sequentially because their owner isolates differ; concurrency inside one owner is exercised explicitly. HTTP tests cover ranges and blocked-reader disconnect/seek cancellation.
+On macOS: clean analysis; fourteen passing tests including a real seeded torrent, exact HTTP bytes, download pause, seed interruption/recovery, metadata/preparation cancellation, independent sessions preservation of caller/source files, paused state observers and unexpected worker exit. Tests run native files sequentially because their owner isolates differ; concurrency inside one owner is exercised explicitly. HTTP tests cover ranges and blocked-reader disconnect/seek cancellation.
 
 No Sentorr app wiring or MediaKit playback audit of this package has been performed. The lab's prior playback results validate the approach, not this extraction's player integration. Windows/Linux/mobile runtimes and packaging remain unverified.

@@ -40,3 +40,4 @@ Paths below are relative to `../senpwai/`. Read the relevant branch on demand ra
 
 ## Misc
 - Keep files thin and focused instead of owning a lot of functionality, break down most things that go over 300 lines into smaller components unless justified.
+- When asked to commit use concise clear messages e.g., "Add home page" and no co-authored-by.

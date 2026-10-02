@@ -2,17 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../shared/theme/theme.dart';
 
-/// Scrolling top-level page with a headline, responsive gutters and the
-/// shared content width cap.
+/// Scrolling top-level page with responsive gutters and the shared content
+/// width cap. Navigation already names the page, so it carries no headline.
 class PageScaffold extends StatelessWidget {
-  const PageScaffold({
-    super.key,
-    required this.title,
-    required this.children,
-    this.maxWidth = 1400,
-  });
+  const PageScaffold({super.key, required this.children, this.maxWidth = 1400});
 
-  final String title;
   final List<Widget> children;
   final double maxWidth;
 
@@ -28,16 +22,7 @@ class PageScaffold extends StatelessWidget {
               constraints: BoxConstraints(maxWidth: maxWidth),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    title,
-                    style: context.type.headline.copyWith(
-                      color: context.colors.foreground,
-                    ),
-                  ),
-                  const SizedBox(height: Space.s24),
-                  ...children,
-                ],
+                children: [...children],
               ),
             ),
           ),

@@ -16,7 +16,6 @@ class SettingsPage extends ConsumerWidget {
     final c = context.colors;
     final settings = ref.watch(settingsProvider);
     return PageScaffold(
-      title: 'Settings',
       maxWidth: 720,
       children: [
         Surface(

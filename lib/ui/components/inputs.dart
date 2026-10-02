@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../shared/theme/theme.dart';
 import 'surface.dart';
@@ -15,6 +16,13 @@ class STextField extends StatefulWidget {
     this.width,
     this.technical = false,
     this.textAlign = TextAlign.start,
+    this.onChanged,
+    this.onSubmitted,
+    this.focusNode,
+    this.keyboardType,
+    this.inputFormatters,
+    this.textInputAction,
+    this.trailing,
   });
 
   final TextEditingController? controller;
@@ -27,23 +35,46 @@ class STextField extends StatefulWidget {
   /// Numbers, sizes and paths use the technical role.
   final bool technical;
   final TextAlign textAlign;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+
+  /// Caller-owned; the field makes its own when omitted.
+  final FocusNode? focusNode;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextInputAction? textInputAction;
+
+  /// Inline action after the text, e.g. a clear button.
+  final Widget? trailing;
 
   @override
   State<STextField> createState() => _STextFieldState();
 }
 
 class _STextFieldState extends State<STextField> {
-  final _focus = FocusNode();
+  FocusNode? _ownFocus;
+  FocusNode get _focus => widget.focusNode ?? (_ownFocus ??= FocusNode());
 
   @override
   void initState() {
     super.initState();
-    _focus.addListener(() => setState(() {}));
+    _focus.addListener(_onFocus);
   }
 
   @override
+  void didUpdateWidget(STextField old) {
+    super.didUpdateWidget(old);
+    if (old.focusNode == widget.focusNode) return;
+    (old.focusNode ?? _ownFocus)?.removeListener(_onFocus);
+    _focus.addListener(_onFocus);
+  }
+
+  void _onFocus() => setState(() {});
+
+  @override
   void dispose() {
-    _focus.dispose();
+    _focus.removeListener(_onFocus);
+    _ownFocus?.dispose();
     super.dispose();
   }
 
@@ -96,6 +127,11 @@ class _STextFieldState extends State<STextField> {
                       textAlign: widget.textAlign,
                       cursorColor: c.foreground,
                       cursorWidth: 1.5,
+                      onChanged: widget.onChanged,
+                      onSubmitted: widget.onSubmitted,
+                      keyboardType: widget.keyboardType,
+                      inputFormatters: widget.inputFormatters,
+                      textInputAction: widget.textInputAction,
                       decoration: InputDecoration.collapsed(
                         hintText: widget.hint,
                         hintStyle: textStyle.copyWith(color: c.foregroundMuted),
@@ -103,6 +139,10 @@ class _STextFieldState extends State<STextField> {
                     ),
                   ),
                 ),
+                if (widget.trailing != null) ...[
+                  const SizedBox(width: Space.s8),
+                  widget.trailing!,
+                ],
               ],
             ),
           ),

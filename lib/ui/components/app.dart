@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../settings/notifier.dart';
 import '../../shared/app_lifecycle.dart';
 import '../pages/home/home_page.dart';
-import '../pages/search_page.dart';
+import '../pages/search/search_page.dart';
 import '../pages/settings_page.dart';
 import '../shared/theme/theme.dart';
 import 'app_shell.dart';

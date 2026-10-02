@@ -23,7 +23,7 @@ The depth specification below supersedes the earlier flat-card and shadow-free d
 
 ### Color roles
 
-All hex values are opaque sRGB unless explicitly stated. These are resolved semantic roles; Dart implementation may derive them from shared primitives. Both modes use the reference's distinct canvas, panel and control planes. Status pairs and interaction colors complete the references for app use.
+All hex values are opaque sRGB unless explicitly stated. These are resolved semantic roles; Dart implementation may derive them from shared primitives. Both modes use the reference's distinct canvas, panel and control planes. Status pairs and interaction colors complete the references for app use. borderControl sits just above the 3:1 boundary floor against surfaceControl and surface in both modes (softened 2 October 2026), so outlines stay accessible without reading heavy; do not lighten it further.
 
 | Role                | Dark      | Light     | Use                                                          |
 | ------------------- | --------- | --------- | ------------------------------------------------------------ |
@@ -38,7 +38,7 @@ All hex values are opaque sRGB unless explicitly stated. These are resolved sema
 | foregroundDisabled  | `#464A4D` | `#A1A1A1` | Disabled controls only                                       |
 | borderSubtle        | `#333333` | `#D4D4D4` | Decorative dividers and panel edges                          |
 | borderStrong        | `#454545` | `#B8B8B8` | Structural edges                                             |
-| borderControl       | `#AAAAAA` | `#707070` | Input boundaries and controls requiring visible outlines     |
+| borderControl       | `#747474` | `#8A8A8A` | Input boundaries and controls requiring visible outlines     |
 | action              | `#FCFDFF` | `#171717` | Primary button fill, selected checks and progress            |
 | onAction            | `#000000` | `#FFFFFF` | Content on action fill                                       |
 | actionHover         | `#E5E5E5` | `#333333` | Primary hover                                                |
@@ -67,7 +67,7 @@ Dimensions below are Flutter logical units before user text scaling. Line height
 | Text role | Size / line height | Weight | Tracking | Use                                                  |
 | --------- | ------------------ | ------ | -------- | ---------------------------------------------------- |
 | display   | 48 / 56            | 600    | -1.0     | Media detail title at wide widths                    |
-| headline  | 32 / 40            | 600    | -0.5     | Page title; compact detail title                     |
+| headline  | 32 / 40            | 600    | -0.5     | Compact detail title; top-level pages carry no title, navigation names them |
 | title     | 24 / 32            | 600    | -0.2     | Section and dialog title                             |
 | subtitle  | 20 / 28            | 600    | -0.35    | Panel and group heading                              |
 | bodyLarge | 18 / 28            | 400    | -0.25    | Synopsis lead where appropriate                      |

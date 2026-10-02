@@ -68,6 +68,9 @@ class MetaLine extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       softWrap: false,
+      // Mono and sans runs differ in ascent and descent; mixed on one line
+      // they would grow it past the height cards reserve for it.
+      strutStyle: StrutStyle.fromTextStyle(base, forceStrutHeight: true),
     );
   }
 }

@@ -6,7 +6,7 @@ import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/ui/components/app_shell.dart';
 import 'package:sentorr/ui/components/navigation.dart';
 import 'package:sentorr/ui/pages/home/home_page.dart';
-import 'package:sentorr/ui/pages/search_page.dart';
+import 'package:sentorr/ui/pages/search/search_page.dart';
 import 'package:sentorr/ui/pages/settings_page.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 

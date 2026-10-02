@@ -88,3 +88,7 @@ String stampLabel(Duration d) {
   final h = d.inHours, m = d.inMinutes % 60;
   return h == 0 ? '${m}m' : '${h}h ${m}m';
 }
+
+/// "12,480": exact counts people read rather than compare at a glance.
+String groupedCount(int n) =>
+    n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');

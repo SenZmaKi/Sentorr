@@ -9,6 +9,7 @@ import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_card.dart';
 import '../../components/cards/poster_card.dart';
 import '../../components/cards/resume_card.dart';
+import '../../components/cards/title_poster.dart';
 import '../../components/title_artwork.dart';
 import '../../shared/title_format.dart';
 import '../../shared/title_icons.dart';
@@ -32,29 +33,8 @@ IconData _rowIcon(CatalogRow row) => switch (row) {
   CatalogRow.horror => Icons.water_drop_outlined,
 };
 
-List<MetaItem> _facts(ImdbTitle t) => [
-  MetaItem(kindLabel(t), icon: kindIcon(t)),
-  if (yearLabel(t) case final year?) MetaItem(year),
-  if (t.genres.isNotEmpty) MetaItem(t.genres.first),
-];
-
-String _describe(ImdbTitle t, [String? lead]) => [
-  ?lead,
-  t.title,
-  kindLabel(t),
-  ?yearLabel(t),
-  if (t.rating != null) 'rated ${t.rating!.toStringAsFixed(1)}',
-  if (t.voteCount != null) '${compactCount(t.voteCount!)} votes',
-].join(', ');
-
-PosterCard _poster(ImdbTitle t, {String? lead}) => PosterCard(
-  title: t.title,
-  meta: _facts(t),
-  rating: t.rating?.toStringAsFixed(1),
-  artwork: TitleArtwork(image: t.poster),
-  semanticLabel: _describe(t, lead),
-  onTap: _open,
-);
+PosterCard _poster(ImdbTitle t, {String? lead}) =>
+    titlePoster(t, lead: lead, onTap: _open);
 
 class CatalogShelf extends ConsumerWidget {
   const CatalogShelf(this.row, {super.key});
@@ -97,7 +77,7 @@ class CatalogShelf extends ConsumerWidget {
               ),
           ],
           artwork: TitleArtwork(image: t.poster),
-          semanticLabel: _describe(t),
+          semanticLabel: describeTitle(t),
           onTap: _open,
         ),
         _ => _poster(t),

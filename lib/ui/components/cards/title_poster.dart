@@ -6,6 +6,7 @@ import '../../shared/title_icons.dart';
 import '../title_artwork.dart';
 import 'card_parts.dart';
 import 'poster_card.dart';
+import 'title_preview.dart';
 
 /// Kind, year and first genre: what a browsing viewer compares first.
 List<MetaItem> titleFacts(ImdbTitle t) => [
@@ -24,13 +25,19 @@ String describeTitle(ImdbTitle t, [String? lead]) => [
   if (t.voteCount != null) '${compactCount(t.voteCount!)} votes',
 ].join(', ');
 
-/// The standard [PosterCard] for an IMDb title.
-PosterCard titlePoster(ImdbTitle t, {String? lead, VoidCallback? onTap}) =>
-    PosterCard(
-      title: t.title,
-      meta: titleFacts(t),
-      rating: t.rating?.toStringAsFixed(1),
-      artwork: TitleArtwork(image: t.poster),
-      semanticLabel: describeTitle(t, lead),
-      onTap: onTap,
-    );
+/// The standard [PosterCard] for an IMDb title: [onOpen] on tap, and a
+/// [TitlePreview] while hovered.
+PosterCard titlePoster(
+  ImdbTitle t, {
+  String? lead,
+  required VoidCallback onOpen,
+  VoidCallback? onPlay,
+}) => PosterCard(
+  title: t.title,
+  meta: titleFacts(t),
+  rating: t.rating?.toStringAsFixed(1),
+  artwork: TitleArtwork(image: t.poster),
+  semanticLabel: describeTitle(t, lead),
+  onTap: onOpen,
+  preview: (_) => TitlePreview(title: t, onOpen: onOpen, onPlay: onPlay),
+);

@@ -9,7 +9,7 @@ const _series = ['tvSeries', 'tvMiniSeries'];
 
 /// Public catalog rows on the home page, each one IMDb request.
 enum CatalogRow {
-  trending('Trending now', 'Most viewed on IMDb this week'),
+  trending('Trending now', 'Most watched this week'),
   newReleases('New releases', 'Movies out in the last few months'),
   popularSeries('Popular series'),
   popularMovies('Popular movies'),

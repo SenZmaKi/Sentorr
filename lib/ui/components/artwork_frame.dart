@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../shared/theme/theme.dart';
+import 'hover_preview.dart';
+import 'interactive.dart';
 import 'motion.dart';
 import 'surface.dart';
 
@@ -31,39 +33,42 @@ class ArtworkFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final raised = context.depth.of(SurfaceDepth.raised);
     final zoom = active && !reduceMotion(context);
-    return DepthBox(
-      style: active ? raised.hovered() : raised,
-      radius: Radii.card,
-      border: Border.all(
-        color: active
-            ? context.colors.borderStrong
-            : context.colors.borderStrong.clear,
-      ),
-      // Artwork clips independently so the frame shadow is not cut off.
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(Radii.card - 1),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            AnimatedScale(
-              scale: zoom ? 1.06 : 1,
-              duration: Motion.artwork,
-              curve: Motion.enter,
-              child: artwork,
-            ),
-            if (scrim) const _BottomFade(),
-            if (hoverOverlay != null)
-              AnimatedOpacity(
-                opacity: active ? 1 : 0,
-                duration: Motion.hover,
-                curve: Motion.change,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [if (!scrim) const _BottomFade(), hoverOverlay!],
-                ),
+    // Artwork, not the whole tile, is what opens a hover preview.
+    return HoverPreviewTrigger(
+      child: DepthBox(
+        style: active ? raised.hovered() : raised,
+        radius: Radii.card,
+        border: Border.all(
+          color: active
+              ? context.colors.borderStrong
+              : context.colors.borderStrong.clear,
+        ),
+        // Artwork clips independently so the frame shadow is not cut off.
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(Radii.card - 1),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              AnimatedScale(
+                scale: zoom ? 1.06 : 1,
+                duration: Motion.artwork,
+                curve: Motion.enter,
+                child: artwork,
               ),
-            ...decorations,
-          ],
+              if (scrim) const _BottomFade(),
+              if (hoverOverlay != null)
+                AnimatedOpacity(
+                  opacity: active ? 1 : 0,
+                  duration: Motion.hover,
+                  curve: Motion.change,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [if (!scrim) const _BottomFade(), hoverOverlay!],
+                  ),
+                ),
+              ...decorations,
+            ],
+          ),
         ),
       ),
     );
@@ -165,6 +170,56 @@ class OverlayBadge extends StatelessWidget {
             ],
             Text(label, style: style),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Circular control over artwork in the overlay roles, e.g. Back on a
+/// backdrop. Unlike [OverlayGlyph] it is its own action, with a tooltip.
+class OverlayIconButton extends StatelessWidget {
+  const OverlayIconButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Interactive(
+        onTap: onPressed,
+        semanticLabel: tooltip,
+        borderRadius: Radii.full,
+        focusColor: OverlayColors.focus,
+        builder: (context, s) => AnimatedContainer(
+          duration: Motion.hover,
+          curve: Motion.change,
+          width: ControlHeights.standard,
+          height: ControlHeights.standard,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: s.hovered || s.pressed
+                ? OverlayColors.scrim
+                : OverlayColors.controlSurface,
+            border: Border.all(
+              color: s.hovered
+                  ? OverlayColors.foregroundSecondary
+                  : OverlayColors.inactiveTrack,
+            ),
+          ),
+          child: Icon(
+            icon,
+            size: IconSizes.control,
+            color: OverlayColors.foreground,
+          ),
         ),
       ),
     );

@@ -8,6 +8,7 @@ import 'package:sentorr/ui/components/navigation.dart';
 import 'package:sentorr/ui/pages/home/home_page.dart';
 import 'package:sentorr/ui/pages/search/search_page.dart';
 import 'package:sentorr/ui/pages/settings_page.dart';
+import 'package:sentorr/ui/pages/title/title_page.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
 import '../support/fake_imdb.dart';
@@ -19,12 +20,13 @@ Widget _app(Brightness brightness) => ProviderScope(
   ],
   child: MaterialApp(
     theme: buildSentorrTheme(brightness),
-    home: const AppShell(
-      pages: {
+    home: AppShell(
+      pages: const {
         AppDestination.home: HomePage(),
         AppDestination.search: SearchPage(),
         AppDestination.settings: SettingsPage(),
       },
+      titlePage: (route) => TitlePage(route: route),
     ),
   ),
 );

@@ -28,11 +28,7 @@ class SeriesUpdate {
   final int seasonEpisodes;
 }
 
-DateTime? airDate(ImdbDate? date) {
-  final ImdbDate(:year, :month, :day) = date ?? const ImdbDate();
-  if (year == null || month == null || day == null) return null;
-  return DateTime(year, month, day);
-}
+DateTime? airDate(ImdbDate? date) => date?.dateTime;
 
 final seriesUpdatesProvider = FutureProvider<List<SeriesUpdate>>((ref) async {
   final imdb = ref.watch(imdbRepositoryProvider);

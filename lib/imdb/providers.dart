@@ -16,3 +16,23 @@ final titleDetailsProvider = FutureProvider.family<ImdbTitleDetails, String>((
       .watch(imdbRepositoryProvider)
       .getTitleDetails(id, previewLimit: 20, cancelToken: cancel);
 });
+
+/// A title's reviews, best regarded first; [spoilers] includes reviews that
+/// reveal the plot.
+final titleReviewsProvider =
+    FutureProvider.family<List<ImdbReview>, ({String id, bool spoilers})>((
+      ref,
+      key,
+    ) async {
+      final cancel = CancelToken();
+      ref.onDispose(cancel.cancel);
+      final page = await ref
+          .watch(imdbRepositoryProvider)
+          .getReviews(
+            key.id,
+            limit: 12,
+            hideSpoilers: !key.spoilers,
+            cancelToken: cancel,
+          );
+      return page.items;
+    });

@@ -92,3 +92,17 @@ String stampLabel(Duration d) {
 /// "12,480": exact counts people read rather than compare at a glance.
 String groupedCount(int n) =>
     n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
+
+/// How long a title runs: a movie's runtime, or a series' season count
+/// once its details are known.
+String? lengthLabel(ImdbTitle t, [ImdbTitleDetails? details]) {
+  if (t.canHaveEpisodes == true) {
+    final n = details?.seasons.length ?? 0;
+    return n == 0 ? null : (n == 1 ? '1 season' : '$n seasons');
+  }
+  final s = t.runtimeSeconds;
+  return s == null ? null : durationLabel(Duration(seconds: s));
+}
+
+/// "Mar 4, 2024": a full calendar date, for facts rather than recency.
+String dateLabel(DateTime d) => '${_months[d.month - 1]} ${d.day}, ${d.year}';

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../shared/theme/theme.dart';
+import '../shared/title_route.dart';
+import 'motion.dart';
 import 'navigation.dart';
 import 'page_stack.dart';
 import 'side_nav.dart';
@@ -31,31 +33,54 @@ class AppDestinationNotifier extends Notifier<AppDestination> {
 }
 
 /// Responsive navigation chrome: bottom bar below 600, a slim rail above.
-/// Pages stay alive so scroll and input persist.
+/// Pages stay alive so scroll and input persist. Title pages open over the
+/// current destination, inside the same chrome.
 class AppShell extends ConsumerWidget {
-  const AppShell({super.key, required this.pages});
+  const AppShell({super.key, required this.pages, required this.titlePage});
 
   final Map<AppDestination, Widget> pages;
+  final Widget Function(TitleRoute route) titlePage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(appDestinationProvider);
-    void go(AppDestination d) =>
-        ref.read(appDestinationProvider.notifier).go(d);
-    final body = FadePageStack(
-      index: current.index,
+    final title = ref.watch(titleRoutesProvider).lastOrNull;
+    final titles = ref.read(titleRoutesProvider.notifier);
+    // Choosing a destination, even the current one, leaves any title page.
+    void go(AppDestination d) {
+      titles.closeAll();
+      ref.read(appDestinationProvider.notifier).go(d);
+    }
+
+    final body = Stack(
+      fit: StackFit.expand,
       children: [
-        for (final d in AppDestination.values)
-          pages[d] ?? const SizedBox.shrink(),
+        _Covered(
+          covered: title != null,
+          child: FadePageStack(
+            index: current.index,
+            children: [
+              for (final d in AppDestination.values)
+                pages[d] ?? const SizedBox.shrink(),
+            ],
+          ),
+        ),
+        _TitleLayer(route: title, builder: titlePage),
       ],
     );
     // As in Senpwai: with bottom navigation, Back returns to Home before it
-    // leaves the app. Rail layouts have no system Back to intercept.
+    // leaves the app. Rail layouts have no system Back to intercept. An open
+    // title page always takes Back first.
     final bottomNav = MediaQuery.sizeOf(context).width < 600;
     return PopScope(
-      canPop: !bottomNav || current == AppDestination.home,
+      canPop: title == null && (!bottomNav || current == AppDestination.home),
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) go(AppDestination.home);
+        if (didPop) return;
+        if (title != null) {
+          titles.back();
+        } else {
+          go(AppDestination.home);
+        }
       },
       child: Scaffold(
         body: LayoutBuilder(
@@ -104,6 +129,61 @@ class AppShell extends ConsumerWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+/// The destination beneath an open title page: still painted, but takes no
+/// pointer, focus or semantics, and its tickers pause.
+class _Covered extends StatelessWidget {
+  const _Covered({required this.covered, required this.child});
+
+  final bool covered;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+    ignoring: covered,
+    child: ExcludeFocus(
+      excluding: covered,
+      child: ExcludeSemantics(
+        excluding: covered,
+        child: TickerMode(enabled: !covered, child: child),
+      ),
+    ),
+  );
+}
+
+/// Fades the topmost title page in over the destination, and between
+/// stacked title pages.
+class _TitleLayer extends StatelessWidget {
+  const _TitleLayer({required this.route, required this.builder});
+
+  final TitleRoute? route;
+  final Widget Function(TitleRoute route) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    final route = this.route;
+    return AnimatedSwitcher(
+      duration: reduceMotion(context) ? Duration.zero : Motion.reveal,
+      switchInCurve: Motion.enter,
+      switchOutCurve: Motion.change,
+      layoutBuilder: (current, previous) =>
+          Stack(fit: StackFit.expand, children: [...previous, ?current]),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 0.012),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        ),
+      ),
+      child: route == null
+          ? const SizedBox.shrink(key: ValueKey('no title'))
+          : KeyedSubtree(key: ObjectKey(route), child: builder(route)),
     );
   }
 }

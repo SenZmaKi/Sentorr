@@ -56,7 +56,9 @@ class FakeImdbRepository implements ImdbRepository {
   }) async => ImdbTitleDetails(
     title: trending.firstWhere((t) => t.id == id),
     credits: ImdbPage(items: const []),
-    recommendations: ImdbPage(items: const []),
+    recommendations: ImdbPage(
+      items: trending.where((t) => t.id != id).take(4).toList(),
+    ),
     images: ImdbPage(items: const []),
     seasons: seasons[id] ?? const [],
   );
@@ -70,6 +72,34 @@ class FakeImdbRepository implements ImdbRepository {
     bool refresh = false,
     CancelToken? cancelToken,
   }) async => ImdbPage(items: episodes['$id/$seasonNumber'] ?? const []);
+
+  @override
+  Future<ImdbPage<ImdbReview>> getReviews(
+    String id, {
+    int limit = 20,
+    String? cursor,
+    bool hideSpoilers = true,
+    bool refresh = false,
+    CancelToken? cancelToken,
+  }) async => ImdbPage(
+    items: [
+      const ImdbReview(
+        id: 'rw1',
+        title: 'Gripping',
+        content: 'Loved it.',
+        rating: 9,
+        upVotes: 1200,
+        downVotes: 40,
+      ),
+      if (!hideSpoilers)
+        const ImdbReview(
+          id: 'rw2',
+          title: 'That ending',
+          content: 'The twist is everything.',
+          spoiler: true,
+        ),
+    ],
+  );
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

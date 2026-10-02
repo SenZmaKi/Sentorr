@@ -10,15 +10,13 @@ import '../../components/cards/episode_card.dart';
 import '../../components/cards/poster_card.dart';
 import '../../components/cards/resume_card.dart';
 import '../../components/cards/title_poster.dart';
+import '../../components/cards/title_preview.dart';
 import '../../components/title_artwork.dart';
 import '../../shared/title_format.dart';
 import '../../shared/title_icons.dart';
+import '../../shared/title_route.dart';
 import 'async_shelf.dart';
 import 'home_layout.dart';
-
-// Title pages and playback do not exist yet; cards stay interactive so
-// hover, focus and keyboard behavior work. Route these once they land.
-void _open() {}
 
 IconData _rowIcon(CatalogRow row) => switch (row) {
   CatalogRow.trending => Icons.trending_up_rounded,
@@ -33,8 +31,20 @@ IconData _rowIcon(CatalogRow row) => switch (row) {
   CatalogRow.horror => Icons.water_drop_outlined,
 };
 
-PosterCard _poster(ImdbTitle t, {String? lead}) =>
-    titlePoster(t, lead: lead, onTap: _open);
+PosterCard _poster(WidgetRef ref, ImdbTitle t, {String? lead}) => titlePoster(
+  t,
+  lead: lead,
+  onOpen: () => ref.openTitle(t),
+  onPlay: playPending,
+);
+
+WidgetBuilder _preview(WidgetRef ref, ImdbTitle t, {String? playLabel}) =>
+    (_) => TitlePreview(
+      title: t,
+      onOpen: () => ref.openTitle(t),
+      onPlay: playPending,
+      playLabel: playLabel ?? 'Play',
+    );
 
 class CatalogShelf extends ConsumerWidget {
   const CatalogShelf(this.row, {super.key});
@@ -57,7 +67,7 @@ class CatalogShelf extends ConsumerWidget {
         CatalogRow.trending => RankedPosterCard(
           rank: i + 1,
           posterWidth: layout.posterWidth,
-          card: _poster(t, lead: 'Number ${i + 1} trending'),
+          card: _poster(ref, t, lead: 'Number ${i + 1} trending'),
         ),
         // Acclaim rows lead with the score and how many people gave it.
         CatalogRow.topRated => PosterCard(
@@ -78,9 +88,10 @@ class CatalogShelf extends ConsumerWidget {
           ],
           artwork: TitleArtwork(image: t.poster),
           semanticLabel: describeTitle(t),
-          onTap: _open,
+          onTap: () => ref.openTitle(t),
+          preview: _preview(ref, t),
         ),
-        _ => _poster(t),
+        _ => _poster(ref, t),
       },
     );
   }
@@ -116,7 +127,8 @@ class ContinueWatchingShelf extends ConsumerWidget {
               ? null
               : Duration(seconds: t.runtimeSeconds!),
           artwork: TitleBackdrop(title: t),
-          onTap: _open,
+          onTap: playPending,
+          preview: _preview(ref, t, playLabel: 'Resume'),
         );
       },
     );
@@ -141,6 +153,9 @@ class NewEpisodesShelf extends ConsumerWidget {
       },
       cardBuilder: (context, u, _) {
         final e = u.episode.title;
+        final still = e.poster != null
+            ? TitleArtwork(image: e.poster)
+            : TitleBackdrop(title: u.series);
         return EpisodeCard(
           series: u.series.title,
           code: episodeCode(u.season, u.episode.episodeNumber),
@@ -162,10 +177,15 @@ class NewEpisodesShelf extends ConsumerWidget {
               : stampLabel(Duration(seconds: e.runtimeSeconds!)),
           plot: e.plot,
           isNew: DateTime.now().difference(u.aired).inDays < 7,
-          artwork: e.poster != null
-              ? TitleArtwork(image: e.poster)
-              : TitleBackdrop(title: u.series),
-          onTap: _open,
+          artwork: still,
+          onTap: playPending,
+          preview: (_) => EpisodePreview(
+            series: u.series,
+            episode: u.episode,
+            artwork: still,
+            onOpen: () => ref.openTitle(u.series, season: u.season),
+            onPlay: playPending,
+          ),
         );
       },
     );
@@ -208,7 +228,13 @@ class NewSeasonsShelf extends ConsumerWidget {
         semanticLabel:
             '${u.series.title}, season ${u.season} now available, '
             '${u.seasonEpisodes} episodes',
-        onTap: _open,
+        onTap: () => ref.openTitle(u.series, season: u.season),
+        preview: (_) => TitlePreview(
+          title: u.series,
+          onOpen: () => ref.openTitle(u.series, season: u.season),
+          onPlay: playPending,
+          playLabel: 'Play season ${u.season}',
+        ),
       ),
     );
   }

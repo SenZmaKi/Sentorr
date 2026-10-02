@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../shared/theme/theme.dart';
 import '../artwork_frame.dart';
+import '../hover_preview.dart';
 import '../interactive.dart';
 import 'card_parts.dart';
 
@@ -18,6 +19,7 @@ class PosterCard extends StatelessWidget {
     this.badge,
     this.ribbon,
     this.onTap,
+    this.preview,
   });
 
   final String title;
@@ -31,64 +33,70 @@ class PosterCard extends StatelessWidget {
   final Widget? ribbon;
   final VoidCallback? onTap;
 
+  /// Floating detail card shown while the pointer rests on the tile.
+  final WidgetBuilder? preview;
+
   static double textHeight(CardLines l) =>
       Space.s12 + l.small + Space.s2 + l.caption;
 
   @override
   Widget build(BuildContext context) {
-    return Interactive(
-      borderRadius: Radii.card,
-      onTap: onTap,
-      semanticLabel: semanticLabel,
-      builder: (context, s) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 2 / 3,
-            child: ArtworkFrame(
-              active: s.hovered || s.focused,
-              artwork: artwork,
-              hoverOverlay: const Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: Space.s8,
-                  children: [
-                    OverlayGlyph(
-                      Icons.play_arrow_rounded,
-                      primary: true,
-                      size: 44,
-                    ),
-                    OverlayGlyph(Icons.info_outline_rounded),
-                  ],
+    return HoverPreview(
+      preview: preview,
+      child: Interactive(
+        borderRadius: Radii.card,
+        onTap: onTap,
+        semanticLabel: semanticLabel,
+        builder: (context, s) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 2 / 3,
+              child: ArtworkFrame(
+                active: s.hovered || s.focused,
+                artwork: artwork,
+                hoverOverlay: const Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: Space.s8,
+                    children: [
+                      OverlayGlyph(
+                        Icons.play_arrow_rounded,
+                        primary: true,
+                        size: 44,
+                      ),
+                      OverlayGlyph(Icons.info_outline_rounded),
+                    ],
+                  ),
                 ),
-              ),
-              decorations: [
-                if (badge != null)
-                  Positioned(
-                    left: Space.s8,
-                    top: Space.s8,
-                    child: OverlayBadge(badge!),
-                  ),
-                if (rating != null)
-                  Positioned(
-                    right: Space.s8,
-                    top: Space.s8,
-                    child: OverlayBadge(
-                      rating!,
-                      icon: Icons.star_rounded,
-                      technical: true,
+                decorations: [
+                  if (badge != null)
+                    Positioned(
+                      left: Space.s8,
+                      top: Space.s8,
+                      child: OverlayBadge(badge!),
                     ),
-                  ),
-                if (ribbon != null)
-                  Positioned(left: 0, right: 0, bottom: 0, child: ribbon!),
-              ],
+                  if (rating != null)
+                    Positioned(
+                      right: Space.s8,
+                      top: Space.s8,
+                      child: OverlayBadge(
+                        rating!,
+                        icon: Icons.star_rounded,
+                        technical: true,
+                      ),
+                    ),
+                  if (ribbon != null)
+                    Positioned(left: 0, right: 0, bottom: 0, child: ribbon!),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: Space.s12),
-          CardTitle(title),
-          const SizedBox(height: Space.s2),
-          MetaLine(meta),
-        ],
+            const SizedBox(height: Space.s12),
+            CardTitle(title),
+            const SizedBox(height: Space.s2),
+            MetaLine(meta),
+          ],
+        ),
       ),
     );
   }

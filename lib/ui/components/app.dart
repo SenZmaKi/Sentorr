@@ -6,6 +6,7 @@ import '../../shared/app_lifecycle.dart';
 import '../pages/home/home_page.dart';
 import '../pages/search/search_page.dart';
 import '../pages/settings_page.dart';
+import '../pages/title/title_page.dart';
 import '../shared/theme/theme.dart';
 import 'app_shell.dart';
 
@@ -22,12 +23,13 @@ class SentorrApp extends ConsumerWidget {
       themeMode: ref.watch(
         settingsProvider.select((settings) => settings.themeMode),
       ),
-      home: const AppShell(
-        pages: {
+      home: AppShell(
+        pages: const {
           AppDestination.home: HomePage(),
           AppDestination.search: SearchPage(),
           AppDestination.settings: SettingsPage(),
         },
+        titlePage: (route) => TitlePage(route: route),
       ),
     );
   }

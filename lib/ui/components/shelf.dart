@@ -24,6 +24,7 @@ class Shelf extends StatefulWidget {
     this.count,
     this.message,
     this.reveal = false,
+    this.action,
   });
 
   final IconData icon;
@@ -48,6 +49,9 @@ class Shelf extends StatefulWidget {
 
   /// Stagger the first screenful of tiles in as content arrives.
   final bool reveal;
+
+  /// Trailing control in the row's header.
+  final Widget? action;
 
   @override
   State<Shelf> createState() => _ShelfState();
@@ -128,6 +132,7 @@ class _ShelfState extends State<Shelf> {
             title: widget.title,
             subtitle: widget.subtitle,
             count: widget.count,
+            action: widget.action,
           ),
         ),
         const SizedBox(height: Space.s16 - _bleed),

@@ -12,6 +12,7 @@ class SectionHeader extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.count,
+    this.action,
   });
 
   final IconData icon;
@@ -20,6 +21,9 @@ class SectionHeader extends StatelessWidget {
 
   /// Trailing tally, e.g. "5 new".
   final String? count;
+
+  /// Trailing control for the row, e.g. a toggle.
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +38,7 @@ class SectionHeader extends StatelessWidget {
           child: Icon(icon, size: IconSizes.control, color: c.foreground),
         ),
         const SizedBox(width: Space.s12),
-        Flexible(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -87,6 +91,7 @@ class SectionHeader extends StatelessWidget {
             ],
           ),
         ),
+        if (action != null) ...[const SizedBox(width: Space.s12), action!],
       ],
     );
   }

@@ -4,43 +4,8 @@ import '../../components/buttons.dart';
 import '../../components/artwork_frame.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/motion.dart';
-import '../../components/surface.dart';
+import '../../components/hero_frame.dart';
 import '../../shared/theme/theme.dart';
-
-/// Panel-framed backdrop area shared by the hero and its loading/error
-/// states, so the page does not jump when content arrives.
-class HeroFrame extends StatelessWidget {
-  const HeroFrame({super.key, required this.child, this.background});
-
-  final Widget child;
-  final Widget? background;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, box) => DepthBox(
-        style: context.depth.of(SurfaceDepth.panel),
-        radius: Radii.panel,
-        width: double.infinity,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(Radii.panel),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: (box.maxWidth * 9 / 21).clamp(400, 600),
-            ),
-            child: Stack(
-              alignment: Alignment.bottomLeft,
-              children: [
-                if (background != null) Positioned.fill(child: background!),
-                child,
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// Spotlight backdrop with title, synopsis and the primary actions. Text sits
 /// over bottom and leading artwork fades rather than trusting the image.
@@ -85,13 +50,13 @@ class FeaturedHero extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               artwork,
-              const _Fade(
+              const ArtworkFade(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 stops: [0.25, 1],
               ),
               if (wide)
-                const _Fade(
+                const ArtworkFade(
                   begin: Alignment.centerRight,
                   end: Alignment.centerLeft,
                   stops: [0.35, 1],
@@ -134,25 +99,6 @@ class FeaturedHero extends StatelessWidget {
   }
 }
 
-class _Fade extends StatelessWidget {
-  const _Fade({required this.begin, required this.end, required this.stops});
-
-  final Alignment begin, end;
-  final List<double> stops;
-
-  @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: begin,
-        end: end,
-        colors: OverlayColors.artworkFade,
-        stops: stops,
-      ),
-    ),
-  );
-}
-
 class _Copy extends StatelessWidget {
   const _Copy({super.key, required this.hero, required this.wide});
 
@@ -187,7 +133,7 @@ class _Copy extends StatelessWidget {
         child: Wrap(
           spacing: Space.s8,
           runSpacing: Space.s8,
-          children: [for (final g in hero.genres) _GenreChip(g)],
+          children: [for (final g in hero.genres) OverlayGenreChip(g)],
         ),
       ),
     if (hero.synopsis.isNotEmpty)
@@ -246,32 +192,4 @@ class _Copy extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Outlined genre label over artwork; informational, not a filter.
-class _GenreChip extends StatelessWidget {
-  const _GenreChip(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      border: Border.all(color: OverlayColors.inactiveTrack),
-      borderRadius: BorderRadius.circular(Radii.full),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Space.s12,
-        vertical: Space.s4,
-      ),
-      child: Text(
-        label,
-        style: context.type.caption.copyWith(
-          color: OverlayColors.foregroundSecondary,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    ),
-  );
 }

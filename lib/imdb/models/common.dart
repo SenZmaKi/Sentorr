@@ -19,6 +19,11 @@ class ImdbDate {
   final int? year;
   final int? month;
   final int? day;
+
+  /// Null unless the full date is known.
+  DateTime? get dateTime => year == null || month == null || day == null
+      ? null
+      : DateTime(year!, month!, day!);
 }
 
 class ImdbPage<T> {

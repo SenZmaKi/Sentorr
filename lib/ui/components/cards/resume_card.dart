@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import '../artwork_frame.dart';
+import '../hover_preview.dart';
 import '../interactive.dart';
 import 'card_parts.dart';
 
@@ -19,6 +20,7 @@ class ResumeCard extends StatelessWidget {
     this.chip,
     this.chipIcon,
     this.onTap,
+    this.preview,
   });
 
   final String title;
@@ -34,6 +36,9 @@ class ResumeCard extends StatelessWidget {
   final IconData? chipIcon;
   final VoidCallback? onTap;
 
+  /// Floating detail card shown while the pointer rests on the tile.
+  final WidgetBuilder? preview;
+
   static double textHeight(CardLines l) =>
       Space.s12 + l.body + Space.s2 + l.caption;
 
@@ -42,48 +47,51 @@ class ResumeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final left = _left;
-    return Interactive(
-      borderRadius: Radii.card,
-      onTap: onTap,
-      semanticLabel: [
-        'Resume $title',
-        if (left != null) '${durationLabel(left)} left',
-      ].join(', '),
-      builder: (context, s) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: ArtworkFrame(
-              active: s.hovered || s.focused,
-              artwork: artwork,
-              scrim: true,
-              decorations: [
-                if (chip != null)
+    return HoverPreview(
+      preview: preview,
+      child: Interactive(
+        borderRadius: Radii.card,
+        onTap: onTap,
+        semanticLabel: [
+          'Resume $title',
+          if (left != null) '${durationLabel(left)} left',
+        ].join(', '),
+        builder: (context, s) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: ArtworkFrame(
+                active: s.hovered || s.focused,
+                artwork: artwork,
+                scrim: true,
+                decorations: [
+                  if (chip != null)
+                    Positioned(
+                      left: Space.s12,
+                      top: Space.s12,
+                      child: OverlayBadge(chip!, icon: chipIcon),
+                    ),
                   Positioned(
                     left: Space.s12,
-                    top: Space.s12,
-                    child: OverlayBadge(chip!, icon: chipIcon),
+                    right: Space.s12,
+                    bottom: Space.s8,
+                    child: _PlayerBar(
+                      progress: progress,
+                      runtime: runtime,
+                      left: left,
+                      active: s.hovered || s.focused,
+                    ),
                   ),
-                Positioned(
-                  left: Space.s12,
-                  right: Space.s12,
-                  bottom: Space.s8,
-                  child: _PlayerBar(
-                    progress: progress,
-                    runtime: runtime,
-                    left: left,
-                    active: s.hovered || s.focused,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: Space.s12),
-          CardTitle(title, large: true),
-          const SizedBox(height: Space.s2),
-          MetaLine(meta),
-        ],
+            const SizedBox(height: Space.s12),
+            CardTitle(title, large: true),
+            const SizedBox(height: Space.s2),
+            MetaLine(meta),
+          ],
+        ),
       ),
     );
   }

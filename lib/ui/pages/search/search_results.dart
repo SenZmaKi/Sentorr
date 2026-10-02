@@ -9,10 +9,7 @@ import '../../components/cards/poster_card.dart';
 import '../../components/cards/title_poster.dart';
 import '../../components/load_error.dart';
 import '../../shared/theme/theme.dart';
-
-// Title pages do not exist yet; tiles stay interactive so hover, focus and
-// keyboard behavior work. Route this once they land.
-void _open() {}
+import '../../shared/title_route.dart';
 
 /// Poster grid of results: skeletons while the first page loads, more
 /// skeletons while the next page loads, and plain-language empty and
@@ -34,7 +31,7 @@ class SearchResults extends ConsumerWidget {
             ? Padding(
                 padding: const EdgeInsets.only(top: Space.s24),
                 child: LoadError(
-                  message: "Couldn't search IMDb. Check your connection.",
+                  message: "Couldn't search. Check your connection.",
                   onRetry: search.retry,
                 ),
               )
@@ -66,7 +63,11 @@ class SearchResults extends ConsumerWidget {
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, i) => i < r.items.length
-                    ? titlePoster(r.items[i], onTap: _open)
+                    ? titlePoster(
+                        r.items[i],
+                        onOpen: () => ref.openTitle(r.items[i]),
+                        onPlay: playPending,
+                      )
                     : const CardSkeleton(aspectRatio: 2 / 3),
                 childCount: r.items.length + skeletons,
               ),

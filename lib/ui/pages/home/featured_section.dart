@@ -5,6 +5,7 @@ import '../../../home/catalog_rows.dart';
 import '../../../imdb/models.dart';
 import '../../../imdb/providers.dart';
 import '../../components/interactive.dart';
+import '../../components/hero_frame.dart';
 import '../../components/load_error.dart';
 import '../../components/motion.dart';
 import '../../components/title_artwork.dart';
@@ -12,6 +13,7 @@ import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import '../../components/cards/card_parts.dart';
 import '../../shared/title_icons.dart';
+import '../../shared/title_route.dart';
 import 'featured_hero.dart';
 import 'spotlight_state.dart';
 
@@ -126,9 +128,8 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
                           progress: _hold,
                           onSelect: _show,
                         ),
-                  // Title pages and playback are not built yet.
-                  onPlay: () {},
-                  onDetails: () {},
+                  onPlay: playPending,
+                  onDetails: () => ref.openTitle(t),
                 ),
               ),
             );

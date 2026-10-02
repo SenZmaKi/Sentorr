@@ -100,7 +100,7 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     cancel();
     ref
         .read(playerSessionProvider.notifier)
-        .play(s.request, queue: queue, torrent: torrent);
+        .play(s.request, queue: queue, torrent: torrent, options: s.resolution);
   }
 
   void cancel() {

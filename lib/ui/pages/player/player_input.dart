@@ -71,6 +71,7 @@ class PlayerShortcuts extends StatelessWidget {
       LogicalKeyboardKey.keyF => run(a.toggleFullscreen),
       LogicalKeyboardKey.keyC => run(a.toggleSubtitles),
       LogicalKeyboardKey.keyQ => run(() => a.ui.toggle(PlayerPanel.queue)),
+      LogicalKeyboardKey.keyT => run(a.toggleTorrents),
       LogicalKeyboardKey.keyI => run(a.minimize),
       LogicalKeyboardKey.keyN when shift => run(a.next),
       LogicalKeyboardKey.keyP when shift => run(a.previous),

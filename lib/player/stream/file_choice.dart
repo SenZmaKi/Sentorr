@@ -23,6 +23,7 @@ TorrentStreamFile? playableFile(
   List<TorrentStreamFile> files,
   PlaybackItem item, {
   required bool pack,
+  bool seriesPack = false,
 }) {
   final videos = [
     for (final f in files)
@@ -32,25 +33,40 @@ TorrentStreamFile? playableFile(
   final features = videos
       .where((f) => !_extra.hasMatch(p.basenameWithoutExtension(f.path)))
       .toList();
-  var pool = features.isEmpty ? videos : features;
+  var pool = features.isEmpty && !pack ? videos : features;
   if (item.isEpisode && (pack || pool.length > 1)) {
-    final named = pool.where((f) => _plays(f, item)).toList();
+    final named = pool
+        .where((f) => _plays(f, item, requireSeason: seriesPack))
+        .toList();
     if (named.isNotEmpty || pack) pool = named;
   }
   if (pool.isEmpty) return null;
   return pool.reduce((a, b) => b.length > a.length ? b : a);
 }
 
-bool _plays(TorrentStreamFile file, PlaybackItem item) {
+bool _plays(
+  TorrentStreamFile file,
+  PlaybackItem item, {
+  required bool requireSeason,
+}) {
   final base = p.basenameWithoutExtension(file.path);
   final name = ReleaseMetadata.parse(base);
   final episodes = name.episodes.isNotEmpty
       ? name.episodes
       : [?int.tryParse(_leading.firstMatch(base)?[1] ?? '')];
   // Files inside a season folder often carry only the episode number.
-  final season = name.seasons.isEmpty
-      ? ReleaseMetadata.parse(p.dirname(file.path)).seasons
-      : name.seasons;
-  return episodes.contains(item.episode) &&
-      (season.isEmpty || season.contains(item.season));
+  // Use the closest season folder, rather than a multi-season root label.
+  final folders = p.split(p.dirname(file.path)).reversed;
+  final season = name.seasons.isNotEmpty
+      ? name.seasons
+      : folders
+                .map((folder) => ReleaseMetadata.parse(folder).seasons)
+                .where((seasons) => seasons.isNotEmpty)
+                .firstOrNull ??
+            <int>[];
+  return episodes.length == 1 &&
+      episodes.single == item.episode &&
+      (season.isEmpty
+          ? !requireSeason
+          : season.length == 1 && season.single == item.season);
 }

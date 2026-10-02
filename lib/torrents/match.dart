@@ -10,13 +10,15 @@ enum MatchConcern {
   unknownResolution,
 
   /// A season pack; the episode is chosen from its files at playback.
-  seasonPack;
+  seasonPack,
+  seriesPack;
 
   String describe(TorrentPreferences preferences) => switch (this) {
     otherResolution => 'Not available in ${preferences.preferredResolution}p.',
     unknownResolution => 'The release does not state its quality.',
     seasonPack =>
       'This is a whole season; the episode is picked from its files.',
+    seriesPack => 'This is a series batch; the season and episode are checked in its files.',
   };
 }
 
@@ -39,7 +41,10 @@ class TorrentMatch {
         MatchConcern.unknownResolution
       else if (quality != preferences.preferredResolution)
         MatchConcern.otherResolution,
-      if (best.requiresFileSelection) MatchConcern.seasonPack,
+      if (best.requiresFileSelection)
+        best.release.isSeriesPack
+            ? MatchConcern.seriesPack
+            : MatchConcern.seasonPack,
     ]);
   }
 

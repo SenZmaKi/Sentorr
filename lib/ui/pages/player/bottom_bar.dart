@@ -146,6 +146,13 @@ class BottomBar extends StatelessWidget {
                           onPressed: actions.toggleSubtitles,
                         ),
                       ),
+                      if (!compact)
+                        PlayerControl(
+                          icon: Icons.swap_horiz_rounded,
+                          tooltip: 'Torrents (t)',
+                          selected: ui.panel == PlayerPanel.torrents,
+                          onPressed: actions.toggleTorrents,
+                        ),
                       PlayerControl(
                         icon: Icons.settings_outlined,
                         tooltip: 'Settings',

@@ -11,12 +11,15 @@ import 'package:sentorr/torrents/providers.dart';
 import 'package:sentorr/torrents/repository.dart';
 import 'package:sentorr/ui/pages/launch/launch_dialog.dart';
 import 'package:sentorr/ui/pages/launch/launch_host.dart';
-import 'package:sentorr/ui/pages/launch/torrent_option.dart';
+import 'package:sentorr/ui/pages/torrent_picker/torrent_option.dart';
 import 'package:sentorr/ui/shared/play_route.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
+import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_torrents.dart';
+
+final _autoPlayDelay = const TorrentSettings().autoPlayDelay;
 
 Future<ProviderContainer> _pump(
   WidgetTester tester,
@@ -28,6 +31,7 @@ Future<ProviderContainer> _pump(
   final container = ProviderContainer(
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
+      ...watchHistoryOverrides(),
       imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
       torrentRepositoryProvider.overrideWithValue(
         TorrentRepository([FakeTorrentSource(answer)]),
@@ -66,7 +70,7 @@ void main() {
     expect(find.text('Play in 4s'), findsOneWidget);
     expect(container.read(playerSessionProvider), isNull);
 
-    await tester.pump(autoPlayDelay);
+    await tester.pump(_autoPlayDelay);
     await tester.pumpAndSettle();
     expect(find.byType(LaunchDialog), findsNothing);
     expect(container.read(playerSessionProvider)!.torrents, contains('tt1'));
@@ -78,7 +82,7 @@ void main() {
       (_) async => [fakeRelease(1), fakeRelease(2, resolution: 720)],
     );
     await tester.tap(find.text('Show 1 more'));
-    await tester.pump(autoPlayDelay * 2);
+    await tester.pump(_autoPlayDelay * 2);
     expect(find.text('Play'), findsOneWidget);
     expect(container.read(playerSessionProvider), isNull);
 
@@ -90,6 +94,45 @@ void main() {
     expect(torrent.release.resolution, 720);
   });
 
+  testWidgets('more torrents can be sorted and filtered', (tester) async {
+    await _pump(
+      tester,
+      (_) async => [
+        fakeRelease(1, name: 'Title 1 2026 1080p WEB-DL x264'),
+        fakeRelease(2, name: 'Title 1 2026 720p HDTV x264', resolution: 720),
+        fakeRelease(
+          3,
+          name: 'Title 1 2026 2160p BluRay x265',
+          resolution: 2160,
+        ),
+      ],
+    );
+    await tester.tap(find.text('Show 2 more'));
+    await tester.pump();
+    expect(find.byType(TorrentOption), findsNWidgets(3));
+    expect(find.text('3 torrents'), findsOneWidget);
+
+    await tester.tap(find.text('Filters'));
+    await tester.pump();
+    await tester.tap(find.text('Any quality'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('720p · 1'));
+    await tester.pump();
+    // Escape would cancel the launch; a tap outside closes the menu.
+    await tester.tap(find.text('Ready to play'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TorrentOption), findsOneWidget);
+    expect(find.text('1 of 3 torrents'), findsOneWidget);
+    expect(find.text('Filters · 1'), findsOneWidget);
+
+    // Folded away, the filter stays visible as a chip that removes it.
+    await tester.tap(find.text('Filters · 1'));
+    await tester.pump();
+    await tester.tap(find.text('720p'));
+    await tester.pump();
+    expect(find.byType(TorrentOption), findsNWidgets(3));
+  });
+
   testWidgets('a close match explains itself and waits', (tester) async {
     final container = await _pump(
       tester,
@@ -97,7 +140,7 @@ void main() {
     );
     expect(find.text('Closest match'), findsOneWidget);
     expect(find.textContaining('Not available in 1080p.'), findsOneWidget);
-    await tester.pump(autoPlayDelay * 2);
+    await tester.pump(_autoPlayDelay * 2);
     expect(find.byType(LaunchDialog), findsOneWidget);
     expect(container.read(playerSessionProvider), isNull);
   });
@@ -123,7 +166,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(LaunchDialog), findsNothing);
     expect(container.read(playbackLaunchProvider), isNull);
-    await tester.pump(autoPlayDelay);
+    await tester.pump(_autoPlayDelay);
     expect(container.read(playerSessionProvider), isNull);
   });
 }

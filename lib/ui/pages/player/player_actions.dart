@@ -5,6 +5,7 @@ import 'package:media_kit/media_kit.dart';
 
 import '../../../player/engine.dart';
 import '../../../player/session.dart';
+import '../../../torrents/resolution_models.dart';
 import '../../shared/player_view.dart';
 import '../../shared/window_manager.dart';
 import 'player_ui.dart';
@@ -128,6 +129,25 @@ class PlayerActions {
     final window = WindowManager.getInstance();
     await window.toggleFullScreen();
     ui.fullscreen = await window.isFullScreen;
+  }
+
+  /// Opens the torrent picker; a pending automatic switch waits for the
+  /// viewer's choice.
+  void chooseTorrent() {
+    engine.streaming.hold();
+    if (ui.panel != PlayerPanel.torrents) ui.toggle(PlayerPanel.torrents);
+  }
+
+  void toggleTorrents() =>
+      ui.panel == PlayerPanel.torrents ? ui.closePanel() : chooseTorrent();
+
+  /// Streams the current item from [torrent], one of [options], instead.
+  void switchTorrent(TorrentCandidate torrent, {TorrentResolution? options}) {
+    final item = session.queue?.current;
+    if (item == null) return;
+    session.chooseTorrent(item.id, torrent, options: options);
+    ui.closePanel();
+    unawaited(engine.streaming.switchTo(torrent, options: options));
   }
 
   void next() => session.next();

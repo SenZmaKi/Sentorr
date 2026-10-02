@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../player/launch.dart';
+import '../../../settings/notifier.dart';
 import '../../../torrents/resolution_models.dart';
 import '../../components/buttons.dart';
+import '../../components/countdown_track.dart';
 import '../../components/surface.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'launch_states.dart';
-import 'torrent_option.dart';
-
-/// How long an exact match waits for the viewer before it plays.
-const autoPlayDelay = Duration(seconds: 4);
+import '../torrent_picker/torrent_option.dart';
+import '../torrent_picker/torrent_picker.dart';
 
 /// The torrent about to play, from the moment Play is pressed: searching,
 /// then an exact match counting down, a close match to confirm, or a miss
@@ -26,9 +26,10 @@ class LaunchDialog extends ConsumerStatefulWidget {
 
 class _LaunchDialogState extends ConsumerState<LaunchDialog>
     with SingleTickerProviderStateMixin {
+  // How long an exact match waits for the viewer before it plays.
   late final _countdown = AnimationController(
     vsync: this,
-    duration: autoPlayDelay,
+    duration: ref.read(settingsProvider).torrents.autoPlayDelay,
   )..addStatusListener(_onCountdown);
   final _title = TextEditingController();
 
@@ -120,7 +121,7 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
           elevation: 0,
           insetPadding: const EdgeInsets.all(Space.s24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+            constraints: BoxConstraints(maxWidth: _showAll ? 720 : 560),
             child: DepthBox(
               style: context.depth.of(SurfaceDepth.floating),
               radius: Radii.panel,
@@ -168,7 +169,9 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
   Widget _body(PlaybackLaunch launch) {
     if (launch.error case final error?) return LaunchFailure(error: error);
     final resolution = launch.resolution;
-    if (resolution == null) return LaunchSearching(launch: launch);
+    if (resolution == null) {
+      return LaunchSearching(searchText: launch.query?.searchText);
+    }
     final match = launch.match;
     if (match == null) {
       return SingleChildScrollView(
@@ -179,16 +182,16 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
         ),
       );
     }
-    final c = context.colors;
     final all = resolution.candidates;
-    final rows = _showAll ? all : [?_selected];
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           resolution.message,
-          style: context.type.bodySmall.copyWith(color: c.foregroundSecondary),
+          style: context.type.bodySmall.copyWith(
+            color: context.colors.foregroundSecondary,
+          ),
         ),
         if (!match.exact) ...[
           const SizedBox(height: Space.s12),
@@ -199,34 +202,34 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
           ]),
         ],
         const SizedBox(height: Space.s12),
-        Flexible(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final (i, candidate) in rows.indexed) ...[
-                  if (i > 0) Divider(height: 1, color: c.borderSubtle),
-                  TorrentOption(
-                    candidate: candidate,
-                    best: identical(candidate, all.first),
-                    selected: identical(candidate, _selected),
-                    onTap: () => setState(() => _selected = candidate),
-                  ),
-                ],
-              ],
+        if (_showAll)
+          Flexible(
+            child: TorrentPicker(
+              candidates: all,
+              selected: _selected,
+              onSelected: (c) => setState(() => _selected = c),
+              title: _title,
+              onSearch: (_) => _search(),
             ),
+          )
+        else ...[
+          TorrentOption(
+            candidate: _selected!,
+            best: identical(_selected, all.first),
+            selected: true,
+            onTap: () {},
           ),
-        ),
-        if (!_showAll && all.length > 1) ...[
-          const SizedBox(height: Space.s8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SButton.ghost(
-              label: 'Show ${all.length - 1} more',
-              icon: Icons.expand_more_rounded,
-              onPressed: () => setState(() => _showAll = true),
+          if (all.length > 1) ...[
+            const SizedBox(height: Space.s8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SButton.ghost(
+                label: 'Show ${all.length - 1} more',
+                icon: Icons.expand_more_rounded,
+                onPressed: () => setState(() => _showAll = true),
+              ),
             ),
-          ),
+          ],
         ],
       ],
     );
@@ -249,7 +252,8 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
       );
     }
     final seconds =
-        (autoPlayDelay.inMilliseconds * (1 - _countdown.value) / 1000).ceil();
+        (_countdown.duration!.inMilliseconds * (1 - _countdown.value) / 1000)
+            .ceil();
     return SButton.primary(
       label: _counting ? 'Play in ${seconds}s' : 'Play',
       icon: Icons.play_arrow_rounded,

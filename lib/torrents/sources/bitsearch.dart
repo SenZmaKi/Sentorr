@@ -114,6 +114,7 @@ class BitsearchSource implements DiagnosticTorrentSource {
           sizeBytes: size,
           resolution: resolutionOf(name),
           isSeasonPack: query.isSeasonPack,
+          isSeriesPack: query.searchSeriesPacks,
         ),
       );
     }

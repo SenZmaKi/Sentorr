@@ -20,6 +20,7 @@ import 'player_input.dart';
 import 'player_ui.dart';
 import 'player_value.dart';
 import 'stage_states.dart';
+import 'switching_prompt.dart';
 import 'torrent_stats.dart';
 
 /// The full-window player: picture, captions and feedback beneath chrome
@@ -46,7 +47,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   /// Kept so the page can finish fading out after the session closes.
   PlayerSession? _session;
   bool _ended = false;
-  String? _error;
 
   @override
   void initState() {
@@ -56,10 +56,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     _subscriptions.addAll([
       s.playing.listen((playing) => _ui.playing = playing),
       s.completed.listen(_onCompleted),
-      s.error.listen((error) {
-        // Only failures that leave nothing playing are the viewer's problem.
-        if (_engine.state.duration == Duration.zero && mounted) {
-          setState(() => _error = error);
+      s.error.listen((_) {
+        // Only failures that leave nothing playing are the viewer's
+        // problem; the torrent behind it counts as failed.
+        if (_engine.state.duration == Duration.zero) {
+          _engine.streaming.unplayable();
         }
       }),
     ]);
@@ -107,10 +108,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     ref.watch(playbackEngineProvider);
     ref.listen(playerSessionProvider.select((s) => s?.current?.id), (_, id) {
       if (id == null) return;
-      setState(() {
-        _ended = false;
-        _error = null;
-      });
+      setState(() => _ended = false);
       _ui.itemChanged();
     });
     ref.listen(playerViewProvider, (_, view) {
@@ -177,7 +175,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                         duration: const Duration(milliseconds: 450),
                         child:
                             duration == Duration.zero &&
-                                _error == null &&
                                 stream?.stage != StreamStage.failed
                             ? IgnorePointer(
                                 child: OpeningCover(
@@ -220,24 +217,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                       ended: _ended,
                     ),
                   if (full)
-                    ValueListenableBuilder(
-                      valueListenable: _engine.streaming.status,
-                      builder: (context, stream, _) =>
-                          switch (_problem(session, stream)) {
-                            final message? => PlaybackProblem(
-                              message: message,
-                              onBack: _actions.close,
-                              onSkip: next == null ? null : _actions.next,
-                              onRetry: queue == null
-                                  ? _retry
-                                  : () {
-                                      final item = session.current!;
-                                      setState(() => _error = null);
-                                      unawaited(_engine.reopen(item));
-                                    },
-                            ),
-                            null => const SizedBox.shrink(),
-                          },
+                    ListenableBuilder(
+                      listenable: Listenable.merge([
+                        _ui,
+                        _engine.streaming.status,
+                      ]),
+                      builder: (context, _) =>
+                          _failure(session, _engine.streaming.status.value),
                     ),
                 ],
               ),
@@ -250,17 +236,46 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
   void _retry() => ref.read(playerSessionProvider.notifier).retry();
 
+  /// A torrent that failed to start, or nothing left to try. Yields to the
+  /// torrent picker, which is how the viewer answers it.
+  Widget _failure(PlayerSession session, StreamStatus? stream) {
+    if (_ui.panel == PlayerPanel.torrents) return const SizedBox.shrink();
+    final streaming = _engine.streaming;
+    if (stream?.stage == StreamStage.switching) {
+      return SwitchingPrompt(
+        status: stream!,
+        onChoose: _actions.chooseTorrent,
+        onNow: streaming.switchNow,
+      );
+    }
+    final message = _problem(session, stream);
+    if (message == null) return const SizedBox.shrink();
+    final queue = session.queue;
+    final next = queue?.next;
+    final others = (stream?.options?.candidates.length ?? 0) > 1;
+    return PlaybackProblem(
+      message: message,
+      onBack: _actions.close,
+      onSkip: next == null ? null : _actions.next,
+      onChoose: queue == null ? null : _actions.chooseTorrent,
+      chooseLabel: others ? 'Choose another torrent' : 'Search for torrents',
+      onRetry: queue == null
+          ? _retry
+          : () => unawaited(_engine.reopen(session.current!)),
+    );
+  }
+
   String? _problem(PlayerSession session, StreamStatus? stream) {
     if (session.queue == null && session.error != null) {
       return "Couldn't find what to play for ${session.request.subject.title}. "
           'Check your connection and try again.';
     }
-    if (stream?.stage == StreamStage.failed) return stream!.problem;
-    if (_error != null) {
-      return "This video couldn't be played. It may be unavailable or in a "
-          'format this device does not support.';
-    }
-    return null;
+    if (stream?.stage != StreamStage.failed) return null;
+    final tried = stream!.failed.length;
+    return tried > 1
+        ? '${stream.problem} $tried torrents couldn’t start. Choose another '
+              'or try again.'
+        : '${stream.problem} Try again or choose another torrent.';
   }
 
   String _resolvingLabel(PlayRequest request) => switch (request) {

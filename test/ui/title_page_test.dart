@@ -14,11 +14,12 @@ import 'package:sentorr/ui/components/cards/review_card.dart';
 import 'package:sentorr/ui/components/hover_preview.dart';
 import 'package:sentorr/ui/pages/home/home_page.dart';
 import 'package:sentorr/ui/pages/search/search_page.dart';
-import 'package:sentorr/ui/pages/settings_page.dart';
+import 'package:sentorr/ui/pages/settings/settings_page.dart';
 import 'package:sentorr/ui/pages/title/title_page.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 import 'package:sentorr/ui/shared/title_route.dart';
 
+import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 
 ImdbEpisode _episode(int season, int n) => ImdbEpisode(
@@ -49,6 +50,7 @@ Future<ProviderContainer> _pump(
   final container = ProviderContainer(
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
+      ...watchHistoryOverrides(),
       imdbRepositoryProvider.overrideWithValue(_imdb),
     ],
   );

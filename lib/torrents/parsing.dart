@@ -1,6 +1,7 @@
 import 'models.dart';
 import 'diagnostics.dart';
 import 'release_metadata.dart';
+import 'batch_matching.dart';
 
 int? integer(Object? value) => int.tryParse('$value');
 String? infoHash(Object? value) {
@@ -81,7 +82,7 @@ final _season = RegExp(
   caseSensitive: false,
 );
 final _marker = RegExp(
-  r'\b(?:s\d{1,2}(?:e\d{1,3})?|season\s*\d{1,2}|\d{1,2}x\d{1,3}|(?:19|20)\d{2}|2160p|1080p|720p|480p|4k|uhd|bluray|brrip|bdrip|webrip|web-dl|hdtv|x264|x265)\b',
+  r'\b(?:s\d{1,2}(?:e\d{1,3})?|seasons?\s*\d{1,2}|complete|entire|all\s+seasons|\d{1,2}x\d{1,3}|(?:19|20)\d{2}|2160p|1080p|720p|480p|4k|uhd|bluray|brrip|bdrip|webrip|web-dl|hdtv|x264|x265)\b',
   caseSensitive: false,
 );
 
@@ -101,7 +102,14 @@ TorrentRejection? releaseRejection(
       .replaceAll(RegExp(r'[._]'), ' ')
       .trim();
   final seasons = _season.allMatches(clean).toList();
-  if (query.isSeries) {
+  if (query.searchSeriesPacks) {
+    final rejection = seriesBatchRejection(
+      clean,
+      query.season!,
+      title: query.title,
+    );
+    if (rejection != null) return rejection;
+  } else if (query.isSeries) {
     final metadata = ReleaseMetadata.parse(name);
     // Multi-season/range/multi-episode releases need a richer parser; fail closed.
     if (seasons.length != 1 ||

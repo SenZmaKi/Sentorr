@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 import '../../shared/theme/theme.dart';
 
 /// A floating panel over the video; one at a time.
-enum PlayerPanel { none, settings, queue }
+enum PlayerPanel { none, settings, queue, torrents }
 
 /// A brief acknowledgement in the middle of the picture, YouTube style:
 /// a glyph and optional words that fade out on their own.

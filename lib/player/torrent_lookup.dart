@@ -34,11 +34,15 @@ TorrentQuery torrentQueryFor(
     season: item.season,
     episode: item.episode,
     languages: languages,
+    seriesEnded:
+        series.endYear != null && series.endYear! <= DateTime.now().year,
   );
 }
 
 TorrentPreferences torrentPreferencesFor(TorrentSettings settings) =>
     TorrentPreferences(
       preferredResolution: settings.preferredResolution,
+      minimumSeeders: settings.minimumSeeders,
       allowSeasonPackFallback: true,
+      includeBatchCandidates: true,
     );

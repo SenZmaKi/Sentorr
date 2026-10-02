@@ -14,9 +14,13 @@ class TorrentQuery {
     this.season,
     this.episode,
     this.searchStyle = TorrentSearchStyle.scene,
+    this.seriesEnded = false,
+    this.searchSeriesPacks = false,
     Set<String> languages = const {},
   }) : languages = Set.unmodifiable(languages) {
     if (title.trim().isEmpty ||
+        ((seriesEnded || searchSeriesPacks) && season == null) ||
+        (searchSeriesPacks && episode != null) ||
         (episode != null && season == null) ||
         (season != null && season! < 0) ||
         (episode != null && episode! < 0) ||
@@ -32,13 +36,19 @@ class TorrentQuery {
   final String? imdbId, episodeImdbId;
   final int? year, season, episode;
   final TorrentSearchStyle searchStyle;
+  final bool seriesEnded, searchSeriesPacks;
 
   /// Empty means unrestricted. Unknown languages never satisfy an explicit filter.
   final Set<String> languages;
   bool get isSeries => season != null;
-  bool get isSeasonPack => isSeries && episode == null;
+  bool get isSeasonPack => isSeries && episode == null && !searchSeriesPacks;
   String get searchText {
     if (!isSeries) return '$title${year != null ? ' $year' : ''}';
+    if (searchSeriesPacks) {
+      return searchStyle == TorrentSearchStyle.longForm
+          ? '$title complete series'
+          : '$title complete';
+    }
     final s = season.toString().padLeft(2, '0');
     final e = episode?.toString().padLeft(2, '0');
     return switch (searchStyle) {
@@ -59,6 +69,8 @@ class TorrentQuery {
     episode: episode,
     languages: languages,
     searchStyle: style,
+    seriesEnded: seriesEnded,
+    searchSeriesPacks: searchSeriesPacks,
   );
 }
 
@@ -73,6 +85,7 @@ class TorrentRelease {
     this.resolution,
     this.uploadedAt,
     this.isSeasonPack = false,
+    this.isSeriesPack = false,
   });
   final TorrentSourceId source;
   final String name, infoHash;
@@ -81,6 +94,8 @@ class TorrentRelease {
   final int? resolution;
   final DateTime? uploadedAt;
   final bool isSeasonPack;
+  final bool isSeriesPack;
+  bool get isPack => isSeasonPack || isSeriesPack;
 }
 
 class SourceFailure {

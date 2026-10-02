@@ -7,7 +7,7 @@ import '../pages/home/home_page.dart';
 import '../pages/launch/launch_host.dart';
 import '../pages/player/player_host.dart';
 import '../pages/search/search_page.dart';
-import '../pages/settings_page.dart';
+import '../pages/settings/settings_page.dart';
 import '../pages/title/title_page.dart';
 import '../shared/theme/theme.dart';
 import 'app_shell.dart';

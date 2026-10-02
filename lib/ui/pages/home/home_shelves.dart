@@ -5,6 +5,7 @@ import '../../../home/catalog_rows.dart';
 import '../../../home/series_updates.dart';
 import '../../../home/watch_activity.dart';
 import '../../../imdb/models.dart';
+import '../../../watching/models.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_card.dart';
 import '../../components/cards/poster_card.dart';
@@ -106,30 +107,37 @@ class ContinueWatchingShelf extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AsyncShelf<ResumeEntry>(
+    return AsyncShelf<WatchEntry>(
       icon: Icons.history_rounded,
       title: 'Continue watching',
       count: (n) => '$n in progress',
       items: ref.watch(continueWatchingProvider),
       spec: HomeLayout.of(context).resume,
-      onRetry: () => _retryTrending(ref),
+      onRetry: () => ref.invalidate(continueWatchingProvider),
       cardBuilder: (context, entry, _) {
-        final t = entry.title;
+        final show = entry.series ?? entry.title;
         return ResumeCard(
-          title: t.title,
+          title: show.title,
           meta: [
-            MetaItem(kindLabel(t), icon: kindIcon(t)),
-            if (t.genres.isNotEmpty) MetaItem(t.genres.take(2).join(', ')),
+            if (entry.isEpisode)
+              MetaItem(entry.title.title)
+            else ...[
+              MetaItem(kindLabel(show), icon: kindIcon(show)),
+              if (show.genres.isNotEmpty)
+                MetaItem(show.genres.take(2).join(', ')),
+            ],
           ],
-          chip: kindLabel(t),
-          chipIcon: kindIcon(t),
+          chip: entry.isEpisode
+              ? episodeCode(entry.season, entry.episode)
+              : kindLabel(show),
+          chipIcon: kindIcon(show),
           progress: entry.progress,
-          runtime: t.runtimeSeconds == null
+          runtime: entry.duration,
+          artwork: TitleBackdrop(title: show),
+          onTap: () => ref.resume(entry),
+          preview: entry.isEpisode
               ? null
-              : Duration(seconds: t.runtimeSeconds!),
-          artwork: TitleBackdrop(title: t),
-          onTap: () => ref.playTitle(t),
-          preview: _preview(ref, t, playLabel: 'Resume'),
+              : _preview(ref, show, playLabel: 'Resume'),
         );
       },
     );

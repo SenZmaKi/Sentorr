@@ -78,6 +78,9 @@ abstract final class PlayerMetrics {
   static const double menuWidth = 280;
   static const double queueWidth = 460;
 
+  /// Wider than the queue: torrent names and their facts need the room.
+  static const double torrentsWidth = 560;
+
   /// Idle time before controls hide during playback.
   static const Duration idle = Duration(seconds: 3);
 }

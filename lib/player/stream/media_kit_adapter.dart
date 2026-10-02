@@ -21,9 +21,10 @@ class MediaKitTorrentAdapter {
   /// Must exceed the engine's piece wait, or mpv abandons slow reads.
   static const httpTimeoutSeconds = 60;
 
-  Future<void> open(TorrentStream stream) async {
+  /// Plays [stream] from [start], or its beginning.
+  Future<void> open(TorrentStream stream, {Duration? start}) async {
     await _configure();
-    await player.open(Media(stream.uri.toString()));
+    await player.open(Media(stream.uri.toString(), start: start));
   }
 
   /// Cancels the engine's obsolete reads before mpv asks for [position].

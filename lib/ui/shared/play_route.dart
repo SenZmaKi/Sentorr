@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../imdb/models.dart';
 import '../../player/launch.dart';
 import '../../player/queue_builder.dart';
+import '../../watching/models.dart';
 
 /// Play requests find a torrent first; the player opens once one is chosen.
 extension PlayMedia on WidgetRef {
@@ -15,4 +16,19 @@ extension PlayMedia on WidgetRef {
   void playEpisode(ImdbTitle series, ImdbEpisode episode, {int? season}) =>
       read(playbackLaunchProvider.notifier)
           .start(PlayEpisode(series, episode, season: season));
+
+  /// Picks [entry] back up; the player resumes where it stopped.
+  void resume(WatchEntry entry) {
+    final series = entry.series;
+    if (series == null) return playTitle(entry.title);
+    playEpisode(
+      series,
+      ImdbEpisode(
+        title: entry.title,
+        seasonNumber: entry.season,
+        episodeNumber: entry.episode,
+      ),
+      season: entry.season,
+    );
+  }
 }

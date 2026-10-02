@@ -18,6 +18,7 @@ class PlayerSession {
     this.error,
     this.resolving = false,
     this.torrents = const {},
+    this.options = const {},
   });
 
   final PlayRequest request;
@@ -35,16 +36,26 @@ class PlayerSession {
   /// one stream the best torrent found when they start.
   final Map<String, TorrentCandidate> torrents;
 
+  /// Everything found alongside a chosen torrent, by item ID, so the
+  /// player can fall back through it and offer it to switch to.
+  final Map<String, TorrentResolution> options;
+
   PlaybackItem? get current => queue?.current;
 
-  PlayerSession copyWith({PlayQueue? queue, Object? error, bool? resolving}) =>
-      PlayerSession(
-        request: request,
-        queue: queue ?? this.queue,
-        error: error,
-        resolving: resolving ?? this.resolving,
-        torrents: torrents,
-      );
+  PlayerSession copyWith({
+    PlayQueue? queue,
+    Object? error,
+    bool? resolving,
+    Map<String, TorrentCandidate>? torrents,
+    Map<String, TorrentResolution>? options,
+  }) => PlayerSession(
+    request: request,
+    queue: queue ?? this.queue,
+    error: error,
+    resolving: resolving ?? this.resolving,
+    torrents: torrents ?? this.torrents,
+    options: options ?? this.options,
+  );
 }
 
 final queueBuilderProvider = Provider<QueueBuilder>(
@@ -77,11 +88,12 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
   /// Opens the player on [request]; the first item plays as soon as it is
   /// known and the rest of the queue fills in behind it. A [queue] already
   /// built for the request is used as is. [torrent] is the release chosen
-  /// for the first item.
+  /// for the first item, from [options].
   void play(
     PlayRequest request, {
     PlayQueue? queue,
     TorrentCandidate? torrent,
+    TorrentResolution? options,
   }) {
     final cancel = _restart();
     final first = queue ?? _builder.immediate(request);
@@ -92,8 +104,28 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
       torrents: {
         if (first != null && torrent != null) first.current.id: torrent,
       },
+      options: {
+        if (first != null && options != null) first.current.id: options,
+      },
     );
     if (queue == null) _resolve(request, cancel);
+  }
+
+  /// Remembers the viewer's torrent for [itemId], so returning to the item
+  /// streams it again.
+  void chooseTorrent(
+    String itemId,
+    TorrentCandidate torrent, {
+    TorrentResolution? options,
+  }) {
+    final s = state;
+    if (s == null) return;
+    state = s.copyWith(
+      resolving: s.resolving,
+      error: s.error,
+      torrents: {...s.torrents, itemId: torrent},
+      options: options == null ? null : {...s.options, itemId: options},
+    );
   }
 
   void retry() {

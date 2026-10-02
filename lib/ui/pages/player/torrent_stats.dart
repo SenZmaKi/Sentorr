@@ -21,8 +21,9 @@ class TorrentStats extends StatelessWidget {
     valueListenable: status,
     builder: (context, status, _) {
       if (status == null ||
-          status.stage == StreamStage.finding ||
-          status.stage == StreamStage.failed) {
+          !(status.stage == StreamStage.connecting ||
+              status.stage == StreamStage.preparing ||
+              status.stage == StreamStage.streaming)) {
         return const SizedBox.shrink();
       }
       final t = status.transfer;
@@ -91,6 +92,7 @@ String? streamLabel(StreamStatus? status) {
     StreamStage.connecting => 'Connecting to peers$suffix',
     StreamStage.preparing => 'Preparing the video$suffix',
     StreamStage.streaming => 'Buffering$suffix',
+    StreamStage.switching => 'Switching torrents',
     StreamStage.failed => null,
   };
 }

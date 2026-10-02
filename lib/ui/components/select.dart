@@ -13,6 +13,7 @@ class SSelect<T> extends StatelessWidget {
     required this.options,
     required this.selected,
     required this.labelOf,
+    this.optionLabelOf,
     required this.onSelected,
     required this.semanticLabel,
     this.multiple = false,
@@ -24,6 +25,9 @@ class SSelect<T> extends StatelessWidget {
   final List<T> options;
   final Set<T> selected;
   final String Function(T option) labelOf;
+
+  /// The menu's wording when it says more than the trigger, e.g. a count.
+  final String Function(T option)? optionLabelOf;
 
   /// Single selection picks; [multiple] toggles.
   final ValueChanged<T> onSelected;
@@ -73,7 +77,7 @@ class SSelect<T> extends StatelessWidget {
                 for (final o in options)
                   _option(
                     context,
-                    labelOf(o),
+                    (optionLabelOf ?? labelOf)(o),
                     checked: selected.contains(o),
                     onPressed: () => onSelected(o),
                   ),

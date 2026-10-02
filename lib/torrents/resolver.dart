@@ -24,6 +24,7 @@ class TorrentResolver {
     final failures = <SourceFailure>[];
     var candidates = <TorrentCandidate>[];
     var allSourcesFailed = false;
+    final byHash = <String, TorrentRelease>{};
 
     Future<void> search(
       TorrentQuery intent,
@@ -37,6 +38,14 @@ class TorrentResolver {
         onRejected: (reason) =>
             rejected.update(reason, (n) => n + 1, ifAbsent: () => 1),
       );
+      for (final candidate in candidates) {
+        final release = candidate.release;
+        final key = release.infoHash.toLowerCase();
+        final previous = byHash[key];
+        if (previous == null || release.seeders > previous.seeders) {
+          byHash[key] = release;
+        }
+      }
       failures.addAll(result.failures);
       attempts.add(
         TorrentResolutionAttempt(
@@ -68,7 +77,8 @@ class TorrentResolver {
         if (!seen.add(variant.searchText)) continue;
         await search(
           variant,
-          stage == TorrentResolutionStage.seasonPack
+          stage == TorrentResolutionStage.seasonPack ||
+                  stage == TorrentResolutionStage.seriesPack
               ? stage
               : TorrentResolutionStage.alternate,
         );
@@ -76,10 +86,10 @@ class TorrentResolver {
     }
 
     await searchVariants(query, TorrentResolutionStage.primary);
-    if (candidates.isEmpty &&
-        !allSourcesFailed &&
-        query.episode != null &&
-        prefs.allowSeasonPackFallback) {
+    final searchBatches =
+        prefs.includeBatchCandidates ||
+        (candidates.isEmpty && prefs.allowSeasonPackFallback);
+    if (searchBatches && !allSourcesFailed && query.episode != null) {
       await searchVariants(
         TorrentQuery(
           title: query.title,
@@ -87,14 +97,31 @@ class TorrentResolver {
           year: query.year,
           season: query.season,
           languages: query.languages,
+          seriesEnded: query.seriesEnded,
         ),
         TorrentResolutionStage.seasonPack,
       );
+      if (prefs.includeBatchCandidates &&
+          query.seriesEnded &&
+          !allSourcesFailed) {
+        await searchVariants(
+          TorrentQuery(
+            title: query.title,
+            imdbId: query.imdbId,
+            year: query.year,
+            season: query.season,
+            languages: query.languages,
+            seriesEnded: true,
+            searchSeriesPacks: true,
+          ),
+          TorrentResolutionStage.seriesPack,
+        );
+      }
     }
     if (cancelToken?.isCancelled ?? false) throw cancelToken!.cancelError!;
     return TorrentResolution(
       query: query,
-      candidates: candidates,
+      candidates: rank(byHash.values, prefs),
       failures: failures,
       attempts: attempts,
     );
@@ -129,7 +156,7 @@ class TorrentResolver {
           qualityScore: quality,
           availabilityScore: availability,
           sizeScore: size,
-          requiresFileSelection: release.isSeasonPack,
+          requiresFileSelection: release.isPack,
         ),
       );
     }

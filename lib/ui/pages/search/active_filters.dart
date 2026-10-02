@@ -6,7 +6,7 @@ import '../../../search/notifier.dart';
 import '../../components/buttons.dart';
 import '../../components/chips.dart';
 import '../../shared/theme/theme.dart';
-import 'range_field.dart';
+import '../../components/range_field.dart';
 import 'search_filters.dart';
 
 /// "Rated 7–9", "Rated 7+", "Rated up to 5".

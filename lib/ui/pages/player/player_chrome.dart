@@ -12,6 +12,7 @@ import 'player_value.dart';
 import 'episodes_panel.dart';
 import 'settings_menu.dart';
 import 'top_bar.dart';
+import 'torrents_panel.dart';
 import 'up_next_card.dart';
 
 /// Everything drawn over the picture that comes and goes with activity:
@@ -130,6 +131,15 @@ class PlayerChrome extends StatelessWidget {
                   onJump: actions.session.jump,
                   onClose: ui.closePanel,
                 ),
+                PlayerPanel.torrents when session.current != null =>
+                  TorrentsPanel(
+                    key: ValueKey('torrents ${session.current!.id}'),
+                    item: session.current!,
+                    status: engine.streaming.status,
+                    onSwitch: (torrent, options) =>
+                        actions.switchTorrent(torrent, options: options),
+                    onClose: ui.closePanel,
+                  ),
                 _ => const SizedBox.shrink(key: ValueKey('none')),
               },
             ),

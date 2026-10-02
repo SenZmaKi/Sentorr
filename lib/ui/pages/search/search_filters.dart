@@ -5,7 +5,7 @@ import '../../../search/models.dart';
 import '../../../search/notifier.dart';
 import '../../components/select.dart';
 import '../../shared/theme/theme.dart';
-import 'range_field.dart';
+import '../../components/range_field.dart';
 
 Set<T> toggled<T>(Set<T> set, T value) =>
     set.contains(value) ? ({...set}..remove(value)) : {...set, value};

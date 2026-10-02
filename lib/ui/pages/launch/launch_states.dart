@@ -1,23 +1,21 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
-import '../../../player/launch.dart';
 import '../../../torrents/resolution_models.dart';
 import '../../components/buttons.dart';
 import '../../components/inputs.dart';
-import '../../components/surface.dart';
 import '../../shared/theme/theme.dart';
 
 /// While the sources are searched: what is being looked for.
 class LaunchSearching extends StatelessWidget {
-  const LaunchSearching({super.key, required this.launch});
+  const LaunchSearching({super.key, this.searchText});
 
-  final PlaybackLaunch launch;
+  /// Null while the item itself is still being found.
+  final String? searchText;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final query = launch.query;
     return Row(
       children: [
         SizedBox.square(
@@ -31,8 +29,8 @@ class LaunchSearching extends StatelessWidget {
               children: [
                 const TextSpan(text: 'Searching for '),
                 TextSpan(
-                  text: query?.searchText ?? 'the first episode',
-                  style: query == null ? null : context.type.technical,
+                  text: searchText ?? 'the first episode',
+                  style: searchText == null ? null : context.type.technical,
                 ),
               ],
             ),
@@ -188,36 +186,6 @@ class LaunchNote extends StatelessWidget {
   }
 }
 
-/// How long until an exact match plays on its own: an inset track the
-/// action fill crosses.
-class CountdownTrack extends StatelessWidget {
-  const CountdownTrack({super.key, required this.progress});
-
-  final Animation<double> progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return DepthBox(
-      style: context.depth.of(SurfaceDepth.inset),
-      radius: Radii.full,
-      height: 4,
-      child: AnimatedBuilder(
-        animation: progress,
-        builder: (context, _) => FractionallySizedBox(
-          alignment: Alignment.centerLeft,
-          widthFactor: progress.value,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: context.colors.action,
-              borderRadius: BorderRadius.circular(Radii.full),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Cancel and the step forward, the forward one dominant.
 class LaunchActions extends StatelessWidget {
   const LaunchActions({super.key, required this.onCancel, this.primary});
@@ -226,9 +194,10 @@ class LaunchActions extends StatelessWidget {
   final SButton? primary;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.end,
+  Widget build(BuildContext context) => Wrap(
+    alignment: WrapAlignment.end,
     spacing: Space.s8,
+    runSpacing: Space.s8,
     children: [
       SButton.ghost(label: 'Cancel', onPressed: onCancel),
       ?primary,

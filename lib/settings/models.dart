@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'json.dart';
+import 'streaming_settings.dart';
+import 'torrent_settings.dart';
+
+export 'streaming_settings.dart';
+export 'torrent_settings.dart';
+
 class WindowPreferences {
   const WindowPreferences({
     this.alwaysOnTop = false,
@@ -13,6 +20,20 @@ class WindowPreferences {
       startFullScreen,
       launchAtStartup,
       closeToTray;
+  WindowPreferences copyWith({
+    bool? alwaysOnTop,
+    bool? startMaximized,
+    bool? startFullScreen,
+    bool? launchAtStartup,
+    bool? closeToTray,
+  }) => WindowPreferences(
+    alwaysOnTop: alwaysOnTop ?? this.alwaysOnTop,
+    startMaximized: startMaximized ?? this.startMaximized,
+    startFullScreen: startFullScreen ?? this.startFullScreen,
+    launchAtStartup: launchAtStartup ?? this.launchAtStartup,
+    closeToTray: closeToTray ?? this.closeToTray,
+  );
+
   factory WindowPreferences.fromJson(Map<String, dynamic> json) =>
       WindowPreferences(
         alwaysOnTop: json['alwaysOnTop'] == true,
@@ -30,97 +51,61 @@ class WindowPreferences {
   };
 }
 
-/// How a torrent is chosen when the viewer presses Play.
-class TorrentSettings {
-  const TorrentSettings({
-    this.preferredResolution = 1080,
-    this.languages = const {},
-    this.reviewExactMatches = true,
-  });
-
-  static const resolutions = [2160, 1080, 720, 480];
-
-  final int preferredResolution;
-
-  /// Audio languages a release must confirm; empty accepts any.
-  final Set<String> languages;
-
-  /// Show an exact match with a short countdown before it plays. Close
-  /// matches and misses always ask the viewer.
-  final bool reviewExactMatches;
-
-  factory TorrentSettings.fromJson(Map<String, dynamic> json) {
-    final resolution = json['preferredResolution'];
-    final languages = json['languages'];
-    return TorrentSettings(
-      preferredResolution: resolutions.contains(resolution)
-          ? resolution as int
-          : 1080,
-      languages: languages is List
-          ? {
-              for (final l in languages)
-                if (l is String && l.trim().isNotEmpty) l.trim(),
-            }
-          : const {},
-      reviewExactMatches: json['reviewExactMatches'] != false,
-    );
-  }
-  Map<String, dynamic> toJson() => {
-    'preferredResolution': preferredResolution,
-    'languages': languages.toList(),
-    'reviewExactMatches': reviewExactMatches,
-  };
-}
-
 class AppSettings {
   const AppSettings({
     this.themeMode = ThemeMode.system,
     this.window = const WindowPreferences(),
-    this.imageCacheMaxBytes = 100 * 1024 * 1024,
+    this.imageCacheMaxBytes = defaultImageCacheMaxBytes,
     this.torrents = const TorrentSettings(),
+    this.sources = const SourceSettings(),
+    this.streaming = const StreamingSettings(),
   });
+
+  static const defaultImageCacheMaxBytes = 100 * 1024 * 1024;
+
   final ThemeMode themeMode;
   final WindowPreferences window;
+  /// Zero means unlimited.
   final int imageCacheMaxBytes;
   final TorrentSettings torrents;
+  final SourceSettings sources;
+  final StreamingSettings streaming;
 
   AppSettings copyWith({
     ThemeMode? themeMode,
     WindowPreferences? window,
     int? imageCacheMaxBytes,
     TorrentSettings? torrents,
+    SourceSettings? sources,
+    StreamingSettings? streaming,
   }) => AppSettings(
     themeMode: themeMode ?? this.themeMode,
     window: window ?? this.window,
     imageCacheMaxBytes: imageCacheMaxBytes ?? this.imageCacheMaxBytes,
     torrents: torrents ?? this.torrents,
+    sources: sources ?? this.sources,
+    streaming: streaming ?? this.streaming,
   );
 
-  factory AppSettings.fromJson(Map<String, dynamic> json) {
-    final bytes = json['imageCacheMaxBytes'];
-    return AppSettings(
-      themeMode: ThemeMode.values.firstWhere(
-        (mode) => mode.name == json['themeMode'],
-        orElse: () => ThemeMode.system,
-      ),
-      window: WindowPreferences.fromJson(
-        json['window'] is Map<String, dynamic>
-            ? json['window']
-            : <String, dynamic>{},
-      ),
-      imageCacheMaxBytes: bytes is int && bytes > 0 ? bytes : 100 * 1024 * 1024,
-      torrents: TorrentSettings.fromJson(
-        json['torrents'] is Map<String, dynamic>
-            ? json['torrents']
-            : <String, dynamic>{},
-      ),
-    );
-  }
+  factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
+    themeMode: jsonEnum(ThemeMode.values, json['themeMode'], ThemeMode.system),
+    window: WindowPreferences.fromJson(jsonObject(json['window'])),
+    imageCacheMaxBytes: jsonInt(
+      json['imageCacheMaxBytes'],
+      defaultImageCacheMaxBytes,
+    ),
+    torrents: TorrentSettings.fromJson(jsonObject(json['torrents'])),
+    sources: SourceSettings.fromJson(jsonObject(json['sources'])),
+    streaming: StreamingSettings.fromJson(jsonObject(json['streaming'])),
+  );
+
   Map<String, dynamic> toJson() => {
     'version': 1,
     'themeMode': themeMode.name,
     'window': window.toJson(),
     'imageCacheMaxBytes': imageCacheMaxBytes,
     'torrents': torrents.toJson(),
+    'sources': sources.toJson(),
+    'streaming': streaming.toJson(),
   };
 }

@@ -140,11 +140,14 @@ class PlaybackProblem extends StatelessWidget {
     required this.message,
     this.onRetry,
     this.onSkip,
+    this.onChoose,
+    this.chooseLabel = 'Choose another torrent',
     required this.onBack,
   });
 
   final String message;
-  final VoidCallback? onRetry, onSkip;
+  final VoidCallback? onRetry, onSkip, onChoose;
+  final String chooseLabel;
   final VoidCallback onBack;
 
   @override
@@ -184,6 +187,12 @@ class PlaybackProblem extends StatelessWidget {
                         label: 'Play next',
                         icon: Icons.skip_next_rounded,
                         onPressed: onSkip,
+                      ),
+                    if (onChoose != null)
+                      SButton(
+                        label: chooseLabel,
+                        icon: Icons.swap_horiz_rounded,
+                        onPressed: onChoose,
                       ),
                     if (onRetry != null)
                       SButton.primary(

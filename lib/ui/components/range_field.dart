@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../search/models.dart';
-import '../../components/inputs.dart';
-import '../../shared/theme/theme.dart';
+import '../../search/models.dart';
+import 'inputs.dart';
+import '../shared/theme/theme.dart';
 
 /// "7" rather than "7.0".
 String formatBound(num v) =>

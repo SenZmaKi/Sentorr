@@ -15,6 +15,7 @@ class TorrentStreamConfig {
     this.nativeReadTimeout = const Duration(seconds: 15),
     this.transport = TorrentTransport.tcpOnly,
     this.prepareContainer = true,
+    this.retainedDirectory,
   }) {
     if (!Directory(cacheDirectory).isAbsolute ||
         downloadBytesPerSecond < 0 ||
@@ -22,7 +23,9 @@ class TorrentStreamConfig {
         pieceCacheBytes < 0 ||
         metadataTimeout <= Duration.zero ||
         pieceTimeout <= Duration.zero ||
-        nativeReadTimeout <= Duration.zero) {
+        nativeReadTimeout <= Duration.zero ||
+        (retainedDirectory != null &&
+            !RegExp(r'^[A-Za-z0-9._-]+$').hasMatch(retainedDirectory!))) {
       throw ArgumentError(
         'Require an absolute cache root, nonnegative limits and positive timeouts/window',
       );
@@ -35,4 +38,9 @@ class TorrentStreamConfig {
   final Duration metadataTimeout, pieceTimeout, nativeReadTimeout;
   final TorrentTransport transport;
   final bool prepareContainer;
+
+  /// A plain child name of the cache root to save into and leave in place on
+  /// close, so a later session for the same torrent reuses what was
+  /// downloaded. Null gives each session a temporary child, removed on close.
+  final String? retainedDirectory;
 }

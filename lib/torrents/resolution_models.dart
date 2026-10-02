@@ -11,6 +11,7 @@ class TorrentPreferences {
     this.allowSeasonPackFallback = false,
     this.allowAlternateSearchFallback = true,
     this.allowResolutionFallback = true,
+    this.includeBatchCandidates = false,
   }) {
     if (preferredResolution <= 0 ||
         minimumSeeders < 1 ||
@@ -23,9 +24,12 @@ class TorrentPreferences {
   final int? maximumSizeBytes;
   final bool allowUnknownResolution, allowSeasonPackFallback;
   final bool allowAlternateSearchFallback, allowResolutionFallback;
+
+  /// Search packs even when an eligible single episode already exists.
+  final bool includeBatchCandidates;
 }
 
-enum TorrentResolutionStage { primary, alternate, seasonPack }
+enum TorrentResolutionStage { primary, alternate, seasonPack, seriesPack }
 
 class TorrentResolutionAttempt {
   TorrentResolutionAttempt({
@@ -106,8 +110,8 @@ class TorrentResolution {
     if (best != null) {
       final found = best!.requiresFileSelection
           ? query.episode != null
-                ? 'Found a season pack. Check its files for the requested episode.'
-                : 'Found a season pack. Check its files before playback.'
+                ? 'Found a batch torrent. Check its files for the requested episode.'
+                : 'Found a batch torrent. Check its files before playback.'
           : 'Found ${candidates.length} matching torrents.';
       return failures.isEmpty
           ? found

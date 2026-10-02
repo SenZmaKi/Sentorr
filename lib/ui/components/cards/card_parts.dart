@@ -17,10 +17,19 @@ class CardLines {
 /// One fact in a metadata line: an optional leading icon, and the mono
 /// role for numbers people compare (ratings, times, counts).
 class MetaItem {
-  const MetaItem(this.label, {this.icon, this.technical = false});
+  const MetaItem(
+    this.label, {
+    this.icon,
+    this.leading,
+    this.technical = false,
+  });
 
   final String label;
   final IconData? icon;
+
+  /// Leads the fact in place of [icon], e.g. a site's logo, at the size
+  /// the line gives icons.
+  final Widget Function(double size)? leading;
   final bool technical;
 }
 
@@ -53,12 +62,14 @@ class MetaLine extends StatelessWidget {
         children: [
           for (final (i, item) in items.indexed) ...[
             if (i > 0) const WidgetSpan(child: SizedBox(width: Space.s12)),
-            if (item.icon != null)
+            if (item.leading != null || item.icon != null)
               WidgetSpan(
                 alignment: PlaceholderAlignment.middle,
                 child: Padding(
                   padding: const EdgeInsets.only(right: Space.s4),
-                  child: Icon(item.icon, size: iconSize, color: fg),
+                  child:
+                      item.leading?.call(iconSize) ??
+                      Icon(item.icon, size: iconSize, color: fg),
                 ),
               ),
             TextSpan(text: item.label, style: item.technical ? mono : null),

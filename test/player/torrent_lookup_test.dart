@@ -69,6 +69,24 @@ void main() {
     );
     expect(prefs.preferredResolution, 720);
     expect(prefs.allowSeasonPackFallback, isTrue);
+    expect(prefs.includeBatchCandidates, isTrue);
+  });
+  test('finished catalog series enable complete-series discovery', () {
+    final query = torrentQueryFor(
+      PlaybackItem(
+        title: ImdbTitle(id: 'tt9', title: 'Episode'),
+        series: ImdbTitle(
+          id: 'tt2',
+          title: 'Breaking Bad',
+          releaseYear: 2008,
+          endYear: 2013,
+        ),
+        season: 2,
+        episode: 3,
+      ),
+    );
+    expect(query.seriesEnded, isTrue);
+    expect(query.episode, 3);
   });
 
   test('torrent settings survive a round trip and reject bad values', () {

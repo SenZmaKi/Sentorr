@@ -18,13 +18,22 @@ import '../ui/shared/desktop_tray_controller.dart';
 import '../ui/shared/desktop_icon_controller.dart';
 import '../ui/shared/launch_at_startup_manager.dart';
 import '../ui/shared/window_manager.dart';
+import '../watching/notifier.dart';
+import '../watching/repository.dart';
 import 'services.dart';
 
 class AppRuntime with WidgetsBindingObserver {
-  AppRuntime._(this.container, this.network, this.repository, this.tray);
+  AppRuntime._(
+    this.container,
+    this.network,
+    this.repository,
+    this.history,
+    this.tray,
+  );
   final ProviderContainer container;
   final NetworkClient network;
   final SettingsRepository repository;
+  final WatchHistoryRepository history;
   final DesktopTrayController tray;
   final window = WindowManager.getInstance();
   bool _quitting = false;
@@ -48,6 +57,10 @@ class AppRuntime with WidgetsBindingObserver {
     await configureFileLogging(paths.logsDirectory);
     final repository = SettingsRepository(JsonFileStore(paths.settingsFile));
     final settings = await repository.load();
+    final history = WatchHistoryRepository(
+      JsonFileStore(paths.watchHistoryFile),
+    );
+    final watched = await history.load();
     AppImageCache.initialize(paths, maxSizeBytes: settings.imageCacheMaxBytes);
     final network = NetworkClient(
       cacheDirectory: paths.networkCacheDirectory.path,
@@ -58,13 +71,21 @@ class AppRuntime with WidgetsBindingObserver {
         appPathsProvider.overrideWithValue(paths),
         settingsRepositoryProvider.overrideWithValue(repository),
         initialSettingsProvider.overrideWithValue(settings),
+        watchHistoryRepositoryProvider.overrideWithValue(history),
+        initialWatchHistoryProvider.overrideWithValue(watched),
         networkClientProvider.overrideWithValue(network),
         desktopIconControllerProvider.overrideWithValue(
           DesktopIconController(tray: tray),
         ),
       ],
     );
-    final runtime = AppRuntime._(container, network, repository, tray);
+    final runtime = AppRuntime._(
+      container,
+      network,
+      repository,
+      history,
+      tray,
+    );
     await runtime.window.init(
       settings.window,
       WindowStateRepository(store: JsonFileStore(paths.windowStateFile)),
@@ -94,6 +115,7 @@ class AppRuntime with WidgetsBindingObserver {
   Future<void> flush() async {
     await container.read(settingsProvider.notifier).flushed;
     await repository.store.flushed;
+    await history.store.flushed;
     if (supportsWindowCustomization) await window.flush();
     await flushLogs();
   }
@@ -126,6 +148,8 @@ class AppRuntime with WidgetsBindingObserver {
     await network.close();
     await AppImageCache.dispose();
     container.dispose();
+    // An open player saves where it stopped as the container disposes it.
+    await history.store.flushed;
     await flushLogs();
   }
 

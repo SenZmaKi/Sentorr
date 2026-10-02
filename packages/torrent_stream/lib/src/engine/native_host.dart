@@ -27,6 +27,9 @@ class NativeHost {
   int _servedBytes = 0, _requests = 0;
   MediaServer? server;
   Directory? owned;
+
+  /// The retained save directory, which outlives the session.
+  Directory? saveDirectory;
   Timer? timer;
   StreamSubscription<AlertInfo>? alerts;
   List<TorrentFileEntry> files = [];
@@ -94,9 +97,15 @@ class NativeHost {
     snapshot();
     await Directory(config.cacheDirectory).create(recursive: true);
     lifetime.check();
-    owned = await Directory(
-      config.cacheDirectory,
-    ).createTemp('torrent-stream-');
+    final retained = config.retainedDirectory;
+    final root = Directory(config.cacheDirectory);
+    if (retained == null) {
+      owned = await root.createTemp('torrent-stream-');
+    } else {
+      saveDirectory = await Directory(
+        '${root.path}${Platform.pathSeparator}$retained',
+      ).create();
+    }
     lifetime.check();
     native = NativeSession(config: config);
     alerts = native!.events.listen(
@@ -106,7 +115,7 @@ class NativeHost {
         send({'kind': 'fatal', 'message': 'Native alert pump failed: $error'});
       },
     );
-    final save = owned!.path;
+    final save = (owned ?? saveDirectory)!.path;
     torrent = switch (source['kind']) {
       'magnet' => native!.session.addMagnet(
         magnetUri: source['value'] as String,

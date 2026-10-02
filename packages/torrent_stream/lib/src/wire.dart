@@ -11,6 +11,7 @@ Map<String, Object?> encodeConfig(TorrentStreamConfig c) => {
   'read': c.nativeReadTimeout.inMilliseconds,
   'transport': c.transport.index,
   'prepare': c.prepareContainer,
+  'retained': c.retainedDirectory,
 };
 TorrentStreamConfig decodeConfig(Map c) => TorrentStreamConfig(
   cacheDirectory: c['cache'] as String,
@@ -22,6 +23,7 @@ TorrentStreamConfig decodeConfig(Map c) => TorrentStreamConfig(
   nativeReadTimeout: Duration(milliseconds: c['read'] as int),
   transport: TorrentTransport.values[c['transport'] as int],
   prepareContainer: c['prepare'] as bool,
+  retainedDirectory: c['retained'] as String?,
 );
 TorrentStreamFile decodeFile(Map f) => TorrentStreamFile(
   index: f['index'] as int,

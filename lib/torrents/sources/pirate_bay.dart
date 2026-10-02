@@ -101,6 +101,7 @@ class PirateBaySource implements DiagnosticTorrentSource {
           resolution: resolutionOf(name),
           uploadedAt: unixDate(row['added']),
           isSeasonPack: query.isSeasonPack,
+          isSeriesPack: query.searchSeriesPacks,
         ),
       );
     }

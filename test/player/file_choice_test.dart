@@ -13,7 +13,9 @@ TorrentStreamFile _file(String path, int length, {bool pad = false}) =>
       isPadFile: pad,
     );
 
-final _movie = PlaybackItem(title: ImdbTitle(id: 'tt1', title: 'Movie'));
+final _movie = PlaybackItem(
+  title: ImdbTitle(id: 'tt1', title: 'Movie'),
+);
 PlaybackItem _episode(int season, int episode) => PlaybackItem(
   title: ImdbTitle(id: 'tt9', title: 'Episode'),
   series: ImdbTitle(id: 'tt2', title: 'Show'),
@@ -22,6 +24,59 @@ PlaybackItem _episode(int season, int episode) => PlaybackItem(
 );
 
 void main() {
+  test('series batch chooses exact season and episode from nested folders', () {
+    final requested = _file('Show Complete/Season 2/02 - Name.mkv', 900);
+    final files = [
+      _file('Show Complete/Season 1/02 - Name.mkv', 4000),
+      requested,
+    ];
+    expect(
+      playableFile(files, _episode(2, 2), pack: true, seriesPack: true),
+      requested,
+    );
+  });
+  test('series batch with bare episode numbers and no season fails closed', () {
+    expect(
+      playableFile(
+        [_file('Show Complete/02 - Name.mkv', 900)],
+        _episode(2, 2),
+        pack: true,
+        seriesPack: true,
+      ),
+      isNull,
+    );
+  });
+  test('series batch accepts explicit season and episode filenames', () {
+    final requested = _file('Show Complete/Show.S02E03.mkv', 900);
+    expect(
+      playableFile(
+        [_file('Show Complete/Show.S01E03.mkv', 4000), requested],
+        _episode(2, 3),
+        pack: true,
+        seriesPack: true,
+      ),
+      requested,
+    );
+  });
+  test('packs never substitute a sample or combined-episode video', () {
+    expect(
+      playableFile(
+        [_file('Show.S02E03.sample.mkv', 900)],
+        _episode(2, 3),
+        pack: true,
+      ),
+      isNull,
+    );
+    expect(
+      playableFile(
+        [_file('Show.S02E01-E03.mkv', 900)],
+        _episode(2, 3),
+        pack: true,
+        seriesPack: true,
+      ),
+      isNull,
+    );
+  });
   test('a movie plays its largest video, not samples or other files', () {
     final feature = _file('Movie 2020/Movie.2020.1080p.mkv', 4000);
     final files = [

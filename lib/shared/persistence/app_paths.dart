@@ -12,11 +12,18 @@ class AppPaths {
       File(path.join(rootDirectory.path, 'settings', 'settings.json'));
   File get windowStateFile =>
       File(path.join(rootDirectory.path, 'state', 'window.json'));
+  File get watchHistoryFile =>
+      File(path.join(rootDirectory.path, 'state', 'watch_history.json'));
   Directory get networkCacheDirectory => directory('cache/http');
   Directory get imageCacheDirectory => directory('cache/images');
 
-  /// Torrent streaming sessions keep their pieces in children of this.
+  /// Torrent streaming sessions keep their pieces in children of this,
+  /// unless the viewer chose another torrent folder.
   Directory get streamCacheDirectory => directory('cache/streams');
+
+  /// Which kept torrents were watched when, wherever they are saved.
+  File get torrentCacheIndexFile =>
+      File(path.join(rootDirectory.path, 'cache', 'metadata', 'torrents.json'));
   File get imageCacheMetadataFile =>
       File(path.join(rootDirectory.path, 'cache', 'metadata', 'images.json'));
   Directory get logsDirectory => directory('logs');

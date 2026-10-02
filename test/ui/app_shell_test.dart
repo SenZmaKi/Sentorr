@@ -7,15 +7,17 @@ import 'package:sentorr/ui/components/app_shell.dart';
 import 'package:sentorr/ui/components/navigation.dart';
 import 'package:sentorr/ui/pages/home/home_page.dart';
 import 'package:sentorr/ui/pages/search/search_page.dart';
-import 'package:sentorr/ui/pages/settings_page.dart';
+import 'package:sentorr/ui/pages/settings/settings_page.dart';
 import 'package:sentorr/ui/pages/title/title_page.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
+import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 
 Widget _app(Brightness brightness) => ProviderScope(
   overrides: [
     initialSettingsProvider.overrideWithValue(const AppSettings()),
+    ...watchHistoryOverrides(),
     imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
   ],
   child: MaterialApp(

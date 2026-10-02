@@ -1,0 +1,220 @@
+{
+  "validatedOn": "2026-10-02",
+  "method": "Native HTTP metadata-only probes through Sentorr NetworkClient; no browser or downloads",
+  "legacyProbes": {
+    "rargb.to": "HTTP 403, excluded at user request",
+    "solidtorrents.to": "HTTP 200 redirect to https://bitsearch.eu/search; changed HTML",
+    "yts.mx": "DNS resolution failed",
+    "yts.gg": "API @meta.migration.new_base = https://movies-api.accel.li/api/v2/"
+  },
+  "checks": [
+    {
+      "query": {
+        "title": "Big Buck Bunny",
+        "imdbId": "tt1254207"
+      },
+      "providers": [
+        {
+          "source": "pirateBay",
+          "status": "ok",
+          "matches": 2,
+          "sample": [
+            {
+              "name": "Big.Buck.Bunny.1080p.Surround",
+              "seeders": 1,
+              "resolution": 1080
+            },
+            {
+              "name": "Big Buck Bunny (2008) 720p Bluray nHD x264-NhaNc3",
+              "seeders": 1,
+              "resolution": 720
+            }
+          ],
+          "elapsedMs": 1290
+        },
+        {
+          "source": "yts",
+          "status": "ok",
+          "matches": 0,
+          "sample": [],
+          "elapsedMs": 719
+        },
+        {
+          "source": "bitsearch",
+          "status": "ok",
+          "matches": 13,
+          "sample": [
+            {
+              "name": "big.buck.bunny.1080p.surround.avi",
+              "seeders": 2,
+              "resolution": 1080
+            },
+            {
+              "name": "big-buck-bunny-2008-4-k-60-fps-blender-animated-short-x-265",
+              "seeders": 2,
+              "resolution": null
+            }
+          ],
+          "elapsedMs": 11725
+        }
+      ]
+    },
+    {
+      "query": {
+        "title": "The Matrix",
+        "imdbId": "tt0133093"
+      },
+      "providers": [
+        {
+          "source": "pirateBay",
+          "status": "ok",
+          "matches": 29,
+          "sample": [
+            {
+              "name": "The Matrix (1999) 1080p BrRip x264 - 1.85GB - YIFY",
+              "seeders": 826,
+              "resolution": 1080
+            },
+            {
+              "name": "The.Matrix.1999.REMASTERED.1080p.BluRay.REMUX.AVC.DTS-HD.MA.True",
+              "seeders": 126,
+              "resolution": 1080
+            }
+          ],
+          "elapsedMs": 342
+        },
+        {
+          "source": "yts",
+          "status": "ok",
+          "matches": 3,
+          "sample": [
+            {
+              "name": "The Matrix (1999) 720p bluray",
+              "seeders": 100,
+              "resolution": 720
+            },
+            {
+              "name": "The Matrix (1999) 1080p bluray",
+              "seeders": 100,
+              "resolution": 1080
+            }
+          ],
+          "elapsedMs": 627
+        },
+        {
+          "source": "bitsearch",
+          "status": "ok",
+          "matches": 2,
+          "sample": [
+            {
+              "name": "The Matrix (1999) [1080p]",
+              "seeders": 354,
+              "resolution": 1080
+            },
+            {
+              "name": "The Matrix (1999)",
+              "seeders": 122,
+              "resolution": null
+            }
+          ],
+          "elapsedMs": 780
+        }
+      ]
+    },
+    {
+      "query": {
+        "title": "Breaking Bad",
+        "imdbId": "tt0903747",
+        "season": 1,
+        "episode": 1,
+        "year": 2008
+      },
+      "providers": [
+        {
+          "source": "pirateBay",
+          "status": "ok",
+          "matches": 9,
+          "sample": [
+            {
+              "name": "Breaking.Bad.S01E01.Pilot.720p.HEVC.x265-MeGusta",
+              "seeders": 63,
+              "resolution": 720
+            },
+            {
+              "name": "Breaking.Bad.S01E01.Pilot.1080p.HEVC.x265-MeGusta",
+              "seeders": 38,
+              "resolution": 1080
+            }
+          ],
+          "elapsedMs": 1542
+        },
+        {
+          "source": "yts",
+          "status": "unsupported"
+        },
+        {
+          "source": "bitsearch",
+          "status": "ok",
+          "matches": 10,
+          "sample": [
+            {
+              "name": "Breaking.Bad.S01E01.DSR.XviD-0TV.avi",
+              "seeders": 9,
+              "resolution": null
+            },
+            {
+              "name": "Breaking.Bad.S01E01.2008.WEB-DL.1080p-Dual-Lat",
+              "seeders": 5,
+              "resolution": 1080
+            }
+          ],
+          "elapsedMs": 1341
+        }
+      ]
+    },
+    {
+      "query": {
+        "title": "The Office",
+        "imdbId": "tt0386676",
+        "season": 1,
+        "year": 2005
+      },
+      "providers": [
+        {
+          "source": "pirateBay",
+          "status": "ok",
+          "matches": 0,
+          "sample": [],
+          "elapsedMs": 337
+        },
+        {
+          "source": "yts",
+          "status": "unsupported"
+        },
+        {
+          "source": "bitsearch",
+          "status": "ok",
+          "matches": 2,
+          "sample": [
+            {
+              "name": "The.Office.S01.Multi.WebRip1080p",
+              "seeders": 20,
+              "resolution": 1080
+            },
+            {
+              "name": "The.Office.S01.MULTi.1080p.WEB-DL.DDP5.1.H265",
+              "seeders": 17,
+              "resolution": 1080
+            }
+          ],
+          "elapsedMs": 783
+        }
+      ]
+    }
+  ],
+  "offlineValidation": {
+    "torrentTests": 22,
+    "fullSuiteTests": 52,
+    "flutterAnalyze": "No issues found"
+  }
+}

@@ -55,7 +55,7 @@ void main() {
     expect(repository.saved, hasLength(1));
   });
 
-  test('resume rewinds a little; finishing removes the entry', () async {
+  test('resume rewinds a little; finishing keeps it as watched', () async {
     final (container, _) = _container();
     final history = container.read(watchHistoryProvider.notifier);
     await history.record(
@@ -72,7 +72,8 @@ void main() {
       position: const Duration(minutes: 58),
       duration: _hour,
     );
-    expect(container.read(watchHistoryProvider), isEmpty);
+    expect(container.read(watchHistoryProvider).single.finished, isTrue);
+    expect(container.read(inProgressProvider), isEmpty);
     expect(history.resumePoint('tt1'), isNull);
   });
 

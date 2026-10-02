@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../imdb/models.dart';
+import '../../../titles/pick_up.dart';
+import '../../shared/play_route.dart';
 import '../../shared/title_format.dart';
 import '../../shared/title_icons.dart';
 import '../title_artwork.dart';
@@ -26,7 +29,7 @@ String describeTitle(ImdbTitle t, [String? lead]) => [
 ].join(', ');
 
 /// The standard [PosterCard] for an IMDb title: [onOpen] on tap, and a
-/// [TitlePreview] while hovered.
+/// [TitlePreview] while hovered, its Play naming where the viewer left off.
 PosterCard titlePoster(
   ImdbTitle t, {
   String? lead,
@@ -39,5 +42,28 @@ PosterCard titlePoster(
   artwork: TitleArtwork(image: t.poster),
   semanticLabel: describeTitle(t, lead),
   onTap: onOpen,
-  preview: (_) => TitlePreview(title: t, onOpen: onOpen, onPlay: onPlay),
+  preview: (_) => PickUpPreview(title: t, onOpen: onOpen, onPlay: onPlay),
 );
+
+/// A [TitlePreview] whose Play reads "Resume" or "Continue S1 E4" for a
+/// title the viewer has started.
+class PickUpPreview extends ConsumerWidget {
+  const PickUpPreview({
+    super.key,
+    required this.title,
+    required this.onOpen,
+    this.onPlay,
+  });
+
+  final ImdbTitle title;
+  final VoidCallback onOpen;
+  final VoidCallback? onPlay;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => TitlePreview(
+    title: title,
+    onOpen: onOpen,
+    onPlay: onPlay,
+    playLabel: pickUpLabel(ref.watch(pickUpProvider(title.id)).value),
+  );
+}

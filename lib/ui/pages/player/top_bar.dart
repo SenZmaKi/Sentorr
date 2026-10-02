@@ -51,69 +51,82 @@ class TopBar extends StatelessWidget {
         padding: EdgeInsets.all(
           context.player.floatingBars ? Space.s8 : Space.s16,
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _BarButton(
-              icon: Icons.keyboard_arrow_down_rounded,
-              tooltip: 'Keep watching while browsing (i)',
-              onPressed: onBack,
-            ),
-            const SizedBox(width: Space.s16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (eyebrow != null)
-                    Text(
-                      eyebrow,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.type.label.copyWith(
-                        color: context.player.foregroundSecondary,
-                      ),
-                    ),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        if (item != null && item.isEpisode)
-                          TextSpan(
-                            text: '${episodeCode(item.season, item.episode)}  ',
-                            style: context.type.technical.copyWith(
-                              fontSize: 16,
-                              color: context.player.foregroundSecondary,
-                            ),
-                          ),
-                        TextSpan(text: heading),
-                      ],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.type.subtitle.copyWith(
-                      color: context.player.foreground,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: Space.s16),
-            SizedBox(
-              height: PlayerMetrics.control,
-              child: TorrentStats(
-                status: stream,
-                compact: MediaQuery.sizeOf(context).width < 720,
-              ),
-            ),
-            const SizedBox(width: Space.s8),
-            _BarButton(
-              icon: Icons.close_rounded,
-              tooltip: 'Stop and close',
-              onPressed: onClose,
-            ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, box) =>
+              _row(context, box.maxWidth, eyebrow, heading),
         ),
       ),
+    );
+  }
+
+  Widget _row(
+    BuildContext context,
+    double width,
+    String? eyebrow,
+    String heading,
+  ) {
+    final item = this.item;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _BarButton(
+          icon: Icons.keyboard_arrow_down_rounded,
+          tooltip: 'Keep watching while browsing (i)',
+          onPressed: onBack,
+        ),
+        const SizedBox(width: Space.s16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (eyebrow != null)
+                Text(
+                  eyebrow,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.type.label.copyWith(
+                    color: context.player.foregroundSecondary,
+                  ),
+                ),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    if (item != null && item.isEpisode)
+                      TextSpan(
+                        text: '${episodeCode(item.season, item.episode)}  ',
+                        style: context.type.technical.copyWith(
+                          fontSize: 16,
+                          color: context.player.foregroundSecondary,
+                        ),
+                      ),
+                    TextSpan(text: heading),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.type.subtitle.copyWith(
+                  color: context.player.foreground,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: Space.s16),
+        // Sized by the player, not the window: a docked player is
+        // narrow in a wide window. Too narrow, the title keeps the room.
+        if (width >= 420)
+          SizedBox(
+            height: PlayerMetrics.control,
+            child: TorrentStats(status: stream, compact: width < 720),
+          ),
+        const SizedBox(width: Space.s8),
+        _BarButton(
+          icon: Icons.close_rounded,
+          tooltip: 'Stop and close',
+          onPressed: onClose,
+        ),
+      ],
     );
   }
 }

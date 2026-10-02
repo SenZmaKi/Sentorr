@@ -67,7 +67,7 @@ class SearchResults extends ConsumerWidget {
                     ? titlePoster(
                         r.items[i],
                         onOpen: () => ref.openTitle(r.items[i]),
-                        onPlay: () => ref.playTitle(r.items[i]),
+                        onPlay: () => ref.playOrPickUp(r.items[i]),
                       )
                     : const CardSkeleton(aspectRatio: 2 / 3),
                 childCount: r.items.length + skeletons,

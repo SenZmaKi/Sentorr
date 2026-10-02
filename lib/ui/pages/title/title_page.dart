@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../imdb/models.dart';
 import '../../../imdb/providers.dart';
 import '../../../player/models.dart';
+import '../../../titles/pick_up.dart';
 import '../../components/download_button.dart';
 import '../../components/follow_button.dart';
 import '../../components/load_error.dart';
@@ -67,6 +68,7 @@ class _TitlePageState extends ConsumerState<TitlePage> {
     final details = ref.watch(titleDetailsProvider(_title.id));
     final d = details.value;
     final seasons = [...?d?.seasons.where((n) => n >= 0)]..sort();
+    final pick = ref.watch(pickUpProvider(_title.id)).value;
     return CallbackShortcuts(
       bindings: {const SingleActivator(LogicalKeyboardKey.escape): _back},
       child: Focus(
@@ -90,7 +92,8 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                     title: d?.title ?? _title,
                     details: d,
                     onBack: _back,
-                    onPlay: () => ref.playTitle(d?.title ?? _title),
+                    onPlay: () => ref.playFrom(d?.title ?? _title, pick),
+                    playLabel: pickUpLabel(pick),
                     onEpisodes: seasons.isEmpty ? null : _showEpisodes,
                     actions: [
                       if ((d?.title ?? _title).canHaveEpisodes == true)
@@ -122,7 +125,7 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                       key: _episodesKey,
                       series: _title,
                       seasons: seasons,
-                      initialSeason: widget.route.season,
+                      initialSeason: widget.route.season ?? pick?.season,
                     ),
                   ),
                 if (d != null && d.recommendations.items.isNotEmpty)

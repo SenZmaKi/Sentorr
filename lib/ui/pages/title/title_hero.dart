@@ -22,6 +22,7 @@ class TitleHero extends StatelessWidget {
     required this.onBack,
     this.details,
     this.onPlay,
+    this.playLabel = 'Play',
     this.onEpisodes,
     this.actions = const [],
   });
@@ -30,6 +31,9 @@ class TitleHero extends StatelessWidget {
   final ImdbTitleDetails? details;
   final VoidCallback onBack;
   final VoidCallback? onPlay;
+
+  /// e.g. "Resume" or "Continue S1 E4" for a title already started.
+  final String playLabel;
 
   /// Series only: jumps to the episode list.
   final VoidCallback? onEpisodes;
@@ -244,7 +248,7 @@ class _Copy extends StatelessWidget {
           runSpacing: Space.s8,
           children: [
             SButton.primary(
-              label: 'Play',
+              label: hero.playLabel,
               icon: Icons.play_arrow_rounded,
               onPressed: hero.onPlay,
             ),

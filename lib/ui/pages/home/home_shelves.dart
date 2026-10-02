@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../home/catalog_rows.dart';
+import '../../../home/more_like.dart';
 import '../../../home/series_updates.dart';
 import '../../../home/watch_activity.dart';
 import '../../../imdb/models.dart';
@@ -37,15 +38,14 @@ PosterCard _poster(WidgetRef ref, ImdbTitle t, {String? lead}) => titlePoster(
   t,
   lead: lead,
   onOpen: () => ref.openTitle(t),
-  onPlay: () => ref.playTitle(t),
+  onPlay: () => ref.playOrPickUp(t),
 );
 
-WidgetBuilder _preview(WidgetRef ref, ImdbTitle t, {String? playLabel}) =>
-    (_) => TitlePreview(
+WidgetBuilder _preview(WidgetRef ref, ImdbTitle t) =>
+    (_) => PickUpPreview(
       title: t,
       onOpen: () => ref.openTitle(t),
-      onPlay: () => ref.playTitle(t),
-      playLabel: playLabel ?? 'Play',
+      onPlay: () => ref.playOrPickUp(t),
     );
 
 class CatalogShelf extends ConsumerWidget {
@@ -132,11 +132,30 @@ class ContinueWatchingShelf extends ConsumerWidget {
           runtime: entry.duration,
           artwork: TitleBackdrop(title: show),
           onTap: () => ref.resume(entry),
-          preview: entry.isEpisode
-              ? null
-              : _preview(ref, show, playLabel: 'Resume'),
+          preview: entry.isEpisode ? null : _preview(ref, show),
         );
       },
+    );
+  }
+}
+
+/// Recommendations from one title the viewer watched lately, drawn anew
+/// each launch.
+class MoreLikeShelf extends ConsumerWidget {
+  const MoreLikeShelf({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final seed = ref.watch(moreLikeSeedProvider);
+    if (seed == null) return const SizedBox.shrink();
+    return AsyncShelf<ImdbTitle>(
+      icon: Icons.auto_awesome_outlined,
+      title: 'More like ${seed.title}',
+      subtitle: 'Because you watched it recently',
+      items: ref.watch(moreLikeProvider),
+      spec: HomeLayout.of(context).poster,
+      onRetry: () => ref.invalidate(moreLikeProvider),
+      cardBuilder: (context, t, _) => _poster(ref, t),
     );
   }
 }

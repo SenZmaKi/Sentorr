@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../home/catalog_rows.dart';
 import '../../../imdb/models.dart';
 import '../../../imdb/providers.dart';
+import '../../../titles/pick_up.dart';
 import '../../components/interactive.dart';
 import '../../components/hero_frame.dart';
 import '../../components/load_error.dart';
@@ -90,6 +91,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
                 .watch(spotlightIndexProvider)
                 .clamp(0, titles.length - 1);
             final t = titles[i];
+            final pick = ref.watch(pickUpProvider(t.id)).value;
             return MouseRegion(
               onEnter: (_) => _setPause(hovered: true),
               onExit: (_) => _setPause(hovered: false),
@@ -129,7 +131,8 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
                           progress: _hold,
                           onSelect: _show,
                         ),
-                  onPlay: () => ref.playTitle(t),
+                  onPlay: () => ref.playFrom(t, pick),
+                  playLabel: pickUpLabel(pick),
                   onDetails: () => ref.openTitle(t),
                 ),
               ),

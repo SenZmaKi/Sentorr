@@ -29,6 +29,9 @@ class TitleEpisodes extends ConsumerStatefulWidget {
 
   final ImdbTitle series;
   final List<int> seasons;
+
+  /// The season shown first; a later one shows it until the viewer picks a
+  /// season themselves, since where they are in a series can arrive late.
   final int? initialSeason;
 
   @override
@@ -36,9 +39,20 @@ class TitleEpisodes extends ConsumerStatefulWidget {
 }
 
 class _TitleEpisodesState extends ConsumerState<TitleEpisodes> {
-  late int _season = widget.seasons.contains(widget.initialSeason)
+  late int _season = _initial;
+  bool _picked = false;
+
+  int get _initial => widget.seasons.contains(widget.initialSeason)
       ? widget.initialSeason!
       : widget.seasons.first;
+
+  @override
+  void didUpdateWidget(TitleEpisodes old) {
+    super.didUpdateWidget(old);
+    if (!_picked && widget.initialSeason != old.initialSeason) {
+      _season = _initial;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +83,10 @@ class _TitleEpisodesState extends ConsumerState<TitleEpisodes> {
                   SChip(
                     label: 'Season $n',
                     selected: n == _season,
-                    onTap: () => setState(() => _season = n),
+                    onTap: () => setState(() {
+                      _season = n;
+                      _picked = true;
+                    }),
                   ),
               ],
             ),

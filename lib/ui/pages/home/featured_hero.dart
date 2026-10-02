@@ -21,6 +21,7 @@ class FeaturedHero extends StatelessWidget {
     this.badgeIcon,
     this.pager,
     this.onPlay,
+    this.playLabel = 'Play',
     this.onDetails,
   });
 
@@ -37,6 +38,9 @@ class FeaturedHero extends StatelessWidget {
   /// Optional control to switch between featured titles.
   final Widget? pager;
   final VoidCallback? onPlay;
+
+  /// e.g. "Resume" or "Continue S1 E4" for a title already started.
+  final String playLabel;
   final VoidCallback? onDetails;
 
   @override
@@ -157,7 +161,7 @@ class _Copy extends StatelessWidget {
         runSpacing: Space.s8,
         children: [
           SButton.primary(
-            label: 'Play',
+            label: hero.playLabel,
             icon: Icons.play_arrow_rounded,
             onPressed: hero.onPlay,
           ),

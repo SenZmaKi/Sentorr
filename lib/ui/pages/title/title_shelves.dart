@@ -92,7 +92,7 @@ class RecommendationsShelf extends ConsumerWidget {
       itemBuilder: (context, i) => titlePoster(
         titles[i],
         onOpen: () => ref.openTitle(titles[i]),
-        onPlay: () => ref.playTitle(titles[i]),
+        onPlay: () => ref.playOrPickUp(titles[i]),
       ),
     );
   }

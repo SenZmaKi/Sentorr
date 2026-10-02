@@ -18,7 +18,7 @@ final initialWatchHistoryProvider = Provider<List<WatchEntry>>(
 );
 
 /// Where the viewer stopped in each movie and episode, newest first.
-/// Finished items leave the history.
+/// Finished items stay, marked finished, as a record of what was watched.
 final watchHistoryProvider =
     NotifierProvider<WatchHistoryNotifier, List<WatchEntry>>(
       WatchHistoryNotifier.new,
@@ -55,11 +55,11 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
     if (duration <= Duration.zero) return Future.value();
     final entry = WatchEntry.of(item, position: position, duration: duration);
     final known = _entries.any((e) => e.id == item.id);
-    if (entry.finished) {
-      if (known) _log.info('Finished $item; removing it from history');
-      return known ? _commit(_without((e) => e.id == item.id)) : Future.value();
+    // Skipping straight to the end of something never started is not
+    // watching it.
+    if (!known && (entry.finished || position < minimumWatched)) {
+      return Future.value();
     }
-    if (!known && position < minimumWatched) return Future.value();
     return _commit(
       [entry, ..._without((e) => e.id == item.id)].take(capacity).toList(),
     );
@@ -103,6 +103,6 @@ final inProgressProvider = Provider<List<WatchEntry>>((ref) {
   final seen = <String>{};
   return [
     for (final e in ref.watch(watchHistoryProvider))
-      if (seen.add(e.key)) e,
+      if (!e.finished && seen.add(e.key)) e,
   ];
 });

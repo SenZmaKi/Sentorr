@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../downloads/manager.dart';
-import '../../imdb/models.dart';
 import '../../library/models.dart';
 import '../../library/notifier.dart';
 import '../../library/planner.dart';
@@ -34,20 +33,7 @@ extension DownloadActions on WidgetRef {
   void showDownload(LibraryEntry entry) =>
       unawaited(openFolder(p.dirname(entry.path)));
 
-  void playDownload(LibraryEntry entry) {
-    final item = entry.item;
-    final series = item.series;
-    if (series == null) return playTitle(item.title);
-    playEpisode(
-      series,
-      ImdbEpisode(
-        title: item.title,
-        seasonNumber: item.season,
-        episodeNumber: item.episode,
-      ),
-      season: item.season,
-    );
-  }
+  void playDownload(LibraryEntry entry) => playItem(entry.item);
 
   /// Stops and deletes [entry] after asking; a finished file asks first.
   Future<void> deleteDownload(

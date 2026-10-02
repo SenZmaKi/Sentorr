@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../home/catalog_rows.dart';
+import '../../../home/more_like.dart';
 import '../../../home/series_updates.dart';
 import '../../../home/watch_activity.dart';
 import 'featured_section.dart';
@@ -10,7 +11,8 @@ import 'home_shelves.dart';
 import 'spotlight_ambient.dart';
 
 /// Streaming-style landing: a trending spotlight, personal rows (resume,
-/// new episodes, new seasons), then IMDb catalog rows.
+/// new episodes, more like something watched, new seasons), then IMDb
+/// catalog rows.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -32,6 +34,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     ContinueWatchingShelf(),
     NewEpisodesShelf(),
     CatalogShelf(CatalogRow.trending),
+    MoreLikeShelf(),
     NewSeasonsShelf(),
     CatalogShelf(CatalogRow.newReleases),
     CatalogShelf(CatalogRow.popularSeries),
@@ -50,6 +53,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
     ref
       ..invalidate(continueWatchingProvider)
+      ..invalidate(moreLikeProvider)
       ..invalidate(seriesUpdatesProvider);
     await ref.read(featuredTitlesProvider.future);
   }

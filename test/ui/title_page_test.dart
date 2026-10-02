@@ -4,6 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/app/services.dart';
+import 'package:flutter_riverpod/misc.dart';
+import 'package:sentorr/watching/models.dart';
+import 'package:sentorr/player/models.dart';
+import 'package:sentorr/library/models.dart';
+import 'package:sentorr/downloads/models.dart';
+import 'package:sentorr/downloads/manager.dart';
 import 'package:sentorr/imdb/models.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/ui/components/app_shell.dart';
@@ -23,6 +29,7 @@ import '../support/fake_following.dart';
 import '../support/fake_library.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
+import '../support/fake_torrents.dart';
 
 ImdbEpisode _episode(int season, int n) => ImdbEpisode(
   title: ImdbTitle(id: 'tt9$season$n', title: 'Episode $n', plot: 'Plot'),
@@ -45,6 +52,7 @@ Future<ProviderContainer> _pump(
   WidgetTester tester, {
   Size size = const Size(1440, 1000),
   Brightness brightness = Brightness.dark,
+  List<Override> state = const [],
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -52,9 +60,12 @@ Future<ProviderContainer> _pump(
   final container = ProviderContainer(
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
-      ...followedSeriesOverrides(),
-      ...libraryOverrides(),
-      ...watchHistoryOverrides(),
+      if (state.isEmpty) ...[
+        ...followedSeriesOverrides(),
+        ...libraryOverrides(),
+        ...watchHistoryOverrides(),
+      ] else
+        ...state,
       imdbRepositoryProvider.overrideWithValue(_imdb),
     ],
   );
@@ -314,4 +325,62 @@ void main() {
       expect(container.read(titleRoutesProvider), isNotEmpty);
     });
   });
+
+  for (final width in [1100.0, 700.0, 390.0]) {
+    testWidgets('a followed series with a download fits at $width wide', (
+      tester,
+    ) async {
+      final series = _imdb.trending[1];
+      final episode = PlaybackItem.episode(series, _episode(1, 1));
+      final container = await _pump(
+        tester,
+        size: Size(width, 900),
+        state: [
+          ...followedSeriesOverrides([
+            following(
+              series,
+              episode: 1,
+              progress: .9,
+            ).copyWith(autoDownload: true),
+          ]),
+          ...libraryOverrides([
+            LibraryEntry(
+              item: episode,
+              downloadId: 'd1',
+              release: fakeRelease(1),
+              fileIndex: 0,
+              path: '/nowhere.mkv',
+              addedAt: DateTime(2026),
+            ),
+          ]),
+          downloadsProvider.overrideWith(
+            (ref) => Stream.value([
+              DownloadItem(
+                id: 'd1',
+                job: TorrentDownloadJob(
+                  title: 'x',
+                  magnet: Uri.parse('magnet:?xt=urn:btih:1'),
+                  destinationDirectory: '/',
+                ),
+                status: DownloadStatus.completed,
+                files: const [DownloadFileProgress(0, 'x.mkv', 1, 1)],
+              ),
+            ]),
+          ),
+          ...watchHistoryOverrides([
+            WatchEntry.of(
+              episode,
+              position: const Duration(minutes: 46),
+              duration: const Duration(minutes: 53),
+            ),
+          ]),
+        ],
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'home');
+      container.read(titleRoutesProvider.notifier).open(series);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'title page');
+    });
+  }
 }

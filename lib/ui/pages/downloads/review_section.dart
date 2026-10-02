@@ -34,9 +34,11 @@ class ReviewSection extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(Space.s12),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(Icons.warning_amber_rounded, size: 20, color: c.warning),
                 const SizedBox(width: Space.s12),
+                // Actions sit under the words so narrow windows still fit.
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,27 +50,27 @@ class ReviewSection extends ConsumerWidget {
                           color: c.foregroundSecondary,
                         ),
                       ),
+                      const SizedBox(height: Space.s12),
+                      Wrap(
+                        spacing: Space.s8,
+                        runSpacing: Space.s8,
+                        children: [
+                          SButton(
+                            label: 'Download closest',
+                            icon: Icons.download_rounded,
+                            onPressed: () {
+                              notifier.remove(r.item.id);
+                              ref.download(r.item);
+                            },
+                          ),
+                          SButton.ghost(
+                            label: 'Dismiss',
+                            onPressed: () => notifier.dismiss(r.item.id),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ),
-                const SizedBox(width: Space.s8),
-                Wrap(
-                  spacing: Space.s8,
-                  runSpacing: Space.s8,
-                  children: [
-                    SButton(
-                      label: 'Download closest',
-                      icon: Icons.download_rounded,
-                      onPressed: () {
-                        notifier.remove(r.item.id);
-                        ref.download(r.item);
-                      },
-                    ),
-                    SButton.ghost(
-                      label: 'Dismiss',
-                      onPressed: () => notifier.dismiss(r.item.id),
-                    ),
-                  ],
                 ),
               ],
             ),

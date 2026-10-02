@@ -1,8 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/app/services.dart';
+import 'package:sentorr/downloads/manager.dart';
+import 'package:sentorr/downloads/models.dart';
+import 'package:sentorr/library/models.dart';
+import 'package:sentorr/player/models.dart';
 import 'package:sentorr/player/launch.dart';
 import 'package:sentorr/player/session.dart';
 import 'package:sentorr/settings/models.dart';
@@ -25,8 +31,10 @@ final _autoPlayDelay = const TorrentSettings().autoPlayDelay;
 
 Future<ProviderContainer> _pump(
   WidgetTester tester,
-  Future<List<TorrentRelease>> Function(TorrentQuery) answer,
-) async {
+  Future<List<TorrentRelease>> Function(TorrentQuery) answer, {
+  List<LibraryEntry> library = const [],
+  List<DownloadItem> downloads = const [],
+}) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -34,7 +42,8 @@ Future<ProviderContainer> _pump(
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
       ...followedSeriesOverrides(),
-      ...libraryOverrides(),
+      ...libraryOverrides(library),
+      downloadsProvider.overrideWith((ref) => Stream.value(downloads)),
       ...watchHistoryOverrides(),
       imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
       torrentRepositoryProvider.overrideWithValue(
@@ -172,5 +181,49 @@ void main() {
     expect(container.read(playbackLaunchProvider), isNull);
     await tester.pump(_autoPlayDelay);
     expect(container.read(playerSessionProvider), isNull);
+  });
+
+  testWidgets('a downloaded title opens the player without a search', (
+    tester,
+  ) async {
+    final file = File(
+      '${Directory.systemTemp.createTempSync('sentorr-launch-').path}/t.mkv',
+    )..writeAsBytesSync([0]);
+    addTearDown(() => file.parent.deleteSync(recursive: true));
+    var searched = false;
+    final container = await _pump(
+      tester,
+      (_) async {
+        searched = true;
+        return [fakeRelease(1)];
+      },
+      library: [
+        LibraryEntry(
+          item: PlaybackItem(title: fakeTitle(1)),
+          downloadId: 'd1',
+          release: fakeRelease(1),
+          fileIndex: 0,
+          path: file.path,
+          addedAt: DateTime(2026),
+        ),
+      ],
+      downloads: [
+        DownloadItem(
+          id: 'd1',
+          job: TorrentDownloadJob(
+            title: 'Title 1',
+            magnet: Uri.parse('magnet:?xt=urn:btih:1'),
+            destinationDirectory: file.parent.path,
+          ),
+          status: DownloadStatus.completed,
+          files: const [DownloadFileProgress(0, 't.mkv', 1, 1)],
+        ),
+      ],
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byType(LaunchDialog), findsNothing);
+    expect(searched, isFalse);
+    expect(container.read(playerSessionProvider)!.current!.id, 'tt1');
   });
 }

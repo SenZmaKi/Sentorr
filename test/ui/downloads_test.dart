@@ -27,6 +27,7 @@ import '../support/fake_planner.dart';
 import '../support/fake_torrents.dart';
 
 final _series = fakeTitle(2, series: true);
+double _width = 1280;
 final _movie = fakeTitle(1);
 
 PlaybackItem _episode(int n) => PlaybackItem(
@@ -66,7 +67,7 @@ Future<FakePlanner> _pump(
   List<DownloadItem> downloads = const [],
   List<AutoDownloadReview> reviews = const [],
 }) async {
-  tester.view.physicalSize = const Size(1280, 900);
+  tester.view.physicalSize = Size(_width, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final root = Directory.systemTemp.createTempSync('sentorr-ui-');
@@ -189,4 +190,59 @@ void main() {
     await _pump(tester, const DownloadsPage());
     expect(find.text('Nothing downloaded yet'), findsOneWidget);
   });
+
+  for (final width in [1100.0, 700.0, 390.0]) {
+    testWidgets('the page fits at $width wide', (tester) async {
+      _width = width;
+      addTearDown(() => _width = 1280);
+      final long = PlaybackItem(
+        title: ImdbTitle(
+          id: 'tt99',
+          title: 'An episode with a long, long name that goes on and on',
+        ),
+        series: ImdbTitle(id: 'tt98', title: 'A series with a long name too'),
+        season: 12,
+        episode: 108,
+      );
+      await _pump(
+        tester,
+        const DownloadsPage(),
+        library: [
+          _entry(long, 'd1'),
+          _entry(_episode(2), 'd2'),
+          _entry(PlaybackItem(title: _movie), 'd3'),
+        ],
+        downloads: [
+          _download('d1', DownloadStatus.downloading, done: 40),
+          _download('d2', DownloadStatus.failed),
+          _download('d3', DownloadStatus.completed, done: 100),
+        ],
+        reviews: [
+          AutoDownloadReview(long, 'No exact torrent match to download.'),
+        ],
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: ProviderScope.containerOf(
+            tester.element(find.byType(DownloadsPage)),
+          ),
+          child: MaterialApp(
+            theme: buildSentorrTheme(Brightness.dark),
+            home: Scaffold(
+              body: Center(
+                child: Wrap(
+                  children: [
+                    DownloadButton(item: long, labelled: true),
+                    DownloadButton(item: PlaybackItem(title: _movie)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

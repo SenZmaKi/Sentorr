@@ -26,11 +26,10 @@ class LaunchDialog extends ConsumerStatefulWidget {
 
 class _LaunchDialogState extends ConsumerState<LaunchDialog>
     with SingleTickerProviderStateMixin {
-  // How long an exact match waits for the viewer before it plays.
-  late final _countdown = AnimationController(
-    vsync: this,
-    duration: ref.read(settingsProvider).torrents.autoPlayDelay,
-  )..addStatusListener(_onCountdown);
+  /// How long an exact match waits for the viewer before it plays. Built
+  /// up front: a launch can end before any result touches it, and dispose
+  /// must not be the first to, since it reads settings.
+  late final AnimationController _countdown;
   final _title = TextEditingController();
 
   TorrentResolution? _shown;
@@ -43,8 +42,19 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
   @override
   void initState() {
     super.initState();
+    _countdown = AnimationController(
+      vsync: this,
+      duration: ref.read(settingsProvider).torrents.autoPlayDelay,
+    )..addStatusListener(_onCountdown);
     final launch = ref.read(playbackLaunchProvider);
-    if (launch != null) _apply(launch);
+    if (launch != null) {
+      _apply(launch);
+    } else {
+      // Ended before this mounted, e.g. a download playing at once.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _close();
+      });
+    }
     ref.listenManual(playbackLaunchProvider, (_, next) {
       if (next == null) return _close();
       setState(() => _apply(next));

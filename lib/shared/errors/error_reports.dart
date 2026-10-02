@@ -10,14 +10,22 @@ import '../log.dart';
 /// report it: [details] is what the toast's Copy details puts on the
 /// clipboard.
 class ErrorReport {
-  ErrorReport({required this.title, required this.error, this.stack})
-    : time = DateTime.now() {
-    details = _format(error, stack, time);
+  ErrorReport({
+    required this.title,
+    required this.error,
+    this.stack,
+    this.diagnostics,
+  }) : time = DateTime.now() {
+    details = _format(error, stack, time, diagnostics);
   }
 
   final String title;
   final Object error;
   final StackTrace? stack;
+
+  /// The framework's own account, e.g. which widget overflowed and where
+  /// it was created; layout errors carry no useful stack.
+  final String? diagnostics;
   final DateTime time;
   late final String details;
 
@@ -48,9 +56,23 @@ abstract final class ErrorReports {
   static Stream<ErrorReport> get stream => _controller.stream;
 
   /// Logs [error] and offers it to the viewer under [title].
-  static void report(String title, Object error, [StackTrace? stack]) {
-    _log.severe(title, error, stack);
-    final report = ErrorReport(title: title, error: error, stack: stack);
+  static void report(
+    String title,
+    Object error, [
+    StackTrace? stack,
+    String? diagnostics,
+  ]) {
+    _log.severe(
+      diagnostics == null ? title : '$title\n$diagnostics',
+      error,
+      stack,
+    );
+    final report = ErrorReport(
+      title: title,
+      error: error,
+      stack: stack,
+      diagnostics: diagnostics,
+    );
     final key = '$title|${report.message}';
     final last = _lastShown[key];
     if (last != null && report.time.difference(last) < repeatWindow) return;
@@ -67,7 +89,12 @@ abstract final class ErrorReports {
   static void install() {
     FlutterError.onError = (details) {
       FlutterError.presentError(details);
-      report('Something went wrong', details.exception, details.stack);
+      report(
+        'Something went wrong',
+        details.exception,
+        details.stack,
+        details.toString().trim(),
+      );
     };
     PlatformDispatcher.instance.onError = (error, stack) {
       report('Unexpected error', error, stack);
@@ -83,7 +110,12 @@ abstract final class ErrorReports {
   }
 }
 
-String _format(Object error, StackTrace? stack, DateTime time) {
+String _format(
+  Object error,
+  StackTrace? stack,
+  DateTime time,
+  String? diagnostics,
+) {
   final mode = kReleaseMode
       ? 'release'
       : kProfileMode
@@ -97,6 +129,12 @@ String _format(Object error, StackTrace? stack, DateTime time) {
       'Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}',
     )
     ..writeln('Build: $mode, Dart ${Platform.version.split(' ').first}');
+  if (diagnostics != null && diagnostics.isNotEmpty) {
+    buffer
+      ..writeln()
+      ..writeln('Diagnostics:')
+      ..writeln(diagnostics);
+  }
   if (stack != null) {
     buffer
       ..writeln()

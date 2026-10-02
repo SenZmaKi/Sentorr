@@ -6,6 +6,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../torrents/resolution_models.dart';
+import '../following/notifier.dart';
 import '../watching/notifier.dart';
 import 'models.dart';
 import 'progress_tracker.dart';
@@ -128,13 +129,15 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
         ref.read(torrentSearchProvider)(item, cancel: cancel),
   );
   final history = ref.read(watchHistoryProvider.notifier);
+  final following = ref.read(followedSeriesProvider.notifier);
   final progress = ProgressTracker(
     engine.player,
     canRecord: () =>
         engine.streaming.status.value?.stage == StreamStage.streaming,
-    save: (item, position, duration) => unawaited(
-      history.record(item, position: position, duration: duration),
-    ),
+    save: (item, position, duration) {
+      unawaited(history.record(item, position: position, duration: duration));
+      unawaited(following.record(item, position: position, duration: duration));
+    },
   );
   ref.onDispose(progress.dispose);
   ref.onDispose(engine.dispose);

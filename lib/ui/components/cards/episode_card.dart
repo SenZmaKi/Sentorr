@@ -84,7 +84,10 @@ class EpisodeCard extends StatelessWidget {
                     const Positioned(
                       right: Space.s12,
                       top: Space.s12,
-                      child: OverlayBadge('New', icon: Icons.bolt_rounded),
+                      child: OverlayBadge(
+                        'New',
+                        icon: Icons.new_releases_rounded,
+                      ),
                     ),
                   if (duration != null)
                     Positioned(

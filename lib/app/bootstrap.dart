@@ -8,6 +8,11 @@ import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart' show windowManager;
 
 import '../downloads/manager.dart';
+import '../following/models.dart';
+import '../following/notifier.dart';
+import '../following/release_alerts.dart';
+import '../following/repository.dart';
+import '../notifications/notification_service.dart';
 import '../settings/notifier.dart';
 import '../settings/repository.dart';
 import '../shared/errors/error_reports.dart';
@@ -32,12 +37,14 @@ class AppRuntime with WidgetsBindingObserver {
     this.network,
     this.repository,
     this.history,
+    this.following,
     this.tray,
   );
   final ProviderContainer container;
   final NetworkClient network;
   final SettingsRepository repository;
   final WatchHistoryRepository history;
+  final FollowedSeriesRepository following;
   final DesktopTrayController tray;
   final window = WindowManager.getInstance();
   bool _quitting = false;
@@ -73,7 +80,16 @@ class AppRuntime with WidgetsBindingObserver {
       JsonFileStore(paths.watchHistoryFile),
     );
     final watched = await history.load();
-    log.info('Loaded settings and ${watched.length} watch history entries');
+    final following = FollowedSeriesRepository(
+      JsonFileStore(paths.followedSeriesFile),
+    );
+    // Before following was saved, series came from the watch history.
+    final followed =
+        await following.load() ?? FollowedSeries.fromHistory(watched);
+    log.info(
+      'Loaded settings, ${watched.length} watch history entries and '
+      '${followed.length} followed series',
+    );
     AppImageCache.initialize(paths, maxSizeBytes: settings.imageCacheMaxBytes);
     final network = NetworkClient(
       cacheDirectory: paths.networkCacheDirectory.path,
@@ -87,6 +103,8 @@ class AppRuntime with WidgetsBindingObserver {
         initialSettingsProvider.overrideWithValue(settings),
         watchHistoryRepositoryProvider.overrideWithValue(history),
         initialWatchHistoryProvider.overrideWithValue(watched),
+        followedSeriesRepositoryProvider.overrideWithValue(following),
+        initialFollowedSeriesProvider.overrideWithValue(followed),
         networkClientProvider.overrideWithValue(network),
         desktopIconControllerProvider.overrideWithValue(
           DesktopIconController(tray: tray),
@@ -98,6 +116,7 @@ class AppRuntime with WidgetsBindingObserver {
       network,
       repository,
       history,
+      following,
       tray,
     );
     await runtime.window.init(
@@ -121,6 +140,8 @@ class AppRuntime with WidgetsBindingObserver {
         await runtime.quit();
       }
     });
+    await container.read(notificationServiceProvider).initialize();
+    container.read(releaseAlertsProvider).start();
     await container.read(downloadRuntimeProvider).initialize();
     WidgetsBinding.instance.addObserver(runtime);
     log.info('Application services ready in ${clock.elapsedMilliseconds}ms');
@@ -132,6 +153,7 @@ class AppRuntime with WidgetsBindingObserver {
     await container.read(settingsProvider.notifier).flushed;
     await repository.store.flushed;
     await history.store.flushed;
+    await following.store.flushed;
     if (supportsWindowCustomization) await window.flush();
     await flushLogs();
   }
@@ -168,6 +190,7 @@ class AppRuntime with WidgetsBindingObserver {
     container.dispose();
     // An open player saves where it stopped as the container disposes it.
     await history.store.flushed;
+    await following.store.flushed;
     await flushLogs();
   }
 

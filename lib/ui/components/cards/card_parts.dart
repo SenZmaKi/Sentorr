@@ -17,12 +17,7 @@ class CardLines {
 /// One fact in a metadata line: an optional leading icon, and the mono
 /// role for numbers people compare (ratings, times, counts).
 class MetaItem {
-  const MetaItem(
-    this.label, {
-    this.icon,
-    this.leading,
-    this.technical = false,
-  });
+  const MetaItem(this.label, {this.icon, this.leading, this.technical = false});
 
   final String label;
   final IconData? icon;

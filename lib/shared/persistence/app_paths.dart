@@ -14,6 +14,8 @@ class AppPaths {
       File(path.join(rootDirectory.path, 'state', 'window.json'));
   File get watchHistoryFile =>
       File(path.join(rootDirectory.path, 'state', 'watch_history.json'));
+  File get followedSeriesFile =>
+      File(path.join(rootDirectory.path, 'state', 'followed_series.json'));
   File get downloadsFile =>
       File(path.join(rootDirectory.path, 'state', 'downloads.json'));
   Directory get networkCacheDirectory => directory('cache/http');

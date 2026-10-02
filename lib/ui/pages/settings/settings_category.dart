@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../shared/window_manager.dart';
 import 'sections/appearance_section.dart';
+import 'sections/following_section.dart';
+import 'sections/notifications_section.dart';
 import 'sections/playback_section.dart';
 import 'sections/sources_section.dart';
 import 'sections/storage_section.dart';
@@ -35,8 +37,15 @@ enum SettingsCategory {
   watching(
     'Continue watching',
     Icons.history_rounded,
-    'Progress and history',
-    'in progress continue watching history resume clear',
+    'Progress and followed series',
+    'in progress continue watching history resume clear following series '
+        'unfollow new episodes',
+  ),
+  notifications(
+    'Notifications',
+    Icons.notifications_outlined,
+    'New episodes',
+    'notifications alerts new episodes airing mute',
   ),
   appearance(
     'Appearance',
@@ -75,7 +84,11 @@ enum SettingsCategory {
     playback => const PlaybackSection(),
     sources => const SourcesSection(),
     streaming => const StreamingSection(),
-    watching => const WatchingSection(),
+    watching => const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [WatchingSection(), FollowingSection()],
+    ),
+    notifications => const NotificationsSection(),
     appearance => const AppearanceSection(),
     window => const WindowSection(),
     storage => const StorageSection(),

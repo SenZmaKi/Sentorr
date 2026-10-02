@@ -50,7 +50,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
     ref
       ..invalidate(continueWatchingProvider)
-      ..invalidate(followedSeriesProvider)
       ..invalidate(seriesUpdatesProvider);
     await ref.read(featuredTitlesProvider.future);
   }

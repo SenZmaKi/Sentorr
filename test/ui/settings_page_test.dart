@@ -18,6 +18,7 @@ import 'package:sentorr/ui/pages/settings/settings_page.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 import 'package:sentorr/watching/models.dart';
 
+import '../support/fake_following.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_torrents.dart';
@@ -45,6 +46,7 @@ Future<ProviderContainer> _pump(WidgetTester tester, Size size) async {
       initialSettingsProvider.overrideWithValue(const AppSettings()),
       settingsRepositoryProvider.overrideWithValue(_MemorySettings()),
       torrentDirectoryProvider.overrideWithValue('/torrents'),
+      ...followedSeriesOverrides(),
       ...watchHistoryOverrides([
         WatchEntry.of(
           PlaybackItem(title: fakeTitle(1)),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'json.dart';
+import 'notification_settings.dart';
 import 'streaming_settings.dart';
 import 'torrent_settings.dart';
 
+export 'notification_settings.dart';
 export 'streaming_settings.dart';
 export 'torrent_settings.dart';
 
@@ -59,17 +61,20 @@ class AppSettings {
     this.torrents = const TorrentSettings(),
     this.sources = const SourceSettings(),
     this.streaming = const StreamingSettings(),
+    this.notifications = const NotificationSettings(),
   });
 
   static const defaultImageCacheMaxBytes = 100 * 1024 * 1024;
 
   final ThemeMode themeMode;
   final WindowPreferences window;
+
   /// Zero means unlimited.
   final int imageCacheMaxBytes;
   final TorrentSettings torrents;
   final SourceSettings sources;
   final StreamingSettings streaming;
+  final NotificationSettings notifications;
 
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -78,6 +83,7 @@ class AppSettings {
     TorrentSettings? torrents,
     SourceSettings? sources,
     StreamingSettings? streaming,
+    NotificationSettings? notifications,
   }) => AppSettings(
     themeMode: themeMode ?? this.themeMode,
     window: window ?? this.window,
@@ -85,6 +91,7 @@ class AppSettings {
     torrents: torrents ?? this.torrents,
     sources: sources ?? this.sources,
     streaming: streaming ?? this.streaming,
+    notifications: notifications ?? this.notifications,
   );
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -97,6 +104,9 @@ class AppSettings {
     torrents: TorrentSettings.fromJson(jsonObject(json['torrents'])),
     sources: SourceSettings.fromJson(jsonObject(json['sources'])),
     streaming: StreamingSettings.fromJson(jsonObject(json['streaming'])),
+    notifications: NotificationSettings.fromJson(
+      jsonObject(json['notifications']),
+    ),
   );
 
   Map<String, dynamic> toJson() => {
@@ -107,5 +117,6 @@ class AppSettings {
     'torrents': torrents.toJson(),
     'sources': sources.toJson(),
     'streaming': streaming.toJson(),
+    'notifications': notifications.toJson(),
   };
 }

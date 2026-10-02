@@ -39,6 +39,7 @@ dependencies:
   torrent_stream:
     path: packages/torrent_stream
   file_picker: ^9.2.1
+  flutter_local_notifications: ^22.0.1
 
 # torrent_stream needs the binding's streaming symbols, which only a local
 # checkout rebuilt with packages/torrent_stream/tool/build_native.py has.

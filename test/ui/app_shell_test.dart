@@ -11,12 +11,14 @@ import 'package:sentorr/ui/pages/settings/settings_page.dart';
 import 'package:sentorr/ui/pages/title/title_page.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
+import '../support/fake_following.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 
 Widget _app(Brightness brightness) => ProviderScope(
   overrides: [
     initialSettingsProvider.overrideWithValue(const AppSettings()),
+    ...followedSeriesOverrides(),
     ...watchHistoryOverrides(),
     imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
   ],

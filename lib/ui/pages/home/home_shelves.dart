@@ -99,9 +99,6 @@ class CatalogShelf extends ConsumerWidget {
   }
 }
 
-void _retryTrending(WidgetRef ref) =>
-    ref.invalidate(catalogRowProvider(CatalogRow.trending));
-
 class ContinueWatchingShelf extends ConsumerWidget {
   const ContinueWatchingShelf({super.key});
 
@@ -150,16 +147,13 @@ class NewEpisodesShelf extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AsyncShelf<SeriesUpdate>(
-      icon: Icons.bolt_rounded,
+      icon: Icons.new_releases_outlined,
       title: 'New episodes',
-      subtitle: 'Latest from series you follow',
+      subtitle: 'Just aired in series you are caught up on',
       count: (n) => '$n new',
       items: ref.watch(newEpisodesProvider),
       spec: HomeLayout.of(context).episode,
-      onRetry: () {
-        _retryTrending(ref);
-        ref.invalidate(seriesUpdatesProvider);
-      },
+      onRetry: () => ref.invalidate(seriesUpdatesProvider),
       cardBuilder: (context, u, _) {
         final e = u.episode.title;
         final still = e.poster != null
@@ -213,10 +207,7 @@ class NewSeasonsShelf extends ConsumerWidget {
       subtitle: 'Series you follow are back',
       items: ref.watch(newSeasonsProvider),
       spec: HomeLayout.of(context).poster,
-      onRetry: () {
-        _retryTrending(ref);
-        ref.invalidate(seriesUpdatesProvider);
-      },
+      onRetry: () => ref.invalidate(seriesUpdatesProvider),
       cardBuilder: (context, u, _) => PosterCard(
         title: u.series.title,
         meta: [

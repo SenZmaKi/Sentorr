@@ -32,8 +32,9 @@ optional maximum bytes and optional known resolution. It also rejects malformed
 hashes, magnets that disagree with the hash, and invalid sizes or resolutions.
 Seed counts are provider reports, not verified availability.
 
-Scores use fixed scales: 55% closeness to preferred resolution, 40% logarithmic
-seeder availability capped at 100, and 5% preference for smaller releases. Unknown
+Scores use fixed scales: 55% closeness to preferred resolution, 40% seeder
+availability (`seeders / (seeders + 100)`), and 5% preference for smaller releases.
+Availability increases with diminishing returns and has no hard seeder cap. Unknown
 resolution gets zero quality credit. Fixed scales prevent an outlier from
 changing other candidates' scores. Ties prefer seeders then hash. All eligible
 candidates remain available to the caller for manual selection or retry.

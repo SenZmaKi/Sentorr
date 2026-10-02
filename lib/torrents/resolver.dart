@@ -101,7 +101,7 @@ class TorrentResolver {
   }
 
   /// Fixed scales keep scores stable when unrelated candidates are added.
-  /// Quality and capped availability dominate; size is a small tiebreaker.
+  /// Quality and availability dominate; size is a small tiebreaker.
   static List<TorrentCandidate> rank(
     Iterable<TorrentRelease> releases,
     TorrentPreferences preferences, {
@@ -118,8 +118,9 @@ class TorrentResolver {
           ? 0.0
           : math.min(release.resolution!, preferences.preferredResolution) /
                 math.max(release.resolution!, preferences.preferredResolution);
-      final availability =
-          math.log(1 + math.min(release.seeders, 100)) / math.log(101);
+      // Smooth saturation preserves seeder differences above 100 without
+      // letting very large swarms overwhelm quality and size preferences.
+      final availability = release.seeders / (release.seeders + 100.0);
       final size = 1 / (1 + release.sizeBytes / (4 * 1024 * 1024 * 1024));
       candidates.add(
         TorrentCandidate(

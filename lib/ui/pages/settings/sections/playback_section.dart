@@ -36,6 +36,18 @@ class PlaybackSection extends ConsumerWidget {
           description: 'What Sentorr looks for when you press Play',
           children: [
             SettingsTile(
+              icon: Icons.layers_outlined,
+              title: 'Compare episodes with packs',
+              subtitle: 'Consider season and finished-series batches by quality and availability',
+              keywords: 'batch complete seasons seeders',
+              trailing: SToggle(
+                value: t.includeBatchCandidates,
+                semanticLabel: 'Compare episodes with packs',
+                onChanged: (v) =>
+                    edit((t) => t.copyWith(includeBatchCandidates: v)),
+              ),
+            ),
+            SettingsTile(
               icon: Icons.high_quality_outlined,
               title: 'Preferred quality',
               subtitle: 'Closest available is used when this one is missing',

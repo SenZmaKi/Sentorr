@@ -124,3 +124,44 @@ Planet Earth S01 had no match after two forms, with identity/title/year/episode
 ambiguity and zero-seeder rejections recorded. No provider failures occurred.
 These checks establish metadata discovery and ranking, not peer connectivity or
 playback. Counts and source availability can change.
+
+## Episode and batch competition
+
+Playback enables `includeBatchCandidates` by default. The persisted
+**Compare episodes with packs** setting controls this mode. A standalone resolver
+keeps its previous behavior unless the caller enables this preference.
+
+When enabled, a season-pack search runs even after finding individual episodes.
+If the episode query has `seriesEnded: true`, it also searches `Title complete`
+and, when needed, `Title complete series`. Playback derives this flag from a
+non-future catalog `endYear`. Unknown/ongoing series still get season searches
+but do not trigger complete-series discovery. Catalog status and release names
+are discovery hints; file inspection remains authoritative.
+
+Candidates from all completed attempts are merged by hash and ranked together.
+More-seeded batches can beat an available episode, but quality, language, seed
+and size restrictions still apply. Size uses the reported total torrent bytes,
+not an invented per-episode estimate. Alternate queries stay bounded: up to
+three episode, two season and two series-batch forms. Failures retain healthy
+episode candidates and remain visible in diagnostics. Disabling competition
+restores episode-first behavior with the existing optional season fallback.
+
+Series batches accept explicit multi-season ranges covering the requested
+season (`S01-S05`, `Seasons 1-5`), explicit season lists, or complete/entire-series
+labels. Wrong-season ranges, reverse/ambiguous ranges, single-episode names,
+single-season releases and unrelated titles are rejected. `isSeriesPack`
+distinguishes these from `isSeasonPack`; both require file selection.
+
+Playback picks only the requested episode from a batch. Series batches require
+an exact season from the filename or nearest season folder; a bare episode
+number with no season context fails closed. Sample files and combined-episode
+videos cannot stand in for the requested episode. A missing file raises the
+existing playback error and leaves other candidates available for recovery.
+The UI identifies series batches separately and still asks before playing packs.
+
+Live metadata probe: `dart run tool/torrent_sources/batch_probe.dart`. On
+2026-10-02, Breaking Bad S02E03 yielded 29 candidates: six single episodes,
+nine season packs and fourteen series batches, without provider failures.
+The highest-ranked result was a complete S01-S05 batch. See
+[the captured report](batch-live-validation.json). This verifies discovery and
+ranking; no torrent files or media were fetched in the probe.

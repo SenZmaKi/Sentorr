@@ -95,12 +95,15 @@ void main() {
         preferredResolution: 2160,
         languages: {'en'},
         reviewExactMatches: false,
+        includeBatchCandidates: false,
       ),
     );
     final back = AppSettings.fromJson(settings.toJson()).torrents;
     expect(back.preferredResolution, 2160);
     expect(back.languages, {'en'});
     expect(back.reviewExactMatches, isFalse);
+    expect(back.includeBatchCandidates, isFalse);
+    expect(torrentPreferencesFor(back).includeBatchCandidates, isFalse);
     final bad = TorrentSettings.fromJson({
       'preferredResolution': 999,
       'languages': [' ', 3],

@@ -44,5 +44,5 @@ TorrentPreferences torrentPreferencesFor(TorrentSettings settings) =>
       preferredResolution: settings.preferredResolution,
       minimumSeeders: settings.minimumSeeders,
       allowSeasonPackFallback: true,
-      includeBatchCandidates: true,
+      includeBatchCandidates: settings.includeBatchCandidates,
     );

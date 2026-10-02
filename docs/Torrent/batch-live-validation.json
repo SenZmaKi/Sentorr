@@ -1,0 +1,436 @@
+{
+  "checkedAt": "2026-10-02T14:13:28.631412Z",
+  "scope": "Metadata ranking only; does not open magnets or download media",
+  "query": "Breaking Bad S02E03",
+  "status": "resolved",
+  "message": "Found a batch torrent. Check its files for the requested episode.",
+  "candidates": [
+    {
+      "name": "Breaking.Bad.Complete.S01-S05.1080p.10bit.BluRay.x265.HEVC.6CH-M",
+      "source": "pirateBay",
+      "seeders": 54,
+      "bytes": 42228785197,
+      "resolution": 1080,
+      "score": 0.6948756268400912,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking Bad S02 1080p BluRay AV1 Opus [AV1D]",
+      "source": "bitsearch",
+      "seeders": 41,
+      "bytes": 5604932321,
+      "resolution": 1080,
+      "score": 0.6880040307078334,
+      "seasonPack": true,
+      "seriesPack": false,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking Bad - Complete Season + Extras - BluRay 1080p",
+      "source": "pirateBay",
+      "seeders": 39,
+      "bytes": 226997012117,
+      "resolution": 1080,
+      "score": 0.6631586888567317,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.S02.1080p.BluRay.x265-RARBG",
+      "source": "bitsearch",
+      "seeders": 9,
+      "bytes": 10307921510,
+      "resolution": 1080,
+      "score": 0.5977334052891239,
+      "seasonPack": true,
+      "seriesPack": false,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.Complete.1080p.BluRay.10bit.x265-HazMatt",
+      "source": "pirateBay",
+      "seeders": 7,
+      "bytes": 58739398914,
+      "resolution": 1080,
+      "score": 0.5795750700835469,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.S02.BDRip.1080p-SOFCJ",
+      "source": "bitsearch",
+      "seeders": 6,
+      "bytes": 98032628531,
+      "resolution": 1080,
+      "score": 0.5747401453206401,
+      "seasonPack": true,
+      "seriesPack": false,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.S02.1080p.BluRay.x264-NODLABS[rartv]",
+      "source": "bitsearch",
+      "seeders": 5,
+      "bytes": 45741401702,
+      "resolution": 1080,
+      "score": 0.5733394645412156,
+      "seasonPack": true,
+      "seriesPack": false,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.S01-S05.COMPLETE.SERIES.1080p.Bluray.x265-HiQVE",
+      "source": "pirateBay",
+      "seeders": 5,
+      "bytes": 84931215148,
+      "resolution": 1080,
+      "score": 0.5714544054741793,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking Bad: Complete Series + Movie (1080p.H265.AAC 5.1)",
+      "source": "pirateBay",
+      "seeders": 2,
+      "bytes": 21582050530,
+      "resolution": 1080,
+      "score": 0.5661419437960572,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.S01-S05.COMPLETE.1080p.BluRay.REMUX.AVC.DTS-HD.MA.5.1-FraMeSToR",
+      "source": "pirateBay",
+      "seeders": 2,
+      "bytes": 523688051560,
+      "resolution": 1080,
+      "score": 0.5582498707238406,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking Bad S01-S05 Complete 720p BlaRay x265-BMF",
+      "source": "pirateBay",
+      "seeders": 71,
+      "bytes": 19326032884,
+      "resolution": 720,
+      "score": 0.5418399551051105,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking Bad S02E03 Bit by a Dead Bee 2160p NF WEB-DL DDP5 1 H 265-XEBEC",
+      "source": "pirateBay",
+      "seeders": 37,
+      "bytes": 5912067673,
+      "resolution": 2160,
+      "score": 0.404068447504359,
+      "seasonPack": false,
+      "seriesPack": false,
+      "requiresFileSelection": false
+    },
+    {
+      "name": "Breaking Bad s02 720p hdtv x264",
+      "source": "pirateBay",
+      "seeders": 1,
+      "bytes": 15251678888,
+      "resolution": 720,
+      "score": 0.3816135185298678,
+      "seasonPack": true,
+      "seriesPack": false,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.Complete.Series (S01-S05) .720p.BluRay.Goblin.Eng.A",
+      "source": "pirateBay",
+      "seeders": 3,
+      "bytes": 184632583903,
+      "resolution": 720,
+      "score": 0.3794538225544133,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking Bad COMPLETE S01-S05 2160p WEB-DL Rus Ukr Eng DTS-HD MA",
+      "source": "pirateBay",
+      "seeders": 34,
+      "bytes": 1873513828687,
+      "resolution": 2160,
+      "score": 0.37660689845885903,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.S02E03.Ger.Eng.5.1.EAC3D.DL.2160p.WEB.h265-HDSource",
+      "source": "bitsearch",
+      "seeders": 1,
+      "bytes": 5658619412,
+      "resolution": 2160,
+      "score": 0.3005353690719281,
+      "seasonPack": false,
+      "seriesPack": false,
+      "requiresFileSelection": false
+    },
+    {
+      "name": "Breaking Bad - The Complete Seasons 1-5 + EXTRAS [BRRip/480p]-Bo",
+      "source": "pirateBay",
+      "seeders": 1,
+      "bytes": 10489510242,
+      "resolution": 480,
+      "score": 0.2629300994421712,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.S01-S05.Complete.480p.BluRay.x264-Sticky83",
+      "source": "pirateBay",
+      "seeders": 1,
+      "bytes": 19169683871,
+      "resolution": 480,
+      "score": 0.25755683525574213,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking Bad S02",
+      "source": "bitsearch",
+      "seeders": 69,
+      "bytes": 81776177316,
+      "resolution": null,
+      "score": 0.16580861944749092,
+      "seasonPack": true,
+      "seriesPack": false,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.S02E03.HDTV.XviD-0TV.avi",
+      "source": "bitsearch",
+      "seeders": 9,
+      "bytes": 367693660,
+      "resolution": null,
+      "score": 0.07908456350263848,
+      "seasonPack": false,
+      "seriesPack": false,
+      "requiresFileSelection": false
+    },
+    {
+      "name": "Breaking.Bad.S02.FRENCH.DVDRip.XviD-JMT",
+      "source": "bitsearch",
+      "seeders": 16,
+      "bytes": 4756676280,
+      "resolution": null,
+      "score": 0.07889720620200862,
+      "seasonPack": true,
+      "seriesPack": false,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "[ OxTorrent.com ] Breaking.Bad.S02.FRENCH.DVDRip.XviD-JMT",
+      "source": "bitsearch",
+      "seeders": 14,
+      "bytes": 4756676280,
+      "resolution": null,
+      "score": 0.07284759942644903,
+      "seasonPack": true,
+      "seriesPack": false,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking.Bad.S02E03.FRENCH.DVDRip.XviD-JMT.avi",
+      "source": "bitsearch",
+      "seeders": 2,
+      "bytes": 365858652,
+      "resolution": null,
+      "score": 0.053918310882046384,
+      "seasonPack": false,
+      "seriesPack": false,
+      "requiresFileSelection": false
+    },
+    {
+      "name": "Breaking.Bad.S02E03.FRENCH.LD.HDTV.XviD-JMT.avi",
+      "source": "bitsearch",
+      "seeders": 2,
+      "bytes": 368605921,
+      "resolution": null,
+      "score": 0.053891168412037754,
+      "seasonPack": false,
+      "seriesPack": false,
+      "requiresFileSelection": false
+    },
+    {
+      "name": "Breaking Bad.S02E03.HDTV.Subtitulado.Esp.SC.avi",
+      "source": "pirateBay",
+      "seeders": 1,
+      "bytes": 260607544,
+      "resolution": null,
+      "score": 0.05110008144536496,
+      "seasonPack": false,
+      "seriesPack": false,
+      "requiresFileSelection": false
+    },
+    {
+      "name": "Breaking Bad Complete (All Seasons 1 to 5) -nelly-",
+      "source": "pirateBay",
+      "seeders": 3,
+      "bytes": 10248845469,
+      "resolution": null,
+      "score": 0.026416102147581104,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking Bad   (Seasons 1 to 4  -  Complete)",
+      "source": "pirateBay",
+      "seeders": 1,
+      "bytes": 21681949981,
+      "resolution": null,
+      "score": 0.01222728785398174,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking Bad Complete Series + El Camino [ relentlesstech ]",
+      "source": "pirateBay",
+      "seeders": 1,
+      "bytes": 26369136497,
+      "resolution": null,
+      "score": 0.010963645384495062,
+      "seasonPack": false,
+      "seriesPack": true,
+      "requiresFileSelection": true
+    },
+    {
+      "name": "Breaking Bad S02 br 10bit dts hevc-d3g",
+      "source": "pirateBay",
+      "seeders": 1,
+      "bytes": 67430660303,
+      "resolution": null,
+      "score": 0.006954421633922971,
+      "seasonPack": true,
+      "seriesPack": false,
+      "requiresFileSelection": true
+    }
+  ],
+  "attempts": [
+    {
+      "stage": "primary",
+      "search": "Breaking Bad S02E03",
+      "releases": 6,
+      "eligible": 6,
+      "sources": [
+        {
+          "source": "pirateBay",
+          "status": "succeeded",
+          "accepted": 3,
+          "rejections": {
+            "titleMismatch": 3,
+            "noSeeders": 4
+          }
+        },
+        {
+          "source": "yts",
+          "status": "unsupported",
+          "accepted": 0,
+          "rejections": {}
+        },
+        {
+          "source": "bitsearch",
+          "status": "succeeded",
+          "accepted": 4,
+          "rejections": {
+            "titleMismatch": 4,
+            "yearMismatch": 2,
+            "noSeeders": 9,
+            "nonVideo": 1
+          }
+        }
+      ]
+    },
+    {
+      "stage": "seasonPack",
+      "search": "Breaking Bad S02",
+      "releases": 9,
+      "eligible": 9,
+      "sources": [
+        {
+          "source": "pirateBay",
+          "status": "succeeded",
+          "accepted": 2,
+          "rejections": {
+            "ambiguousEpisodes": 7,
+            "episodeMismatch": 1,
+            "yearMismatch": 1,
+            "noSeeders": 13,
+            "identityMismatch": 1
+          }
+        },
+        {
+          "source": "yts",
+          "status": "unsupported",
+          "accepted": 0,
+          "rejections": {}
+        },
+        {
+          "source": "bitsearch",
+          "status": "succeeded",
+          "accepted": 7,
+          "rejections": {
+            "nonVideo": 3,
+            "episodeMismatch": 2,
+            "ambiguousEpisodes": 3,
+            "yearMismatch": 4,
+            "titleMismatch": 1
+          }
+        }
+      ]
+    },
+    {
+      "stage": "seriesPack",
+      "search": "Breaking Bad complete",
+      "releases": 14,
+      "eligible": 14,
+      "sources": [
+        {
+          "source": "pirateBay",
+          "status": "succeeded",
+          "accepted": 14,
+          "rejections": {
+            "seasonMismatch": 36,
+            "ambiguousEpisodes": 3,
+            "noSeeders": 46,
+            "identityMismatch": 1
+          }
+        },
+        {
+          "source": "yts",
+          "status": "unsupported",
+          "accepted": 0,
+          "rejections": {}
+        },
+        {
+          "source": "bitsearch",
+          "status": "succeeded",
+          "accepted": 1,
+          "rejections": {
+            "seasonMismatch": 14,
+            "nonVideo": 5
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -34,8 +34,9 @@ all raw parsed fields would lose movie/TV identity or admit false matches.
 Sentorr retains focused identity policy: explicit TV season syntax, full-title
 comparison, sequel-number checks, explicit year, provider IMDb identity,
 language hints and range rejection. Bare absolute anime episodes such as
-`Title - 01` cannot establish a TV season and are rejected. Ambiguous packs need
-actual file inspection before playback. No modifications to Anitomy were made.
+`Title - 01` cannot establish a TV season and are rejected. Episode-range releases remain rejected. Explicit multi-season ranges and
+complete-series labels are supported through the batch-search validator; actual
+file inspection is still required before playback. No modifications to Anitomy were made.
 
 Tests cover scene/long/cross forms, numeric titles, zero-valued specials,
 bracketed languages, subtitle hints, ranges, wrong episodes/seasons and reboot

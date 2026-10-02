@@ -126,8 +126,8 @@ class TorrentOption extends StatelessWidget {
                       technical: true,
                     ),
                     if (candidate.requiresFileSelection)
-                      const MetaItem(
-                        'Whole season',
+                      MetaItem(
+                        r.isSeriesPack ? 'Series batch' : 'Whole season',
                         icon: Icons.layers_outlined,
                       ),
                     MetaItem(

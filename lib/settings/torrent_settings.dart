@@ -9,6 +9,7 @@ class TorrentSettings {
     this.reviewExactMatches = true,
     this.autoPlayDelaySeconds = 4,
     this.minimumSeeders = 1,
+    this.includeBatchCandidates = true,
   });
 
   static const resolutions = [2160, 1080, 720, 480];
@@ -28,6 +29,7 @@ class TorrentSettings {
 
   /// Releases with fewer seeders are never offered.
   final int minimumSeeders;
+  final bool includeBatchCandidates;
 
   Duration get autoPlayDelay => Duration(seconds: autoPlayDelaySeconds);
 
@@ -37,12 +39,15 @@ class TorrentSettings {
     bool? reviewExactMatches,
     int? autoPlayDelaySeconds,
     int? minimumSeeders,
+    bool? includeBatchCandidates,
   }) => TorrentSettings(
     preferredResolution: preferredResolution ?? this.preferredResolution,
     languages: languages ?? this.languages,
     reviewExactMatches: reviewExactMatches ?? this.reviewExactMatches,
     autoPlayDelaySeconds: autoPlayDelaySeconds ?? this.autoPlayDelaySeconds,
     minimumSeeders: minimumSeeders ?? this.minimumSeeders,
+    includeBatchCandidates:
+        includeBatchCandidates ?? this.includeBatchCandidates,
   );
 
   factory TorrentSettings.fromJson(Map<String, dynamic> json) {
@@ -66,6 +71,7 @@ class TorrentSettings {
         max: maxAutoPlayDelay,
       ),
       minimumSeeders: jsonInt(json['minimumSeeders'], 1, min: 1),
+      includeBatchCandidates: jsonBool(json['includeBatchCandidates'], true),
     );
   }
 
@@ -75,6 +81,7 @@ class TorrentSettings {
     'reviewExactMatches': reviewExactMatches,
     'autoPlayDelaySeconds': autoPlayDelaySeconds,
     'minimumSeeders': minimumSeeders,
+    'includeBatchCandidates': includeBatchCandidates,
   };
 }
 

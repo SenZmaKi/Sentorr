@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "host": {
+    "os": "Darwin",
+    "architecture": "arm64"
+  },
+  "nativeBridgeSha256": "1d350b90a8a978b4c1d62e42867bf35c00015a6a08fe04b205ab68987786929d",
+  "bindingsPackageVersion": "1.0.1 (modified local checkout)",
+  "httpTestsPassed": 7,
+  "bindingsTestsPassed": 10,
+  "nativeByteProof": {
+    "passed": true,
+    "checks": {
+      "bytes=131060-262160": {
+        "bytes": 131101,
+        "elapsedMs": 3424
+      },
+      "bytes=-123": {
+        "bytes": 123,
+        "elapsedMs": 476
+      },
+      "bytes=19-99": {
+        "bytes": 81,
+        "elapsedMs": 3
+      },
+      "bytes=2097100-2097200": {
+        "bytes": 101,
+        "elapsedMs": 2520
+      },
+      "stallWaited": true,
+      "bytes=3407872-3407972": {
+        "bytes": 101,
+        "elapsedMs": 17717
+      },
+      "stallRecovered": true,
+      "incompleteAtRead": true,
+      "cleanup": true
+    }
+  },
+  "playback": {
+    "faststart": {
+      "passed": true,
+      "createdAt": "2026-10-02T07:10:51.851944Z",
+      "checks": {
+        "playback-progress": 3767,
+        "decoded-video": 0,
+        "width": 640,
+        "height": 360,
+        "durationSeconds": 90,
+        "downloadedAtFirstPlayback": 442368,
+        "fileSize": 16914577,
+        "forward-seek": 2945,
+        "backward-seek": 4167,
+        "pause": true,
+        "resume": 507,
+        "repeated-seeks": 4414
+      },
+      "httpRequests": 7,
+      "downloadedAtFirstPlaybackPercent": 2.62
+    },
+    "tail-index": {
+      "passed": true,
+      "createdAt": "2026-10-02T07:10:53.464693Z",
+      "checks": {
+        "playback-progress": 5692,
+        "decoded-video": 0,
+        "width": 640,
+        "height": 360,
+        "durationSeconds": 90,
+        "downloadedAtFirstPlayback": 923680,
+        "fileSize": 16914577,
+        "forward-seek": 2745,
+        "backward-seek": 2240,
+        "pause": true,
+        "resume": 609,
+        "repeated-seeks": 6128
+      },
+      "httpRequests": 10,
+      "downloadedAtFirstPlaybackPercent": 5.46
+    },
+    "mkv": {
+      "passed": true,
+      "createdAt": "2026-10-02T07:10:52.349876Z",
+      "checks": {
+        "playback-progress": 3760,
+        "decoded-video": 0,
+        "width": 640,
+        "height": 360,
+        "durationSeconds": 90,
+        "downloadedAtFirstPlayback": 425984,
+        "fileSize": 16898326,
+        "forward-seek": 3658,
+        "backward-seek": 3456,
+        "pause": true,
+        "resume": 611,
+        "repeated-seeks": 4818
+      },
+      "httpRequests": 8,
+      "downloadedAtFirstPlaybackPercent": 2.52
+    }
+  },
+  "limits": [
+    "No browser inspection",
+    "No visual or audible verification",
+    "No external swarm validation",
+    "Windows and Linux runners not built or run",
+    "No rolling disk cache or persistent resume"
+  ]
+}

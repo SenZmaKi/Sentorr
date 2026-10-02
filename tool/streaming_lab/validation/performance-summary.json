@@ -1,0 +1,326 @@
+{
+  "date": "2026-10-02",
+  "host": "macOS arm64",
+  "cases": [
+    {
+      "name": "Big.Buck.Bunny.BDRip.360p.H264[REQ]",
+      "infoHash": "1658902A7E0FF5838A9DEC29DC92F6CD7632EC7B",
+      "listedSeeders": 0,
+      "listedSizeBytes": 36357276,
+      "passedChecks": false,
+      "checks": {
+        "failure": "Bad state: Bad state: TimeoutException: Torrent metadata",
+        "failurePhase": "metadata"
+      },
+      "meanProcessCpuPercent": 20.31,
+      "peakRssMiB": 152.72,
+      "maxObservedPeersAfterMetadata": null,
+      "finalSnapshot": {},
+      "bufferingEvents": []
+    },
+    {
+      "name": "Tears Of Steel (2012) 720p WEBRip-LAMA",
+      "infoHash": "D8CF1DCE819935BBECDF6D0745886A297AF89007",
+      "listedSeeders": 5,
+      "listedSizeBytes": 118419997,
+      "passedChecks": false,
+      "checks": {
+        "failure": "Bad state: Bad state: TimeoutException: Torrent metadata",
+        "failurePhase": "metadata"
+      },
+      "meanProcessCpuPercent": 20.59,
+      "peakRssMiB": 156.48,
+      "maxObservedPeersAfterMetadata": null,
+      "finalSnapshot": {},
+      "bufferingEvents": []
+    },
+    {
+      "name": "Sintel.2010.1080p.WEB.H264-CLASSiCALHD",
+      "infoHash": "43F4001DE4AB25D521C63684E2B69804193ED9D9",
+      "listedSeeders": 22,
+      "listedSizeBytes": 583689809,
+      "passedChecks": true,
+      "checks": {
+        "metadataMs": 1286,
+        "startupMs": 18006,
+        "firstPlaybackMs": 19293,
+        "bytesAtFirstPlayback": 48266860,
+        "width": 1920,
+        "height": 1080,
+        "positionAfter30sMs": 31083,
+        "seek-0.5Ms": 7872,
+        "seek-0.9Ms": 13073,
+        "seek-0.05Ms": 615,
+        "pauseDriftMs": 0
+      },
+      "meanProcessCpuPercent": 24.76,
+      "peakRssMiB": 180.95,
+      "maxObservedPeersAfterMetadata": 8,
+      "finalSnapshot": {
+        "event": "snapshot",
+        "mode": "External torrent",
+        "downloadRate": 3930159.0,
+        "peers": 8,
+        "totalDownloaded": 145129472,
+        "fileBytes": 143044995,
+        "fileSize": 576700012,
+        "urgentPieces": 5,
+        "memoryCacheBytes": 8388608,
+        "httpBytes": 36459078,
+        "requests": 11
+      },
+      "bufferingEvents": [
+        {
+          "elapsedMs": 1175,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 0
+        },
+        {
+          "elapsedMs": 17668,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 0
+        },
+        {
+          "elapsedMs": 49177,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 444547
+        },
+        {
+          "elapsedMs": 56551,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 444547
+        },
+        {
+          "elapsedMs": 57048,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 800184
+        },
+        {
+          "elapsedMs": 69610,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 800184
+        },
+        {
+          "elapsedMs": 70121,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 44455
+        },
+        {
+          "elapsedMs": 70236,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 44455
+        }
+      ]
+    },
+    {
+      "name": "Tears of Steel 2012 2160p DM DD5 1 x264-DON",
+      "infoHash": "A83525878992BC849B538DFB3CE870AB60AF03F0",
+      "listedSeeders": 1,
+      "listedSizeBytes": 13220455591,
+      "passedChecks": false,
+      "checks": {
+        "failure": "Bad state: Bad state: TimeoutException: Torrent metadata",
+        "failurePhase": "metadata"
+      },
+      "meanProcessCpuPercent": 19.8,
+      "peakRssMiB": 129.91,
+      "maxObservedPeersAfterMetadata": null,
+      "finalSnapshot": {},
+      "bufferingEvents": []
+    },
+    {
+      "name": "Tears of Steel (2012) 1080p webm",
+      "infoHash": "02767050E0BE2FD4DB9A2AD6C12416AC806ED6ED",
+      "listedSeeders": 14,
+      "listedSizeBytes": 571346576,
+      "passedChecks": true,
+      "checks": {
+        "metadataMs": 3741,
+        "startupMs": 6466,
+        "firstPlaybackMs": 10208,
+        "bytesAtFirstPlayback": 394287,
+        "width": 1920,
+        "height": 800,
+        "positionAfter30sMs": 23208,
+        "seek-0.5Ms": 7259,
+        "seek-0.9Ms": 18200,
+        "seek-0.05Ms": 8474,
+        "pauseDriftMs": 0
+      },
+      "meanProcessCpuPercent": 26.33,
+      "peakRssMiB": 195.3,
+      "maxObservedPeersAfterMetadata": 2,
+      "finalSnapshot": {
+        "event": "snapshot",
+        "mode": "External torrent",
+        "downloadRate": 550004.0,
+        "peers": 2,
+        "totalDownloaded": 33164944,
+        "fileBytes": 33169408,
+        "fileSize": 571346576,
+        "urgentPieces": 5,
+        "memoryCacheBytes": 8388608,
+        "httpBytes": 30215744,
+        "requests": 8
+      },
+      "bufferingEvents": [
+        {
+          "elapsedMs": 3646,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 0
+        },
+        {
+          "elapsedMs": 8695,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 0
+        },
+        {
+          "elapsedMs": 18411,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 9375
+        },
+        {
+          "elapsedMs": 20784,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 9417
+        },
+        {
+          "elapsedMs": 22667,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 11250
+        },
+        {
+          "elapsedMs": 24326,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 11292
+        },
+        {
+          "elapsedMs": 26122,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 13042
+        },
+        {
+          "elapsedMs": 28923,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 13125
+        },
+        {
+          "elapsedMs": 31124,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 15250
+        },
+        {
+          "elapsedMs": 32194,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 15292
+        },
+        {
+          "elapsedMs": 40096,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 367084
+        },
+        {
+          "elapsedMs": 46243,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 367084
+        },
+        {
+          "elapsedMs": 46482,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 367250
+        },
+        {
+          "elapsedMs": 47004,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 367292
+        },
+        {
+          "elapsedMs": 47355,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 660750
+        },
+        {
+          "elapsedMs": 61122,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 660791
+        },
+        {
+          "elapsedMs": 61315,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 660875
+        },
+        {
+          "elapsedMs": 65197,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 660958
+        },
+        {
+          "elapsedMs": 65555,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 36708
+        },
+        {
+          "elapsedMs": 71560,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 36750
+        },
+        {
+          "elapsedMs": 71644,
+          "event": "player-buffering",
+          "value": true,
+          "positionMs": 36750
+        },
+        {
+          "elapsedMs": 73608,
+          "event": "player-buffering",
+          "value": false,
+          "positionMs": 36792
+        }
+      ]
+    },
+    {
+      "name": "Tears Of Steel (2012) 720p WEBRip-LAMA",
+      "infoHash": "D8CF1DCE819935BBECDF6D0745886A297AF89007",
+      "listedSeeders": 5,
+      "listedSizeBytes": 118419997,
+      "passedChecks": false,
+      "checks": {
+        "failure": "Bad state: Bad state: TimeoutException: Torrent metadata",
+        "failurePhase": "metadata"
+      },
+      "meanProcessCpuPercent": 19.79,
+      "peakRssMiB": 155.31,
+      "maxObservedPeersAfterMetadata": null,
+      "finalSnapshot": {},
+      "bufferingEvents": []
+    }
+  ]
+}

@@ -63,6 +63,25 @@ abstract final class Motion {
   static const Curve change = Curves.easeInOutCubic;
 }
 
+/// Player-specific dimensions shared by its controls.
+abstract final class PlayerMetrics {
+  /// Circular player targets.
+  static const double control = 48;
+  static const double icon = 24;
+
+  /// Seek track at rest, and while hovered or dragged.
+  static const double track = 4;
+  static const double trackActive = 6;
+  static const double thumb = 14;
+
+  /// Floating panels over video: settings menu and queue.
+  static const double menuWidth = 280;
+  static const double queueWidth = 460;
+
+  /// Idle time before controls hide during playback.
+  static const Duration idle = Duration(seconds: 3);
+}
+
 abstract final class FontFamilies {
   static const String mono = 'GeistMono';
 }

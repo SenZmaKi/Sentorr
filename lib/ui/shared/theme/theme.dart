@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'colors.dart';
 import 'depth.dart';
+import 'player_colors.dart';
 import 'typography.dart';
 import 'tokens.dart';
 
 export 'colors.dart';
 export 'depth.dart';
+export 'player_colors.dart';
 export 'tokens.dart';
 export 'typography.dart';
 
@@ -65,7 +67,12 @@ ThemeData buildSentorrTheme(Brightness brightness) {
         elevation: 1,
       ),
     ),
-    extensions: [c, SentorrDepth.resolve(c, brightness), type],
+    extensions: [
+      c,
+      SentorrDepth.resolve(c, brightness),
+      type,
+      brightness == Brightness.dark ? PlayerColors.dark : PlayerColors.light,
+    ],
   );
 }
 
@@ -73,6 +80,7 @@ extension SentorrThemeContext on BuildContext {
   SentorrColors get colors => Theme.of(this).extension<SentorrColors>()!;
   SentorrDepth get depth => Theme.of(this).extension<SentorrDepth>()!;
   SentorrType get type => Theme.of(this).extension<SentorrType>()!;
+  PlayerColors get player => Theme.of(this).extension<PlayerColors>()!;
 }
 
 /// Explicit presentation context for controls placed over artwork or video:

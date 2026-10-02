@@ -136,11 +136,15 @@ class OverlayBadge extends StatelessWidget {
     super.key,
     this.icon,
     this.technical = false,
+    this.dense = false,
   });
 
   final String label;
   final IconData? icon;
   final bool technical;
+
+  /// Smaller and tighter, for stamps on small stills.
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -148,8 +152,9 @@ class OverlayBadge extends StatelessWidget {
         .copyWith(
           color: OverlayColors.foreground,
           fontWeight: FontWeight.w500,
-          fontSize: 12,
-          height: 16 / 12,
+          fontSize: dense ? 10 : 12,
+          height: dense ? 14 / 10 : 16 / 12,
+          letterSpacing: dense ? -0.3 : null,
         );
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -157,9 +162,9 @@ class OverlayBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(Radii.chip),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Space.s8,
-          vertical: Space.s2,
+        padding: EdgeInsets.symmetric(
+          horizontal: dense ? Space.s4 : Space.s8,
+          vertical: dense ? 1 : Space.s2,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

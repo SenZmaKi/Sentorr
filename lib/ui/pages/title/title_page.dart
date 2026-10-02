@@ -8,6 +8,7 @@ import '../../components/load_error.dart';
 import '../../components/motion.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_route.dart';
+import '../../shared/play_route.dart';
 import 'title_episodes.dart';
 import 'title_hero.dart';
 import 'title_shelves.dart';
@@ -86,7 +87,7 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                     title: d?.title ?? _title,
                     details: d,
                     onBack: _back,
-                    onPlay: playPending,
+                    onPlay: () => ref.playTitle(d?.title ?? _title),
                     onEpisodes: seasons.isEmpty ? null : _showEpisodes,
                   ),
                 ),

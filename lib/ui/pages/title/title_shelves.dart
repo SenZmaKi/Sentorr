@@ -13,6 +13,7 @@ import '../../components/chips.dart';
 import '../../components/shelf.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_route.dart';
+import '../../shared/play_route.dart';
 import 'review_dialog.dart';
 
 /// Shared row geometry for the title page.
@@ -91,7 +92,7 @@ class RecommendationsShelf extends ConsumerWidget {
       itemBuilder: (context, i) => titlePoster(
         titles[i],
         onOpen: () => ref.openTitle(titles[i]),
-        onPlay: playPending,
+        onPlay: () => ref.playTitle(titles[i]),
       ),
     );
   }

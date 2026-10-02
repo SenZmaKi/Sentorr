@@ -11,6 +11,8 @@ import 'package:window_manager/window_manager.dart';
 bool get supportsWindowCustomization =>
     !kIsWeb && !Platform.isAndroid && !Platform.isIOS;
 
+const minimumWindowSize = Size(360, 480);
+
 class WindowManager with WindowListener {
   static WindowManager? _instance;
   static const _minimumVisibleExtent = 64.0;
@@ -22,6 +24,10 @@ class WindowManager with WindowListener {
   bool _saveAgain = false;
   bool _mobileFullScreen = false;
   WindowStateRepository? _stateRepository;
+
+  /// While set, moves and resizes are temporary (e.g. the pop-out player)
+  /// and must not replace the saved window bounds.
+  bool suspendBoundsSaving = false;
   Future<void> Function()? _closeHandler;
 
   static WindowManager getInstance() {
@@ -46,7 +52,7 @@ class WindowManager with WindowListener {
       alwaysOnTop: preferences.alwaysOnTop,
       center: restoredBounds == null,
       size: const Size(1100, 760),
-      minimumSize: const Size(360, 480),
+      minimumSize: minimumWindowSize,
       fullScreen: preferences.startFullScreen,
       title: 'Sentorr',
     );
@@ -87,6 +93,10 @@ class WindowManager with WindowListener {
           : SystemUiMode.edgeToEdge,
     );
   }
+
+  Future<bool> get isFullScreen async => supportsWindowCustomization
+      ? await windowManager.isFullScreen()
+      : _mobileFullScreen;
 
   Future<void> focus() async {
     if (!supportsWindowCustomization) return;
@@ -173,7 +183,7 @@ class WindowManager with WindowListener {
       return;
     }
     final repository = _stateRepository;
-    if (!_ready || repository == null) return;
+    if (!_ready || repository == null || suspendBoundsSaving) return;
 
     _savingBounds = true;
     _saveCompletion = Completer<void>();

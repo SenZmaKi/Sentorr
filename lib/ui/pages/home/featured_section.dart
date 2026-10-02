@@ -14,6 +14,7 @@ import '../../shared/title_format.dart';
 import '../../components/cards/card_parts.dart';
 import '../../shared/title_icons.dart';
 import '../../shared/title_route.dart';
+import '../../shared/play_route.dart';
 import 'featured_hero.dart';
 import 'spotlight_state.dart';
 
@@ -128,7 +129,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
                           progress: _hold,
                           onSelect: _show,
                         ),
-                  onPlay: playPending,
+                  onPlay: () => ref.playTitle(t),
                   onDetails: () => ref.openTitle(t),
                 ),
               ),

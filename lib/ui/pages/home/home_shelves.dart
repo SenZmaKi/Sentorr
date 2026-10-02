@@ -15,6 +15,7 @@ import '../../components/title_artwork.dart';
 import '../../shared/title_format.dart';
 import '../../shared/title_icons.dart';
 import '../../shared/title_route.dart';
+import '../../shared/play_route.dart';
 import 'async_shelf.dart';
 import 'home_layout.dart';
 
@@ -35,14 +36,14 @@ PosterCard _poster(WidgetRef ref, ImdbTitle t, {String? lead}) => titlePoster(
   t,
   lead: lead,
   onOpen: () => ref.openTitle(t),
-  onPlay: playPending,
+  onPlay: () => ref.playTitle(t),
 );
 
 WidgetBuilder _preview(WidgetRef ref, ImdbTitle t, {String? playLabel}) =>
     (_) => TitlePreview(
       title: t,
       onOpen: () => ref.openTitle(t),
-      onPlay: playPending,
+      onPlay: () => ref.playTitle(t),
       playLabel: playLabel ?? 'Play',
     );
 
@@ -127,7 +128,7 @@ class ContinueWatchingShelf extends ConsumerWidget {
               ? null
               : Duration(seconds: t.runtimeSeconds!),
           artwork: TitleBackdrop(title: t),
-          onTap: playPending,
+          onTap: () => ref.playTitle(t),
           preview: _preview(ref, t, playLabel: 'Resume'),
         );
       },
@@ -178,13 +179,14 @@ class NewEpisodesShelf extends ConsumerWidget {
           plot: e.plot,
           isNew: DateTime.now().difference(u.aired).inDays < 7,
           artwork: still,
-          onTap: playPending,
+          onTap: () => ref.playEpisode(u.series, u.episode, season: u.season),
           preview: (_) => EpisodePreview(
             series: u.series,
             episode: u.episode,
             artwork: still,
             onOpen: () => ref.openTitle(u.series, season: u.season),
-            onPlay: playPending,
+            onPlay: () =>
+                ref.playEpisode(u.series, u.episode, season: u.season),
           ),
         );
       },
@@ -232,7 +234,7 @@ class NewSeasonsShelf extends ConsumerWidget {
         preview: (_) => TitlePreview(
           title: u.series,
           onOpen: () => ref.openTitle(u.series, season: u.season),
-          onPlay: playPending,
+          onPlay: () => ref.playTitle(u.series, season: u.season),
           playLabel: 'Play season ${u.season}',
         ),
       ),

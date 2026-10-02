@@ -40,7 +40,3 @@ extension OpenTitle on WidgetRef {
   void openTitle(ImdbTitle title, {int? season}) =>
       read(titleRoutesProvider.notifier).open(title, season: season);
 }
-
-/// Playback is not built yet. Play actions stay live, so their states can be
-/// reviewed, and route here until the player lands.
-void playPending() {}

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart' show windowManager;
 
 import '../settings/notifier.dart';
@@ -31,6 +32,7 @@ class AppRuntime with WidgetsBindingObserver {
 
   static Future<AppRuntime> initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
+    MediaKit.ensureInitialized();
     setupLogger();
     final log = Logger('sentorr.app');
     FlutterError.onError = (details) {

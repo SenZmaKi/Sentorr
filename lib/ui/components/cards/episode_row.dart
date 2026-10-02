@@ -11,7 +11,7 @@ import 'card_parts.dart';
 class EpisodeRow extends StatelessWidget {
   const EpisodeRow({
     super.key,
-    required this.code,
+    this.code,
     required this.name,
     required this.meta,
     required this.artwork,
@@ -21,10 +21,11 @@ class EpisodeRow extends StatelessWidget {
     this.compact = false,
     this.onTap,
     this.preview,
+    this.selected = false,
   });
 
-  /// Mono stamp on the still, e.g. "S2 E4".
-  final String code;
+  /// Mono stamp on the still, e.g. "S2 E4"; none for movies.
+  final String? code;
   final String name;
   final List<MetaItem> meta;
   final Widget artwork;
@@ -39,9 +40,15 @@ class EpisodeRow extends StatelessWidget {
   final VoidCallback? onTap;
   final WidgetBuilder? preview;
 
+  /// The episode now playing: selection fill and edge, a playing glyph on
+  /// the still and a Now playing line above the name.
+  final bool selected;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    // Small stills keep their stamps tight to the corners.
+    final inset = compact ? Space.s4 : Space.s8;
     return HoverPreview(
       preview: preview,
       align: PreviewAlign.start,
@@ -49,6 +56,7 @@ class EpisodeRow extends StatelessWidget {
         borderRadius: Radii.card,
         onTap: onTap,
         semanticLabel: semanticLabel,
+        selected: selected,
         builder: (context, s) => AnimatedContainer(
           duration: Motion.hover,
           curve: Motion.change,
@@ -58,8 +66,13 @@ class EpisodeRow extends StatelessWidget {
                 ? c.statePressed
                 : s.hovered
                 ? c.stateHover
+                : selected
+                ? c.selection
                 : c.stateHover.clear,
             borderRadius: BorderRadius.circular(Radii.card),
+            border: Border.all(
+              color: selected ? c.borderStrong : c.borderStrong.clear,
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,16 +91,39 @@ class EpisodeRow extends StatelessWidget {
                       ),
                     ),
                     decorations: [
-                      Positioned(
-                        left: Space.s8,
-                        top: Space.s8,
-                        child: OverlayBadge(code, technical: true),
-                      ),
+                      // A glyph only: the still is too small for words
+                      // beside its code and length stamps.
+                      if (selected) ...[
+                        const Positioned.fill(
+                          child: ColoredBox(color: OverlayColors.scrim),
+                        ),
+                        const Center(
+                          child: Icon(
+                            Icons.graphic_eq_rounded,
+                            size: IconSizes.navigation,
+                            color: OverlayColors.foreground,
+                          ),
+                        ),
+                      ],
+                      if (code case final code?)
+                        Positioned(
+                          left: inset,
+                          top: inset,
+                          child: OverlayBadge(
+                            code,
+                            technical: true,
+                            dense: compact,
+                          ),
+                        ),
                       if (duration != null)
                         Positioned(
-                          right: Space.s8,
-                          bottom: Space.s8,
-                          child: OverlayBadge(duration!, technical: true),
+                          right: inset,
+                          bottom: inset,
+                          child: OverlayBadge(
+                            duration!,
+                            technical: true,
+                            dense: compact,
+                          ),
                         ),
                     ],
                   ),
@@ -98,6 +134,14 @@ class EpisodeRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (selected)
+                      Text(
+                        'Now playing',
+                        style: context.type.caption.copyWith(
+                          color: c.foregroundSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     CardTitle(name, large: true),
                     const SizedBox(height: Space.s2),
                     MetaLine(meta),

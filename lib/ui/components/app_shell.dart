@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../shared/theme/theme.dart';
+import '../../player/session.dart';
+import '../shared/player_view.dart';
 import '../shared/title_route.dart';
 import 'motion.dart';
 import 'navigation.dart';
 import 'page_stack.dart';
 import 'side_nav.dart';
+import 'inert.dart';
 import 'surface.dart';
 
 enum AppDestination {
@@ -55,8 +58,8 @@ class AppShell extends ConsumerWidget {
     final body = Stack(
       fit: StackFit.expand,
       children: [
-        _Covered(
-          covered: title != null,
+        Inert(
+          inert: title != null,
           child: FadePageStack(
             index: current.index,
             children: [
@@ -72,10 +75,18 @@ class AppShell extends ConsumerWidget {
     // leaves the app. Rail layouts have no system Back to intercept. An open
     // title page always takes Back first.
     final bottomNav = MediaQuery.sizeOf(context).width < 600;
+    // A full player sits above the shell and handles Back itself; a docked
+    // one leaves Back to the app beneath it.
+    final playing =
+        ref.watch(playerSessionProvider.select((s) => s != null)) &&
+        ref.watch(playerViewProvider) != PlayerView.mini;
     return PopScope(
-      canPop: title == null && (!bottomNav || current == AppDestination.home),
+      canPop:
+          !playing &&
+          title == null &&
+          (!bottomNav || current == AppDestination.home),
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
+        if (didPop || playing) return;
         if (title != null) {
           titles.back();
         } else {
@@ -131,27 +142,6 @@ class AppShell extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// The destination beneath an open title page: still painted, but takes no
-/// pointer, focus or semantics, and its tickers pause.
-class _Covered extends StatelessWidget {
-  const _Covered({required this.covered, required this.child});
-
-  final bool covered;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => IgnorePointer(
-    ignoring: covered,
-    child: ExcludeFocus(
-      excluding: covered,
-      child: ExcludeSemantics(
-        excluding: covered,
-        child: TickerMode(enabled: !covered, child: child),
-      ),
-    ),
-  );
 }
 
 /// Fades the topmost title page in over the destination, and between

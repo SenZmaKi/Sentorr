@@ -13,7 +13,7 @@ import '../../components/section_header.dart';
 import '../../components/title_artwork.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
-import '../../shared/title_route.dart';
+import '../../shared/play_route.dart';
 
 /// A series' episodes, one season at a time: season chips, then the
 /// season's episodes in air order, paged on request.
@@ -170,6 +170,9 @@ class _EpisodeList extends ConsumerWidget {
     );
     final aired = episode.releaseDate?.dateTime;
     final upcoming = aired != null && aired.isAfter(DateTime.now());
+    final VoidCallback? play = upcoming
+        ? null
+        : () => ref.playEpisode(series, episode, season: season);
     final still = e.poster != null
         ? TitleArtwork(image: e.poster)
         : TitleBackdrop(title: series);
@@ -196,13 +199,14 @@ class _EpisodeList extends ConsumerWidget {
           : stampLabel(Duration(seconds: e.runtimeSeconds!)),
       artwork: still,
       semanticLabel: 'Play $code, ${e.title}',
-      onTap: upcoming ? null : playPending,
+      onTap: play,
       preview: (_) => EpisodePreview(
         series: series,
         episode: episode,
         artwork: still,
-        onPlay: upcoming ? null : playPending,
-        onOpen: playPending,
+        onPlay: play,
+        // Upcoming episodes have nothing to open; the card stays inert.
+        onOpen: play ?? () {},
         openLabel: null,
       ),
     );

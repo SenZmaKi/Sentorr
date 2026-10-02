@@ -10,6 +10,7 @@ import '../../components/cards/title_poster.dart';
 import '../../components/load_error.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_route.dart';
+import '../../shared/play_route.dart';
 
 /// Poster grid of results: skeletons while the first page loads, more
 /// skeletons while the next page loads, and plain-language empty and
@@ -66,7 +67,7 @@ class SearchResults extends ConsumerWidget {
                     ? titlePoster(
                         r.items[i],
                         onOpen: () => ref.openTitle(r.items[i]),
-                        onPlay: playPending,
+                        onPlay: () => ref.playTitle(r.items[i]),
                       )
                     : const CardSkeleton(aspectRatio: 2 / 3),
                 childCount: r.items.length + skeletons,

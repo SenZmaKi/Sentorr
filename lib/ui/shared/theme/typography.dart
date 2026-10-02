@@ -99,6 +99,16 @@ class SentorrType extends ThemeExtension<SentorrType> {
   TextStyle get bodySmall => _role(TextRole.bodySmall, 14, 20, FontWeight.w400);
   TextStyle get label => _role(TextRole.label, 14, 20, FontWeight.w500);
   TextStyle get caption => _role(TextRole.caption, 12, 16, FontWeight.w400);
+
+  /// Running time in the player: the sans face with fixed-width digits,
+  /// so a counting clock sits with the controls' type without jittering.
+  TextStyle get timecode => _role(
+    TextRole.label,
+    14,
+    20,
+    FontWeight.w500,
+  ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
+
   TextStyle get technical => const TextStyle(
     fontFamily: FontFamilies.mono,
     fontSize: 13,

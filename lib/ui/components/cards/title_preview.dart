@@ -33,7 +33,7 @@ class TitlePreview extends ConsumerWidget {
     final details = ref.watch(titleDetailsProvider(t.id)).value;
     return PreviewCard(
       title: t.title,
-      artwork: TitleBackdrop(title: t),
+      artwork: TitleBackdrop(title: t, waitForBackdrop: true),
       rating: t.rating?.toStringAsFixed(1),
       facts: [
         MetaItem(kindLabel(t), icon: kindIcon(t)),

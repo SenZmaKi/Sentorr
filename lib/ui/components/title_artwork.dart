@@ -47,26 +47,34 @@ class TitleArtwork extends StatelessWidget {
 }
 
 /// Landscape art for a title: its widest still once details arrive, or the
-/// poster cropped toward the top (where faces usually are) until then.
+/// poster cropped toward the top (where faces usually are) as a fallback.
 class TitleBackdrop extends ConsumerWidget {
-  const TitleBackdrop({super.key, required this.title});
+  const TitleBackdrop({
+    super.key,
+    required this.title,
+    this.waitForBackdrop = false,
+  });
 
   final ImdbTitle title;
 
+  /// Wait for details before using the poster when no backdrop is available.
+  final bool waitForBackdrop;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final backdrop = ref
-        .watch(titleDetailsProvider(title.id))
-        .whenOrNull(data: (d) => d.backdropCandidate);
+    final details = ref.watch(titleDetailsProvider(title.id));
+    final backdrop = details.whenOrNull(data: (d) => d.backdropCandidate);
     return AnimatedSwitcher(
       duration: Motion.panel,
       child: backdrop != null
           ? TitleArtwork(key: ValueKey(backdrop.url), image: backdrop)
-          : TitleArtwork(
+          : !waitForBackdrop || details.hasValue
+          ? TitleArtwork(
               key: const ValueKey('poster'),
               image: title.poster,
               alignment: const Alignment(0, -0.6),
-            ),
+            )
+          : const ArtworkPlaceholder(),
     );
   }
 }

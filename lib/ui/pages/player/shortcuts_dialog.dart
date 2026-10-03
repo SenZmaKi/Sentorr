@@ -6,6 +6,7 @@ import '../../components/dialog_actions.dart';
 import '../../shared/theme/theme.dart';
 import 'shortcut_keyboard.dart';
 import 'shortcut_map.dart';
+import 'shortcut_highlight.dart';
 
 /// Shows the player's keyboard shortcuts on a keyboard, with a legend.
 Future<void> showPlayerShortcuts(BuildContext context) => showAdaptiveSheet(
@@ -147,42 +148,48 @@ class _Row extends StatelessWidget {
         valueListenable: lit,
         builder: (context, shown, _) {
           final on = shown.contains(shortcut);
-          return AnimatedContainer(
-            duration: Motion.hover,
-            curve: Motion.change,
-            padding: const EdgeInsets.symmetric(
-              horizontal: Space.s8,
-              vertical: Space.s4,
-            ),
-            decoration: BoxDecoration(
-              color: on ? c.stateHover : Colors.transparent,
-              borderRadius: BorderRadius.circular(Radii.control),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    shortcut.action,
-                    style: context.type.bodySmall.copyWith(
-                      color: on ? c.foreground : c.foregroundSecondary,
+          return ShortcutHighlight(
+            on: on,
+            builder: (context, progress) => Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Space.s8,
+                vertical: Space.s4,
+              ),
+              decoration: BoxDecoration(
+                color: Color.lerp(c.stateHover.clear, c.stateHover, progress),
+                borderRadius: BorderRadius.circular(Radii.control),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      shortcut.action,
+                      style: context.type.bodySmall.copyWith(
+                        color: Color.lerp(
+                          c.foregroundSecondary,
+                          c.foreground,
+                          progress,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: Space.s8),
-                // Caps wrap under each other rather than squeeze the action.
-                Flexible(
-                  flex: 2,
-                  child: Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: Space.s4,
-                    runSpacing: Space.s4,
-                    children: [
-                      for (final key in shortcut.caps) _KeyCap(key, on: on),
-                    ],
+                  const SizedBox(width: Space.s8),
+                  // Caps wrap under each other rather than squeeze the action.
+                  Flexible(
+                    flex: 2,
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: Space.s4,
+                      runSpacing: Space.s4,
+                      children: [
+                        for (final key in shortcut.caps)
+                          _KeyCap(key, progress: progress),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -194,16 +201,16 @@ class _Row extends StatelessWidget {
 /// A key written inline as a recessed cap, lit like the keyboard's when
 /// its command is.
 class _KeyCap extends StatelessWidget {
-  const _KeyCap(this.label, {required this.on});
+  const _KeyCap(this.label, {required this.progress});
 
   final String label;
-  final bool on;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final ink = on ? c.onAction : c.foreground;
-    // Lit switches at once, as the keyboard's caps do.
+    final ink = Color.lerp(c.foreground, c.onAction, progress)!;
+    // Fill and ink follow the row's single animation.
     return Container(
       constraints: const BoxConstraints(minWidth: Space.s24 + Space.s4),
       padding: const EdgeInsets.symmetric(
@@ -211,9 +218,15 @@ class _KeyCap extends StatelessWidget {
         vertical: Space.s2,
       ),
       decoration: BoxDecoration(
-        color: on ? c.action : context.depth.of(SurfaceDepth.inset).fill,
+        color: Color.lerp(
+          context.depth.of(SurfaceDepth.inset).fill,
+          c.action,
+          progress,
+        ),
         borderRadius: BorderRadius.circular(Radii.chip),
-        border: Border.all(color: on ? c.action : c.borderSubtle),
+        border: Border.all(
+          color: Color.lerp(c.borderSubtle, c.action, progress)!,
+        ),
       ),
       child: switch (capIcons[label]) {
         final icon? => Icon(icon, size: IconSizes.control, color: ink),

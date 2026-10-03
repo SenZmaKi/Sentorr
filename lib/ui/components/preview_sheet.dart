@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../shared/layout/adaptive.dart';
 import '../shared/theme/theme.dart';
 import 'adaptive_sheet.dart';
+import 'dialog_scroll.dart';
 
 /// The touch path to a [HoverPreview]: the same preview card, opened by a
 /// long press, presented the way [showAdaptiveSheet] presents for the
@@ -103,7 +104,10 @@ class _PreviewFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
-      child: SingleChildScrollView(child: child),
+      child: ScrollConfiguration(
+        behavior: const DialogScrollBehavior(),
+        child: SingleChildScrollView(child: child),
+      ),
     );
     if (!bottom) return SafeArea(child: card);
     final media = MediaQuery.of(context);

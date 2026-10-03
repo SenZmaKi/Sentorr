@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../components/surface.dart';
 import '../../shared/theme/theme.dart';
 import 'shortcut_map.dart';
+import 'shortcut_highlight.dart';
 
 /// One cap: its id in [PlayerShortcut.keys], printed legend, the shifted
 /// legend above it, and width in key units.
@@ -160,30 +161,37 @@ class _Cap extends StatelessWidget {
           onEnter: (_) => lit.value = mine,
           child: GestureDetector(
             onTap: () => lit.value = setEquals(shown, mine) ? const {} : mine,
-            child: _face(context, bound: true, on: on),
+            child: ShortcutHighlight(
+              on: on,
+              builder: (context, progress) =>
+                  _face(context, bound: true, on: on, progress: progress),
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _face(BuildContext context, {required bool bound, required bool on}) {
+  Widget _face(
+    BuildContext context, {
+    required bool bound,
+    required bool on,
+    double progress = 0,
+  }) {
     final c = context.colors;
     final raised = context.depth.of(SurfaceDepth.raised);
     final style = !bound
         ? DepthStyle(fill: c.surfaceInset)
         : on
         ? DepthStyle(
-            fill: c.action,
+            fill: Color.lerp(raised.fill, c.action, progress)!,
             shadows: raised.shadows,
             edgeHighlight: raised.edgeHighlight,
             edgeShade: raised.edgeShade,
           )
         : raised;
-    final ink = on
-        ? c.onAction
-        : bound
-        ? c.foreground
+    final ink = bound
+        ? Color.lerp(c.foreground, c.onAction, progress)!
         : c.foregroundDisabled;
     final word = k.label.length > 1 && k.id.length > 1;
     final type = context.type;
@@ -196,8 +204,7 @@ class _Cap extends StatelessWidget {
     final glyph = k.shifted == null ? keyGlyphs[k.id] : null;
     return DepthBox(
       style: style,
-      // Lit switches at once: a fade passes through grey under ink that
-      // has already flipped, which reads as a flicker.
+      // The highlight builder animates fill and ink together.
       duration: Duration.zero,
       radius: Radii.chip,
       height: height,
@@ -212,7 +219,11 @@ class _Cap extends StatelessWidget {
               Text(
                 shifted,
                 style: type.caption.copyWith(
-                  color: on ? c.onAction : ink.withValues(alpha: 0.6),
+                  color: Color.lerp(
+                    c.foreground.withValues(alpha: 0.6),
+                    c.onAction,
+                    progress,
+                  ),
                 ),
               ),
             legend,

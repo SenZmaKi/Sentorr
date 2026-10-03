@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../shared/layout/adaptive.dart';
 import '../shared/theme/theme.dart';
 import 'surface.dart';
+import 'dialog_scroll.dart';
 
 /// How an adaptive sheet presents in a window of a given size.
 enum SheetStyle {
@@ -44,9 +45,12 @@ Future<T?> showAdaptiveSheet<T>(
   final style = SheetStyle.of(context.screen);
   Widget content(BuildContext context) => SheetScope(
     style: style,
-    child: framed
-        ? SheetFrame(maxWidth: maxWidth, child: builder(context))
-        : builder(context),
+    child: ScrollConfiguration(
+      behavior: const DialogScrollBehavior(),
+      child: framed
+          ? SheetFrame(maxWidth: maxWidth, child: builder(context))
+          : builder(context),
+    ),
   );
   if (style == SheetStyle.bottom) {
     return showModalBottomSheet<T>(

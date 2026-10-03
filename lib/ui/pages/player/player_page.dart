@@ -24,6 +24,7 @@ import 'player_panels.dart';
 import 'player_ui.dart';
 import 'player_value.dart';
 import 'stage_states.dart';
+import 'nerd_stats.dart';
 import 'switching_prompt.dart';
 import 'torrent_stats.dart';
 
@@ -255,6 +256,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                           engine: _engine,
                           actions: _actions,
                           ended: _ended,
+                        ),
+                      if (full)
+                        ListenableBuilder(
+                          listenable: _ui,
+                          builder: (context, _) => _ui.statsVisible
+                              ? NerdStats(
+                                  engine: _engine,
+                                  onClose: _ui.toggleStats,
+                                )
+                              : const SizedBox.shrink(),
                         ),
                       if (full)
                         ListenableBuilder(

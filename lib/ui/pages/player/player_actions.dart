@@ -182,6 +182,7 @@ class PlayerActions {
   /// player in the corner so the app can be browsed while it plays.
   Future<void> back() async {
     if (ui.panel != PlayerPanel.none) return ui.closePanel();
+    if (ui.statsVisible) return ui.toggleStats();
     if (ui.fullscreen) return toggleFullscreen();
     await minimize();
   }

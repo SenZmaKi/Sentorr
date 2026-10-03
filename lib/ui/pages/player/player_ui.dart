@@ -24,6 +24,13 @@ class PlayerFeedback {
 class PlayerUi extends ChangeNotifier {
   Timer? _idle;
   bool _awake = true;
+  bool statsVisible = false;
+
+  void toggleStats() {
+    statsVisible = !statsVisible;
+    notifyListeners();
+  }
+
   bool _playing = false;
   bool _hovering = false;
   bool _fullscreen = false;

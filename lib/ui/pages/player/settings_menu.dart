@@ -118,6 +118,14 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
         chevron: true,
         onTap: widget.actions.chooseTorrent,
       ),
+      PlayerMenuRow(
+        icon: Icons.analytics_outlined,
+        label: 'Stats for nerds (D)',
+        onTap: () {
+          widget.actions.ui.toggleStats();
+          widget.actions.ui.closePanel();
+        },
+      ),
       if (!context.input.isTouch)
         PlayerMenuRow(
           icon: Icons.keyboard_outlined,

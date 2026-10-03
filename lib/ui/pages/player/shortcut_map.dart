@@ -44,6 +44,7 @@ const shortcutGroups = <(String, List<PlayerShortcut>)>[
       (action: 'Full screen', caps: ['F'], keys: {'f'}),
       (action: 'Mini player', caps: ['I'], keys: {'i'}),
       (action: 'Episodes', caps: ['Q'], keys: {'q'}),
+      (action: 'Stats for nerds', caps: ['D'], keys: {'d'}),
       (action: 'Torrents', caps: ['T'], keys: {'t'}),
       (action: 'Keyboard shortcuts', caps: ['?'], keys: {'shift', '/'}),
       (

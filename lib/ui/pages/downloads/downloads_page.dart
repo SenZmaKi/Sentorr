@@ -16,6 +16,7 @@ import '../page_scaffold.dart';
 import 'download_row.dart';
 import 'review_section.dart';
 import 'season_controls.dart';
+import '../../shared/layout/adaptive.dart';
 
 typedef _View = ({
   LibraryEntry entry,
@@ -27,6 +28,10 @@ typedef _View = ({
 /// this device, a series' episodes together in order.
 class DownloadsPage extends ConsumerWidget {
   const DownloadsPage({super.key});
+
+  /// Rows stop growing here so progress tracks and actions stay near the
+  /// name on wide windows; the rest becomes margin.
+  static const _listMax = 1040.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,7 +61,7 @@ class DownloadsPage extends ConsumerWidget {
     final empty = views.isEmpty && planning == 0 && planningSeasons.isEmpty;
     return LayoutBuilder(
       builder: (context, box) {
-        final compact = box.maxWidth < 600;
+        final compact = LayoutSize(box.biggest).compact;
         Widget rows(List<_View> list) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -72,6 +77,7 @@ class DownloadsPage extends ConsumerWidget {
           ],
         );
         return PageScaffold(
+          maxWidth: _listMax,
           children: [
             const ReviewSection(),
             if (empty) const _Empty(),

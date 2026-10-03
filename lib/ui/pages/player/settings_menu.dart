@@ -31,30 +31,33 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
   @override
   Widget build(BuildContext context) {
     final p = widget.player;
+    // Sized by the player's panel slot; scrolls when a page outgrows a
+    // short window.
     return PlayerMenuSurface(
-      width: PlayerMetrics.menuWidth,
-      child: AnimatedSize(
-        duration: reduceMotion(context) ? Duration.zero : Motion.panel,
-        curve: Motion.change,
-        alignment: Alignment.bottomCenter,
-        child: PlayerValue(
-          stream: p.stream.tracks,
-          initial: p.state.tracks,
-          builder: (context, tracks) => PlayerValue(
-            stream: p.stream.track,
-            initial: p.state.track,
-            builder: (context, track) => PlayerValue(
-              stream: p.stream.rate,
-              initial: p.state.rate,
-              builder: (context, rate) => Column(
-                mainAxisSize: MainAxisSize.min,
-                children: switch (_page) {
-                  _Page.root => _root(tracks, track, rate),
-                  _Page.speed => _speed(rate),
-                  _Page.audio => _audio(tracks, track),
-                  _Page.subtitles => _subtitles(tracks, track),
-                  _Page.sleep => _sleep(),
-                },
+      child: SingleChildScrollView(
+        child: AnimatedSize(
+          duration: reduceMotion(context) ? Duration.zero : Motion.panel,
+          curve: Motion.change,
+          alignment: Alignment.bottomCenter,
+          child: PlayerValue(
+            stream: p.stream.tracks,
+            initial: p.state.tracks,
+            builder: (context, tracks) => PlayerValue(
+              stream: p.stream.track,
+              initial: p.state.track,
+              builder: (context, track) => PlayerValue(
+                stream: p.stream.rate,
+                initial: p.state.rate,
+                builder: (context, rate) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: switch (_page) {
+                    _Page.root => _root(tracks, track, rate),
+                    _Page.speed => _speed(rate),
+                    _Page.audio => _audio(tracks, track),
+                    _Page.subtitles => _subtitles(tracks, track),
+                    _Page.sleep => _sleep(),
+                  },
+                ),
               ),
             ),
           ),

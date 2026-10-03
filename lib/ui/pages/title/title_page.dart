@@ -13,9 +13,11 @@ import '../../components/motion.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_route.dart';
 import '../../shared/play_route.dart';
+import 'cast_column.dart';
 import 'title_episodes.dart';
 import 'title_hero.dart';
 import 'title_shelves.dart';
+import '../../shared/layout/adaptive.dart';
 
 /// Everything about one title: a hero carrying its details, cast, episodes
 /// for series, related titles and reviews. Opens over the current
@@ -77,15 +79,28 @@ class _TitlePageState extends ConsumerState<TitlePage> {
           color: context.colors.surface,
           child: LayoutBuilder(
             builder: (context, box) {
-              final gutter = box.maxWidth < 600 ? Space.s16 : Space.s24;
-              final shelves = TitleShelfLayout(context, gutter: gutter);
+              final shelves = TitleShelfLayout(
+                context,
+                layout: LayoutSize(box.biggest),
+              );
+              final gutter = shelves.gutter;
               final cast = [
                 ...?d?.credits.items.where((c) => c.kind == 'Cast'),
               ];
-              Widget padded(Widget child) => Padding(
-                padding: EdgeInsets.symmetric(horizontal: gutter),
-                child: child,
-              );
+              Widget padded(Widget child) =>
+                  Padding(padding: shelves.insets.horizontal, child: child);
+              // Large layouts keep the cast beside a series' episodes rather
+              // than as a row above them.
+              final castBeside =
+                  shelves.layout.large && cast.isNotEmpty && seasons.isNotEmpty;
+              final episodes = seasons.isEmpty
+                  ? null
+                  : TitleEpisodes(
+                      key: _episodesKey,
+                      series: _title,
+                      seasons: seasons,
+                      initialSeason: widget.route.season ?? pick?.season,
+                    );
               final sections = <Widget>[
                 padded(
                   TitleHero(
@@ -118,15 +133,23 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                   ),
                 // Who is in it reads as part of the title's information, so
                 // it follows the hero, ahead of the episode list.
-                if (cast.isNotEmpty) CastShelf(cast: cast, layout: shelves),
-                if (seasons.isNotEmpty)
+                if (cast.isNotEmpty && !castBeside)
+                  CastShelf(cast: cast, layout: shelves),
+                if (episodes != null)
                   padded(
-                    TitleEpisodes(
-                      key: _episodesKey,
-                      series: _title,
-                      seasons: seasons,
-                      initialSeason: widget.route.season ?? pick?.season,
-                    ),
+                    castBeside
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: Space.s32,
+                            children: [
+                              Expanded(child: episodes),
+                              SizedBox(
+                                width: CastColumn.width,
+                                child: CastColumn(cast: cast),
+                              ),
+                            ],
+                          )
+                        : episodes,
                   ),
                 if (d != null && d.recommendations.items.isNotEmpty)
                   RecommendationsShelf(
@@ -138,15 +161,12 @@ class _TitlePageState extends ConsumerState<TitlePage> {
               return ListView(
                 padding: EdgeInsets.only(top: gutter, bottom: gutter * 2),
                 children: [
+                  // Shelves span the page; everything else is padded into
+                  // the content column.
                   for (final (i, s) in sections.indexed)
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1400),
-                        child: Padding(
-                          padding: EdgeInsets.only(top: i == 0 ? 0 : Space.s48),
-                          child: s,
-                        ),
-                      ),
+                    Padding(
+                      padding: EdgeInsets.only(top: i == 0 ? 0 : Space.s48),
+                      child: s,
                     ),
                 ],
               );

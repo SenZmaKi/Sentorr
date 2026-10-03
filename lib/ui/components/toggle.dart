@@ -33,49 +33,51 @@ class SToggle extends StatelessWidget {
         onTap: enabled ? () => onChanged!(!value) : null,
         semanticLabel: semanticLabel,
         borderRadius: Radii.full,
-        builder: (context, s) => Opacity(
-          opacity: enabled ? 1 : .45,
-          child: Stack(
-            alignment: Alignment.centerLeft,
-            children: [
-              value
-                  ? AnimatedContainer(
-                      duration: Motion.hover,
-                      width: _width,
-                      height: _height,
-                      decoration: BoxDecoration(
-                        color: s.hovered ? c.actionHover : c.action,
-                        borderRadius: BorderRadius.circular(Radii.full),
-                      ),
-                    )
-                  : DepthBox(
-                      style: d.of(SurfaceDepth.inset),
-                      radius: Radii.full,
-                      width: _width,
-                      height: _height,
-                      border: Border.all(color: c.borderControl),
-                    ),
-              AnimatedPositioned(
-                duration: Motion.hover,
-                curve: Curves.easeOut,
-                left: value ? _width - _thumb - 3 : 3,
-                child: value
-                    ? Container(
-                        width: _thumb,
-                        height: _thumb,
+        builder: (context, s) => MinTarget(
+          child: Opacity(
+            opacity: enabled ? 1 : .45,
+            child: Stack(
+              alignment: Alignment.centerLeft,
+              children: [
+                value
+                    ? AnimatedContainer(
+                        duration: Motion.hover,
+                        width: _width,
+                        height: _height,
                         decoration: BoxDecoration(
-                          color: c.onAction,
-                          shape: BoxShape.circle,
+                          color: s.hovered ? c.actionHover : c.action,
+                          borderRadius: BorderRadius.circular(Radii.full),
                         ),
                       )
                     : DepthBox(
-                        style: d.of(SurfaceDepth.raised),
+                        style: d.of(SurfaceDepth.inset),
                         radius: Radii.full,
-                        width: _thumb,
-                        height: _thumb,
+                        width: _width,
+                        height: _height,
+                        border: Border.all(color: c.borderControl),
                       ),
-              ),
-            ],
+                AnimatedPositioned(
+                  duration: Motion.hover,
+                  curve: Curves.easeOut,
+                  left: value ? _width - _thumb - 3 : 3,
+                  child: value
+                      ? Container(
+                          width: _thumb,
+                          height: _thumb,
+                          decoration: BoxDecoration(
+                            color: c.onAction,
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                      : DepthBox(
+                          style: d.of(SurfaceDepth.raised),
+                          radius: Radii.full,
+                          width: _thumb,
+                          height: _thumb,
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

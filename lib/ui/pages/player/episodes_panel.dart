@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -60,10 +58,6 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
   Widget build(BuildContext context) {
     final episodes = widget.queue.kind == QueueKind.episodes;
     final series = _current.series;
-    final width = math.min(
-      PlayerMetrics.queueWidth,
-      MediaQuery.sizeOf(context).width - Space.s32,
-    );
     final seasons = series == null
         ? const <int>[]
         : ref
@@ -74,8 +68,8 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
     final state = series != null && season != null
         ? ref.watch(seasonEpisodesProvider((series.id, season)))
         : null;
+    // Sized by the player's panel slot.
     return PlayerMenuSurface(
-      width: width,
       padding: const EdgeInsets.all(Space.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

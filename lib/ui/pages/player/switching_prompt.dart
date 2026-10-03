@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../player/stream/torrent_playback.dart';
 import '../../components/buttons.dart';
+import '../../components/dialog_actions.dart';
 import '../../components/progress_track.dart';
 import '../../shared/theme/theme.dart';
 import 'menu_rows.dart';
+import 'player_layout.dart';
 
 /// A torrent failed to start and the next one follows shortly: what went
 /// wrong, which torrent is next, and the countdown, with the chance to
@@ -62,13 +64,15 @@ class _SwitchingPromptState extends State<SwitchingPrompt>
     final c = context.colors;
     final type = context.type;
     final s = widget.status;
+    final pad = context.playerLayout.handheld ? Space.s16 : Space.s24;
+    // Scrolls rather than overflows in a phone held sideways.
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(Space.s24),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(pad),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
           child: PlayerMenuSurface(
-            padding: const EdgeInsets.all(Space.s24),
+            padding: EdgeInsets.all(pad),
             child: Semantics(
               liveRegion: true,
               container: true,
@@ -124,9 +128,7 @@ class _SwitchingPromptState extends State<SwitchingPrompt>
                   const SizedBox(height: Space.s16),
                   ProgressTrack(progress: _countdown),
                   const SizedBox(height: Space.s24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    spacing: Space.s8,
+                  DialogActions(
                     children: [
                       SButton(
                         label: 'Choose torrent',

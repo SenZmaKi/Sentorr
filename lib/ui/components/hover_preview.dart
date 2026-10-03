@@ -3,9 +3,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../shared/layout/adaptive.dart';
 import '../shared/theme/theme.dart';
 import 'motion.dart';
+import 'preview_layout.dart';
+import 'preview_sheet.dart';
 
 /// Where the preview sits horizontally over its tile.
 enum PreviewAlign {
@@ -24,7 +28,9 @@ enum PreviewAlign {
 /// settle there for [delay]. Content scrolling under a still pointer, a
 /// sweep across a row, or a scroll during the wait never does.
 /// Mouse only: touch taps go straight to the tile, and keyboard focus keeps
-/// the tile's own artwork zoom. One preview is shown at a time.
+/// the tile's own artwork zoom. One preview is shown at a time. On touch a
+/// long press on the tile opens the same card in a sheet instead
+/// ([showPreviewSheet]).
 class HoverPreview extends StatefulWidget {
   const HoverPreview({
     super.key,
@@ -233,11 +239,11 @@ class _HoverPreviewState extends State<HoverPreview>
     );
     final width = math.min(
       widget.width ?? (anchor.width * 1.5).clamp(300.0, 400.0),
-      info.overlaySize.width - _PreviewLayout.margin * 2,
+      info.overlaySize.width - PreviewLayout.margin * 2,
     );
     return Positioned.fill(
       child: CustomSingleChildLayout(
-        delegate: _PreviewLayout(anchor, width, widget.align),
+        delegate: PreviewLayout(anchor, width, widget.align),
         // Pointer-only and supplementary: the tile keeps focus and speech.
         child: ExcludeFocus(
           child: ExcludeSemantics(
@@ -254,8 +260,16 @@ class _HoverPreviewState extends State<HoverPreview>
                 onExit: _exitPreview,
                 child: AnimatedBuilder(
                   animation: _curve,
-                  child: Builder(
-                    builder: widget.preview ?? (_) => const SizedBox(),
+                  // In a squat window a card taller than the room loses its
+                  // trailing synopsis rather than overflowing; actions
+                  // come first, so they stay visible.
+                  child: UnconstrainedBox(
+                    constrainedAxis: Axis.horizontal,
+                    alignment: Alignment.topCenter,
+                    clipBehavior: Clip.hardEdge,
+                    child: Builder(
+                      builder: widget.preview ?? (_) => const SizedBox(),
+                    ),
                   ),
                   builder: (context, child) {
                     final t = _curve.value;
@@ -279,12 +293,25 @@ class _HoverPreviewState extends State<HoverPreview>
     );
   }
 
+  void _showSheet() {
+    final preview = widget.preview;
+    if (preview == null) return;
+    HapticFeedback.selectionClick();
+    showPreviewSheet(context, preview: preview, maxWidth: widget.width ?? 400);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final touch = context.input.isTouch && widget.preview != null;
     return OverlayPortal.overlayChildLayoutBuilder(
       controller: _portal,
       overlayChildBuilder: _overlay,
-      child: _TriggerScope(state: this, child: widget.child),
+      child: _TriggerScope(
+        state: this,
+        child: touch
+            ? GestureDetector(onLongPress: _showSheet, child: widget.child)
+            : widget.child,
+      ),
     );
   }
 }
@@ -316,43 +343,4 @@ class HoverPreviewTrigger extends StatelessWidget {
       child: child,
     );
   }
-}
-
-/// Centres the card on its tile (or starts at its edge), then keeps it
-/// inside the window.
-class _PreviewLayout extends SingleChildLayoutDelegate {
-  _PreviewLayout(this.anchor, this.width, this.align);
-
-  static const margin = Space.s8;
-
-  final Rect anchor;
-  final double width;
-  final PreviewAlign align;
-
-  @override
-  BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
-      BoxConstraints(
-        minWidth: width,
-        maxWidth: width,
-        maxHeight: math.max(0, constraints.maxHeight - margin * 2),
-      );
-
-  @override
-  Offset getPositionForChild(Size size, Size child) {
-    final x = switch (align) {
-      PreviewAlign.center => anchor.center.dx - child.width / 2,
-      PreviewAlign.start => anchor.left - margin,
-    };
-    final y = anchor.center.dy - child.height / 2;
-    double fit(double v, double extent, double max) =>
-        v.clamp(margin, math.max(margin, max - extent - margin));
-    return Offset(
-      fit(x, child.width, size.width),
-      fit(y, child.height, size.height),
-    );
-  }
-
-  @override
-  bool shouldRelayout(_PreviewLayout old) =>
-      old.anchor != anchor || old.width != width || old.align != align;
 }

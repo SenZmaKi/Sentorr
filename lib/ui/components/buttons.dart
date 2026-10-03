@@ -115,7 +115,7 @@ class SButton extends StatelessWidget {
           style: style,
           radius: Radii.control,
           border: border,
-          height: ControlHeights.standard,
+          minHeight: context.density.control,
           padding: const EdgeInsets.symmetric(horizontal: Space.s16),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -131,7 +131,14 @@ class SButton extends StatelessWidget {
                 Icon(icon, size: IconSizes.control, color: fg),
               if (loading || icon != null || leading != null)
                 const SizedBox(width: Space.s8),
-              Text(label, style: context.type.label.copyWith(color: fg)),
+              // Wraps rather than overflows in a narrow sheet at large text.
+              Flexible(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: context.type.label.copyWith(color: fg),
+                ),
+              ),
             ],
           ),
         );
@@ -162,16 +169,17 @@ class SIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final label = shortcutLabel(context, tooltip);
     return Tooltip(
-      message: tooltip,
+      message: label,
       child: Interactive(
         onTap: onPressed,
-        semanticLabel: tooltip,
+        semanticLabel: label,
         selected: selected,
         builder: (context, s) => AnimatedContainer(
           duration: Motion.hover,
-          width: ControlHeights.standard,
-          height: ControlHeights.standard,
+          width: context.density.iconButton,
+          height: context.density.iconButton,
           decoration: BoxDecoration(
             color: s.pressed
                 ? c.statePressed

@@ -9,6 +9,7 @@ import 'tokens.dart';
 
 export 'colors.dart';
 export 'brand.dart';
+export 'density.dart';
 export 'depth.dart';
 export 'player_colors.dart';
 export 'tokens.dart';

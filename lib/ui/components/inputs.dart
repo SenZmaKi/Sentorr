@@ -100,7 +100,7 @@ class _STextFieldState extends State<STextField> {
           DepthBox(
             style: context.depth.of(SurfaceDepth.raised),
             radius: Radii.control,
-            height: ControlHeights.standard,
+            minHeight: context.density.control,
             border: Border.all(
               color: borderColor,
               width: focused || hasError ? Borders.focus : Borders.edge,

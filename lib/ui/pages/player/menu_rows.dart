@@ -61,7 +61,7 @@ class PlayerMenuRow extends StatelessWidget {
       semanticLabel: value == null ? label : '$label, $value',
       builder: (context, s) => AnimatedContainer(
         duration: Motion.hover,
-        height: ControlHeights.standard,
+        constraints: BoxConstraints(minHeight: context.density.control),
         padding: const EdgeInsets.symmetric(horizontal: Space.s12),
         decoration: BoxDecoration(
           color: s.pressed
@@ -154,7 +154,7 @@ class PlayerMenuHeader extends StatelessWidget {
         semanticLabel: 'Back to settings',
         builder: (context, s) => AnimatedContainer(
           duration: Motion.hover,
-          height: ControlHeights.standard,
+          constraints: BoxConstraints(minHeight: context.density.control),
           padding: const EdgeInsets.symmetric(horizontal: Space.s8),
           decoration: BoxDecoration(
             color: s.hovered

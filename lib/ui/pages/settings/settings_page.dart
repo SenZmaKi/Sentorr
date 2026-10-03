@@ -7,9 +7,10 @@ import '../../shared/theme/theme.dart';
 import 'settings_category.dart';
 import 'settings_nav.dart';
 import 'settings_search.dart';
+import '../../shared/layout/adaptive.dart';
 
-/// Settings in categories: a sidebar beside the open category on wide
-/// layouts, a list that opens each category on narrow ones. Search shows
+/// Settings in categories: a sidebar beside the open category from medium
+/// (narrower there), a list that opens each category on compact. Search shows
 /// matching settings from every category at once.
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -19,9 +20,14 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  static const _wide = 840.0, _content = 760.0;
+  /// Settings rows hold a label column and a control; past this the pair
+  /// drifts apart, so the open category caps here.
+  static const _content = 760.0;
 
   final _search = TextEditingController();
+
+  /// Keeps the field's state, and so its focus, wherever layouts place it.
+  final _searchKey = GlobalKey();
   SettingsCategory _category = SettingsCategory.playback;
 
   /// The category opened on a narrow layout; null shows the list.
@@ -45,20 +51,36 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        final gutter = box.maxWidth < 600 ? Space.s16 : Space.s24;
+        final layout = LayoutSize(box.biggest);
+        final gutter = gutterFor(layout);
         return Padding(
           padding: EdgeInsets.fromLTRB(gutter, gutter, gutter, 0),
-          child: box.maxWidth >= _wide ? _wideLayout() : _narrowLayout(),
+          child: layout.compact ? _narrowLayout() : _wideLayout(layout),
         );
       },
     );
   }
 
-  Widget _wideLayout() => Row(
+  /// Sidebar, gap and the content's reading cap: on expanded and large
+  /// windows the pair centres instead of hugging the left edge. Medium
+  /// narrows the sidebar and gap so the content keeps its room.
+  Widget _wideLayout(LayoutSize layout) {
+    final sidebar = layout.pick(compact: 200.0, expanded: 240.0);
+    final gap = layout.pick(compact: Space.s24, expanded: Space.s32);
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: sidebar + gap + _content),
+        child: _sidebarLayout(sidebar, gap),
+      ),
+    );
+  }
+
+  Widget _sidebarLayout(double sidebar, double gap) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       SizedBox(
-        width: 240,
+        width: sidebar,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -78,7 +100,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
       ),
-      const SizedBox(width: Space.s32),
+      SizedBox(width: gap),
       Expanded(child: _query.isNotEmpty ? _results() : _page(_category)),
     ],
   );
@@ -90,15 +112,10 @@ class _SettingsPageState extends State<SettingsPage> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) setState(() => _opened = null);
       },
-      child: _query.isNotEmpty
-          ? Column(
-              children: [
-                _searchField(),
-                const SizedBox(height: Space.s16),
-                Expanded(child: _results()),
-              ],
-            )
-          : opened != null
+      // The search field keeps one place in one structure whether the
+      // list or the results show, so typing never rebuilds it and drops
+      // focus (and the keyboard) after the first character.
+      child: opened != null && _query.isEmpty
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -111,14 +128,23 @@ class _SettingsPageState extends State<SettingsPage> {
                 Expanded(child: _page(opened)),
               ],
             )
-          : ListView(
-              padding: const EdgeInsets.only(bottom: Space.s24),
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _searchField(),
                 const SizedBox(height: Space.s16),
-                SettingsNav(
-                  sidebar: false,
-                  onSelect: (c) => setState(() => _opened = c),
+                Expanded(
+                  child: _query.isNotEmpty
+                      ? _results()
+                      : ListView(
+                          padding: const EdgeInsets.only(bottom: Space.s24),
+                          children: [
+                            SettingsNav(
+                              sidebar: false,
+                              onSelect: (c) => setState(() => _opened = c),
+                            ),
+                          ],
+                        ),
                 ),
               ],
             ),
@@ -126,6 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _searchField() => STextField(
+    key: _searchKey,
     controller: _search,
     hint: 'Search settings',
     semanticLabel: 'Search settings',

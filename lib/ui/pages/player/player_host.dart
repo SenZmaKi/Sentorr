@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../player/session.dart';
+import '../../components/bottom_nav.dart';
 import '../../components/inert.dart';
 import '../../components/motion.dart';
 import '../../shared/player_view.dart';
 import '../../shared/theme/theme.dart';
+import 'player_layout.dart';
 import 'player_page.dart';
 
 /// The player as a layer over the app, as in the original app: over
@@ -40,35 +42,24 @@ class PlayerHost extends ConsumerWidget {
 
 /// Places the player: filling the app, or a 16:9 card in its corner. Only
 /// the player's own rectangle takes pointer input.
-class _PlayerFrame extends StatelessWidget {
+class _PlayerFrame extends ConsumerWidget {
   const _PlayerFrame({super.key, required this.view});
 
   final PlayerView view;
 
-  /// Where the docked player sits; clears the bottom bar on compact layouts.
-  static Rect dockedRect(Size size) {
-    final compact = size.width < 600;
-    final width = (size.width * 0.28).clamp(260.0, 420.0);
-    final height = width * 9 / 16;
-    final margin = compact ? Space.s12 : Space.s24;
-    final bottom = margin + (compact ? 72 : 0);
-    return Rect.fromLTWH(
-      size.width - width - margin,
-      size.height - height - bottom,
-      width,
-      height,
-    );
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final mini = view == PlayerView.mini;
+    final nav = ref.watch(bottomNavExtentProvider);
+    final insets = MediaQuery.paddingOf(context);
     final duration = reduceMotion(context) ? Duration.zero : Motion.reveal;
     final floating = context.depth.of(SurfaceDepth.floating);
     return LayoutBuilder(
       builder: (context, box) {
         final size = box.biggest;
-        final rect = mini ? dockedRect(size) : Offset.zero & size;
+        final rect = mini
+            ? dockedPlayerRect(size, insets, nav)
+            : Offset.zero & size;
         return Stack(
           children: [
             AnimatedPositioned.fromRect(

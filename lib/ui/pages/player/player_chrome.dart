@@ -9,10 +9,10 @@ import 'bottom_bar.dart';
 import 'player_actions.dart';
 import 'player_ui.dart';
 import 'player_value.dart';
-import 'episodes_panel.dart';
-import 'settings_menu.dart';
 import 'top_bar.dart';
-import 'torrents_panel.dart';
+import 'panel_slot.dart';
+import 'player_panels.dart';
+import 'player_layout.dart';
 import 'up_next_card.dart';
 
 /// Everything drawn over the picture that comes and goes with activity:
@@ -26,14 +26,6 @@ class PlayerChrome extends StatelessWidget {
     required this.ended,
   });
 
-  /// Space the bottom bar occupies; panels and cards float above it.
-  static double barClearance(BuildContext context) =>
-      context.player.floatingBars ? 124 : 96;
-
-  /// Space the top bar occupies, when it is a floating surface.
-  static double topClearance(BuildContext context) =>
-      context.player.floatingBars ? 100 : Space.s16;
-
   final PlayerSession session;
   final PlaybackEngine engine;
   final PlayerActions actions;
@@ -42,10 +34,13 @@ class PlayerChrome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ui = PlayerUiScope.of(context);
-    final visible = ui.controlsVisible;
+    final layout = context.playerLayout;
+    // Sheets cover the bars' controls; the bars step aside while one shows.
+    final visible =
+        ui.controlsVisible &&
+        !(layout.barsYieldToPanels && ui.panel != PlayerPanel.none);
     final queue = session.queue;
     final duration = reduceMotion(context) ? Duration.zero : Motion.panel;
-    final compact = MediaQuery.sizeOf(context).width < 600;
     Widget fade(Widget child) => IgnorePointer(
       ignoring: !visible,
       child: AnimatedOpacity(
@@ -93,56 +88,16 @@ class PlayerChrome extends StatelessWidget {
         // Yields to an open panel, which occupies the same corner.
         if (queue?.next != null &&
             !ended &&
-            !compact &&
+            layout.showUpNextCard &&
             ui.panel == PlayerPanel.none)
           _UpNextSlot(engine: engine, session: session, actions: actions),
-        Positioned(
-          right: Space.s16,
-          bottom: barClearance(context),
-          top: topClearance(context),
-          child: SafeArea(
-            child: AnimatedSwitcher(
-              duration: duration,
-              switchInCurve: Motion.enter,
-              switchOutCurve: Motion.change,
-              layoutBuilder: (current, previous) => Stack(
-                alignment: Alignment.bottomRight,
-                children: [...previous, ?current],
-              ),
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween(
-                    begin: const Offset(0, 0.02),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                ),
-              ),
-              child: switch (ui.panel) {
-                PlayerPanel.settings => SettingsMenu(
-                  key: const ValueKey('settings'),
-                  player: engine.player,
-                  actions: actions,
-                ),
-                PlayerPanel.queue when queue != null => EpisodesPanel(
-                  key: const ValueKey('queue'),
-                  queue: queue,
-                  onJump: actions.session.jump,
-                  onClose: ui.closePanel,
-                ),
-                PlayerPanel.torrents when session.current != null =>
-                  TorrentsPanel(
-                    key: ValueKey('torrents ${session.current!.id}'),
-                    item: session.current!,
-                    status: engine.streaming.status,
-                    onSwitch: (torrent, options) =>
-                        actions.switchTorrent(torrent, options: options),
-                    onClose: ui.closePanel,
-                  ),
-                _ => const SizedBox.shrink(key: ValueKey('none')),
-              },
-            ),
+        PanelSlot(
+          floatingBars: context.player.floatingBars,
+          panel: openPlayerPanel(
+            ui: ui,
+            session: session,
+            engine: engine,
+            actions: actions,
           ),
         ),
       ],
@@ -162,6 +117,7 @@ class _BarBackdrop extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.player;
+    final layout = context.playerLayout;
     if (colors.floatingBars) {
       return SafeArea(
         top: top,
@@ -194,8 +150,8 @@ class _BarBackdrop extends StatelessWidget {
         child: Padding(
           // Room for the fade to reach clear before the bar's content.
           padding: top
-              ? const EdgeInsets.only(bottom: Space.s48)
-              : const EdgeInsets.only(top: Space.s64),
+              ? EdgeInsets.only(bottom: layout.topFade)
+              : EdgeInsets.only(top: layout.bottomFade),
           child: child,
         ),
       ),
@@ -228,8 +184,11 @@ class _UpNextSlot extends StatelessWidget {
     // Fixed above the bar whether or not it shows: a card that moves with
     // the chrome would drag its hover preview along.
     return Positioned(
-      right: Space.s24,
-      bottom: PlayerChrome.barClearance(context),
+      // Clear of a landscape phone's cut-out on that side.
+      right: Space.s24 + MediaQuery.paddingOf(context).right,
+      bottom: context.playerLayout.barClearance(
+        floatingBars: context.player.floatingBars,
+      ),
       child: PlayerValue(
         stream: p.stream.duration,
         initial: p.state.duration,

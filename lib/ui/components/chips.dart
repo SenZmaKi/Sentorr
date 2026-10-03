@@ -32,50 +32,56 @@ class SChip extends StatelessWidget {
       borderRadius: Radii.chip,
       selected: removable ? null : selected,
       semanticLabel: semanticLabel ?? (removable ? 'Remove $label' : label),
-      // Pads the hit region past the visual chip.
-      builder: (context, s) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: Space.s2),
-        child: AnimatedContainer(
-          duration: Motion.hover,
-          curve: Motion.change,
-          padding: const EdgeInsets.symmetric(
-            horizontal: Space.s8,
-            vertical: Space.s4,
-          ),
-          decoration: BoxDecoration(
-            color: s.pressed
-                ? c.statePressed
-                : s.hovered
-                ? c.stateHover
-                : selected
-                ? c.selection
-                : c.surfaceInset,
-            borderRadius: BorderRadius.circular(Radii.chip),
-            border: Border.all(
-              color: s.hovered || selected ? c.borderStrong : c.borderSubtle,
+      // Pads the hit region past the visual chip; to 48 on touch.
+      builder: (context, s) => MinTarget(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: Space.s2),
+          child: AnimatedContainer(
+            duration: Motion.hover,
+            curve: Motion.change,
+            padding: const EdgeInsets.symmetric(
+              horizontal: Space.s8,
+              vertical: Space.s4,
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: Space.s4,
-            children: [
-              if (selected && !removable)
-                Icon(Icons.check_rounded, size: IconSizes.metadata, color: fg),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.type.label.copyWith(color: fg),
-                ),
+            decoration: BoxDecoration(
+              color: s.pressed
+                  ? c.statePressed
+                  : s.hovered
+                  ? c.stateHover
+                  : selected
+                  ? c.selection
+                  : c.surfaceInset,
+              borderRadius: BorderRadius.circular(Radii.chip),
+              border: Border.all(
+                color: s.hovered || selected ? c.borderStrong : c.borderSubtle,
               ),
-              if (removable)
-                Icon(
-                  Icons.close_rounded,
-                  size: IconSizes.metadata,
-                  color: s.hovered ? c.foreground : c.foregroundMuted,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: Space.s4,
+              children: [
+                if (selected && !removable)
+                  Icon(
+                    Icons.check_rounded,
+                    size: IconSizes.metadata,
+                    color: fg,
+                  ),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.type.label.copyWith(color: fg),
+                  ),
                 ),
-            ],
+                if (removable)
+                  Icon(
+                    Icons.close_rounded,
+                    size: IconSizes.metadata,
+                    color: s.hovered ? c.foreground : c.foregroundMuted,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

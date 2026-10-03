@@ -53,76 +53,88 @@ class _TorrentPickerState extends ConsumerState<TorrentPicker> {
     final all = widget.candidates;
     final shown = filters.apply(all);
     final best = all.firstOrNull;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (widget.onSearch case final search?) ...[
-          STextField(
-            controller: widget.title,
-            prefixIcon: Icons.search,
-            hint: 'Search under another title',
-            semanticLabel: 'Title to search for',
-            textInputAction: TextInputAction.search,
-            onSubmitted: search,
-          ),
-          const SizedBox(height: Space.s12),
-        ],
-        PickerToolbar(
-          filters: filters,
-          filtersOpen: _filtersOpen,
-          onToggleFilters: () => setState(() => _filtersOpen = !_filtersOpen),
-          onChanged: setFilters,
+    final header = [
+      if (widget.onSearch case final search?) ...[
+        STextField(
+          controller: widget.title,
+          prefixIcon: Icons.search,
+          hint: 'Search under another title',
+          semanticLabel: 'Title to search for',
+          textInputAction: TextInputAction.search,
+          onSubmitted: search,
         ),
         const SizedBox(height: Space.s12),
-        Flexible(
-          child: ListView(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            children: [
-              if (_filtersOpen) ...[
-                PickerFilters(
-                  filters: filters,
-                  candidates: all,
-                  onChanged: setFilters,
-                ),
-                const SizedBox(height: Space.s16),
-                const Divider(height: 1),
-                const SizedBox(height: Space.s12),
-              ] else if (filters.activeCount > 0) ...[
-                ActiveFilterChips(filters: filters, onChanged: setFilters),
-                const SizedBox(height: Space.s8),
-              ],
-              Padding(
-                padding: const EdgeInsets.only(bottom: Space.s8),
-                child: Text(
-                  shown.length == all.length
-                      ? '${all.length} ${all.length == 1 ? 'torrent' : 'torrents'}'
-                      : '${shown.length} of ${all.length} torrents',
-                  style: context.type.bodySmall.copyWith(
-                    color: c.foregroundMuted,
-                  ),
-                ),
-              ),
-              if (shown.isEmpty)
-                _NoneShown(onClear: () => setFilters(filters.cleared()))
-              else
-                for (final (i, candidate) in shown.indexed) ...[
-                  if (i > 0) Divider(height: 1, color: c.borderSubtle),
-                  TorrentOption(
-                    candidate: candidate,
-                    best: identical(candidate, best),
-                    selected: identical(candidate, widget.selected),
-                    mark: _mark(candidate),
-                    onTap: () => widget.onSelected(candidate),
-                  ),
-                ],
-            ],
-          ),
-        ),
       ],
+      PickerToolbar(
+        filters: filters,
+        filtersOpen: _filtersOpen,
+        onToggleFilters: () => setState(() => _filtersOpen = !_filtersOpen),
+        onChanged: setFilters,
+      ),
+      const SizedBox(height: Space.s12),
+    ];
+    final list = <Widget>[
+      if (_filtersOpen) ...[
+        PickerFilters(filters: filters, candidates: all, onChanged: setFilters),
+        const SizedBox(height: Space.s16),
+        const Divider(height: 1),
+        const SizedBox(height: Space.s12),
+      ] else if (filters.activeCount > 0) ...[
+        ActiveFilterChips(filters: filters, onChanged: setFilters),
+        const SizedBox(height: Space.s8),
+      ],
+      Padding(
+        padding: const EdgeInsets.only(bottom: Space.s8),
+        child: Text(
+          shown.length == all.length
+              ? '${all.length} ${all.length == 1 ? 'torrent' : 'torrents'}'
+              : '${shown.length} of ${all.length} torrents',
+          style: context.type.bodySmall.copyWith(color: c.foregroundMuted),
+        ),
+      ),
+      if (shown.isEmpty)
+        _NoneShown(onClear: () => setFilters(filters.cleared()))
+      else
+        for (final (i, candidate) in shown.indexed) ...[
+          if (i > 0) Divider(height: 1, color: c.borderSubtle),
+          TorrentOption(
+            candidate: candidate,
+            best: identical(candidate, best),
+            selected: identical(candidate, widget.selected),
+            mark: _mark(candidate),
+            onTap: () => widget.onSelected(candidate),
+          ),
+        ],
+    ];
+    // With room, the search and toolbar stay put above the list; in a short
+    // host (a phone on its side) they scroll away with it so the list
+    // gets the height.
+    return LayoutBuilder(
+      builder: (context, box) => box.maxHeight < _pinnedHeaderMin
+          ? ListView(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              children: [...header, ...list],
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ...header,
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    children: list,
+                  ),
+                ),
+              ],
+            ),
     );
   }
+
+  /// Below this height a pinned header would leave the list a sliver.
+  static const _pinnedHeaderMin = 360.0;
 
   OptionMark _mark(TorrentCandidate candidate) {
     final hash = candidate.release.infoHash;

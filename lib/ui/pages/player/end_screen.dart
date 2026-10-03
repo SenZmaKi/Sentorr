@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../player/models.dart';
 import '../../components/artwork_frame.dart';
 import '../../components/buttons.dart';
+import '../../components/dialog_actions.dart';
 import '../../components/interactive.dart';
 import '../../components/title_artwork.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
+import 'player_layout.dart';
 
 /// Shown when an item ends without carrying on: the viewer dismissed Up
 /// next, the sleep timer claimed the ending, or nothing follows. No
@@ -32,7 +34,10 @@ class EndScreen extends StatelessWidget {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(Space.s24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
+            // Short windows shrink the artwork so the actions stay in view.
+            constraints: BoxConstraints(
+              maxWidth: context.playerLayout.short ? 280 : 400,
+            ),
             child: next == null ? _finished(context) : _upNext(context, next),
           ),
         ),
@@ -48,8 +53,7 @@ class EndScreen extends StatelessWidget {
         style: context.type.title.copyWith(color: context.player.foreground),
       ),
       const SizedBox(height: Space.s24),
-      Wrap(
-        spacing: Space.s8,
+      DialogActions(
         children: [
           SButton(label: 'Back', onPressed: onBack),
           SButton.primary(
@@ -113,9 +117,7 @@ class EndScreen extends StatelessWidget {
         style: context.type.subtitle.copyWith(color: context.player.foreground),
       ),
       const SizedBox(height: Space.s24),
-      Wrap(
-        spacing: Space.s8,
-        runSpacing: Space.s8,
+      DialogActions(
         children: [
           SButton(
             label: 'Replay',

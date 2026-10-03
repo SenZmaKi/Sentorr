@@ -6,11 +6,12 @@ import '../../player/session.dart';
 import '../shared/player_view.dart';
 import '../shared/title_route.dart';
 import 'motion.dart';
-import 'navigation.dart';
+import 'bottom_nav.dart';
 import 'page_stack.dart';
 import 'side_nav.dart';
 import 'inert.dart';
 import 'surface.dart';
+import '../shared/layout/adaptive.dart';
 
 enum AppDestination {
   home(Icons.home_outlined, Icons.home_rounded, 'Home'),
@@ -36,7 +37,7 @@ class AppDestinationNotifier extends Notifier<AppDestination> {
   void go(AppDestination destination) => state = destination;
 }
 
-/// Responsive navigation chrome: bottom bar below 600, a slim rail above.
+/// Responsive navigation chrome: bottom bar when compact, a slim rail above.
 /// Pages stay alive so scroll and input persist. Title pages open over the
 /// current destination, inside the same chrome.
 class AppShell extends ConsumerWidget {
@@ -75,7 +76,9 @@ class AppShell extends ConsumerWidget {
     // As in Senpwai: with bottom navigation, Back returns to Home before it
     // leaves the app. Rail layouts have no system Back to intercept. An open
     // title page always takes Back first.
-    final bottomNav = MediaQuery.sizeOf(context).width < 600;
+    final bottomNav = context.screen.compact;
+    // Read outside the Scaffold, which hides the inset from its body.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom > 0;
     // A full player sits above the shell and handles Back itself; a docked
     // one leaves Back to the app beneath it.
     final playing =
@@ -95,9 +98,9 @@ class AppShell extends ConsumerWidget {
         }
       },
       child: Scaffold(
-        body: LayoutBuilder(
-          builder: (context, box) {
-            if (box.maxWidth < 600) {
+        body: ResponsiveBuilder(
+          builder: (context, layout) {
+            if (layout.compact) {
               return Column(
                 children: [
                   // Pages always sit on surface, as on the wider panel layout.
@@ -107,7 +110,8 @@ class AppShell extends ConsumerWidget {
                       child: SafeArea(bottom: false, child: body),
                     ),
                   ),
-                  _BottomBar(current: current, onSelect: go),
+                  // The keyboard needs the room; the bar returns with it.
+                  if (!keyboard) BottomNavBar(current: current, onSelect: go),
                 ],
               );
             }
@@ -118,22 +122,27 @@ class AppShell extends ConsumerWidget {
                   SideNav(current: current, onSelect: go),
                   // Pages sit on a panel above the canvas the nav shares.
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        0,
-                        Space.s8,
-                        Space.s8,
-                        Space.s8,
-                      ),
-                      child: DepthBox(
-                        style: context.depth.of(SurfaceDepth.panel),
-                        radius: Radii.panel,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(Radii.panel),
-                          child: body,
-                        ),
-                      ),
-                    ),
+                    // A phone on its side keeps every row for the page.
+                    child: layout.phoneLandscape
+                        ? ColoredBox(color: context.colors.surface, child: body)
+                        : Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              0,
+                              Space.s8,
+                              Space.s8,
+                              Space.s8,
+                            ),
+                            child: DepthBox(
+                              style: context.depth.of(SurfaceDepth.panel),
+                              radius: Radii.panel,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                  Radii.panel,
+                                ),
+                                child: body,
+                              ),
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -175,46 +184,6 @@ class _TitleLayer extends StatelessWidget {
       child: route == null
           ? const SizedBox.shrink(key: ValueKey('no title'))
           : KeyedSubtree(key: ObjectKey(route), child: builder(route)),
-    );
-  }
-}
-
-class _BottomBar extends StatelessWidget {
-  const _BottomBar({required this.current, required this.onSelect});
-
-  final AppDestination current;
-  final ValueChanged<AppDestination> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: c.surface,
-        border: Border(top: BorderSide(color: c.borderSubtle)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Space.s8,
-            vertical: Space.s4,
-          ),
-          child: Row(
-            children: [
-              for (final d in AppDestination.values)
-                Expanded(
-                  child: BottomNavItem(
-                    icon: d == current ? d.selectedIcon : d.icon,
-                    label: d.label,
-                    selected: d == current,
-                    onTap: () => onSelect(d),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

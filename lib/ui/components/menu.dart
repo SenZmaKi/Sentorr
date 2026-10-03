@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../shared/theme/theme.dart';
+import 'adaptive_menu.dart';
 import 'surface.dart';
+
+export 'adaptive_menu.dart' show AdaptiveMenuController;
 
 /// One choice in an [ActionMenu].
 class MenuAction {
@@ -11,6 +14,7 @@ class MenuAction {
     this.icon,
     this.checked,
     this.destructive = false,
+    this.stayOpen,
   });
 
   final String label;
@@ -22,41 +26,35 @@ class MenuAction {
 
   /// Error foreground, for actions that remove something.
   final bool destructive;
+
+  /// Overrides [staysOpen], e.g. a single-choice list with checks.
+  final bool? stayOpen;
+
+  /// Whether choosing it leaves the menu open; toggles do by default.
+  bool get staysOpen => stayOpen ?? checked != null;
 }
 
-/// A floating menu of [actions] opened from the control [builder] draws;
-/// toggles stay open so several can change.
+/// A menu of [actions] opened from the control [builder] draws; toggles
+/// stay open so several can change. Floats beside its control, or rises as
+/// a bottom sheet on a touch phone ([AdaptiveMenu]).
 class ActionMenu extends StatelessWidget {
-  const ActionMenu({super.key, required this.actions, required this.builder});
+  const ActionMenu({
+    super.key,
+    required this.actions,
+    required this.builder,
+    this.title,
+  });
 
   final List<MenuAction> actions;
-  final Widget Function(BuildContext context, MenuController menu) builder;
+  final Widget Function(BuildContext context, AdaptiveMenuController menu)
+  builder;
+
+  /// Heads the bottom sheet form.
+  final String? title;
 
   @override
-  Widget build(BuildContext context) => MenuAnchor(
-    alignmentOffset: const Offset(-menuBleed, Space.s4 - menuBleed),
-    style: menuAnchorStyle,
-    menuChildren: [
-      Padding(
-        padding: const EdgeInsets.all(menuBleed),
-        child: MenuPanel(
-          minWidth: 200,
-          children: [
-            for (final a in actions)
-              MenuOption(
-                label: a.label,
-                icon: a.icon,
-                checked: a.checked,
-                destructive: a.destructive,
-                closeOnActivate: a.checked == null,
-                onPressed: a.onPressed,
-              ),
-          ],
-        ),
-      ),
-    ],
-    builder: (context, menu, _) => builder(context, menu),
-  );
+  Widget build(BuildContext context) =>
+      AdaptiveMenu(entries: actions, title: title, builder: builder);
 }
 
 /// Room around a menu for its floating shadow, which the menu's own scroll
@@ -130,9 +128,7 @@ class MenuOption extends StatelessWidget {
         foregroundColor: WidgetStatePropertyAll(fg),
         overlayColor: const WidgetStatePropertyAll(Colors.transparent),
         textStyle: WidgetStatePropertyAll(context.type.bodySmall),
-        minimumSize: const WidgetStatePropertyAll(
-          Size(0, ControlHeights.compact),
-        ),
+        minimumSize: WidgetStatePropertyAll(Size(0, context.density.menuRow)),
         padding: const WidgetStatePropertyAll(
           EdgeInsets.symmetric(horizontal: Space.s8),
         ),

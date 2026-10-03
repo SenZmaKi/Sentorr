@@ -33,6 +33,14 @@ Future<ProviderContainer> _pump(WidgetTester tester, Size size) async {
   return container;
 }
 
+/// Opens the filters where they sit behind a toggle; wide layouts keep
+/// them open beside the grid.
+Future<void> _openFilters(WidgetTester tester) async {
+  if (find.text('Filters').evaluate().isEmpty) return;
+  await tester.tap(find.text('Filters'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('does not search until the page is first shown', (tester) async {
     final container = ProviderContainer(
@@ -58,8 +66,7 @@ void main() {
       final container = await _pump(tester, size);
       expect(find.byType(PosterCard), findsWidgets);
 
-      await tester.tap(find.text('Filters'));
-      await tester.pumpAndSettle();
+      await _openFilters(tester);
       await tester.tap(find.text('Any').first);
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Drama'));
@@ -68,11 +75,17 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(container.read(searchProvider).query.genres, {'Drama'});
-      expect(find.text('Filters · 1'), findsOneWidget);
+      // Wide layouts show the filters beside the grid, with no toggle.
+      if (name == 'compact') expect(find.text('Filters · 1'), findsOneWidget);
 
-      // Close the menu, then remove the filter through its chip.
+      // Close the menu (and on compact the filters sheet), then remove the
+      // filter through its chip.
       await tester.tapAt(Offset.zero);
       await tester.pumpAndSettle();
+      if (find.text('Done').evaluate().isNotEmpty) {
+        await tester.tap(find.text('Done'));
+        await tester.pumpAndSettle();
+      }
       await tester.tap(find.widgetWithText(SChip, 'Drama'));
       await tester.pumpAndSettle();
       expect(container.read(searchProvider).query.genres, isEmpty);
@@ -82,8 +95,7 @@ void main() {
 
   testWidgets('a typed year range commits after the pause', (tester) async {
     final container = await _pump(tester, const Size(1440, 1000));
-    await tester.tap(find.text('Filters'));
-    await tester.pumpAndSettle();
+    await _openFilters(tester);
     final years = find.bySemanticsLabel('Minimum year');
     await tester.enterText(
       find.descendant(of: years, matching: find.byType(EditableText)),

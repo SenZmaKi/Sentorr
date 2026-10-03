@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../shared/layout/adaptive.dart';
 import '../shared/theme/theme.dart';
 import 'hover_preview.dart';
 import 'interactive.dart';
@@ -9,6 +10,11 @@ import 'surface.dart';
 /// Raised frame for card artwork. [decorations] are always shown (chips,
 /// player bars); [hoverOverlay] fades in over a bottom fade while [active].
 /// The frame never moves: only the artwork zooms within its clip.
+///
+/// The hover overlay's glyphs are decorative hints of what a pointer can do;
+/// touch has no hover to reveal them, so they are left out there. A tap
+/// opens the tile and a long press opens its preview with Play
+/// ([HoverPreview]).
 class ArtworkFrame extends StatelessWidget {
   const ArtworkFrame({
     super.key,
@@ -33,6 +39,7 @@ class ArtworkFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final raised = context.depth.of(SurfaceDepth.raised);
     final zoom = active && !reduceMotion(context);
+    final overlay = context.input.canHover ? hoverOverlay : null;
     // Artwork, not the whole tile, is what opens a hover preview.
     return HoverPreviewTrigger(
       child: DepthBox(
@@ -56,14 +63,14 @@ class ArtworkFrame extends StatelessWidget {
                 child: artwork,
               ),
               if (scrim) const _BottomFade(),
-              if (hoverOverlay != null)
+              if (overlay != null)
                 AnimatedOpacity(
                   opacity: active ? 1 : 0,
                   duration: Motion.hover,
                   curve: Motion.change,
                   child: Stack(
                     fit: StackFit.expand,
-                    children: [if (!scrim) const _BottomFade(), hoverOverlay!],
+                    children: [if (!scrim) const _BottomFade(), overlay],
                   ),
                 ),
               ...decorations,
@@ -173,7 +180,16 @@ class OverlayBadge extends StatelessWidget {
               Icon(icon, size: 12, color: OverlayColors.foreground),
               const SizedBox(width: Space.s4),
             ],
-            Text(label, style: style),
+            // Badges are one line; a narrow place shortens rather than
+            // overflows them.
+            Flexible(
+              child: Text(
+                label,
+                style: style,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
       ),
@@ -207,8 +223,8 @@ class OverlayIconButton extends StatelessWidget {
         builder: (context, s) => AnimatedContainer(
           duration: Motion.hover,
           curve: Motion.change,
-          width: ControlHeights.standard,
-          height: ControlHeights.standard,
+          width: context.density.iconButton,
+          height: context.density.iconButton,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: s.hovered || s.pressed

@@ -8,6 +8,7 @@ import '../../components/cards/card_skeleton.dart';
 import '../../components/cards/poster_card.dart';
 import '../../components/cards/title_poster.dart';
 import '../../components/load_error.dart';
+import '../../shared/layout/adaptive.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_route.dart';
 import '../../shared/play_route.dart';
@@ -18,8 +19,11 @@ import '../../shared/play_route.dart';
 class SearchResults extends ConsumerWidget {
   const SearchResults({super.key});
 
-  // Nominal tile width; columns grow from it to fill the row.
-  static const _tileWidth = 176.0;
+  // Nominal tile width by the grid's own width class (DESIGN: 160–220);
+  // columns grow from it to fill the row.
+  static double _tileWidth(double width) =>
+      LayoutSize(Size(width, 0))
+          .pick(compact: 176.0, medium: 160.0, expanded: 176.0, large: 200.0);
   static const _gap = Space.s16;
 
   @override
@@ -43,10 +47,9 @@ class SearchResults extends ConsumerWidget {
     return SliverLayoutBuilder(
       builder: (context, box) {
         final width = box.crossAxisExtent;
-        final columns = ((width + _gap) / (_tileWidth + _gap)).floor().clamp(
-          2,
-          12,
-        );
+        final columns = ((width + _gap) / (_tileWidth(width) + _gap))
+            .floor()
+            .clamp(2, 12);
         final tile = (width - _gap * (columns - 1)) / columns;
         final skeletons = r.loading
             ? columns * 3

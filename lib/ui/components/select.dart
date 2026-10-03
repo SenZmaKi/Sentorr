@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shared/theme/theme.dart';
 import 'interactive.dart';
+import 'adaptive_menu.dart';
 import 'menu.dart';
 import 'surface.dart';
 
@@ -49,34 +50,26 @@ class SSelect<T> extends StatelessWidget {
     ];
     final value = chosen.isEmpty ? null : chosen.join(', ');
     return LayoutBuilder(
-      builder: (context, box) => MenuAnchor(
-        alignmentOffset: const Offset(-menuBleed, Space.s4 - menuBleed),
-        style: menuAnchorStyle,
-        menuChildren: [
-          Padding(
-            padding: const EdgeInsets.all(menuBleed),
-            child: MenuPanel(
-              minWidth: box.hasBoundedWidth ? box.maxWidth : 0,
-              children: [
-                if (onClear != null)
-                  MenuOption(
-                    label: placeholder,
-                    checked: selected.isEmpty,
-                    closeOnActivate: !multiple,
-                    onPressed: onClear!,
-                  ),
-                for (final o in options)
-                  MenuOption(
-                    label: (optionLabelOf ?? labelOf)(o),
-                    checked: selected.contains(o),
-                    closeOnActivate: !multiple,
-                    onPressed: () => onSelected(o),
-                  ),
-              ],
+      builder: (context, box) => AdaptiveMenu(
+        matchAnchorWidth: true,
+        title: semanticLabel,
+        entries: [
+          if (onClear != null)
+            MenuAction(
+              placeholder,
+              checked: selected.isEmpty,
+              stayOpen: multiple,
+              onPressed: onClear!,
             ),
-          ),
+          for (final o in options)
+            MenuAction(
+              (optionLabelOf ?? labelOf)(o),
+              checked: selected.contains(o),
+              stayOpen: multiple,
+              onPressed: () => onSelected(o),
+            ),
         ],
-        builder: (context, menu, _) => Interactive(
+        builder: (context, menu) => Interactive(
           onTap: () => menu.isOpen ? menu.close() : menu.open(),
           semanticLabel: '$semanticLabel: ${value ?? placeholder}',
           builder: (context, s) => DepthBox(
@@ -84,7 +77,7 @@ class SSelect<T> extends StatelessWidget {
                 ? context.depth.of(SurfaceDepth.raised).hovered()
                 : context.depth.of(SurfaceDepth.raised),
             radius: Radii.control,
-            height: ControlHeights.standard,
+            minHeight: context.density.control,
             border: Border.all(
               color: menu.isOpen ? c.focus : c.borderControl,
               width: menu.isOpen ? Borders.focus : Borders.edge,

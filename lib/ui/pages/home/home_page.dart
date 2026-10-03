@@ -6,6 +6,7 @@ import '../../../home/more_like.dart';
 import '../../../home/series_updates.dart';
 import '../../../home/watch_activity.dart';
 import 'featured_section.dart';
+import '../../shared/layout/layout_size.dart';
 import 'home_layout.dart';
 import 'home_shelves.dart';
 import 'spotlight_ambient.dart';
@@ -62,7 +63,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) => HomeLayout(
-        width: box.maxWidth,
+        layout: LayoutSize(box.biggest),
         textScaler: MediaQuery.textScalerOf(context),
         child: Stack(
           children: [
@@ -84,23 +85,17 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _list(BuildContext context) {
-    final gutter = HomeLayout.of(context).gutter;
+    final layout = HomeLayout.of(context);
+    final gutter = layout.gutter;
     return ListView.builder(
       controller: _scroll,
       padding: EdgeInsets.only(top: gutter, bottom: gutter * 2),
       itemCount: _sections.length,
-      itemBuilder: (context, i) => Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1400),
-          // Shelves scroll under the gutter; the hero sits inside it.
-          child: i == 0
-              ? Padding(
-                  padding: EdgeInsets.symmetric(horizontal: gutter),
-                  child: _sections[i],
-                )
-              : _sections[i],
-        ),
-      ),
+      // The hero sits in the content column; shelves span the page and
+      // align their headers with it.
+      itemBuilder: (context, i) => i == 0
+          ? Padding(padding: layout.insets.horizontal, child: _sections[i])
+          : _sections[i],
     );
   }
 }

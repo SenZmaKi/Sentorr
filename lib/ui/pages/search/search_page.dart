@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../search/notifier.dart';
+import '../../components/adaptive_sheet.dart';
 import '../../components/app_shell.dart';
 import '../../components/buttons.dart';
+import '../../components/content_column.dart';
 import '../../components/inputs.dart';
-import '../../components/interactive.dart';
 import '../../components/motion.dart';
 import '../../shared/theme/theme.dart';
 import 'active_filters.dart';
+import 'search_filter_sheet.dart';
 import 'search_filters.dart';
 import 'search_results.dart';
 import 'search_toolbar.dart';
+import '../../shared/layout/adaptive.dart';
 
 /// IMDb catalog search: a title field, collapsible filters summarised as
 /// removable chips, ordering, and an endlessly scrolling poster grid. With
@@ -26,6 +29,9 @@ class SearchPage extends ConsumerStatefulWidget {
 class _SearchPageState extends ConsumerState<SearchPage> {
   // How close to the end of the grid the next page starts loading.
   static const _prefetchExtent = 800.0;
+
+  // The always-open filters column on wide layouts: one filter per row.
+  static const _filterColumnWidth = 264.0;
 
   final _scroll = ScrollController();
   final _term = TextEditingController();
@@ -68,8 +74,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     if (!_visited && !here) return const SizedBox.shrink();
     _visited = true;
     ref.listen(appDestinationProvider, (_, next) {
-      if (next == AppDestination.search &&
-          MediaQuery.sizeOf(context).width >= 600) {
+      // Focusing would raise a touch keyboard over the results.
+      if (next == AppDestination.search && context.input.canHover) {
         // After the page stack stops excluding this page from focus.
         WidgetsBinding.instance.addPostFrameCallback(
           (_) => _termFocus.requestFocus(),
@@ -82,84 +88,162 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     });
     return LayoutBuilder(
       builder: (context, box) {
-        final gutter = box.maxWidth < 600 ? Space.s16 : Space.s24;
-        // Centres content at the shared 1400 cap while the scrollbar stays
-        // at the window edge.
-        final side = ((box.maxWidth - 1400) / 2).clamp(gutter, double.infinity);
-        return Scrollbar(
+        final insets = ContentInsets(box.maxWidth);
+        final gutter = insets.gutter;
+        final side = insets.side;
+        final layout = LayoutSize(box.biggest);
+        // Wide layouts keep the filters open in a column beside the grid.
+        final sideFilters = layout.expanded;
+        // Phones open the filters as a sheet rather than pushing the
+        // results a screen down.
+        final sheetFilters = layout.compact;
+        // Where height is scarce the field floats back in on any upward
+        // scroll, so refining the search never means scrolling to the top.
+        final floatField = layout.compact || context.screen.short;
+        final left = sideFilters ? 0.0 : side;
+        // The scrollbar stays at the window edge, outside the column.
+        final results = Scrollbar(
           controller: _scroll,
           child: CustomScrollView(
             controller: _scroll,
             slivers: [
+              if (floatField)
+                SliverFloatingHeader(
+                  child: ColoredBox(
+                    color: context.colors.surface,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        left,
+                        gutter,
+                        side,
+                        Space.s8,
+                      ),
+                      child: _field(
+                        sideFilters: sideFilters,
+                        sheetFilters: sheetFilters,
+                      ),
+                    ),
+                  ),
+                ),
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(side, gutter, side, 0),
-                sliver: SliverToBoxAdapter(child: _header(context)),
+                padding: EdgeInsets.fromLTRB(
+                  left,
+                  floatField ? Space.s8 : gutter,
+                  side,
+                  0,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: _header(
+                    context,
+                    sideFilters: sideFilters,
+                    sheetFilters: sheetFilters,
+                    field: !floatField,
+                  ),
+                ),
               ),
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(side, Space.s24, side, gutter * 2),
+                padding: EdgeInsets.fromLTRB(
+                  sideFilters ? 0 : side,
+                  Space.s24,
+                  side,
+                  gutter * 2,
+                ),
                 sliver: const SearchResults(),
               ),
             ],
           ),
         );
+        if (!sideFilters) return results;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: side + _filterColumnWidth,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(side, gutter, 0, gutter),
+                child: const SearchFilters(),
+              ),
+            ),
+            const SizedBox(width: Space.s32),
+            Expanded(child: results),
+          ],
+        );
       },
     );
   }
 
-  Widget _header(BuildContext context) {
-    final c = context.colors;
+  /// The search field, with the Filters button beside it unless the
+  /// filters have a column of their own.
+  Widget _field({required bool sideFilters, required bool sheetFilters}) {
+    final filterCount = ref.watch(
+      searchProvider.select((s) => s.query.filterCount),
+    );
+    return Row(
+      children: [
+        Expanded(
+          child: STextField(
+            controller: _term,
+            focusNode: _termFocus,
+            hint: 'Search movies and series',
+            semanticLabel: 'Search movies and series',
+            prefixIcon: Icons.search,
+            textInputAction: TextInputAction.search,
+            onChanged: ref.read(searchProvider.notifier).setTerm,
+            trailing: _term.text.isEmpty
+                ? null
+                : SIconButton(
+                    icon: Icons.close_rounded,
+                    tooltip: 'Clear search',
+                    onPressed: _clearTerm,
+                  ),
+          ),
+        ),
+        if (!sideFilters) ...[
+          const SizedBox(width: Space.s8),
+          SButton(
+            label: filterCount == 0 ? 'Filters' : 'Filters · $filterCount',
+            icon: _filtersOpen && !sheetFilters
+                ? Icons.expand_less_rounded
+                : Icons.tune_rounded,
+            onPressed: sheetFilters
+                ? _showFilterSheet
+                : () => setState(() => _filtersOpen = !_filtersOpen),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _showFilterSheet() => showAdaptiveSheet<void>(
+    context,
+    builder: (context) => const SearchFilterSheet(),
+  );
+
+  Widget _header(
+    BuildContext context, {
+    required bool sideFilters,
+    required bool sheetFilters,
+    required bool field,
+  }) {
     final filterCount = ref.watch(
       searchProvider.select((s) => s.query.filterCount),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: STextField(
-                controller: _term,
-                focusNode: _termFocus,
-                hint: 'Search movies and series',
-                semanticLabel: 'Search movies and series',
-                prefixIcon: Icons.search,
-                textInputAction: TextInputAction.search,
-                onChanged: ref.read(searchProvider.notifier).setTerm,
-                trailing: _term.text.isEmpty
-                    ? null
-                    : Interactive(
-                        onTap: _clearTerm,
-                        semanticLabel: 'Clear search',
-                        borderRadius: Radii.full,
-                        builder: (context, s) => Icon(
-                          Icons.close_rounded,
-                          size: IconSizes.metadata,
-                          color: s.hovered ? c.foreground : c.foregroundMuted,
-                        ),
-                      ),
-              ),
-            ),
-            const SizedBox(width: Space.s8),
-            SButton(
-              label: filterCount == 0 ? 'Filters' : 'Filters · $filterCount',
-              icon: _filtersOpen
-                  ? Icons.expand_less_rounded
-                  : Icons.tune_rounded,
-              onPressed: () => setState(() => _filtersOpen = !_filtersOpen),
-            ),
-          ],
-        ),
-        AnimatedSize(
-          duration: reduceMotion(context) ? Duration.zero : Motion.panel,
-          curve: Motion.change,
-          alignment: Alignment.topCenter,
-          child: _filtersOpen
-              ? const Padding(
-                  padding: EdgeInsets.only(top: Space.s24),
-                  child: SearchFilters(),
-                )
-              : const SizedBox(width: double.infinity),
-        ),
+        if (field) _field(sideFilters: sideFilters, sheetFilters: sheetFilters),
+        if (!sideFilters && !sheetFilters)
+          AnimatedSize(
+            duration: reduceMotion(context) ? Duration.zero : Motion.panel,
+            curve: Motion.change,
+            alignment: Alignment.topCenter,
+            child: _filtersOpen
+                ? const Padding(
+                    padding: EdgeInsets.only(top: Space.s24),
+                    child: SearchFilters(),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
         if (filterCount > 0) ...[
           const SizedBox(height: Space.s16),
           const ActiveFilters(),

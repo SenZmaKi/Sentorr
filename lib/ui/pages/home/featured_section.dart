@@ -16,10 +16,12 @@ import '../../shared/title_route.dart';
 import '../../shared/play_route.dart';
 import 'featured_hero.dart';
 import 'featured_artwork.dart';
+import 'spotlight_gestures.dart';
 import 'spotlight_state.dart';
 
 /// Spotlight over the top trending titles. Advances on its own, pausing
-/// while hovered or focused, and stays put under reduced motion.
+/// while hovered or focused, or once touched until the viewer swipes or
+/// picks another title, and stays put under reduced motion.
 class FeaturedSection extends ConsumerStatefulWidget {
   const FeaturedSection({super.key});
 
@@ -36,8 +38,9 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
   int _count = 0;
   bool _hovered = false;
   bool _focused = false;
+  bool _touched = false;
 
-  bool get _paused => _hovered || _focused || reduceMotion(context);
+  bool get _paused => _hovered || _focused || _touched || reduceMotion(context);
 
   @override
   void dispose() {
@@ -52,13 +55,15 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
 
   void _show(int index) {
     ref.read(spotlightIndexProvider.notifier).show(index);
+    _touched = false;
     _hold.value = 0;
     if (!_paused) _hold.forward();
   }
 
-  void _setPause({bool? hovered, bool? focused}) {
+  void _setPause({bool? hovered, bool? focused, bool? touched}) {
     _hovered = hovered ?? _hovered;
     _focused = focused ?? _focused;
+    _touched = touched ?? _touched;
     if (_paused) {
       _hold.stop();
     } else if (_count > 1) {
@@ -94,27 +99,35 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
                 canRequestFocus: false,
                 skipTraversal: true,
                 onFocusChange: (f) => _setPause(focused: f),
-                child: FeaturedHero(
-                  title: t.title,
-                  facts: _facts(t),
-                  genres: t.genres.take(3).toList(),
-                  synopsis: t.plot ?? '',
-                  badge: '#${i + 1} trending this week',
-                  badgeIcon: Icons.trending_up_rounded,
-                  artwork: FeaturedArtwork(titles: titles, index: i),
-                  pager: titles.length < 2
-                      ? null
-                      : RepaintBoundary(
-                          child: _Pager(
-                            titles: titles,
-                            index: i,
-                            progress: _hold,
-                            onSelect: _show,
+                child: SpotlightGestures(
+                  onTouch: () => _setPause(touched: true),
+                  onSwipe: (step) {
+                    if (titles.length > 1) {
+                      _show((i + step) % titles.length);
+                    }
+                  },
+                  child: FeaturedHero(
+                    title: t.title,
+                    facts: _facts(t),
+                    genres: t.genres.take(3).toList(),
+                    synopsis: t.plot ?? '',
+                    badge: '#${i + 1} trending this week',
+                    badgeIcon: Icons.trending_up_rounded,
+                    artwork: FeaturedArtwork(titles: titles, index: i),
+                    pager: titles.length < 2
+                        ? null
+                        : RepaintBoundary(
+                            child: _Pager(
+                              titles: titles,
+                              index: i,
+                              progress: _hold,
+                              onSelect: _show,
+                            ),
                           ),
-                        ),
-                  onPlay: () => ref.playFrom(t, pick),
-                  playLabel: pickUpLabel(pick),
-                  onDetails: () => ref.openTitle(t),
+                    onPlay: () => ref.playFrom(t, pick),
+                    playLabel: pickUpLabel(pick),
+                    onDetails: () => ref.openTitle(t),
+                  ),
                 ),
               ),
             );
@@ -181,32 +194,35 @@ class _Pager extends StatelessWidget {
             semanticLabel: 'Feature ${t.title}',
             borderRadius: Radii.full,
             focusColor: OverlayColors.focus,
-            builder: (context, s) => Padding(
-              padding: const EdgeInsets.all(Space.s8),
-              child: AnimatedContainer(
-                duration: Motion.reveal,
-                curve: Motion.change,
-                width: n == index ? Space.s32 : Space.s8,
-                height: Space.s8,
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: s.hovered
-                      ? OverlayColors.foregroundSecondary
-                      : OverlayColors.inactiveTrack,
-                  borderRadius: BorderRadius.circular(Radii.full),
-                ),
-                child: n != index
-                    ? null
-                    : AnimatedBuilder(
-                        animation: progress,
-                        builder: (context, _) => FractionallySizedBox(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: still ? 1 : progress.value,
-                          child: const ColoredBox(
-                            color: OverlayColors.foreground,
+            // 24 on pointer; 48 on touch, keeping the 8 dot.
+            builder: (context, s) => MinTarget(
+              child: Padding(
+                padding: const EdgeInsets.all(Space.s8),
+                child: AnimatedContainer(
+                  duration: Motion.reveal,
+                  curve: Motion.change,
+                  width: n == index ? Space.s32 : Space.s8,
+                  height: Space.s8,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: s.hovered
+                        ? OverlayColors.foregroundSecondary
+                        : OverlayColors.inactiveTrack,
+                    borderRadius: BorderRadius.circular(Radii.full),
+                  ),
+                  child: n != index
+                      ? null
+                      : AnimatedBuilder(
+                          animation: progress,
+                          builder: (context, _) => FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: still ? 1 : progress.value,
+                            child: const ColoredBox(
+                              color: OverlayColors.foreground,
+                            ),
                           ),
                         ),
-                      ),
+                ),
               ),
             ),
           ),

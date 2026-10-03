@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -138,19 +139,29 @@ class _ErrorToastState extends State<_ErrorToast> {
       // Reading or copying must not race the timer.
       onEnter: (_) => _close?.cancel(),
       onExit: (_) => _schedule(),
-      child: Reveal(
-        child: Toast(
-          tone: ToastTone.error,
-          title: report.title,
-          message: report.message,
-          onDismiss: widget.onDismiss,
-          actions: [
-            SButton.ghost(
-              label: _copied ? 'Copied' : 'Copy details',
-              icon: _copied ? Icons.check_rounded : Icons.copy_rounded,
-              onPressed: _copy,
-            ),
-          ],
+      // Touch has no hover: a finger on the toast holds it, and lifting
+      // grants a fresh lifetime to finish reading.
+      child: Listener(
+        onPointerDown: (e) {
+          if (e.kind != PointerDeviceKind.mouse) _close?.cancel();
+        },
+        onPointerUp: (e) {
+          if (e.kind != PointerDeviceKind.mouse) _schedule();
+        },
+        child: Reveal(
+          child: Toast(
+            tone: ToastTone.error,
+            title: report.title,
+            message: report.message,
+            onDismiss: widget.onDismiss,
+            actions: [
+              SButton.ghost(
+                label: _copied ? 'Copied' : 'Copy details',
+                icon: _copied ? Icons.check_rounded : Icons.copy_rounded,
+                onPressed: _copy,
+              ),
+            ],
+          ),
         ),
       ),
     );

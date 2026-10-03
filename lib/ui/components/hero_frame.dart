@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
+import '../shared/layout/adaptive.dart';
 import '../shared/theme/theme.dart';
 import 'surface.dart';
 
@@ -19,6 +22,20 @@ class HeroFrame extends StatelessWidget {
   /// Pinned to the frame's top-left corner, e.g. a Back control.
   final Widget? leading;
 
+  /// A cinematic 21:9 band between 400 and 600 tall; in a short window no
+  /// more than most of its height, so the page's actions and first shelf
+  /// are in view without scrolling.
+  static double minHeight(BuildContext context, BoxConstraints box) {
+    final band = (box.maxWidth * 9 / 21).clamp(400.0, 600.0);
+    final screen = context.screen;
+    return screen.short ? math.min(band, screen.size.height * 0.7) : band;
+  }
+
+  /// Top padding before hero copy: room for the pinned Back control, and
+  /// an opening above it only where the height allows.
+  static double topPad(BuildContext context) =>
+      context.screen.pickHeight(short: Space.s64, regular: Space.s96);
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -29,9 +46,7 @@ class HeroFrame extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(Radii.panel),
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: (box.maxWidth * 9 / 21).clamp(400, 600),
-            ),
+            constraints: BoxConstraints(minHeight: minHeight(context, box)),
             child: Stack(
               alignment: Alignment.bottomLeft,
               children: [

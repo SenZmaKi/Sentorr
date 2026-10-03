@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -11,6 +10,7 @@ import '../../../player/stream/torrent_playback.dart';
 import '../../../player/torrent_search.dart';
 import '../../../torrents/resolution_models.dart';
 import '../../components/buttons.dart';
+import '../../components/dialog_actions.dart';
 import '../../components/section_header.dart';
 import '../../shared/theme/theme.dart';
 import '../launch/launch_states.dart';
@@ -100,12 +100,8 @@ class _TorrentsPanelState extends ConsumerState<TorrentsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final width = math.min(
-      PlayerMetrics.torrentsWidth,
-      MediaQuery.sizeOf(context).width - Space.s32,
-    );
+    // Sized by the player's panel slot.
     return PlayerMenuSurface(
-      width: width,
       padding: const EdgeInsets.all(Space.s16),
       child: ValueListenableBuilder(
         valueListenable: widget.status,
@@ -135,9 +131,7 @@ class _TorrentsPanelState extends ConsumerState<TorrentsPanel> {
               const SizedBox(height: Space.s16),
               Expanded(child: _body(status, options)),
               const SizedBox(height: Space.s16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                spacing: Space.s8,
+              DialogActions(
                 children: [
                   SButton.ghost(label: 'Cancel', onPressed: widget.onClose),
                   SButton.primary(

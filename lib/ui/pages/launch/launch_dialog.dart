@@ -6,7 +6,7 @@ import '../../../settings/notifier.dart';
 import '../../../torrents/resolution_models.dart';
 import '../../components/buttons.dart';
 import '../../components/progress_track.dart';
-import '../../components/surface.dart';
+import '../../components/adaptive_sheet.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'launch_states.dart';
@@ -126,50 +126,41 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
           _interrupt();
           return KeyEventResult.ignored;
         },
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          insetPadding: const EdgeInsets.all(Space.s24),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: _showAll ? 720 : 560),
-            child: DepthBox(
-              style: context.depth.of(SurfaceDepth.floating),
-              radius: Radii.panel,
-              border: Border.all(color: c.borderStrong),
-              padding: const EdgeInsets.all(Space.s24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    _subject(launch),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: type.bodySmall.copyWith(color: c.foregroundMuted),
-                  ),
-                  const SizedBox(height: Space.s4),
-                  Text(
-                    _heading(launch),
-                    style: type.title.copyWith(color: c.foreground),
-                  ),
-                  const SizedBox(height: Space.s16),
-                  Flexible(child: _body(launch)),
-                  const SizedBox(height: Space.s24),
-                  if (_counting) ...[
-                    ProgressTrack(progress: _countdown),
-                    const SizedBox(height: Space.s16),
-                  ],
-                  // Rebuilt as the countdown ticks, for its seconds label.
-                  AnimatedBuilder(
-                    animation: _countdown,
-                    builder: (context, _) => LaunchActions(
-                      onCancel: _launch.cancel,
-                      primary: _primary(launch),
-                    ),
-                  ),
-                ],
+        // The host shows it as an adaptive sheet; the frame widens when
+        // every torrent is listed.
+        child: SheetFrame(
+          maxWidth: _showAll ? 720 : 560,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                _subject(launch),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: type.bodySmall.copyWith(color: c.foregroundMuted),
               ),
-            ),
+              const SizedBox(height: Space.s4),
+              Text(
+                _heading(launch),
+                style: type.title.copyWith(color: c.foreground),
+              ),
+              const SizedBox(height: Space.s16),
+              Flexible(child: _body(launch)),
+              const SizedBox(height: Space.s24),
+              if (_counting) ...[
+                ProgressTrack(progress: _countdown),
+                const SizedBox(height: Space.s16),
+              ],
+              // Rebuilt as the countdown ticks, for its seconds label.
+              AnimatedBuilder(
+                animation: _countdown,
+                builder: (context, _) => LaunchActions(
+                  onCancel: _launch.cancel,
+                  primary: _primary(launch),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -193,7 +184,7 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
       );
     }
     final all = resolution.candidates;
-    return Column(
+    final body = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -243,6 +234,9 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
         ],
       ],
     );
+    // Large text in a squat window outgrows the dialog; the picker scrolls
+    // itself, the single choice scrolls here.
+    return _showAll ? body : SingleChildScrollView(child: body);
   }
 
   SButton? _primary(PlaybackLaunch launch) {

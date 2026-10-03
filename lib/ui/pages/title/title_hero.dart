@@ -10,6 +10,7 @@ import '../../components/title_artwork.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import '../../shared/title_icons.dart';
+import '../../shared/layout/adaptive.dart';
 
 /// The title's backdrop carrying everything a viewer decides on: Back, the
 /// poster with its rating, name, facts, genres, synopsis, key people and
@@ -45,8 +46,14 @@ class TitleHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        final wide = box.maxWidth >= 960;
+        final layout = LayoutSize(box.biggest);
+        final wide = layout.expanded;
         final pad = wide ? Space.s48 : Space.s24;
+        // Two columns from medium: the poster (carrying the rating) beside
+        // the copy. Short windows give the height to the copy instead.
+        final posterWidth = context.screen.short
+            ? null
+            : layout.pick<double?>(compact: null, medium: 160, expanded: 200);
         return HeroFrame(
           background: Stack(
             fit: StackFit.expand,
@@ -74,16 +81,25 @@ class TitleHero extends StatelessWidget {
           ),
           child: ImageOverlayContext(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(pad, Space.s96, pad, pad),
+              padding: EdgeInsets.fromLTRB(
+                pad,
+                HeroFrame.topPad(context),
+                pad,
+                pad,
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  if (wide) ...[
-                    Reveal(child: _Poster(title)),
-                    const SizedBox(width: Space.s32),
+                  if (posterWidth != null) ...[
+                    Reveal(child: _Poster(title, width: posterWidth)),
+                    SizedBox(width: wide ? Space.s32 : Space.s24),
                   ],
                   Expanded(
-                    child: _Copy(hero: this, wide: wide),
+                    child: _Copy(
+                      hero: this,
+                      wide: wide,
+                      poster: posterWidth != null,
+                    ),
                   ),
                 ],
               ),
@@ -96,15 +112,16 @@ class TitleHero extends StatelessWidget {
 }
 
 class _Poster extends StatelessWidget {
-  const _Poster(this.title);
+  const _Poster(this.title, {required this.width});
 
   final ImdbTitle title;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
     final t = title;
     return SizedBox(
-      width: 200,
+      width: width,
       child: AspectRatio(
         aspectRatio: 2 / 3,
         child: ArtworkFrame(
@@ -133,16 +150,19 @@ class _Poster extends StatelessWidget {
 }
 
 class _Copy extends StatelessWidget {
-  const _Copy({required this.hero, required this.wide});
+  const _Copy({required this.hero, required this.wide, required this.poster});
 
   final TitleHero hero;
   final bool wide;
 
+  /// The poster beside the copy carries the rating.
+  final bool poster;
+
   List<MetaItem> _facts(ImdbTitle t, ImdbTitleDetails? d) {
     final episodes = d?.episodeCount;
     return [
-      // Wide layouts carry the rating on the poster.
-      if (!wide && t.rating != null)
+      // With a poster, the rating rides on it.
+      if (!poster && t.rating != null)
         MetaItem(
           t.rating!.toStringAsFixed(1),
           icon: Icons.star_rounded,
@@ -167,7 +187,7 @@ class _Copy extends StatelessWidget {
     ];
   }
 
-  List<Widget> _parts(SentorrType type) {
+  List<Widget> _parts(SentorrType type, {required bool short}) {
     final t = hero.title;
     final original = hero.details?.originalTitle;
     final people = _people(hero.details);
@@ -180,7 +200,7 @@ class _Copy extends StatelessWidget {
       ),
       Text(
         t.title,
-        maxLines: 3,
+        maxLines: short ? 2 : 3,
         overflow: TextOverflow.ellipsis,
         style: (wide ? type.display : type.headline).copyWith(
           color: OverlayColors.foreground,
@@ -206,7 +226,9 @@ class _Copy extends StatelessWidget {
           style: type.bodySmall,
         ),
       ),
-      if (t.genres.isNotEmpty)
+      // A short window keeps the actions in view: genres and credits
+      // wait for the sections below.
+      if (t.genres.isNotEmpty && !short)
         Padding(
           padding: const EdgeInsets.only(top: Space.s12),
           child: Wrap(
@@ -220,14 +242,14 @@ class _Copy extends StatelessWidget {
           padding: const EdgeInsets.only(top: Space.s12),
           child: Text(
             plot,
-            maxLines: 5,
+            maxLines: short ? 2 : 5,
             overflow: TextOverflow.ellipsis,
             style: (wide ? type.bodyLarge : type.bodySmall).copyWith(
               color: OverlayColors.foregroundSecondary,
             ),
           ),
         ),
-      if (people.isEmpty)
+      if (people.isEmpty || short)
         const SizedBox.shrink()
       else
         Padding(
@@ -275,7 +297,10 @@ class _Copy extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (final (i, part) in _parts(context.type).indexed)
+            for (final (i, part) in _parts(
+              context.type,
+              short: context.screen.short,
+            ).indexed)
               Reveal(
                 delay: Duration(milliseconds: 60 * i),
                 child: part,

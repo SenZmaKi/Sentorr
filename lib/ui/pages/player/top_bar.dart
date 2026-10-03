@@ -7,6 +7,7 @@ import '../../components/artwork_frame.dart';
 import '../../components/player_control.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
+import 'player_layout.dart';
 import 'player_ui.dart';
 import 'torrent_stats.dart';
 
@@ -51,17 +52,14 @@ class TopBar extends StatelessWidget {
         padding: EdgeInsets.all(
           context.player.floatingBars ? Space.s8 : Space.s16,
         ),
-        child: LayoutBuilder(
-          builder: (context, box) =>
-              _row(context, box.maxWidth, eyebrow, heading),
-        ),
+        child: _row(context, context.playerLayout, eyebrow, heading),
       ),
     );
   }
 
   Widget _row(
     BuildContext context,
-    double width,
+    PlayerLayout layout,
     String? eyebrow,
     String heading,
   ) {
@@ -80,7 +78,8 @@ class TopBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (eyebrow != null)
+              // A short window keeps its height for the picture.
+              if (eyebrow != null && !layout.short)
                 Text(
                   eyebrow,
                   maxLines: 1,
@@ -113,12 +112,12 @@ class TopBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: Space.s16),
-        // Sized by the player, not the window: a docked player is
-        // narrow in a wide window. Too narrow, the title keeps the room.
-        if (width >= 420)
+        // Sized by the player, not the window. Too narrow, the title
+        // keeps the room.
+        if (layout.showStats)
           SizedBox(
             height: PlayerMetrics.control,
-            child: TorrentStats(status: stream, compact: width < 720),
+            child: TorrentStats(status: stream, compact: layout.compactStats),
           ),
         const SizedBox(width: Space.s8),
         _BarButton(

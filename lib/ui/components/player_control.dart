@@ -34,9 +34,10 @@ class PlayerControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final label = shortcutLabel(context, tooltip);
     final control = Interactive(
       onTap: onPressed,
-      semanticLabel: tooltip,
+      semanticLabel: label,
       selected: selected,
       borderRadius: Radii.full,
       focusColor: context.player.focus,
@@ -82,6 +83,6 @@ class PlayerControl extends StatelessWidget {
         ),
       ),
     );
-    return showTooltip ? Tooltip(message: tooltip, child: control) : control;
+    return showTooltip ? Tooltip(message: label, child: control) : control;
   }
 }

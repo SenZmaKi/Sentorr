@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../player/launch.dart';
-import '../../shared/theme/theme.dart';
+import '../../components/adaptive_sheet.dart';
 import 'launch_dialog.dart';
 
 /// Shows the launch dialog whenever a launch starts, from wherever Play was
@@ -34,9 +34,9 @@ class _LaunchHostState extends ConsumerState<LaunchHost> {
   Future<void> _show() async {
     _open = true;
     final request = ref.read(playbackLaunchProvider)?.request;
-    await showDialog<void>(
-      context: context,
-      barrierColor: OverlayColors.scrim,
+    await showAdaptiveSheet<void>(
+      context,
+      framed: false,
       builder: (_) => const LaunchDialog(),
     );
     _open = false;

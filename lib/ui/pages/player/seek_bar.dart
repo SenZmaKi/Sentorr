@@ -80,13 +80,21 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
   }
 
   void _syncActive() {
-    final on = _hover != null || _drag != null || _focused;
+    // Touch has no hover to reveal the thumb, so it shows with the chrome.
+    final on =
+        _hover != null || _drag != null || _focused || context.density.isTouch;
     final target = on ? 1.0 : 0.0;
     if (reduceMotion(context)) {
       _active.value = target;
     } else {
       _active.animateTo(target, curve: Motion.change);
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (context.density.isTouch) _syncActive();
   }
 
   double _fraction(Offset local, double width) =>
@@ -162,7 +170,10 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
                     ? (d) => _seek(_at(_fraction(d.localPosition, width)))
                     : null,
                 child: SizedBox(
-                  height: Space.s24,
+                  // A finger needs the 48 band; the track stays thin.
+                  height: context.density.isTouch
+                      ? context.density.minTarget
+                      : Space.s24,
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [

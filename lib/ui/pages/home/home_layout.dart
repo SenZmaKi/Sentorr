@@ -4,7 +4,8 @@ import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_card.dart';
 import '../../components/cards/poster_card.dart';
 import '../../components/cards/resume_card.dart';
-import '../../shared/theme/theme.dart';
+import '../../components/content_column.dart';
+import '../../shared/layout/adaptive.dart';
 
 /// Fixed geometry of one card kind, so a row is sized before it is built.
 class CardSpec {
@@ -25,21 +26,31 @@ class CardSpec {
 class HomeLayout extends InheritedWidget {
   HomeLayout({
     super.key,
-    required double width,
+    required this.layout,
     required TextScaler textScaler,
     required super.child,
-  }) : compact = width < 600,
-       lines = CardLines(textScaler);
+  }) : lines = CardLines(textScaler);
 
-  final bool compact;
+  /// The size class of the home page's own box.
+  final LayoutSize layout;
   final CardLines lines;
+
+  bool get compact => layout.compact;
 
   static HomeLayout of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<HomeLayout>()!;
 
-  double get gutter => compact ? Space.s16 : Space.s24;
-  double get posterWidth => compact ? 144 : 176;
-  double get _landscapeWidth => compact ? 280 : 340;
+  double get gutter => gutterFor(layout);
+
+  /// The page's content column; shelves pad to [ContentInsets.side] so
+  /// their headers align with it while tiles run to the window edge.
+  ContentInsets get insets => ContentInsets(layout.size.width);
+
+  // Large monitors grow tiles toward DESIGN's 220 nominal poster.
+  double get posterWidth =>
+      layout.pick(compact: 144, medium: 160, expanded: 176, large: 200);
+  double get _landscapeWidth =>
+      layout.pick(compact: 280, medium: 300, expanded: 340, large: 380);
 
   CardSpec _poster(double width) => CardSpec(
     width: width,
@@ -62,5 +73,5 @@ class HomeLayout extends InheritedWidget {
 
   @override
   bool updateShouldNotify(HomeLayout old) =>
-      old.compact != compact || old.lines.scaler != lines.scaler;
+      old.layout != layout || old.lines.scaler != lines.scaler;
 }

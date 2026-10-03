@@ -16,7 +16,10 @@ import 'end_screen.dart';
 import 'mini_chrome.dart';
 import 'player_actions.dart';
 import 'player_chrome.dart';
+import 'player_dock.dart';
 import 'player_input.dart';
+import 'player_layout.dart';
+import 'player_panels.dart';
 import 'player_ui.dart';
 import 'player_value.dart';
 import 'stage_states.dart';
@@ -139,93 +142,113 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       },
       child: PlayerUiScope(
         ui: _ui,
-        child: ExcludeFocus(
-          excluding: view == PlayerView.mini,
-          child: PlayerShortcuts(
-            actions: _actions,
-            focusNode: _focus,
-            child: ColoredBox(
-              color: Colors.black,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (full)
-                    StageGestures(actions: _actions, child: video)
-                  else
-                    video,
-                  if (view != PlayerView.mini)
-                    ListenableBuilder(
-                      listenable: _ui,
-                      builder: (context, _) =>
-                          CaptionsView(player: p, lifted: _ui.controlsVisible),
-                    ),
-                  PlayerValue(
-                    stream: p.stream.buffering,
-                    initial: p.state.buffering,
-                    builder: (context, buffering) =>
-                        BufferingIndicator(buffering: buffering && !_ended),
+        child: PlayerLayoutScope(
+          child: ExcludeFocus(
+            excluding: view == PlayerView.mini,
+            child: PlayerShortcuts(
+              actions: _actions,
+              focusNode: _focus,
+              child: ColoredBox(
+                color: Colors.black,
+                // Wide players dock the open panel beside the picture.
+                child: ListenableBuilder(
+                  listenable: _ui,
+                  builder: (context, stage) => PlayerDock(
+                    panel: full
+                        ? openPlayerPanel(
+                            ui: _ui,
+                            session: session,
+                            engine: _engine,
+                            actions: _actions,
+                          )
+                        : null,
+                    child: stage!,
                   ),
-                  if (full) const CenterFeedback(),
-                  ValueListenableBuilder(
-                    valueListenable: _engine.streaming.status,
-                    builder: (context, stream, _) => PlayerValue(
-                      stream: p.stream.duration,
-                      initial: p.state.duration,
-                      builder: (context, duration) => AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 450),
-                        child:
-                            duration == Duration.zero &&
-                                stream?.stage != StreamStage.failed
-                            ? IgnorePointer(
-                                child: OpeningCover(
-                                  subject:
-                                      session.current?.title ??
-                                      session.request.subject,
-                                  label: !full
-                                      ? ''
-                                      : queue == null && session.error == null
-                                      ? _resolvingLabel(session.request)
-                                      : streamLabel(stream),
-                                ),
-                              )
-                            : const SizedBox.shrink(),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (full)
+                        StageGestures(actions: _actions, child: video)
+                      else
+                        video,
+                      if (view != PlayerView.mini)
+                        ListenableBuilder(
+                          listenable: _ui,
+                          builder: (context, _) => CaptionsView(
+                            player: p,
+                            lifted: _ui.controlsVisible,
+                          ),
+                        ),
+                      PlayerValue(
+                        stream: p.stream.buffering,
+                        initial: p.state.buffering,
+                        builder: (context, buffering) =>
+                            BufferingIndicator(buffering: buffering && !_ended),
                       ),
-                    ),
+                      if (full) const CenterFeedback(),
+                      ValueListenableBuilder(
+                        valueListenable: _engine.streaming.status,
+                        builder: (context, stream, _) => PlayerValue(
+                          stream: p.stream.duration,
+                          initial: p.state.duration,
+                          builder: (context, duration) => AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 450),
+                            child:
+                                duration == Duration.zero &&
+                                    stream?.stage != StreamStage.failed
+                                ? IgnorePointer(
+                                    child: OpeningCover(
+                                      subject:
+                                          session.current?.title ??
+                                          session.request.subject,
+                                      label: !full
+                                          ? ''
+                                          : queue == null &&
+                                                session.error == null
+                                          ? _resolvingLabel(session.request)
+                                          : streamLabel(stream),
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                      if (!full)
+                        MiniChrome(
+                          player: p,
+                          actions: _actions,
+                          item: session.current,
+                          hasNext: next != null,
+                          poppedOut: view == PlayerView.popOut,
+                        ),
+                      if (_ended && full)
+                        EndScreen(
+                          key: ValueKey(session.current?.id),
+                          next: next,
+                          onPlayNext: _actions.next,
+                          onReplay: _replay,
+                          onBack: _actions.close,
+                        ),
+                      // Above the end screen, as on YouTube: scrub back or leave.
+                      if (full)
+                        PlayerChrome(
+                          session: session,
+                          engine: _engine,
+                          actions: _actions,
+                          ended: _ended,
+                        ),
+                      if (full)
+                        ListenableBuilder(
+                          listenable: Listenable.merge([
+                            _ui,
+                            _engine.streaming.status,
+                          ]),
+                          builder: (context, _) =>
+                              _failure(session, _engine.streaming.status.value),
+                        ),
+                    ],
                   ),
-                  if (!full)
-                    MiniChrome(
-                      player: p,
-                      actions: _actions,
-                      item: session.current,
-                      hasNext: next != null,
-                      poppedOut: view == PlayerView.popOut,
-                    ),
-                  if (_ended && full)
-                    EndScreen(
-                      key: ValueKey(session.current?.id),
-                      next: next,
-                      onPlayNext: _actions.next,
-                      onReplay: _replay,
-                      onBack: _actions.close,
-                    ),
-                  // Above the end screen, as on YouTube: scrub back or leave.
-                  if (full)
-                    PlayerChrome(
-                      session: session,
-                      engine: _engine,
-                      actions: _actions,
-                      ended: _ended,
-                    ),
-                  if (full)
-                    ListenableBuilder(
-                      listenable: Listenable.merge([
-                        _ui,
-                        _engine.streaming.status,
-                      ]),
-                      builder: (context, _) =>
-                          _failure(session, _engine.streaming.status.value),
-                    ),
-                ],
+                ),
               ),
             ),
           ),

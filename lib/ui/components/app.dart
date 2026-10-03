@@ -10,6 +10,7 @@ import '../pages/player/player_host.dart';
 import '../pages/search/search_page.dart';
 import '../pages/settings/settings_page.dart';
 import '../pages/title/title_page.dart';
+import '../shared/layout/adaptive.dart';
 import '../shared/theme/theme.dart';
 import 'app_shell.dart';
 import 'desktop_icon_sync.dart';
@@ -29,8 +30,11 @@ class SentorrApp extends ConsumerWidget {
         settingsProvider.select((settings) => settings.themeMode),
       ),
       builder: (context, child) => AppActivity(
-        child: DesktopIconSync(
-          child: NotificationTaps(child: ErrorToasts(child: child!)),
+        child: AdaptiveScope(
+          input: InputMode.platform,
+          child: DesktopIconSync(
+            child: NotificationTaps(child: ErrorToasts(child: child!)),
+          ),
         ),
       ),
       home: LaunchHost(

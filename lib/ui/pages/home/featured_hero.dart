@@ -6,6 +6,7 @@ import '../../components/cards/card_parts.dart';
 import '../../components/motion.dart';
 import '../../components/hero_frame.dart';
 import '../../shared/theme/theme.dart';
+import '../../shared/layout/adaptive.dart';
 
 /// Spotlight backdrop with title, synopsis and the primary actions. Text sits
 /// over bottom and leading artwork fades rather than trusting the image.
@@ -47,8 +48,32 @@ class FeaturedHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        final wide = box.maxWidth >= 960;
-        final pad = wide ? Space.s48 : Space.s24;
+        final layout = LayoutSize(box.biggest);
+        final wide = layout.expanded;
+        final short = context.screen.short;
+        final pad = layout.pick(
+          compact: Space.s16,
+          medium: Space.s24,
+          expanded: Space.s48,
+        );
+        // On a phone the pager takes its own row under the actions rather
+        // than squeezing the copy beside it.
+        final pagerBelow = layout.compact;
+        final copy = AnimatedSwitcher(
+          duration: Motion.reveal,
+          switchInCurve: Motion.enter,
+          layoutBuilder: (current, previous) => Stack(
+            alignment: Alignment.bottomLeft,
+            children: [...previous, ?current],
+          ),
+          // Keyed by title so each change replays the reveal.
+          child: _Copy(
+            key: ValueKey(title),
+            hero: this,
+            wide: wide,
+            short: short,
+          ),
+        );
         return HeroFrame(
           background: Stack(
             fit: StackFit.expand,
@@ -68,33 +93,35 @@ class FeaturedHero extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.fromLTRB(pad, Space.s96, pad, pad),
+            padding: EdgeInsets.fromLTRB(
+              pad,
+              context.screen.pickHeight(short: Space.s24, regular: Space.s96),
+              pad,
+              pad,
+            ),
             child: ImageOverlayContext(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: Motion.reveal,
-                      switchInCurve: Motion.enter,
-                      layoutBuilder: (current, previous) => Stack(
-                        alignment: Alignment.bottomLeft,
-                        children: [...previous, ?current],
-                      ),
-                      // Keyed by title so each change replays the reveal.
-                      child: _Copy(
-                        key: ValueKey(title),
-                        hero: this,
-                        wide: wide,
-                      ),
+              child: pagerBelow
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        copy,
+                        if (pager != null) ...[
+                          const SizedBox(height: Space.s16),
+                          pager!,
+                        ],
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(child: copy),
+                        if (pager != null) ...[
+                          const SizedBox(width: Space.s16),
+                          pager!,
+                        ],
+                      ],
                     ),
-                  ),
-                  if (pager != null) ...[
-                    const SizedBox(width: Space.s16),
-                    pager!,
-                  ],
-                ],
-              ),
             ),
           ),
         );
@@ -104,10 +131,18 @@ class FeaturedHero extends StatelessWidget {
 }
 
 class _Copy extends StatelessWidget {
-  const _Copy({super.key, required this.hero, required this.wide});
+  const _Copy({
+    super.key,
+    required this.hero,
+    required this.wide,
+    required this.short,
+  });
 
   final FeaturedHero hero;
   final bool wide;
+
+  /// A short window keeps to title, facts, two lines and the actions.
+  final bool short;
 
   List<Widget> _parts(SentorrType type) => [
     if (hero.badge != null)
@@ -131,7 +166,7 @@ class _Copy extends StatelessWidget {
         style: type.bodySmall,
       ),
     ),
-    if (hero.genres.isNotEmpty)
+    if (hero.genres.isNotEmpty && !short)
       Padding(
         padding: const EdgeInsets.only(top: Space.s12),
         child: Wrap(
@@ -145,7 +180,7 @@ class _Copy extends StatelessWidget {
         padding: const EdgeInsets.only(top: Space.s12),
         child: Text(
           hero.synopsis,
-          maxLines: 3,
+          maxLines: short ? 2 : 3,
           overflow: TextOverflow.ellipsis,
           // Supporting prose: a step down from the facts, so title and
           // facts lead.

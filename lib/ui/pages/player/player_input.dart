@@ -128,6 +128,12 @@ class _StageGesturesState extends State<StageGestures> {
   void _tap(TapUpDetails d, double width) {
     final a = widget.actions;
     final ui = a.ui;
+    // A tap on the picture beside an open panel closes it, whatever the
+    // pointer; on a phone the panel is a sheet that would otherwise stay.
+    if (ui.panel != PlayerPanel.none) {
+      ui.closePanel();
+      return;
+    }
     if (d.kind == PointerDeviceKind.touch) {
       if (_isDouble()) {
         final back = d.localPosition.dx < width / 2;
@@ -138,10 +144,6 @@ class _StageGesturesState extends State<StageGestures> {
       } else {
         ui.wake();
       }
-      return;
-    }
-    if (ui.panel != PlayerPanel.none) {
-      ui.closePanel();
       return;
     }
     if (_isDouble()) {

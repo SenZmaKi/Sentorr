@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
 import '../../../player/models.dart';
 import '../../components/motion.dart';
 import '../../components/player_control.dart';
+import '../../shared/layout/adaptive.dart';
 import '../../shared/pop_out_window.dart';
 import '../../shared/theme/theme.dart';
 import 'bottom_bar.dart';
@@ -13,7 +16,9 @@ import 'seek_track.dart';
 
 /// Controls for the docked and popped-out player: a progress line always,
 /// and on hover a veil with expand and close, transport in the middle and
-/// what is playing. Popped out, the whole picture drags the window.
+/// what is playing. Popped out, the whole picture drags the window. Touch
+/// has no hover: a tap reveals the veil (hiding after [PlayerMetrics.idle])
+/// and a tap on the veil hides it; Expand brings the player back.
 class MiniChrome extends StatefulWidget {
   const MiniChrome({
     super.key,
@@ -36,9 +41,22 @@ class MiniChrome extends StatefulWidget {
 
 class _MiniChromeState extends State<MiniChrome> {
   bool _shown = false;
+  Timer? _idle;
 
   void _show(bool v) {
     if (v != _shown) setState(() => _shown = v);
+  }
+
+  void _toggleTouch() {
+    _idle?.cancel();
+    _show(!_shown);
+    if (_shown) _idle = Timer(PlayerMetrics.idle, () => _show(false));
+  }
+
+  @override
+  void dispose() {
+    _idle?.cancel();
+    super.dispose();
   }
 
   @override
@@ -55,7 +73,11 @@ class _MiniChromeState extends State<MiniChrome> {
         behavior: HitTestBehavior.opaque,
         // Popped out, clicks pause like the full player; docked, they
         // bring the player back.
-        onTap: widget.poppedOut ? a.togglePlay : a.expand,
+        onTap: widget.poppedOut
+            ? a.togglePlay
+            : context.input.isTouch
+            ? _toggleTouch
+            : a.expand,
         onPanStart: widget.poppedOut
             ? (_) => PopOutWindow.instance.startDragging()
             : null,

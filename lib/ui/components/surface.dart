@@ -14,6 +14,7 @@ class DepthBox extends StatelessWidget {
     this.child,
     this.width,
     this.height,
+    this.minHeight,
   });
 
   final DepthStyle style;
@@ -24,6 +25,9 @@ class DepthBox extends StatelessWidget {
   final double? width;
   final double? height;
 
+  /// Grows with its content (text scaling) instead of clipping at [height].
+  final double? minHeight;
+
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
@@ -31,6 +35,9 @@ class DepthBox extends StatelessWidget {
       curve: Curves.easeInOut,
       width: width,
       height: height,
+      constraints: minHeight == null
+          ? null
+          : BoxConstraints(minHeight: minHeight!),
       padding: padding,
       decoration: BoxDecoration(
         color: style.fill,

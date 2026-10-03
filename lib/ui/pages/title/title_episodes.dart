@@ -18,6 +18,7 @@ import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import '../../shared/download_actions.dart';
 import '../../shared/play_route.dart';
+import '../../shared/layout/adaptive.dart';
 
 /// A series' episodes, one season at a time: season chips, then the
 /// season's episodes in air order, paged on request.
@@ -124,7 +125,7 @@ class _SeasonDownload extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => (MediaQuery.sizeOf(context).width < 600)
+  Widget build(BuildContext context) => context.screen.compact
       ? SIconButton(
           icon: Icons.download_for_offline_outlined,
           glyph: queuing ? const DownloadRing() : null,
@@ -150,6 +151,10 @@ class _EpisodeList extends ConsumerWidget {
   final int season;
   final SeasonEpisodes state;
 
+  /// Narrowest an episode column gets before the list drops a column: a
+  /// still, two lines of synopsis and the download action side by side.
+  static const _minColumnWidth = 480.0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(
@@ -174,8 +179,12 @@ class _EpisodeList extends ConsumerWidget {
     }
     return LayoutBuilder(
       builder: (context, box) {
-        final columns = box.maxWidth >= 1100 ? 2 : 1;
-        final compact = box.maxWidth < 600;
+        // As many columns as fit rows of a comfortable reading width.
+        final columns =
+            ((box.maxWidth + Space.s16) / (_minColumnWidth + Space.s16))
+                .floor()
+                .clamp(1, 2);
+        final compact = LayoutSize(box.biggest).compact;
         final rows = [
           for (final e in state.items) _row(ref, e, compact: compact),
         ];

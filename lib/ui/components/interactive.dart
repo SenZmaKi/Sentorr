@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../shared/layout/adaptive.dart';
 import '../shared/theme/theme.dart';
+
+/// Control labels name their keyboard shortcut in a trailing "(k)" or
+/// "(Shift+N)". Touch has no keyboard to use it, so the suffix is dropped
+/// there from both tooltip and spoken label.
+String shortcutLabel(BuildContext context, String label) =>
+    context.input.isTouch ? label.replaceFirst(_shortcutSuffix, '') : label;
+
+final _shortcutSuffix = RegExp(
+  r'\s*\((?:(?:Shift|Ctrl|Alt|Cmd)\+)?[^\s()]{1,3}\)$',
+);
 
 /// Resolved interaction state handed to [Interactive.builder].
 class InteractionState {

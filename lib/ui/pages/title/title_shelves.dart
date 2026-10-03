@@ -10,28 +10,40 @@ import '../../components/cards/poster_card.dart';
 import '../../components/cards/review_card.dart';
 import '../../components/cards/title_poster.dart';
 import '../../components/chips.dart';
+import '../../components/content_column.dart';
 import '../../components/shelf.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_route.dart';
 import '../../shared/play_route.dart';
 import 'review_dialog.dart';
+import '../../shared/layout/adaptive.dart';
 
 /// Shared row geometry for the title page.
 class TitleShelfLayout {
-  TitleShelfLayout(BuildContext context, {required this.gutter})
-    : compact = MediaQuery.sizeOf(context).width < 600,
-      lines = CardLines(MediaQuery.textScalerOf(context));
+  TitleShelfLayout(BuildContext context, {required this.layout})
+    : lines = CardLines(MediaQuery.textScalerOf(context));
 
-  final double gutter;
-  final bool compact;
+  /// The size class of the title page's own box.
+  final LayoutSize layout;
   final CardLines lines;
 
-  double get posterWidth => compact ? 144 : 176;
-  double get avatar => compact ? 72 : 88;
+  bool get compact => layout.compact;
+  double get gutter => gutterFor(layout);
+
+  /// The page's content column; shelves pad to its side so headers align
+  /// with it while tiles run to the window edge.
+  ContentInsets get insets => ContentInsets(layout.size.width);
+
+  // Large monitors grow tiles toward DESIGN's 220 nominal poster.
+  double get posterWidth =>
+      layout.pick(compact: 144, medium: 160, expanded: 176, large: 200);
+  double get avatar =>
+      layout.pick(compact: 72, medium: 88, expanded: 88, large: 96);
 
   /// Wider than the headshot, so names have room.
   double get personWidth => avatar + Space.s32;
-  double get reviewWidth => compact ? 280 : 320;
+  double get reviewWidth =>
+      layout.pick(compact: 280, medium: 300, expanded: 320, large: 360);
 }
 
 class CastShelf extends StatelessWidget {
@@ -47,7 +59,7 @@ class CastShelf extends StatelessWidget {
       icon: Icons.people_alt_outlined,
       title: 'Cast',
       count: '${cast.length}',
-      gutter: layout.gutter,
+      gutter: layout.insets.side,
       tileWidth: layout.personWidth,
       artworkHeight: a,
       tileHeight: a + PersonCard.textHeight(layout.lines),
@@ -83,7 +95,7 @@ class RecommendationsShelf extends ConsumerWidget {
       icon: Icons.movie_filter_outlined,
       title: 'More like this',
       subtitle: 'Watched by people who watched this',
-      gutter: layout.gutter,
+      gutter: layout.insets.side,
       tileWidth: w,
       artworkHeight: w * 3 / 2,
       tileHeight: w * 3 / 2 + PosterCard.textHeight(layout.lines),
@@ -131,7 +143,7 @@ class ReviewsShelf extends ConsumerWidget {
         selected: spoilers,
         onTap: () => ref.read(showSpoilersProvider.notifier).set(!spoilers),
       ),
-      gutter: layout.gutter,
+      gutter: layout.insets.side,
       tileWidth: layout.reviewWidth,
       tileHeight: h,
       artworkHeight: h,

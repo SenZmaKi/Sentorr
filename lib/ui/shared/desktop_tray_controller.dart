@@ -12,20 +12,24 @@ class DesktopTrayController {
   TrayIcon? _icon;
   Menu? _menu;
   Image? _image;
+  MenuItem? _visibilityItem;
+  Future<void>? _visibilityChange;
   final _items = <MenuItem>[];
   bool get canHideWindow => _icon != null && !Platform.isLinux;
   static const termination = MethodChannel('sentorr/app_termination');
   static const reopen = MethodChannel('sentorr/window_reopen');
+  static const menuBarMode = MethodChannel('sentorr/menu_bar_mode');
 
   Future<void> initialize({
     required Future<void> Function() quit,
     required Future<void> Function() prepareToQuit,
+    required Future<void> Function() checkFollowedSeries,
   }) async {
     if (!supportsWindowCustomization) return;
     configureTerminationHandler(prepareToQuit);
     reopen.setMethodCallHandler((call) async {
       if (call.method != 'restoreWindow') throw MissingPluginException();
-      await WindowManager.getInstance().focus();
+      await showWindow();
     });
     try {
       _icon = TrayIcon.create();
@@ -36,12 +40,20 @@ class DesktopTrayController {
       }
       _icon!.icon = _image;
       _icon!.setTooltip('Sentorr');
-      _addItem('Show', WindowManager.getInstance().focus);
-      if (!Platform.isLinux) _addItem('Hide', WindowManager.getInstance().hide);
+      _visibilityItem = _addItem('Show', toggleWindowVisibility);
+      _addItem('Check followed series', checkFollowedSeries);
       _menu!.addSeparator();
       _addItem('Quit', quit);
       _icon!.setContextMenu(_menu!);
+      _icon!.setContextMenuTrigger(ContextMenuTrigger.rightClicked);
+      _icon!.addListener((event) {
+        if (event is TrayIconClickedEvent) {
+          unawaited(_runAction(toggleWindowVisibility));
+        }
+      });
       if (!_icon!.setVisible(true)) throw StateError('Tray unavailable');
+      WindowManager.getInstance().visible.addListener(_refreshVisibilityLabel);
+      _refreshVisibilityLabel();
     } catch (error, stack) {
       Logger('sentorr.tray').warning('Tray disabled', error, stack);
       dispose();
@@ -61,14 +73,52 @@ class DesktopTrayController {
     });
   }
 
-  void _addItem(String label, Future<void> Function() action) {
+  Future<void> _runAction(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (error, stack) {
+      Logger('sentorr.tray').warning('Tray action failed', error, stack);
+    }
+  }
+
+  void _refreshVisibilityLabel() {
+    _visibilityItem?.label =
+        WindowManager.getInstance().visible.value && canHideWindow
+        ? 'Hide'
+        : 'Show';
+  }
+
+  Future<void> toggleWindowVisibility() => _visibilityChange ??=
+      (WindowManager.getInstance().visible.value && canHideWindow
+              ? hideWindow()
+              : showWindow())
+          .whenComplete(() => _visibilityChange = null);
+
+  Future<void> showWindow() async {
+    await _setMenuBarMode(false);
+    await WindowManager.getInstance().focus();
+  }
+
+  Future<void> hideWindow() async {
+    if (!canHideWindow) return;
+    await WindowManager.getInstance().hide();
+    await _setMenuBarMode(true);
+  }
+
+  Future<void> _setMenuBarMode(bool enabled) async {
+    if (!Platform.isMacOS) return;
+    await menuBarMode.invokeMethod<bool>('setEnabled', {'enabled': enabled});
+  }
+
+  MenuItem _addItem(String label, Future<void> Function() action) {
     final item = MenuItem.createWithLabelAndType(label, MenuItemType.normal);
     if (item == null) throw StateError('Tray menu unavailable');
     _items.add(item);
     item.addListener((event) {
-      if (event is MenuItemClickedEvent) unawaited(action());
+      if (event is MenuItemClickedEvent) unawaited(_runAction(action));
     });
     _menu!.addItem(item);
+    return item;
   }
 
   void updateIcon(String asset) {
@@ -81,6 +131,8 @@ class DesktopTrayController {
   }
 
   void dispose() {
+    WindowManager.getInstance().visible.removeListener(_refreshVisibilityLabel);
+    _visibilityItem = null;
     _icon?.setVisible(false);
     _icon?.dispose();
     _icon = null;

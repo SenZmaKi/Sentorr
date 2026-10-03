@@ -164,12 +164,13 @@ class AppRuntime with WidgetsBindingObserver {
     await runtime.tray.initialize(
       quit: runtime.quit,
       prepareToQuit: runtime.dispose,
+      checkFollowedSeries: container.read(releaseAlertsProvider).check,
     );
     await runtime.window.configureCloseHandler(() async {
       final preferences = container.read(settingsProvider).window;
       if (preferences.closeToTray && runtime.tray.canHideWindow) {
         await runtime.flush();
-        await runtime.window.hide();
+        await runtime.tray.hideWindow();
       } else {
         await runtime.quit();
       }

@@ -248,8 +248,13 @@ class _SettingsPageState extends State<SettingsPage> {
     ]);
   }
 
+  // Keeps the content clear of a pointer's scrollbar, which stays over the
+  // view's edge; touch scrollbars only show while scrolling.
   Widget _scroll(List<Widget> children) => SingleChildScrollView(
-    padding: const EdgeInsets.only(bottom: Space.s24),
+    padding: EdgeInsets.only(
+      right: context.input.canHover ? Space.s16 : 0,
+      bottom: Space.s24,
+    ),
     child: Align(
       alignment: Alignment.topLeft,
       child: ConstrainedBox(

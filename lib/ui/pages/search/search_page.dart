@@ -30,9 +30,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   // How close to the end of the grid the next page starts loading.
   static const _prefetchExtent = 800.0;
 
-  // The always-open filters column on wide layouts: one filter per row.
-  static const _filterColumnWidth = 264.0;
-
   final _scroll = ScrollController();
   final _term = TextEditingController();
   final _termFocus = FocusNode();
@@ -92,17 +89,13 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         final gutter = insets.gutter;
         final side = insets.side;
         final layout = LayoutSize(box.biggest);
-        // Wide layouts keep the filters open in a column beside the grid.
-        final sideFilters = layout.expanded;
         // Phones open the filters as a sheet rather than pushing the
-        // results a screen down.
+        // results a screen down; wider layouts expand them under the field.
         final sheetFilters = layout.compact;
         // Where height is scarce the field floats back in on any upward
         // scroll, so refining the search never means scrolling to the top.
         final floatField = layout.compact || context.screen.short;
-        final left = sideFilters ? 0.0 : side;
-        // The scrollbar stays at the window edge, outside the column.
-        final results = Scrollbar(
+        return Scrollbar(
           controller: _scroll,
           child: CustomScrollView(
             controller: _scroll,
@@ -113,21 +106,18 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     color: context.colors.surface,
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                        left,
+                        side,
                         gutter,
                         side,
                         Space.s8,
                       ),
-                      child: _field(
-                        sideFilters: sideFilters,
-                        sheetFilters: sheetFilters,
-                      ),
+                      child: _field(sheetFilters: sheetFilters),
                     ),
                   ),
                 ),
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(
-                  left,
+                  side,
                   floatField ? Space.s8 : gutter,
                   side,
                   0,
@@ -135,46 +125,24 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 sliver: SliverToBoxAdapter(
                   child: _header(
                     context,
-                    sideFilters: sideFilters,
                     sheetFilters: sheetFilters,
                     field: !floatField,
                   ),
                 ),
               ),
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  sideFilters ? 0 : side,
-                  Space.s24,
-                  side,
-                  gutter * 2,
-                ),
+                padding: EdgeInsets.fromLTRB(side, Space.s24, side, gutter * 2),
                 sliver: const SearchResults(),
               ),
             ],
           ),
         );
-        if (!sideFilters) return results;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: side + _filterColumnWidth,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(side, gutter, 0, gutter),
-                child: const SearchFilters(),
-              ),
-            ),
-            const SizedBox(width: Space.s32),
-            Expanded(child: results),
-          ],
-        );
       },
     );
   }
 
-  /// The search field, with the Filters button beside it unless the
-  /// filters have a column of their own.
-  Widget _field({required bool sideFilters, required bool sheetFilters}) {
+  /// The search field, with the Filters button beside it.
+  Widget _field({required bool sheetFilters}) {
     final filterCount = ref.watch(
       searchProvider.select((s) => s.query.filterCount),
     );
@@ -198,18 +166,16 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                   ),
           ),
         ),
-        if (!sideFilters) ...[
-          const SizedBox(width: Space.s8),
-          SButton(
-            label: filterCount == 0 ? 'Filters' : 'Filters · $filterCount',
-            icon: _filtersOpen && !sheetFilters
-                ? Icons.expand_less_rounded
-                : Icons.tune_rounded,
-            onPressed: sheetFilters
-                ? _showFilterSheet
-                : () => setState(() => _filtersOpen = !_filtersOpen),
-          ),
-        ],
+        const SizedBox(width: Space.s8),
+        SButton(
+          label: filterCount == 0 ? 'Filters' : 'Filters · $filterCount',
+          icon: _filtersOpen && !sheetFilters
+              ? Icons.expand_less_rounded
+              : Icons.tune_rounded,
+          onPressed: sheetFilters
+              ? _showFilterSheet
+              : () => setState(() => _filtersOpen = !_filtersOpen),
+        ),
       ],
     );
   }
@@ -221,7 +187,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
   Widget _header(
     BuildContext context, {
-    required bool sideFilters,
     required bool sheetFilters,
     required bool field,
   }) {
@@ -231,8 +196,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (field) _field(sideFilters: sideFilters, sheetFilters: sheetFilters),
-        if (!sideFilters && !sheetFilters)
+        if (field) _field(sheetFilters: sheetFilters),
+        if (!sheetFilters)
           AnimatedSize(
             duration: reduceMotion(context) ? Duration.zero : Motion.panel,
             curve: Motion.change,

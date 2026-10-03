@@ -23,6 +23,7 @@ class EpisodeRow extends StatelessWidget {
     this.preview,
     this.selected = false,
     this.trailing,
+    this.nameLink,
   });
 
   /// Mono stamp on the still, e.g. "S2 E4"; none for movies.
@@ -48,6 +49,9 @@ class EpisodeRow extends StatelessWidget {
   /// An action at the row's end, e.g. a download button.
   final Widget? trailing;
 
+  /// A title reference independent of the row's playback action.
+  final Widget? nameLink;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -60,6 +64,7 @@ class EpisodeRow extends StatelessWidget {
         borderRadius: Radii.card,
         onTap: onTap,
         semanticLabel: semanticLabel,
+        excludeChildSemantics: nameLink == null && trailing == null,
         selected: selected,
         builder: (context, s) => AnimatedContainer(
           duration: Motion.hover,
@@ -146,7 +151,7 @@ class EpisodeRow extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                    CardTitle(name, large: true),
+                    nameLink ?? CardTitle(name, large: true),
                     const SizedBox(height: Space.s2),
                     MetaLine(meta),
                     if (plot case final text? when text.isNotEmpty) ...[

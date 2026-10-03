@@ -14,6 +14,7 @@ import '../../components/cards/resume_card.dart';
 import '../../components/cards/title_poster.dart';
 import '../../components/cards/title_preview.dart';
 import '../../components/title_artwork.dart';
+import '../../components/title_link.dart';
 import '../../shared/title_format.dart';
 import '../../shared/title_icons.dart';
 import '../../shared/title_route.dart';
@@ -115,6 +116,23 @@ class ContinueWatchingShelf extends ConsumerWidget {
         final show = entry.series ?? entry.title;
         return ResumeCard(
           title: show.title,
+          titleLink: TitleLink(
+            title: show,
+            season: entry.season,
+            child: CardTitle(show.title, large: true),
+          ),
+          metaLink: entry.isEpisode
+              ? TitleLink(
+                  title: show,
+                  season: entry.season,
+                  episode: ImdbEpisode(
+                    title: entry.title,
+                    seasonNumber: entry.season,
+                    episodeNumber: entry.episode,
+                  ),
+                  child: MetaLine([MetaItem(entry.title.title)]),
+                )
+              : null,
           meta: [
             if (entry.isEpisode)
               MetaItem(entry.title.title)
@@ -180,8 +198,19 @@ class NewEpisodesShelf extends ConsumerWidget {
             : TitleBackdrop(title: u.series);
         return EpisodeCard(
           series: u.series.title,
+          seriesLink: TitleLink(
+            title: u.series,
+            season: u.season,
+            child: CardEyebrow(u.series.title),
+          ),
           code: episodeCode(u.season, u.episode.episodeNumber),
           name: e.title,
+          nameLink: TitleLink(
+            title: u.series,
+            episode: u.episode,
+            season: u.season,
+            child: CardTitle(e.title, large: true),
+          ),
           meta: [
             MetaItem(
               'Aired ${relativeDay(u.aired)}',

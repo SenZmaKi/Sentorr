@@ -47,6 +47,9 @@ abstract final class Motion {
   static const Duration hover = Duration(milliseconds: 150);
   static const Duration panel = Duration(milliseconds: 200);
 
+  /// Two brief outline pulses locating a linked episode.
+  static const Duration episodeHighlight = Duration(milliseconds: 1800);
+
   /// Content entering view: tiles, rows and spotlight copy.
   static const Duration reveal = Duration(milliseconds: 360);
 

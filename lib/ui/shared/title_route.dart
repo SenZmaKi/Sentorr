@@ -5,10 +5,13 @@ import '../../imdb/models.dart';
 /// One open title page. [season] preselects a series season, e.g. when it
 /// was opened from one of its episodes.
 class TitleRoute {
-  const TitleRoute(this.title, {this.season});
+  const TitleRoute(this.title, {this.season, this.episodeId});
 
   final ImdbTitle title;
   final int? season;
+
+  /// Episode to reveal and briefly highlight within the chosen season.
+  final String? episodeId;
 }
 
 /// Title pages opened over the current destination, most recent last.
@@ -22,9 +25,13 @@ class TitleRoutesNotifier extends Notifier<List<TitleRoute>> {
   @override
   List<TitleRoute> build() => const [];
 
-  void open(ImdbTitle title, {int? season}) {
-    if (state.lastOrNull?.title.id == title.id && season == null) return;
-    state = [...state, TitleRoute(title, season: season)];
+  void open(ImdbTitle title, {int? season, String? episodeId}) {
+    if (state.lastOrNull?.title.id == title.id &&
+        season == null &&
+        episodeId == null) {
+      return;
+    }
+    state = [...state, TitleRoute(title, season: season, episodeId: episodeId)];
   }
 
   void back() {
@@ -37,6 +44,7 @@ class TitleRoutesNotifier extends Notifier<List<TitleRoute>> {
 }
 
 extension OpenTitle on WidgetRef {
-  void openTitle(ImdbTitle title, {int? season}) =>
-      read(titleRoutesProvider.notifier).open(title, season: season);
+  void openTitle(ImdbTitle title, {int? season, String? episodeId}) =>
+      read(titleRoutesProvider.notifier)
+          .open(title, season: season, episodeId: episodeId);
 }

@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../player/models.dart';
+import '../../../imdb/models.dart';
 import '../../../player/stream/torrent_playback.dart';
 import '../../components/artwork_frame.dart';
 import '../../components/player_control.dart';
+import '../../components/title_link.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'player_layout.dart';
@@ -80,34 +82,71 @@ class TopBar extends StatelessWidget {
             children: [
               // A short window keeps its height for the picture.
               if (eyebrow != null && !layout.short)
+                if (item?.series case final series?)
+                  TitleLink(
+                    title: series,
+                    season: item?.season,
+                    beforeOpen: onBack,
+                    preview: false,
+                    child: Text(
+                      eyebrow,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.type.label.copyWith(
+                        color: context.player.foregroundSecondary,
+                      ),
+                    ),
+                  )
+                else
+                  Text(
+                    eyebrow,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.type.label.copyWith(
+                      color: context.player.foregroundSecondary,
+                    ),
+                  ),
+              if (item == null)
                 Text(
-                  eyebrow,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.type.label.copyWith(
-                    color: context.player.foregroundSecondary,
+                  heading,
+                  style: context.type.subtitle.copyWith(
+                    color: context.player.foreground,
+                  ),
+                )
+              else
+                TitleLink(
+                  title: item.series ?? item.title,
+                  episode: item.isEpisode
+                      ? ImdbEpisode(
+                          title: item.title,
+                          seasonNumber: item.season,
+                          episodeNumber: item.episode,
+                        )
+                      : null,
+                  season: item.season,
+                  beforeOpen: onBack,
+                  preview: false,
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        if (item.isEpisode)
+                          TextSpan(
+                            text: '${episodeCode(item.season, item.episode)}  ',
+                            style: context.type.technical.copyWith(
+                              fontSize: 16,
+                              color: context.player.foregroundSecondary,
+                            ),
+                          ),
+                        TextSpan(text: heading),
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.type.subtitle.copyWith(
+                      color: context.player.foreground,
+                    ),
                   ),
                 ),
-              Text.rich(
-                TextSpan(
-                  children: [
-                    if (item != null && item.isEpisode)
-                      TextSpan(
-                        text: '${episodeCode(item.season, item.episode)}  ',
-                        style: context.type.technical.copyWith(
-                          fontSize: 16,
-                          color: context.player.foregroundSecondary,
-                        ),
-                      ),
-                    TextSpan(text: heading),
-                  ],
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.type.subtitle.copyWith(
-                  color: context.player.foreground,
-                ),
-              ),
             ],
           ),
         ),

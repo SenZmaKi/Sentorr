@@ -9,6 +9,9 @@ import '../../components/buttons.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_row.dart';
 import '../../components/chips.dart';
+import '../../components/download_button.dart';
+import '../../components/title_link.dart';
+import '../title/season_download_button.dart';
 import '../../components/load_error.dart';
 import '../../components/section_header.dart';
 import '../../components/title_artwork.dart';
@@ -27,11 +30,13 @@ class EpisodesPanel extends ConsumerStatefulWidget {
     required this.queue,
     required this.onJump,
     required this.onClose,
+    this.onBrowse,
   });
 
   final PlayQueue queue;
   final ValueChanged<int> onJump;
   final VoidCallback onClose;
+  final VoidCallback? onBrowse;
 
   @override
   ConsumerState<EpisodesPanel> createState() => _EpisodesPanelState();
@@ -80,6 +85,21 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
                 : Icons.playlist_play_rounded,
             title: episodes ? 'Episodes' : 'Up next',
             subtitle: episodes ? series!.title : 'Keeps playing after this',
+            subtitleLink: episodes && series != null
+                ? TitleLink(
+                    title: series,
+                    season: season,
+                    beforeOpen: widget.onBrowse,
+                    child: Text(
+                      series.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.type.bodySmall.copyWith(
+                        color: context.colors.foregroundMuted,
+                      ),
+                    ),
+                  )
+                : null,
             count: episodes
                 ? (state?.total == null ? null : '${state!.total} in S$season')
                 : '${widget.queue.items.length - 1} queued',
@@ -105,6 +125,21 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
                     ),
                 ],
               ),
+            ),
+          ],
+          if (episodes &&
+              series != null &&
+              season != null &&
+              state?.items.any(
+                    (e) =>
+                        e.releaseDate?.dateTime?.isAfter(DateTime.now()) ==
+                        false,
+                  ) ==
+                  true) ...[
+            const SizedBox(height: Space.s8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: SeasonDownloadButton(series: series, season: season),
             ),
           ],
           const SizedBox(height: Space.s12),
@@ -182,6 +217,18 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
       selected: current,
       code: code,
       name: t.title,
+      nameLink: TitleLink(
+        title: series,
+        episode: e,
+        season: season,
+        beforeOpen: widget.onBrowse,
+        child: CardTitle(t.title, large: true),
+      ),
+      trailing: upcoming
+          ? null
+          : DownloadButton(
+              item: PlaybackItem.episode(series, e, season: season),
+            ),
       meta: [
         if (aired != null)
           MetaItem(
@@ -219,6 +266,20 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
             compact: true,
             selected: i == widget.queue.index,
             name: item.name,
+            nameLink: TitleLink(
+              title: item.series ?? item.title,
+              episode: item.isEpisode
+                  ? ImdbEpisode(
+                      title: item.title,
+                      seasonNumber: item.season,
+                      episodeNumber: item.episode,
+                    )
+                  : null,
+              season: item.season,
+              beforeOpen: widget.onBrowse,
+              child: CardTitle(item.name, large: true),
+            ),
+            trailing: DownloadButton(item: item),
             meta: [
               if (item.title.rating != null)
                 MetaItem(

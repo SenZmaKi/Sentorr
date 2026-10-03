@@ -11,6 +11,7 @@ class SectionHeader extends StatelessWidget {
     required this.icon,
     required this.title,
     this.subtitle,
+    this.subtitleLink,
     this.count,
     this.action,
   });
@@ -18,6 +19,9 @@ class SectionHeader extends StatelessWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
+
+  /// Independent navigation when the subtitle names another title.
+  final Widget? subtitleLink;
 
   /// Trailing tally, e.g. "5 new".
   final String? count;
@@ -79,7 +83,9 @@ class SectionHeader extends StatelessWidget {
                   ],
                 ],
               ),
-              if (subtitle != null)
+              if (subtitleLink != null)
+                subtitleLink!
+              else if (subtitle != null)
                 Text(
                   subtitle!,
                   maxLines: 1,

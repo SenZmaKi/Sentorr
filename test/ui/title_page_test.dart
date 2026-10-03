@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,6 +32,7 @@ import 'package:sentorr/ui/pages/home/home_page.dart';
 import 'package:sentorr/ui/pages/search/search_page.dart';
 import 'package:sentorr/ui/pages/settings/settings_page.dart';
 import 'package:sentorr/ui/pages/title/title_page.dart';
+import 'package:sentorr/ui/pages/title/episode_destination.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 import 'package:sentorr/ui/shared/title_route.dart';
 
@@ -66,11 +69,41 @@ final _imdb = FakeImdbRepository(
   },
 );
 
+class _PagedEpisodeRepository extends FakeImdbRepository {
+  _PagedEpisodeRepository()
+    : super(
+        seasons: {
+          'tt2': [1],
+        },
+      );
+  final cursors = <String?>[];
+
+  @override
+  Future<ImdbPage<ImdbEpisode>> getEpisodes(
+    String id,
+    int seasonNumber, {
+    int limit = 20,
+    String? cursor,
+    bool refresh = false,
+    CancelToken? cancelToken,
+  }) async {
+    cursors.add(cursor);
+    return cursor == null
+        ? ImdbPage(
+            items: [for (var n = 1; n <= 20; n++) _episode(1, n)],
+            nextCursor: 'next',
+            total: 21,
+          )
+        : ImdbPage(items: [_episode(1, 21)], total: 21);
+  }
+}
+
 Future<ProviderContainer> _pump(
   WidgetTester tester, {
   Size size = const Size(1440, 1000),
   Brightness brightness = Brightness.dark,
   List<Override> state = const [],
+  FakeImdbRepository? imdb,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -84,7 +117,7 @@ Future<ProviderContainer> _pump(
         ...watchHistoryOverrides(),
       ] else
         ...state,
-      imdbRepositoryProvider.overrideWithValue(_imdb),
+      imdbRepositoryProvider.overrideWithValue(imdb ?? _imdb),
     ],
   );
   addTearDown(container.dispose);
@@ -124,6 +157,78 @@ final _posterArt = find
     .first;
 
 void main() {
+  testWidgets(
+    'episode deep link selects its season, scrolls and pulses the row',
+    (tester) async {
+      final container = await _pump(tester, size: const Size(700, 650));
+      container
+          .read(titleRoutesProvider.notifier)
+          .open(
+            fakeTitle(2, series: true),
+            season: 2,
+            episodeId: _episode(2, 1).title.id,
+          );
+      await tester.pump();
+      for (var i = 0; i < 7; i++) {
+        await tester.pump(const Duration(milliseconds: 150));
+      }
+      await tester.pump(const Duration(milliseconds: 75));
+      expect(find.byType(EpisodeDestination), findsOneWidget);
+      final destination = find.byType(EpisodeDestination);
+      final rect = tester.getRect(destination);
+      expect(rect.top, greaterThanOrEqualTo(0));
+      expect(rect.bottom, lessThanOrEqualTo(650));
+      final box = tester.widget<DecoratedBox>(
+        find
+            .descendant(of: destination, matching: find.byType(DecoratedBox))
+            .first,
+      );
+      expect(
+        (box.decoration as BoxDecoration).border!.top.color.a,
+        greaterThan(0),
+      );
+      await tester.pumpAndSettle();
+      final finished = tester.widget<DecoratedBox>(
+        find
+            .descendant(of: destination, matching: find.byType(DecoratedBox))
+            .first,
+      );
+      expect((finished.decoration as BoxDecoration).border!.top.color.a, 0);
+    },
+  );
+
+  testWidgets(
+    'episode destination loads later pages and reveals the exact row',
+    (tester) async {
+      final imdb = _PagedEpisodeRepository();
+      final container = await _pump(
+        tester,
+        size: const Size(700, 650),
+        imdb: imdb,
+      );
+      container
+          .read(titleRoutesProvider.notifier)
+          .open(
+            fakeTitle(2, series: true),
+            season: 1,
+            episodeId: _episode(1, 21).title.id,
+          );
+      await tester.pumpAndSettle();
+      expect(imdb.cursors, [null, 'next']);
+      expect(find.byType(EpisodeDestination), findsOneWidget);
+      final rect = tester.getRect(find.byType(EpisodeDestination));
+      expect(rect.top, greaterThanOrEqualTo(0));
+      expect(rect.bottom, lessThanOrEqualTo(650));
+      expect(
+        find.descendant(
+          of: find.byType(EpisodeDestination),
+          matching: find.text('Episode 21'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
   for (final (name, size) in [
     ('compact', const Size(390, 844)),
     ('desktop', const Size(1440, 1000)),

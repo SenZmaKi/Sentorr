@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,9 @@ import 'package:sentorr/ui/components/download_button.dart';
 import 'package:sentorr/ui/pages/download_review/review_host.dart';
 import 'package:sentorr/ui/pages/download_review/review_row.dart';
 import 'package:sentorr/ui/pages/downloads/downloads_page.dart';
+import 'package:sentorr/ui/pages/player/episodes_panel.dart';
+import 'package:sentorr/ui/pages/title/title_episodes.dart';
+import 'package:sentorr/ui/shared/title_route.dart';
 import 'package:sentorr/ui/pages/torrent_picker/torrent_option.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
@@ -71,6 +75,7 @@ Future<FakePlanner> _pump(
   Widget child, {
   List<LibraryEntry> library = const [],
   List<DownloadItem> downloads = const [],
+  Stream<List<DownloadItem>>? downloadStream,
   List<AutoDownloadReview> reviews = const [],
   FakeSearch? search,
   bool reviewMatches = true,
@@ -89,9 +94,29 @@ Future<FakePlanner> _pump(
         ),
       ),
       ...libraryOverrides(library),
+      imdbRepositoryProvider.overrideWithValue(
+        FakeImdbRepository(
+          seasons: {
+            _series.id: [1],
+          },
+          episodes: {
+            '${_series.id}/1': [
+              for (final n in [1, 2])
+                ImdbEpisode(
+                  title: _episode(n).title,
+                  seasonNumber: 1,
+                  episodeNumber: n,
+                  releaseDate: const ImdbDate(year: 2024, month: 1, day: 1),
+                ),
+            ],
+          },
+        ),
+      ),
       torrentSearchProvider.overrideWithValue((search ?? FakeSearch()).call),
       downloadPlannerProvider.overrideWithValue(planner),
-      downloadsProvider.overrideWith((ref) => Stream.value(downloads)),
+      downloadsProvider.overrideWith(
+        (ref) => downloadStream ?? Stream.value(downloads),
+      ),
       downloadQueueProvider.overrideWithValue(
         DownloadQueue(
           FakeTorrents(),
@@ -126,6 +151,107 @@ Future<void> _settle(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('preview and player pickers share live episode download state', (
+    tester,
+  ) async {
+    final changes = StreamController<List<DownloadItem>>();
+    addTearDown(changes.close);
+    var jumps = 0;
+    var browses = 0;
+    final panel = EpisodesPanel(
+      queue: PlayQueue(
+        items: [_episode(1), _episode(2)],
+        index: 0,
+        kind: QueueKind.episodes,
+      ),
+      onJump: (_) => jumps++,
+      onClose: () {},
+      onBrowse: () => browses++,
+    );
+    // Seed the stream before pumpAndSettle: its preparing ring animates.
+    changes.add([_download('d1', DownloadStatus.downloading, done: 25)]);
+    final planner = await _pump(
+      tester,
+      Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: TitleEpisodes(series: _series, seasons: const [1]),
+            ),
+          ),
+          SizedBox(width: 480, child: panel),
+        ],
+      ),
+      library: [_entry(_episode(1), 'd1')],
+      downloadStream: changes.stream,
+    );
+    expect(find.byTooltip('Downloading · 25%'), findsNWidgets(2));
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(EpisodesPanel)),
+    );
+    for (final status in [
+      DownloadStatus.paused,
+      DownloadStatus.failed,
+      DownloadStatus.completed,
+    ]) {
+      changes.add([
+        _download(
+          'd1',
+          status,
+          done: status == DownloadStatus.completed ? 100 : 25,
+        ),
+      ]);
+      await tester.pump();
+      await _settle(tester);
+      final tooltip = switch (status) {
+        DownloadStatus.paused => 'Paused · 25%',
+        DownloadStatus.failed => 'Download failed',
+        _ => 'Downloaded · watch offline',
+      };
+      expect(find.byTooltip(tooltip), findsNWidgets(2));
+    }
+    // The selected episode remains downloadable/manageable independently of play.
+    final playerDownload = find.descendant(
+      of: find.byType(EpisodesPanel),
+      matching: find.byTooltip('Downloaded · watch offline'),
+    );
+    await tester.tap(playerDownload);
+    await _settle(tester);
+    expect(find.text('Show in folder'), findsOneWidget);
+    expect(jumps, 0);
+    // Dismiss the menu, then navigate through the episode's title.
+    await tester.tapAt(const Offset(5, 5));
+    await _settle(tester);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(EpisodesPanel),
+        matching: find.text('Episode 1'),
+      ),
+    );
+    await tester.pump();
+    expect(container.read(titleRoutesProvider).single.title.id, _series.id);
+    expect(container.read(titleRoutesProvider).single.season, 1);
+    expect(
+      container.read(titleRoutesProvider).single.episodeId,
+      _episode(1).id,
+    );
+    expect(browses, 1);
+    expect(jumps, 0);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(EpisodesPanel),
+        matching: find.byTooltip('Download'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Ready to download'), findsOneWidget);
+    await tester.pump(const TorrentSettings().autoPlayDelay);
+    await _settle(tester);
+    expect(planner.planned, [_episode(2).id]);
+    expect(jumps, 0);
+  });
+
   testWidgets('a season heads its episodes with season-wide controls', (
     tester,
   ) async {

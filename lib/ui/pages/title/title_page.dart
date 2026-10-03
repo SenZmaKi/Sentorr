@@ -33,6 +33,8 @@ class TitlePage extends ConsumerStatefulWidget {
 
 class _TitlePageState extends ConsumerState<TitlePage> {
   final _episodesKey = GlobalKey();
+  final _scroll = ScrollController();
+  bool _seekingEpisode = false;
   final _focus = FocusNode(debugLabel: 'Title page');
 
   @override
@@ -47,6 +49,7 @@ class _TitlePageState extends ConsumerState<TitlePage> {
 
   @override
   void dispose() {
+    _scroll.dispose();
     _focus.dispose();
     super.dispose();
   }
@@ -65,12 +68,34 @@ class _TitlePageState extends ConsumerState<TitlePage> {
     );
   }
 
+  void _seekEpisodeSection() {
+    if (_seekingEpisode || widget.route.episodeId == null) return;
+    _seekingEpisode = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // ListView lays out sections lazily. Bring the episode section into
+      // layout first; its destination row then scrolls to the exact episode.
+      while (mounted &&
+          _episodesKey.currentContext == null &&
+          _scroll.hasClients) {
+        final position = _scroll.position;
+        final next = (position.pixels + position.viewportDimension).clamp(
+          0.0,
+          position.maxScrollExtent,
+        );
+        if (next <= position.pixels) break;
+        _scroll.jumpTo(next);
+        await WidgetsBinding.instance.endOfFrame;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final details = ref.watch(titleDetailsProvider(_title.id));
     final d = details.value;
     final seasons = [...?d?.seasons.where((n) => n >= 0)]..sort();
     final pick = ref.watch(pickUpProvider(_title.id)).value;
+    if (seasons.isNotEmpty) _seekEpisodeSection();
     return CallbackShortcuts(
       bindings: {const SingleActivator(LogicalKeyboardKey.escape): _back},
       child: Focus(
@@ -100,6 +125,7 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                       series: _title,
                       seasons: seasons,
                       initialSeason: widget.route.season ?? pick?.season,
+                      episodeId: widget.route.episodeId,
                     );
               final sections = <Widget>[
                 padded(
@@ -159,6 +185,7 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                 ReviewsShelf(titleId: _title.id, layout: shelves),
               ];
               return ListView(
+                controller: _scroll,
                 padding: EdgeInsets.only(top: gutter, bottom: gutter * 2),
                 children: [
                   // Shelves span the page; everything else is padded into

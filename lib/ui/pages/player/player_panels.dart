@@ -35,6 +35,7 @@ SlotPanel? openPlayerPanel({
         key: const ValueKey('queue'),
         queue: queue,
         onJump: actions.session.jump,
+        onBrowse: actions.minimize,
         onClose: ui.closePanel,
       ),
     ),

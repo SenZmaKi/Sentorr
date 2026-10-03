@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../downloads/models.dart';
+import '../../../imdb/models.dart';
 import '../../../library/models.dart';
 import '../../components/artwork_frame.dart';
 import '../../components/buttons.dart';
@@ -9,6 +10,7 @@ import '../../components/cards/card_parts.dart';
 import '../../components/interactive.dart';
 import '../../components/progress_track.dart';
 import '../../components/title_artwork.dart';
+import '../../components/title_link.dart';
 import '../../shared/download_actions.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
@@ -37,6 +39,7 @@ class DownloadRow extends ConsumerWidget {
     return Interactive(
       borderRadius: Radii.card,
       onTap: () => ref.playDownload(entry),
+      excludeChildSemantics: false,
       semanticLabel: 'Play ${itemLabel(item)}, ${_status(state, download).$2}',
       builder: (context, s) => AnimatedContainer(
         duration: Motion.hover,
@@ -179,8 +182,24 @@ class _Details extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (item.series case final series?) CardEyebrow(series.title),
-        CardTitle(item.name, large: true),
+        if (item.series case final series?)
+          TitleLink(
+            title: series,
+            season: item.season,
+            child: CardEyebrow(series.title),
+          ),
+        TitleLink(
+          title: item.series ?? item.title,
+          episode: item.isEpisode
+              ? ImdbEpisode(
+                  title: item.title,
+                  seasonNumber: item.season,
+                  episodeNumber: item.episode,
+                )
+              : null,
+          season: item.season,
+          child: CardTitle(item.name, large: true),
+        ),
         const SizedBox(height: Space.s4),
         Row(
           children: [

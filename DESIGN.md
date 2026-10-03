@@ -343,3 +343,20 @@ Widgets still own structure, semantics and behavior. The theme owns their shared
 
 - See [design research](docs/design-research.md) for primary-source examples and the reasoning behind the proposed structure. Research informs the contract. The archived sources in [design references](docs/design-references/README.md) explain provenance; this merged contract controls implementation when those sources conflict.
 - See [design demo](tool/design_demo) for a sample flutter app showcasing the design.
+
+### Inline title references
+
+`lib/ui/components/title_link.dart` owns links to movie and series detail
+pages within playback-oriented cards, download rows, season headings and
+player chrome. Text retains its surrounding typography and semantic foreground;
+hover and keyboard focus underline it, and the shared interaction component
+supplies the cursor and focus ring. Series links use the poster preview;
+episode-name links use the episode preview and retain its ID in the route.
+Touch long-press opens that preview in a sheet. Click, Enter and Space open the
+title page, retaining a known season. Episode destinations load additional
+pages as needed, scroll the exact row into view and pulse its theme-owned
+outline twice; reduced motion uses a brief steady outline. Player links dock
+playback first; the top-left player heading has no hover preview. Player episode pickers reuse the title page's episode and season
+download controls, observing the same shared offline state by episode ID.
+Enclosing playback tiles must retain the link's independent accessibility
+semantics and keep their own playback target outside the linked text.

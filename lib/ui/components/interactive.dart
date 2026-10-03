@@ -41,6 +41,7 @@ class Interactive extends StatefulWidget {
     this.selected,
     this.button = true,
     this.focusColor,
+    this.excludeChildSemantics = true,
   });
 
   final Widget Function(BuildContext context, InteractionState state) builder;
@@ -52,6 +53,9 @@ class Interactive extends StatefulWidget {
 
   /// Overlay contexts (player) supply their own focus role.
   final Color? focusColor;
+
+  /// Keep nested independent controls accessible when a tile has links.
+  final bool excludeChildSemantics;
 
   @override
   State<Interactive> createState() => _InteractiveState();
@@ -107,7 +111,7 @@ class _InteractiveState extends State<Interactive> {
               radius: widget.borderRadius,
             ),
             // A semantic label replaces the visual text so it isn't read twice.
-            child: widget.semanticLabel == null
+            child: widget.semanticLabel == null || !widget.excludeChildSemantics
                 ? widget.builder(context, state)
                 : ExcludeSemantics(child: widget.builder(context, state)),
           ),

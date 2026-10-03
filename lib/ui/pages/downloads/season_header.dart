@@ -6,6 +6,7 @@ import '../../../library/season_offline.dart';
 import '../../components/buttons.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/progress_track.dart';
+import '../../components/title_link.dart';
 import '../../shared/download_actions.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
@@ -49,13 +50,17 @@ class SeasonHeader extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: Space.s2,
               children: [
-                Text(
-                  showSeries
-                      ? '${series.title} · Season $season'
-                      : 'Season $season',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.type.label.copyWith(color: c.foreground),
+                TitleLink(
+                  title: series,
+                  season: season,
+                  child: Text(
+                    showSeries
+                        ? '${series.title} · Season $season'
+                        : 'Season $season',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.type.label.copyWith(color: c.foreground),
+                  ),
                 ),
                 TransferStats(_facts(s)),
                 if (moving) ...[

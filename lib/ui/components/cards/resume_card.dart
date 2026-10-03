@@ -21,6 +21,8 @@ class ResumeCard extends StatelessWidget {
     this.chipIcon,
     this.onTap,
     this.preview,
+    this.titleLink,
+    this.metaLink,
   });
 
   final String title;
@@ -39,6 +41,12 @@ class ResumeCard extends StatelessWidget {
   /// Floating detail card shown while the pointer rests on the tile.
   final WidgetBuilder? preview;
 
+  /// Independent title navigation, separate from playback.
+  final Widget? titleLink;
+
+  /// Independent episode navigation in the supporting line.
+  final Widget? metaLink;
+
   static double textHeight(CardLines l) =>
       Space.s12 + l.body + Space.s2 + l.caption;
 
@@ -52,6 +60,7 @@ class ResumeCard extends StatelessWidget {
       child: Interactive(
         borderRadius: Radii.card,
         onTap: onTap,
+        excludeChildSemantics: titleLink == null && metaLink == null,
         semanticLabel: [
           'Resume $title',
           if (left != null) '${durationLabel(left)} left',
@@ -87,9 +96,9 @@ class ResumeCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: Space.s12),
-            CardTitle(title, large: true),
+            titleLink ?? CardTitle(title, large: true),
             const SizedBox(height: Space.s2),
-            MetaLine(meta),
+            metaLink ?? MetaLine(meta),
           ],
         ),
       ),

@@ -28,7 +28,11 @@ class ItemPreview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final series = item.series;
     void open() {
-      ref.openTitle(series ?? item.title, season: item.season);
+      ref.openTitle(
+        series ?? item.title,
+        season: item.season,
+        episodeId: item.isEpisode ? item.id : null,
+      );
       onDock();
     }
 

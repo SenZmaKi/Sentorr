@@ -21,6 +21,8 @@ class EpisodeCard extends StatelessWidget {
     this.isNew = false,
     this.onTap,
     this.preview,
+    this.seriesLink,
+    this.nameLink,
   });
 
   final String series;
@@ -40,6 +42,10 @@ class EpisodeCard extends StatelessWidget {
   /// Floating detail card shown while the pointer rests on the tile.
   final WidgetBuilder? preview;
 
+  /// Independent title navigation, separate from playback.
+  final Widget? seriesLink;
+  final Widget? nameLink;
+
   static double textHeight(CardLines l) =>
       Space.s12 +
       l.caption +
@@ -58,6 +64,7 @@ class EpisodeCard extends StatelessWidget {
       child: Interactive(
         borderRadius: Radii.card,
         onTap: onTap,
+        excludeChildSemantics: seriesLink == null && nameLink == null,
         semanticLabel: 'Play $series${code == null ? '' : ' $code'}, $name',
         builder: (context, s) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,9 +107,9 @@ class EpisodeCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: Space.s12),
-            CardEyebrow(series),
+            seriesLink ?? CardEyebrow(series),
             const SizedBox(height: Space.s2),
-            CardTitle(name, large: true),
+            nameLink ?? CardTitle(name, large: true),
             const SizedBox(height: Space.s2),
             MetaLine(meta),
             const SizedBox(height: Space.s8),

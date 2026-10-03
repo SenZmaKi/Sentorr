@@ -175,6 +175,93 @@ void main() {
     expect(statuses(), [DownloadStatus.completed, DownloadStatus.seeding]);
   });
 
+  test(
+    'restart completes sharing already satisfied without adding torrents',
+    () async {
+      const sharing = DownloadSettings(seedRatio: 1, seedTime: Duration.zero);
+      await queue.configure(sharing);
+      await enqueue('a');
+      torrents['a'].done = 100;
+      await queue.tick();
+      // Progress can meet the limit between the last tick and shutdown.
+      await repository.save([queue.items.single.copyWith(uploadedBytes: 100)]);
+      final again = FakeTorrents();
+      final restored = DownloadQueue(again, repository);
+      try {
+        await restored.initialize(sharing);
+        await settle();
+        expect(restored.items.single.status, DownloadStatus.completed);
+        expect(restored.items.single.uploadedBytes, 100);
+        expect(again.byHash, isEmpty);
+      } finally {
+        await restored.dispose();
+      }
+    },
+  );
+
+  test(
+    'restart preserves unfinished shares, upload totals and seed slots',
+    () async {
+      const sharing = DownloadSettings(
+        maxActiveSeeds: 1,
+        seedRatio: 1,
+        seedTime: Duration.zero,
+      );
+      await queue.configure(sharing);
+      await enqueue('a');
+      await enqueue('b');
+      torrents['a'].done = torrents['b'].done = 100;
+      torrents['a'].uploaded = 40;
+      await queue.tick();
+      final started = queue.items.first.seedingStartedAt;
+      await queue.dispose();
+      final again = FakeTorrents();
+      final restored = DownloadQueue(again, repository);
+      try {
+        await restored.initialize(sharing);
+        await settle();
+        expect(restored.items.map((i) => i.status), [
+          DownloadStatus.seeding,
+          DownloadStatus.queued,
+        ]);
+        expect(restored.items.first.downloadedBytes, 100);
+        expect(again.running('a'), true);
+        expect(again.running('b'), false);
+        again['a'].done = again['b'].done = 100;
+        again['a'].uploaded = 60;
+        await restored.tick();
+        expect(restored.items.first.uploadedBytes, 100);
+        expect(restored.items.first.seedingStartedAt, started);
+        expect(restored.items.map((i) => i.status), [
+          DownloadStatus.completed,
+          DownloadStatus.seeding,
+        ]);
+      } finally {
+        await restored.dispose();
+      }
+    },
+  );
+
+  test('restart applies disabled sharing to saved seeds', () async {
+    await queue.configure(const DownloadSettings());
+    await enqueue('a');
+    torrents['a'].done = 100;
+    await queue.tick();
+    await queue.dispose();
+    final again = FakeTorrents();
+    final restored = DownloadQueue(again, repository);
+    try {
+      await restored.initialize(
+        const DownloadSettings(seedingMode: SeedingMode.disabled),
+      );
+      await settle();
+      expect(restored.items.single.status, DownloadStatus.completed);
+      expect(again.byHash, isEmpty);
+    } finally {
+      await restored.dispose();
+    }
+  });
+
   test('a stream runs its download and others wait for playback', () async {
     await queue.configure(const DownloadSettings(maxActiveDownloads: 2));
     await enqueue('a');

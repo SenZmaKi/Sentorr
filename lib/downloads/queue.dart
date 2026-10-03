@@ -49,9 +49,20 @@ class DownloadQueue {
     initial.validate();
     settings = initial;
     _items.addAll(await repository.load());
-    for (final item in _items) {
-      if (item.status == DownloadStatus.preparing) _attach(item.id);
+    for (final item in _items.toList()) {
+      if (item.status != DownloadStatus.preparing) continue;
+      // Apply saved sharing progress before adding the torrent again. A
+      // stopped share needs no engine owner, even while files are rechecked.
+      final started = item.seedingStartedAt;
+      if (item.isDone &&
+          started != null &&
+          seedingDone(item, settings, started)) {
+        _replace(item.withStatus(DownloadStatus.completed));
+      } else {
+        _attach(item.id);
+      }
     }
+    await _commit();
     _log.info('Restored ${_items.length} downloads');
   });
 

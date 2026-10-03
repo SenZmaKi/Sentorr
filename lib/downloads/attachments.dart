@@ -53,7 +53,15 @@ extension DownloadAttachments on DownloadQueue {
                     f.index,
                     job.renamedFiles[f.index] ?? f.path,
                     f.length,
-                    0,
+                    item.files
+                            .where(
+                              (saved) =>
+                                  saved.index == f.index &&
+                                  saved.totalBytes == f.length,
+                            )
+                            .firstOrNull
+                            ?.downloadedBytes ??
+                        0,
                   ),
               ],
             ),

@@ -23,6 +23,7 @@ class STextField extends StatefulWidget {
     this.inputFormatters,
     this.textInputAction,
     this.trailing,
+    this.obscureText = false,
   });
 
   final TextEditingController? controller;
@@ -46,6 +47,9 @@ class STextField extends StatefulWidget {
 
   /// Inline action after the text, e.g. a clear button.
   final Widget? trailing;
+
+  /// Hides what is typed, e.g. a password.
+  final bool obscureText;
 
   @override
   State<STextField> createState() => _STextFieldState();
@@ -132,6 +136,7 @@ class _STextFieldState extends State<STextField> {
                       keyboardType: widget.keyboardType,
                       inputFormatters: widget.inputFormatters,
                       textInputAction: widget.textInputAction,
+                      obscureText: widget.obscureText,
                       decoration: InputDecoration.collapsed(
                         hintText: widget.hint,
                         hintStyle: textStyle.copyWith(color: c.foregroundMuted),

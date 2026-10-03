@@ -11,10 +11,9 @@ class NativeSession {
   NativeSession(TorrentEngineSettings settings) {
     settings.validate();
     session = createSessionFromTags([
-      LibtorrentTagItem.settingsString(
-        LibtorrentSettingsTag.listenInterfaces,
-        settings.listenInterfaces,
-      ),
+      // Bound and proxied from the start, so nothing leaves another way
+      // first.
+      ..._routeItems(settings),
       LibtorrentTagItem.intValue(
         LibtorrentTag.sesAlertMask,
         1 | (1 << 3) | (1 << 6) | (1 << 21) | (1 << 22),
@@ -46,11 +45,59 @@ class NativeSession {
         enableOutgoingUtp: utp,
       ),
     );
+    session.applySettingsFromTags(_routeItems(settings));
     session.setDhtEnabled(settings.enableDht);
     session.setLsdEnabled(settings.enableLsd);
     session.setUpnpEnabled(settings.enableUpnp);
     session.setNatPmpEnabled(settings.enableNatPmp);
   }
+
+  /// The interface and proxy all traffic goes through. libtorrent reopens
+  /// its sockets only when these values change.
+  static List<LibtorrentTagItem> _routeItems(TorrentEngineSettings settings) {
+    final device = settings.networkInterface?.trim();
+    final proxy = settings.proxy;
+    final on = proxy.kind != TorrentProxyKind.none;
+    final login = proxy.username.isNotEmpty;
+    return [
+      LibtorrentTagItem.settingsString(
+        LibtorrentSettingsTag.listenInterfaces,
+        device == null ? settings.listenInterfaces : '$device:0',
+      ),
+      LibtorrentTagItem.settingsString(_outgoingInterfaces, device ?? ''),
+      LibtorrentTagItem.settingsInt(
+        LibtorrentSettingsTag.proxyType,
+        switch (proxy.kind) {
+          TorrentProxyKind.none => LibtorrentProxyType.none,
+          TorrentProxyKind.socks4 => LibtorrentProxyType.socks4,
+          TorrentProxyKind.socks5 when login =>
+            LibtorrentProxyType.socks5Password,
+          TorrentProxyKind.socks5 => LibtorrentProxyType.socks5,
+          TorrentProxyKind.http when login => LibtorrentProxyType.httpPassword,
+          TorrentProxyKind.http => LibtorrentProxyType.http,
+        },
+      ),
+      LibtorrentTagItem.settingsString(
+        LibtorrentSettingsTag.proxyHostname,
+        on ? proxy.host.trim() : '',
+      ),
+      LibtorrentTagItem.settingsInt(
+        LibtorrentSettingsTag.proxyPort,
+        on ? proxy.port : 0,
+      ),
+      LibtorrentTagItem.settingsString(
+        LibtorrentSettingsTag.proxyUsername,
+        on ? proxy.username : '',
+      ),
+      LibtorrentTagItem.settingsString(
+        LibtorrentSettingsTag.proxyPassword,
+        on && proxy.kind != TorrentProxyKind.socks4 ? proxy.password : '',
+      ),
+    ];
+  }
+
+  /// settings_pack::outgoing_interfaces, which the binding does not name.
+  static const _outgoingInterfaces = 0x0000 + 4;
 
   Timer? _timer;
   final _reads = <(int, int), Completer<Uint8List>>{};

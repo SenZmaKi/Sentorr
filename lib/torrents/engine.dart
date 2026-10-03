@@ -18,6 +18,8 @@ TorrentEngineSettings engineSettingsOf(AppSettings settings) {
     enableLsd: n.lsd,
     enableUpnp: n.upnp,
     enableNatPmp: n.natPmp,
+    proxy: n.proxy.engine,
+    networkInterface: n.networkInterface,
   );
 }
 

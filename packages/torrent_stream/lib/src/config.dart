@@ -2,6 +2,27 @@ import 'dart:io';
 
 enum TorrentTransport { tcpOnly, mixedTcpUtp }
 
+enum TorrentProxyKind { none, socks5, socks4, http }
+
+/// Where peer, tracker and DHT traffic is relayed. An unreachable or
+/// half-filled proxy fails connections rather than going around it.
+class TorrentProxy {
+  const TorrentProxy({
+    this.kind = TorrentProxyKind.none,
+    this.host = '',
+    this.port = 0,
+    this.username = '',
+    this.password = '',
+  });
+
+  final TorrentProxyKind kind;
+  final String host;
+  final int port;
+
+  /// Blank skips authentication. SOCKS4 has no password.
+  final String username, password;
+}
+
 /// Session-wide limits and discovery, shared by every torrent the engine
 /// holds; changes apply to the running session.
 class TorrentEngineSettings {
@@ -15,6 +36,8 @@ class TorrentEngineSettings {
     this.enableUpnp = true,
     this.enableNatPmp = true,
     this.listenInterfaces = '0.0.0.0:0',
+    this.proxy = const TorrentProxy(),
+    this.networkInterface,
   });
 
   /// Zero means unlimited.
@@ -24,16 +47,27 @@ class TorrentEngineSettings {
   final bool enableDht, enableLsd, enableUpnp, enableNatPmp;
 
   /// libtorrent's listen_interfaces, e.g. `127.0.0.1:0` for loopback tests.
-  /// Read when the session starts.
+  /// Ignored while [networkInterface] is set.
   final String listenInterfaces;
+
+  final TorrentProxy proxy;
+
+  /// A device name, e.g. a VPN's `utun4` or `wg0`, that all traffic is bound
+  /// to. While it is down nothing connects, so traffic never leaves another
+  /// way. Null uses any interface.
+  final String? networkInterface;
 
   void validate() {
     if (downloadBytesPerSecond < 0 ||
         uploadBytesPerSecond < 0 ||
         maxConnections < 1 ||
-        listenInterfaces.isEmpty) {
+        listenInterfaces.isEmpty ||
+        proxy.port < 0 ||
+        proxy.port > 65535 ||
+        networkInterface?.trim().isEmpty == true) {
       throw ArgumentError(
-        'Require nonnegative limits, a connection and an interface',
+        'Require nonnegative limits, a connection, an interface and a valid '
+        'proxy port',
       );
     }
   }

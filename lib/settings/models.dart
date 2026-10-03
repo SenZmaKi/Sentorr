@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'download_settings.dart';
 import 'following_settings.dart';
 import 'json.dart';
+import 'network_settings.dart';
 import 'notification_settings.dart';
 import 'streaming_settings.dart';
 import 'torrent_settings.dart';
@@ -10,6 +11,7 @@ import 'update_settings.dart';
 
 export 'download_settings.dart';
 export 'following_settings.dart';
+export 'network_settings.dart';
 export 'notification_settings.dart';
 export 'streaming_settings.dart';
 export 'torrent_settings.dart';

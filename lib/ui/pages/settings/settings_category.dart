@@ -40,9 +40,10 @@ enum SettingsCategory {
   network(
     'Network',
     Icons.lan_outlined,
-    'Speed limits and finding peers',
+    'Speed limits, finding peers, proxy and VPN',
     'network download limit upload limit speed bandwidth connections utp dht '
-        'local peer discovery upnp nat port router',
+        'local peer discovery upnp nat port router proxy socks http vpn '
+        'interface kill switch',
   ),
   streaming(
     'Streaming engine',

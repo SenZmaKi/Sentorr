@@ -19,6 +19,7 @@ import 'package:sentorr/ui/pages/settings/settings_category.dart';
 import 'package:sentorr/ui/pages/settings/settings_page.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 import 'package:sentorr/watching/models.dart';
+import 'package:torrent_stream/torrent_stream.dart' show TorrentProxyKind;
 
 import '../support/fake_following.dart';
 import '../support/fake_library.dart';
@@ -167,6 +168,29 @@ void main() {
     await container.read(settingsProvider.notifier).flushed;
     expect(limit(), 0);
     expect(find.text('MB/s'), findsNothing);
+  });
+
+  testWidgets('choosing a proxy shows where it is and how to log in', (
+    tester,
+  ) async {
+    final container = await _pump(tester, const Size(1440, 1000));
+    await tester.tap(find.text('Network').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Proxy and VPN'), findsOneWidget);
+    expect(find.text('Proxy host'), findsNothing);
+    await tester.ensureVisible(find.text('None').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('None').first);
+    await tester.pumpAndSettle();
+    await tester.tap(_menuItem('SOCKS5'));
+    await tester.pumpAndSettle();
+    await container.read(settingsProvider.notifier).flushed;
+    expect(
+      container.read(settingsProvider).network.proxy.kind,
+      TorrentProxyKind.socks5,
+    );
+    expect(find.text('Proxy host'), findsOneWidget);
+    expect(find.text('Proxy password'), findsOneWidget);
   });
 
   test('the network defaults to uTP, discovery and no limits', () {

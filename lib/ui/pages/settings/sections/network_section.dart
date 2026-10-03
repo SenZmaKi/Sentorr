@@ -6,6 +6,7 @@ import '../../../../settings/notifier.dart';
 import '../../../components/toggle.dart';
 import '../settings_controls.dart';
 import '../settings_group.dart';
+import 'traffic_route_group.dart';
 
 /// The one torrent session's limits and discovery: streams and downloads
 /// share them, and changes apply at once.
@@ -130,6 +131,7 @@ class NetworkSection extends ConsumerWidget {
             ),
           ],
         ),
+        const TrafficRouteGroup(),
       ],
     );
   }

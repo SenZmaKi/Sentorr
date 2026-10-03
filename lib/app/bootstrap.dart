@@ -6,6 +6,7 @@ import '../updates/controller.dart';
 
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -29,6 +30,7 @@ import '../shared/log.dart';
 import '../shared/net/net.dart';
 import '../shared/persistence/app_paths.dart';
 import '../shared/persistence/app_image_cache.dart';
+import '../shared/persistence/credential_store.dart';
 import '../shared/persistence/json_file_store.dart';
 import '../shared/persistence/window_state_repository.dart';
 import '../shared/provider_log_observer.dart';
@@ -83,7 +85,11 @@ class AppRuntime with WidgetsBindingObserver {
       'Starting on ${Platform.operatingSystem} '
       '${Platform.operatingSystemVersion}, data in ${paths.rootDirectory.path}',
     );
-    final repository = SettingsRepository(JsonFileStore(paths.settingsFile));
+    final repository = SettingsRepository(
+      JsonFileStore(paths.settingsFile),
+      // Unsigned debug builds would ask for keychain access on every run.
+      credentials: kDebugMode ? null : CredentialStore(),
+    );
     final settings = await repository.load();
     final history = WatchHistoryRepository(
       JsonFileStore(paths.watchHistoryFile),

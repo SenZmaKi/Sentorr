@@ -6,7 +6,7 @@ class MainFlutterWindow: NSWindow {
   private var sparkleUpdateBridge: SparkleUpdateBridge?
 
   override func awakeFromNib() {
-    let flutterViewController = FlutterViewController()
+    let flutterViewController = RestartSafeFlutterViewController()
     let windowFrame = self.frame
     self.contentViewController = flutterViewController
     self.setFrame(windowFrame, display: true)
@@ -103,5 +103,54 @@ class MainFlutterWindow: NSWindow {
   override public func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {
     super.order(place, relativeTo: otherWin)
     hiddenWindowAtLaunch()
+  }
+}
+
+// mpv survives Dart hot restart and can wake its deleted NativeCallable even
+// before media_kit initializes again. Clear it at the native engine boundary.
+private class RestartSafeFlutterViewController: FlutterViewController {
+  private var playerHandles = Set<Int64>()
+  private var restartChannel: FlutterMethodChannel?
+  private typealias ClearWakeup = @convention(c) (
+    UnsafeMutableRawPointer?, UnsafeMutableRawPointer?, UnsafeMutableRawPointer?
+  ) -> Void
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    let channel = FlutterMethodChannel(
+      name: "sentorr/player_hot_restart", binaryMessenger: engine.binaryMessenger
+    )
+    channel.setMethodCallHandler { [weak self] call, result in
+      guard let handle = call.arguments as? Int64, handle != 0 else {
+        result(FlutterError(code: "invalid_handle", message: "Expected mpv handle", details: nil))
+        return
+      }
+      switch call.method {
+      case "register": self?.playerHandles.insert(handle)
+      case "unregister": self?.playerHandles.remove(handle)
+      default:
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      result(nil)
+    }
+    restartChannel = channel
+  }
+
+  override func onPreEngineRestart() {
+    if !playerHandles.isEmpty {
+      let path = Bundle.main.privateFrameworksPath! + "/Mpv.framework/Mpv"
+      if let library = dlopen(path, RTLD_NOW) {
+        if let symbol = dlsym(library, "mpv_set_wakeup_callback") {
+          let clear = unsafeBitCast(symbol, to: ClearWakeup.self)
+          for handle in playerHandles {
+            clear(UnsafeMutableRawPointer(bitPattern: Int(handle)), nil, nil)
+          }
+        }
+        dlclose(library)
+      }
+      playerHandles.removeAll()
+    }
+    super.onPreEngineRestart()
   }
 }

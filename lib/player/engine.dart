@@ -13,6 +13,7 @@ import '../torrents/resolution_models.dart';
 import '../following/notifier.dart';
 import '../watching/notifier.dart';
 import 'models.dart';
+import 'hot_restart.dart';
 import 'progress_tracker.dart';
 import 'session.dart';
 import 'stream/offline_source.dart';
@@ -37,6 +38,7 @@ class PlaybackEngine {
            bufferSize: 64 * 1024 * 1024,
          ),
        ) {
+    _restartReady = PlayerHotRestart.register(player);
     streaming = TorrentPlayback(
       player: player,
       engine: torrents,
@@ -56,6 +58,7 @@ class PlaybackEngine {
   }
 
   final Player player;
+  late final Future<void> _restartReady;
   late final TorrentPlayback streaming;
   late final VideoController video = VideoController(player);
   String? _opened;
@@ -76,6 +79,7 @@ class PlaybackEngine {
     if (item.id == _opened) return;
     _opened = item.id;
     _log.info('Opening $item${start == null ? '' : ' at ${_clock(start)}'}');
+    await _restartReady;
     await streaming.play(
       item,
       torrent: torrent,
@@ -130,7 +134,9 @@ class PlaybackEngine {
     await _native.cancel();
     await streaming.close();
     streaming.dispose();
+    await _restartReady;
     await player.dispose();
+    await PlayerHotRestart.unregister(player);
   }
 }
 

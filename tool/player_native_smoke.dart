@@ -3,6 +3,8 @@
 //   --directory tool/codec_lab/assets/media
 // flutter run -d macos -t tool/player_native_smoke.dart
 // Override the fixture with --dart-define=SMOKE_MEDIA=http://...
+// Automated hot restart regression: python3 tool/player/hot_restart_smoke.py
+// Keeps this window hidden; checks native video progression after each restart.
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
@@ -11,11 +13,13 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:sentorr/app/bootstrap.dart';
+import 'package:sentorr/player/hot_restart.dart';
 
 Future<void> main() async {
   await AppRuntime.initialize();
   final player = Player();
   player.stream.error.listen((error) => print('NATIVE_SMOKE_ERROR: $error'));
+  await PlayerHotRestart.register(player);
   final video = VideoController(player);
   runApp(
     MaterialApp(
@@ -45,7 +49,12 @@ Future<void> main() async {
   print(
     'NATIVE_SMOKE: mpv=$images position=${player.state.position} width=$width',
   );
-  exit(width > 0 ? 0 : 1);
+  if (const bool.fromEnvironment('SMOKE_HOT_RESTART')) {
+    if (width <= 0) exit(1);
+    print('HOT_RESTART_READY');
+  } else {
+    exit(width > 0 ? 0 : 1);
+  }
 }
 
 // Detect the duplicate-image condition from the user's macOS crash reports.

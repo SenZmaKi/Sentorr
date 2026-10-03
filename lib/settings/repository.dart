@@ -10,7 +10,10 @@ class SettingsRepository {
   SettingsRepository(this.store, {this.credentials});
   final JsonFileStore store;
   final CredentialStore? credentials;
-  ProxyCredentials? _savedCredentials;
+  // Nothing stored reads as an empty login, so saving defaults (a fresh
+  // install) never touches the keychain, which ad-hoc signed macOS builds
+  // cannot use (errSecMissingEntitlement).
+  ProxyCredentials _savedCredentials = (username: '', password: '');
 
   Future<AppSettings> load() async {
     final json = await store.read();

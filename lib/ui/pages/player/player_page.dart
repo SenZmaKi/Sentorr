@@ -195,8 +195,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                       PlayerValue(
                         stream: p.stream.buffering,
                         initial: p.state.buffering,
-                        builder: (context, buffering) =>
-                            BufferingIndicator(buffering: buffering && !_ended),
+                        builder: (context, buffering) => PlayerValue(
+                          stream: p.stream.playing,
+                          initial: p.state.playing,
+                          builder: (context, playing) => BufferingIndicator(
+                            buffering: buffering && !_ended,
+                            playing: playing,
+                          ),
+                        ),
                       ),
                       if (full) const CenterFeedback(),
                       ValueListenableBuilder(

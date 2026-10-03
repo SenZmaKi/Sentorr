@@ -11,9 +11,14 @@ import '../../shared/theme/theme.dart';
 /// A thin white ring, shown only when buffering outlasts a short grace
 /// period so quick seeks do not flash a spinner. Buffering is not an error.
 class BufferingIndicator extends StatefulWidget {
-  const BufferingIndicator({super.key, required this.buffering});
+  const BufferingIndicator({
+    super.key,
+    required this.buffering,
+    required this.playing,
+  });
 
   final bool buffering;
+  final bool playing;
 
   @override
   State<BufferingIndicator> createState() => _BufferingIndicatorState();
@@ -33,12 +38,16 @@ class _BufferingIndicatorState extends State<BufferingIndicator> {
   @override
   void didUpdateWidget(BufferingIndicator old) {
     super.didUpdateWidget(old);
-    if (old.buffering != widget.buffering) _sync();
+    if (old.buffering != widget.buffering || old.playing != widget.playing) {
+      _sync();
+    }
   }
 
   void _sync() {
     _timer?.cancel();
-    if (!widget.buffering) {
+    // Native frame steps pause and may report core-idle as buffering.
+    // Only show a stall when the viewer intends continuous playback.
+    if (!widget.buffering || !widget.playing) {
       if (_visible) setState(() => _visible = false);
       return;
     }

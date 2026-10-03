@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../shared/net/cache_tiers.dart';
 import '../models.dart';
 import '../diagnostics.dart';
 
@@ -24,6 +25,8 @@ abstract interface class DiagnosticTorrentSource implements TorrentSource {
 }
 
 /// Uses the app transport's bounded rate-limit retry and concurrency controls.
+/// Results are cached briefly when [isResult] recognizes them, so error
+/// pages and access challenges are retried instead of replayed.
 class SourceClient {
   SourceClient(this.dio);
   final Dio dio;
@@ -31,6 +34,7 @@ class SourceClient {
     Uri uri, {
     CancelToken? cancelToken,
     bool html = false,
+    required bool Function(Object? body) isResult,
   }) async {
     final response = await dio.getUri<Object?>(
       uri,
@@ -40,6 +44,10 @@ class SourceClient {
         headers: {'Accept': html ? 'text/html' : 'application/json'},
         sendTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 20),
+        extra: cachedRequest(
+          CacheTier.liveSearch,
+          isValid: (data) => isResult(html ? data : jsonDecode('$data')),
+        ),
       ),
     );
     if (response.statusCode != 200) {

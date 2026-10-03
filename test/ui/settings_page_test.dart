@@ -11,6 +11,7 @@ import 'package:sentorr/player/stream/session_config.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/settings/notifier.dart';
 import 'package:sentorr/settings/repository.dart';
+import 'package:sentorr/shared/net/net.dart';
 import 'package:sentorr/shared/persistence/json_file_store.dart';
 import 'package:sentorr/torrents/models.dart';
 import 'package:sentorr/torrents/providers.dart';
@@ -46,8 +47,11 @@ Future<ProviderContainer> _pump(WidgetTester tester, Size size) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
+  final network = NetworkClient(http2: false, logging: false);
+  addTearDown(network.close);
   final container = ProviderContainer(
     overrides: [
+      networkClientProvider.overrideWithValue(network),
       initialSettingsProvider.overrideWithValue(const AppSettings()),
       settingsRepositoryProvider.overrideWithValue(_MemorySettings()),
       torrentDirectoryProvider.overrideWithValue('/torrents'),

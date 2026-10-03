@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
@@ -44,6 +46,12 @@ class SettingsNotifier extends Notifier<AppSettings> {
       }
       await ref.read(settingsRepositoryProvider).save(next);
       AppImageCache.applyMaxSizeBytes(next.imageCacheMaxBytes);
+      final network = ref.read(networkClientProvider)
+        ..ttls = next.cache.ttl
+        ..maxCacheBytes = next.cache.maxBytes;
+      if (next.cache.maxBytes != state.cache.maxBytes) {
+        unawaited(network.trimCache());
+      }
       _log.info('Saved settings: ${_changed(state.toJson(), next.toJson())}');
       state = next;
     });

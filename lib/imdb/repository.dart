@@ -1,8 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:logging/logging.dart';
 
-import '../shared/net/cache.dart';
+import '../shared/net/cache_tiers.dart';
 import 'client.dart';
 import 'mappers.dart' as map;
 import 'models.dart';
@@ -84,7 +83,7 @@ class ImdbRepository {
         'constraints': filters.constraints,
         'sort': filters.ordering,
       },
-      ttl: const Duration(minutes: 2),
+      tier: CacheTier.liveSearch,
       refresh: refresh,
       cancelToken: cancelToken,
     );
@@ -192,6 +191,7 @@ class ImdbRepository {
       'SentorrCredits',
       creditsQuery,
       _pageVariables(id, limit, cursor),
+      tier: CacheTier.reference,
       refresh: refresh,
       cancelToken: cancelToken,
     );
@@ -228,6 +228,7 @@ class ImdbRepository {
       'SentorrImages',
       imagesQuery,
       _pageVariables(id, limit, cursor),
+      tier: CacheTier.reference,
       refresh: refresh,
       cancelToken: cancelToken,
     );
@@ -246,12 +247,10 @@ class ImdbRepository {
       'https://v3.sg.media-imdb.com/suggestion/x/${Uri.encodeComponent(normalized)}.json',
       cancelToken: cancelToken,
       options: Options(
-        extra: CacheOptions(
-          store: null,
-          policy: CachePolicy.forceCache,
-          maxStale: const Duration(minutes: 2),
-          keyBuilder: networkCacheKey,
-        ).toExtra(),
+        extra: cachedRequest(
+          CacheTier.liveSearch,
+          isValid: (data) => ImdbClient.decodeJson(data)['d'] is List,
+        ),
       ),
     );
     if (response.statusCode != 200) {

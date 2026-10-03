@@ -113,6 +113,46 @@ void main() {
     },
   );
 
+  group('tier freshness', () {
+    const ttl = Duration(milliseconds: 300);
+    setUp(() => network.ttls = (_) => ttl);
+
+    test('entries read often still refresh once their TTL passes', () async {
+      await repository.trendingTitles(limit: 1);
+      for (var i = 0; i < 3; i++) {
+        await Future<void>.delayed(ttl ~/ 4);
+        await repository.trendingTitles(limit: 1);
+      }
+      expect(requests, 1);
+      await Future<void>.delayed(ttl ~/ 2);
+      await repository.trendingTitles(limit: 1);
+      expect(requests, 2);
+    });
+
+    test('expired entries answer when the network fails', () async {
+      await repository.trendingTitles(limit: 1);
+      await Future<void>.delayed(ttl * 2);
+      await server.close(force: true);
+      expect((await repository.trendingTitles(limit: 1)).single.id, 'tt1');
+    });
+
+    test('invalid responses keep the last good answer', () async {
+      await repository.trendingTitles(limit: 1);
+      await Future<void>.delayed(ttl * 2);
+      error = true;
+      await expectLater(repository.trendingTitles(limit: 1), throwsException);
+      await server.close(force: true);
+      expect((await repository.trendingTitles(limit: 1)).single.id, 'tt1');
+    });
+
+    test('settings change TTLs without rebuilding the client', () async {
+      network.ttls = (_) => Duration.zero;
+      await repository.trendingTitles(limit: 1);
+      await repository.trendingTitles(limit: 1);
+      expect(requests, 2);
+    });
+  });
+
   test('request logs exclude query values, bodies and credentials', () async {
     final records = <String>[];
     final logger = Logger('sentorr.net');

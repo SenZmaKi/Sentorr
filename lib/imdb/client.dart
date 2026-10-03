@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:logging/logging.dart';
 
 import '../shared/net/cache.dart';
+import '../shared/net/cache_tiers.dart';
 import 'models.dart';
 import 'website.dart';
 
@@ -19,7 +19,7 @@ class ImdbClient {
     String document,
     Map<String, Object?> variables, {
     CancelToken? cancelToken,
-    Duration ttl = const Duration(hours: 1),
+    CacheTier tier = CacheTier.catalogue,
     bool refresh = false,
   }) async {
     final clock = Stopwatch()..start();
@@ -36,13 +36,12 @@ class ImdbClient {
         responseType: ResponseType.json,
         extra: {
           readOnlyRequestKey: true,
-          ...CacheOptions(
-            store: null,
-            policy: refresh ? CachePolicy.refresh : CachePolicy.forceCache,
-            allowPostMethod: true,
-            maxStale: ttl,
-            keyBuilder: networkCacheKey,
-          ).toExtra(),
+          ...cachedRequest(
+            tier,
+            refresh: refresh,
+            post: true,
+            isValid: isGraphqlResult,
+          ),
         },
       ),
     );

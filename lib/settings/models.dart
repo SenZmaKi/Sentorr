@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'cache_settings.dart';
 import 'download_settings.dart';
 import 'following_settings.dart';
 import 'json.dart';
@@ -9,6 +10,7 @@ import 'streaming_settings.dart';
 import 'torrent_settings.dart';
 import 'update_settings.dart';
 
+export 'cache_settings.dart';
 export 'download_settings.dart';
 export 'following_settings.dart';
 export 'network_settings.dart';
@@ -66,6 +68,7 @@ class AppSettings {
     this.themeMode = ThemeMode.system,
     this.window = const WindowPreferences(),
     this.imageCacheMaxBytes = defaultImageCacheMaxBytes,
+    this.cache = const CacheSettings(),
     this.torrents = const TorrentSettings(),
     this.sources = const SourceSettings(),
     this.streaming = const StreamingSettings(),
@@ -83,6 +86,7 @@ class AppSettings {
 
   /// Zero means unlimited.
   final int imageCacheMaxBytes;
+  final CacheSettings cache;
   final TorrentSettings torrents;
   final SourceSettings sources;
   final StreamingSettings streaming;
@@ -96,6 +100,7 @@ class AppSettings {
     ThemeMode? themeMode,
     WindowPreferences? window,
     int? imageCacheMaxBytes,
+    CacheSettings? cache,
     TorrentSettings? torrents,
     SourceSettings? sources,
     StreamingSettings? streaming,
@@ -108,6 +113,7 @@ class AppSettings {
     themeMode: themeMode ?? this.themeMode,
     window: window ?? this.window,
     imageCacheMaxBytes: imageCacheMaxBytes ?? this.imageCacheMaxBytes,
+    cache: cache ?? this.cache,
     torrents: torrents ?? this.torrents,
     sources: sources ?? this.sources,
     streaming: streaming ?? this.streaming,
@@ -125,6 +131,7 @@ class AppSettings {
       json['imageCacheMaxBytes'],
       defaultImageCacheMaxBytes,
     ),
+    cache: CacheSettings.fromJson(jsonObject(json['cache'])),
     torrents: TorrentSettings.fromJson(jsonObject(json['torrents'])),
     sources: SourceSettings.fromJson(jsonObject(json['sources'])),
     streaming: StreamingSettings.fromJson(jsonObject(json['streaming'])),
@@ -145,6 +152,7 @@ class AppSettings {
     'themeMode': themeMode.name,
     'window': window.toJson(),
     'imageCacheMaxBytes': imageCacheMaxBytes,
+    'cache': cache.toJson(),
     'torrents': torrents.toJson(),
     'sources': sources.toJson(),
     'streaming': streaming.toJson(),

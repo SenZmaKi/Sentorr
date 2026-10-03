@@ -41,6 +41,7 @@ class PirateBaySource implements DiagnosticTorrentSource {
       Uri.parse(endpoint)
           .replace(queryParameters: {'q': query.searchText, 'cat': '200'}),
       cancelToken: cancelToken,
+      isResult: (body) => body is List,
     );
     if (data is! List) {
       throw const SourceException('Unexpected Pirate Bay response');

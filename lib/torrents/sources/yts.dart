@@ -43,6 +43,8 @@ class YtsSource implements DiagnosticTorrentSource {
         endpoint,
       ).replace(queryParameters: {'query_term': query.imdbId!, 'limit': '50'}),
       cancelToken: cancelToken,
+      isResult: (body) =>
+          body is Map && body['status'] == 'ok' && body['data'] is Map,
     );
     if (json is! Map || json['status'] != 'ok' || json['data'] is! Map) {
       throw const SourceException('Unexpected YTS response');

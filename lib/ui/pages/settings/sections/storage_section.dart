@@ -9,6 +9,7 @@ import '../../../components/confirm_dialog.dart';
 import '../../../shared/title_format.dart';
 import '../settings_controls.dart';
 import '../settings_group.dart';
+import 'cache_freshness_group.dart';
 
 class _Usage {
   const _Usage(this.images, this.http);
@@ -53,6 +54,9 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
   Widget build(BuildContext context) {
     final limit = ref.watch(
       settingsProvider.select((s) => s.imageCacheMaxBytes),
+    );
+    final networkLimit = ref.watch(
+      settingsProvider.select((s) => s.cache.maxBytes),
     );
     return FutureBuilder(
       future: _usage,
@@ -107,23 +111,48 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
                   ),
                 ),
                 SettingsTile(
+                  icon: Icons.cloud_download_outlined,
+                  title: 'Network cache limit',
+                  subtitle:
+                      'Catalog pages and searches, kept for speed and '
+                      'offline use; using ${size((u) => u.http)}',
+                  keywords: 'http responses catalog imdb offline',
+                  trailing: LimitField(
+                    value: (networkLimit / megabyte).round(),
+                    presets: const {0: 'Unlimited'},
+                    customDefault: 50,
+                    min: 5,
+                    unit: 'MB',
+                    semanticLabel: 'Network cache limit',
+                    onChanged: (n) => ref
+                        .read(settingsProvider.notifier)
+                        .update(
+                          (s) => s.copyWith(
+                            cache: s.cache.withMaxBytes(n * megabyte),
+                          ),
+                        ),
+                  ),
+                ),
+                SettingsTile(
                   icon: Icons.http_rounded,
                   title: 'Clear network cache',
                   subtitle:
-                      '${size((u) => u.http)}; catalog pages load fresh from '
-                      'IMDb',
-                  keywords: 'http responses catalog imdb',
+                      '${size((u) => u.http)}; catalog pages and searches '
+                      'load fresh',
+                  keywords: 'http responses catalog imdb torrent search',
                   trailing: SButton(
                     label: 'Clear',
                     onPressed: () => _clear(
                       'network cache',
-                      'Catalog pages load fresh from IMDb next time.',
+                      'Catalog pages and searches load fresh next time, '
+                          'and are unavailable offline until then.',
                       () => ref.read(networkClientProvider).clearCache(),
                     ),
                   ),
                 ),
               ],
             ),
+            const CacheFreshnessGroup(),
             SettingsGroup(
               title: 'Reset',
               description: 'Start over with Sentorr\'s defaults',

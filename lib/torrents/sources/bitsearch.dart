@@ -44,6 +44,7 @@ class BitsearchSource implements DiagnosticTorrentSource {
           .replace(queryParameters: {'q': query.searchText, 'sort': 'seeders'}),
       cancelToken: cancelToken,
       html: true,
+      isResult: (body) => '$body'.contains('data-impression-ids'),
     );
     final doc = html.parse('$page');
     final container = doc.querySelector('[data-impression-ids]');

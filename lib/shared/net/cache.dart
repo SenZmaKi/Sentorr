@@ -38,33 +38,55 @@ String networkCacheKey({
       .toString();
 }
 
+/// Marks a POST that only reads, so it may be retried after a 429.
 const readOnlyRequestKey = 'sentorr.readOnly';
 
-/// Avoid persisting GraphQL errors/partial failures delivered with HTTP 200.
-class GraphqlCacheGuard extends Interceptor {
+/// A request's `bool Function(Object? data)` saying whether a response is
+/// worth caching.
+const cacheValidityKey = 'sentorr.cacheValidity';
+
+/// Keeps error pages, access challenges and GraphQL errors delivered with
+/// HTTP 200 out of the cache, without evicting the last good answer.
+class CacheValidityGuard extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    if (response.requestOptions.extra[readOnlyRequestKey] == true) {
-      Object? data = response.data;
-      if (data is String) {
-        try {
-          data = jsonDecode(data);
-        } catch (_) {
-          data = null;
-        }
-      }
-      if (data is! Map ||
-          data['data'] == null ||
-          (data['errors'] is List && (data['errors'] as List).isNotEmpty)) {
-        final options =
-            response.requestOptions.extra[extraKey] as CacheOptions?;
-        if (options != null) {
-          response.requestOptions.extra.addAll(
-            options.copyWith(policy: CachePolicy.noCache).toExtra(),
-          );
-        }
-      }
+    final extra = response.requestOptions.extra;
+    final isValid = extra[cacheValidityKey];
+    final options = extra[extraKey];
+    if (isValid is bool Function(Object?) &&
+        options is CacheOptions &&
+        !_accepts(isValid, response.data)) {
+      extra.addAll(options.copyWith(store: _discard).toExtra());
     }
     handler.next(response);
   }
+
+  static bool _accepts(bool Function(Object?) isValid, Object? data) {
+    try {
+      return isValid(data);
+    } catch (_) {
+      return false;
+    }
+  }
+}
+
+/// GraphQL answers with data and no errors.
+bool isGraphqlResult(Object? data) {
+  if (data is String) {
+    try {
+      data = jsonDecode(data);
+    } on FormatException {
+      return false;
+    }
+  }
+  return data is Map &&
+      data['data'] != null &&
+      !(data['errors'] is List && (data['errors'] as List).isNotEmpty);
+}
+
+final _discard = _DiscardingCacheStore();
+
+class _DiscardingCacheStore extends MemCacheStore {
+  @override
+  Future<void> set(CacheResponse response) async {}
 }

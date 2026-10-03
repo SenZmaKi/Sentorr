@@ -113,6 +113,8 @@ class AppRuntime with WidgetsBindingObserver {
     AppImageCache.initialize(paths, maxSizeBytes: settings.imageCacheMaxBytes);
     final network = NetworkClient(
       cacheDirectory: paths.networkCacheDirectory.path,
+      ttls: settings.cache.ttl,
+      maxCacheBytes: settings.cache.maxBytes,
     );
     final tray = DesktopTrayController();
     late final AppRuntime runtime;

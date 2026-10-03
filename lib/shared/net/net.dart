@@ -7,11 +7,14 @@ import 'package:logging/logging.dart';
 import 'dart:io';
 
 import 'cache.dart';
+import 'cache_tiers.dart';
 import 'http2_preferred_adapter.dart';
+import 'interceptors/cache_freshness.dart';
 import 'interceptors/concurrency.dart';
 import 'interceptors/rate_limit.dart';
 import 'interceptors/request_logging.dart';
 import 'request_cancellation_scope.dart';
+import 'size_limited_cache_store.dart';
 
 /// The owner closes both the transport and cache. Pass a Sentorr-owned cache
 /// directory to persist between app runs; CLI/tests default to memory.
@@ -22,22 +25,41 @@ class NetworkClient {
     int perHost = 4,
     bool logging = true,
     CacheStore? store,
-  }) : cacheStore =
-           store ??
-           (cacheDirectory == null
-               ? MemCacheStore()
-               : FileCacheStore(cacheDirectory)),
-       _ownsStore = store == null {
+    this.ttls = defaultCacheTtls,
+    this.maxCacheBytes = 0,
+  }) : _ownsStore = store == null {
+    cacheStore =
+        store ??
+        (cacheDirectory == null
+            ? MemCacheStore()
+            : SizeLimitedCacheStore(
+                FileCacheStore(cacheDirectory),
+                Directory(cacheDirectory),
+                () => maxCacheBytes,
+              ));
     dio = buildDio(
       store: cacheStore,
       http2: http2,
       perHost: perHost,
       logging: logging,
+      ttls: (tier) => ttls(tier),
     );
   }
-  final CacheStore cacheStore;
+  late final CacheStore cacheStore;
   final bool _ownsStore;
   late final Dio dio;
+
+  /// Each cache tier's freshness window, read as requests are sent.
+  CacheTtls ttls;
+
+  /// The disk cache's budget in bytes; zero means unlimited.
+  int maxCacheBytes;
+
+  /// Applies a changed [maxCacheBytes] now rather than on the next write.
+  Future<void> trimCache() async {
+    final store = cacheStore;
+    if (store is SizeLimitedCacheStore) await store.trim();
+  }
   Future<void> clearCache() => cacheStore.clean();
   Future<void> close() async {
     dio.close(force: true);
@@ -50,6 +72,7 @@ Dio buildDio({
   bool http2 = true,
   int perHost = 4,
   bool logging = true,
+  CacheTtls ttls = defaultCacheTtls,
 }) {
   final dio = Dio(
     BaseOptions(
@@ -66,7 +89,8 @@ Dio buildDio({
   if (http2) preferHttp2(dio);
   dio.interceptors.addAll([
     const ScopedCancelTokenInterceptor(),
-    GraphqlCacheGuard(),
+    CacheFreshnessInterceptor(store, ttls),
+    CacheValidityGuard(),
     DioCacheInterceptor(
       options: CacheOptions(
         store: store,

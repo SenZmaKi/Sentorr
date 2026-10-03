@@ -8,10 +8,15 @@ import 'source.dart';
 class YtsSource implements DiagnosticTorrentSource {
   YtsSource(
     Dio dio, {
-    this.endpoint = 'https://movies-api.accel.li/api/v2/list_movies.json',
-  }) : client = SourceClient(dio);
+    this.endpointResolver,
+    String endpoint = 'https://movies-api.accel.li/api/v2/list_movies.json',
+    // ignore: prefer_initializing_formals
+  }) : _endpoint = endpoint,
+       client = SourceClient(dio);
   final SourceClient client;
-  final String endpoint;
+  final String _endpoint;
+  final String Function()? endpointResolver;
+  String get endpoint => endpointResolver?.call() ?? _endpoint;
   @override
   TorrentSourceId get id => TorrentSourceId.yts;
   @override

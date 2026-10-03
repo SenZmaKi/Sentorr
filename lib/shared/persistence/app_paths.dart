@@ -36,6 +36,16 @@ class AppPaths {
       File(path.join(rootDirectory.path, 'cache', 'metadata', 'torrents.json'));
   File get imageCacheMetadataFile =>
       File(path.join(rootDirectory.path, 'cache', 'metadata', 'images.json'));
+  File get sourceDirectoryFile =>
+      File(path.join(rootDirectory.path, 'state', 'source-directory.json'));
+  File get sourceDirectoryFetchStateFile => File(
+    path.join(rootDirectory.path, 'state', 'source-directory-fetch.json'),
+  );
+  Directory get updatesDirectory => directory('updates');
+  File get updateManifestFile =>
+      File(path.join(updatesDirectory.path, 'manifest.json'));
+  File get updateStateFile =>
+      File(path.join(updatesDirectory.path, 'state.json'));
   Directory get logsDirectory => directory('logs');
 
   static Future<AppPaths> initialize({Directory? rootDirectory}) async {
@@ -64,6 +74,7 @@ class AppPaths {
       'cache/metadata',
       'cache/streams',
       'logs',
+      'updates',
     ]) {
       await paths.directory(name).create(recursive: true);
     }

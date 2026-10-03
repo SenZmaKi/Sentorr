@@ -29,3 +29,13 @@ android/key.properties
 macos/Flutter/ephemeral/
 windows/flutter/ephemeral/
 linux/flutter/ephemeral/
+
+# CI native checkout and private signing material
+native/
+pubspec_overrides.yaml
+*.keystore
+*.jks
+*.key
+site/
+
+__pycache__/

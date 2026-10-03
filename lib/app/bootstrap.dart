@@ -1,4 +1,9 @@
 import 'dart:io';
+import 'dart:async';
+
+import '../shared/source_directory/repository.dart';
+import '../updates/controller.dart';
+
 import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
@@ -101,9 +106,12 @@ class AppRuntime with WidgetsBindingObserver {
       cacheDirectory: paths.networkCacheDirectory.path,
     );
     final tray = DesktopTrayController();
+    late final AppRuntime runtime;
     final container = ProviderContainer(
       observers: const [ProviderLogObserver()],
       overrides: [
+        prepareForUpdateProvider.overrideWithValue(() => runtime.flush()),
+        quitApplicationProvider.overrideWithValue(() => runtime.quit()),
         appPathsProvider.overrideWithValue(paths),
         settingsRepositoryProvider.overrideWithValue(repository),
         initialSettingsProvider.overrideWithValue(settings),
@@ -119,7 +127,9 @@ class AppRuntime with WidgetsBindingObserver {
         ),
       ],
     );
-    final runtime = AppRuntime._(
+    await container.read(sourceDirectoryProvider.notifier).initialize();
+    unawaited(container.read(updatesProvider.notifier).initialize());
+    runtime = AppRuntime._(
       container,
       network,
       repository,

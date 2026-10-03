@@ -8,10 +8,17 @@ import 'source.dart';
 
 /// Bitsearch metadata search. No scripts or download links run.
 class BitsearchSource implements DiagnosticTorrentSource {
-  BitsearchSource(Dio dio, {this.endpoint = 'https://bitsearch.eu/search'})
-    : client = SourceClient(dio);
+  BitsearchSource(
+    Dio dio, {
+    this.endpointResolver,
+    String endpoint = 'https://bitsearch.eu/search',
+    // ignore: prefer_initializing_formals
+  }) : _endpoint = endpoint,
+       client = SourceClient(dio);
   final SourceClient client;
-  final String endpoint;
+  final String _endpoint;
+  final String Function()? endpointResolver;
+  String get endpoint => endpointResolver?.call() ?? _endpoint;
   @override
   TorrentSourceId get id => TorrentSourceId.bitsearch;
   @override

@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "expiresAt": "2027-10-03T01:53:48.145290Z",
+  "sources": {
+    "pirateBay": {
+      "apiEntryPoint": "https://apibay.org/q.php",
+      "allowedHosts": [
+        "apibay.org"
+      ]
+    },
+    "yts": {
+      "apiEntryPoint": "https://movies-api.accel.li/api/v2/list_movies.json",
+      "allowedHosts": [
+        "movies-api.accel.li"
+      ]
+    },
+    "bitsearch": {
+      "apiEntryPoint": "https://bitsearch.eu/search",
+      "allowedHosts": [
+        "bitsearch.eu"
+      ]
+    }
+  }
+}

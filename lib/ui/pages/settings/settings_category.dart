@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../shared/window_manager.dart';
 import 'sections/appearance_section.dart';
+import 'sections/updates_section.dart';
 import 'sections/downloads_section.dart';
 import 'sections/following_section.dart';
 import 'sections/network_section.dart';
@@ -76,6 +77,12 @@ enum SettingsCategory {
     'window launch at startup close to tray always on top open maximized '
         'open in full screen desktop',
   ),
+  updates(
+    'Updates',
+    Icons.system_update_alt_rounded,
+    'App and source updates',
+    'update release version restart install source directory refresh',
+  ),
   storage(
     'Cache and storage',
     Icons.storage_rounded,
@@ -109,6 +116,7 @@ enum SettingsCategory {
     notifications => const NotificationsSection(),
     appearance => const AppearanceSection(),
     window => const WindowSection(),
+    updates => const UpdatesSection(),
     storage => const StorageSection(),
   };
 }

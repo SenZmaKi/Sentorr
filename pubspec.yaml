@@ -20,6 +20,9 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_cache_manager: ^3.4.1
   file: ^7.0.1
+  cryptography: ^2.7.0
+  pub_semver: ^2.2.0
+  package_info_plus: ^9.0.0
   crypto: ^3.0.7
   dio: ^5.11.1
   dio_cache_interceptor: ^4.0.7

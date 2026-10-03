@@ -3,6 +3,7 @@ import FlutterMacOS
 import ServiceManagement
 
 class MainFlutterWindow: NSWindow {
+  private var sparkleUpdateBridge: SparkleUpdateBridge?
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
@@ -88,6 +89,10 @@ class MainFlutterWindow: NSWindow {
       }
       result(NSApp.setActivationPolicy(enabled ? .accessory : .regular))
     }
+
+    let sparkle = SparkleUpdateBridge()
+    sparkle.register(with: flutterViewController.engine.binaryMessenger)
+    self.sparkleUpdateBridge = sparkle
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 

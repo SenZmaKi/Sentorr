@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: flutter-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Format, analyze, and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.2
+          channel: stable
+          cache: true
+
+      - name: Check out streaming bindings
+        uses: actions/checkout@v7
+        with:
+          repository: SenZmaKi/libtorrent_dart
+          ref: de9fc4b07ff63dd3f3433497c0fb48568c86f5af
+          submodules: recursive
+          path: native/libtorrent_dart
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Configure native dependency
+        shell: bash
+        run: python tool/release/configure_native.py
+
+      - name: Install native prerequisites
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libboost-dev libssl-dev
+      - name: Build streaming bridge
+        run: python tool/release/build_native.py
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test packages/torrent_stream/lib packages/torrent_stream/test source-directory/signer/bin
+
+      - name: Lint
+        run: flutter analyze --no-pub
+
+      - name: Run tests
+        run: flutter test --no-pub --concurrency=1
+
+      - name: Test torrent engine
+        working-directory: packages/torrent_stream
+        run: |
+          printf 'dependency_overrides:\n  libtorrent_dart:\n    path: ../../native/libtorrent_dart\n' > pubspec_overrides.yaml
+          dart pub get
+          dart analyze
+          dart test --concurrency=1
+      - name: Check signing tools
+        working-directory: source-directory/signer
+        run: |
+          dart pub get
+          dart analyze
+
+      - name: Probe live torrent providers
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: dart run tool/torrent_sources/probe.dart

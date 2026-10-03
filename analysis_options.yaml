@@ -1,6 +1,7 @@
 analyzer:
   exclude:
     - build/**
+    - native/**
     # Standalone Flutter experiments own separate dependency graphs.
     - tool/codec_lab/**
     - tool/design_demo/**

@@ -28,5 +28,13 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/SenZmaKi/Sentorr/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>bI+cNrI3TMgUbJFGzu9f2NPbeO69hP7KX1YXc4b7czY=</string>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
 </dict>
 </plist>

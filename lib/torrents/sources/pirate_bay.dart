@@ -6,10 +6,17 @@ import '../parsing.dart';
 import 'source.dart';
 
 class PirateBaySource implements DiagnosticTorrentSource {
-  PirateBaySource(Dio dio, {this.endpoint = 'https://apibay.org/q.php'})
-    : client = SourceClient(dio);
+  PirateBaySource(
+    Dio dio, {
+    this.endpointResolver,
+    String endpoint = 'https://apibay.org/q.php',
+    // ignore: prefer_initializing_formals
+  }) : _endpoint = endpoint,
+       client = SourceClient(dio);
   final SourceClient client;
-  final String endpoint;
+  final String _endpoint;
+  final String Function()? endpointResolver;
+  String get endpoint => endpointResolver?.call() ?? _endpoint;
   @override
   TorrentSourceId get id => TorrentSourceId.pirateBay;
   @override

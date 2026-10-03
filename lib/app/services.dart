@@ -28,3 +28,11 @@ final imageCacheProvider = Provider<CacheManager>(
 final imdbRepositoryProvider = Provider<ImdbRepository>(
   (ref) => ImdbRepository(ref.watch(networkClientProvider).dio),
 );
+
+final quitApplicationProvider = Provider<Future<void> Function()>(
+  (ref) => throw StateError('Bootstrap must provide quit'),
+);
+
+final prepareForUpdateProvider = Provider<Future<void> Function()>(
+  (ref) => throw StateError('Bootstrap must provide update preparation'),
+);

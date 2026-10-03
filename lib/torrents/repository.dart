@@ -11,7 +11,7 @@ import 'sources/yts.dart';
 final _log = Logger('sentorr.torrents');
 
 class TorrentRepository {
-  TorrentRepository(Iterable<TorrentSource> sources)
+  TorrentRepository(Iterable<TorrentSource> sources, {this.beforeSearch})
     : sources = List.unmodifiable(sources) {
     if (this.sources.map((s) => s.id).toSet().length != this.sources.length) {
       throw ArgumentError('Duplicate source identifiers');
@@ -23,11 +23,13 @@ class TorrentRepository {
     BitsearchSource(dio),
   ]);
   final List<TorrentSource> sources;
+  final Future<void> Function()? beforeSearch;
 
   Future<TorrentSearchResult> search(
     TorrentQuery query, {
     CancelToken? cancelToken,
   }) async {
+    await beforeSearch?.call();
     if (cancelToken?.isCancelled ?? false) throw cancelToken!.cancelError!;
     final clock = Stopwatch()..start();
     final batches = await Future.wait(

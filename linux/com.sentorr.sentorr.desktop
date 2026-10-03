@@ -1,9 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Sentorr
-Comment=Stream movies and TV series
 Exec=sentorr
 Icon=com.sentorr.sentorr
-Terminal=false
 Categories=AudioVideo;Video;
-StartupWMClass=com.sentorr.sentorr
+Terminal=false

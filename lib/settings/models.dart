@@ -6,12 +6,14 @@ import 'json.dart';
 import 'notification_settings.dart';
 import 'streaming_settings.dart';
 import 'torrent_settings.dart';
+import 'update_settings.dart';
 
 export 'download_settings.dart';
 export 'following_settings.dart';
 export 'notification_settings.dart';
 export 'streaming_settings.dart';
 export 'torrent_settings.dart';
+export 'update_settings.dart';
 
 class WindowPreferences {
   const WindowPreferences({
@@ -69,6 +71,7 @@ class AppSettings {
     this.downloads = const DownloadPreferences(),
     this.network = const NetworkSettings(),
     this.following = const FollowingSettings(),
+    this.updates = const UpdateSettings(),
   });
 
   static const defaultImageCacheMaxBytes = 100 * 1024 * 1024;
@@ -85,6 +88,7 @@ class AppSettings {
   final DownloadPreferences downloads;
   final NetworkSettings network;
   final FollowingSettings following;
+  final UpdateSettings updates;
 
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -97,6 +101,7 @@ class AppSettings {
     DownloadPreferences? downloads,
     NetworkSettings? network,
     FollowingSettings? following,
+    UpdateSettings? updates,
   }) => AppSettings(
     themeMode: themeMode ?? this.themeMode,
     window: window ?? this.window,
@@ -108,6 +113,7 @@ class AppSettings {
     downloads: downloads ?? this.downloads,
     network: network ?? this.network,
     following: following ?? this.following,
+    updates: updates ?? this.updates,
   );
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -129,6 +135,7 @@ class AppSettings {
       legacy: jsonObject(json['streaming']),
     ),
     following: FollowingSettings.fromJson(jsonObject(json['following'])),
+    updates: UpdateSettings.fromJson(jsonObject(json['updates'])),
   );
 
   Map<String, dynamic> toJson() => {
@@ -143,5 +150,6 @@ class AppSettings {
     'downloads': downloads.toJson(),
     'network': network.toJson(),
     'following': following.toJson(),
+    'updates': updates.toJson(),
   };
 }

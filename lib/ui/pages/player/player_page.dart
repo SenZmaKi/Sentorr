@@ -118,7 +118,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     });
     ref.listen(playerViewProvider, (_, view) {
       // Keys belong to the player again once it fills the app.
-      if (view != PlayerView.mini) _focus.requestFocus();
+      if (view != PlayerView.mini) {
+        // ExcludeFocus must rebuild before this node can accept focus.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && ref.read(playerViewProvider) != PlayerView.mini) {
+            _focus.requestFocus();
+          }
+        });
+      }
     });
     ref.listen(AppLifecycleNotifier.provider, (_, lifecycle) {
       // Nobody sees a backgrounded, minimized or dismissed app, which on

@@ -189,3 +189,59 @@ class _StageGesturesState extends State<StageGestures> {
     );
   }
 }
+
+/// Docked playback can leave focus on the app's root scope. Listen outside
+/// the focus tree so returning to the player also works in that state.
+class MiniPlayerShortcut extends StatefulWidget {
+  const MiniPlayerShortcut({
+    super.key,
+    required this.enabled,
+    required this.onExpand,
+    required this.child,
+  });
+
+  final bool enabled;
+  final VoidCallback onExpand;
+  final Widget child;
+
+  @override
+  State<MiniPlayerShortcut> createState() => _MiniPlayerShortcutState();
+}
+
+class _MiniPlayerShortcutState extends State<MiniPlayerShortcut> {
+  @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handle);
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handle);
+    super.dispose();
+  }
+
+  bool _handle(KeyEvent event) {
+    final keyboard = HardwareKeyboard.instance;
+    if (!widget.enabled ||
+        event is! KeyDownEvent ||
+        event.logicalKey != LogicalKeyboardKey.keyI ||
+        keyboard.isControlPressed ||
+        keyboard.isMetaPressed ||
+        keyboard.isAltPressed ||
+        keyboard.isShiftPressed) {
+      return false;
+    }
+    final context = FocusManager.instance.primaryFocus?.context;
+    if (context != null &&
+        (context.widget is EditableText ||
+            context.findAncestorWidgetOfExactType<EditableText>() != null)) {
+      return false;
+    }
+    widget.onExpand();
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}

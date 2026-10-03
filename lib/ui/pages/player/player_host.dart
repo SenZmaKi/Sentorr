@@ -8,6 +8,7 @@ import '../../components/motion.dart';
 import '../../shared/player_view.dart';
 import '../../shared/theme/theme.dart';
 import 'player_layout.dart';
+import 'player_input.dart';
 import 'player_page.dart';
 
 /// The player as a layer over the app, as in the original app: over
@@ -23,19 +24,23 @@ class PlayerHost extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final open = ref.watch(playerSessionProvider.select((s) => s != null));
     final view = ref.watch(playerViewProvider);
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Inert(inert: open && view != PlayerView.mini, child: child),
-        AnimatedSwitcher(
-          duration: reduceMotion(context) ? Duration.zero : Motion.reveal,
-          switchInCurve: Motion.enter,
-          switchOutCurve: Motion.change,
-          child: open
-              ? _PlayerFrame(key: const ValueKey('player'), view: view)
-              : const SizedBox.shrink(key: ValueKey('closed')),
-        ),
-      ],
+    return MiniPlayerShortcut(
+      enabled: open && view == PlayerView.mini,
+      onExpand: ref.read(playerViewProvider.notifier).expand,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Inert(inert: open && view != PlayerView.mini, child: child),
+          AnimatedSwitcher(
+            duration: reduceMotion(context) ? Duration.zero : Motion.reveal,
+            switchInCurve: Motion.enter,
+            switchOutCurve: Motion.change,
+            child: open
+                ? _PlayerFrame(key: const ValueKey('player'), view: view)
+                : const SizedBox.shrink(key: ValueKey('closed')),
+          ),
+        ],
+      ),
     );
   }
 }

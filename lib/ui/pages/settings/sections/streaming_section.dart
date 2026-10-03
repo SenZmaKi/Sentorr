@@ -21,13 +21,17 @@ class StreamingSection extends ConsumerWidget {
       children: [
         SettingsGroup(
           title: 'Buffering',
-          description: 'How the engine keeps ahead of the video',
+          description:
+              'How far streams stay ahead of the video, and how long '
+              'a slow torrent gets',
           children: [
             SettingsTile(
               icon: Icons.fast_forward_outlined,
               title: 'Read ahead',
-              subtitle: 'Downloaded ahead of what is playing',
-              keywords: 'buffer prefetch',
+              subtitle:
+                  'Fetched ahead of what is playing; more rides out '
+                  'slow peers but takes longer to start',
+              keywords: 'buffer prefetch stutter',
               trailing: NumberField(
                 value: mb(s.readAheadBytes),
                 min: 1,
@@ -41,8 +45,10 @@ class StreamingSection extends ConsumerWidget {
             SettingsTile(
               icon: Icons.memory_rounded,
               title: 'Memory cache',
-              subtitle: 'Recently read pieces kept in memory',
-              keywords: 'piece cache ram',
+              subtitle:
+                  'Recently played pieces kept in memory, so seeking '
+                  'back is instant',
+              keywords: 'piece cache ram seek',
               trailing: LimitField(
                 value: mb(s.pieceCacheBytes),
                 presets: const {0: 'Off'},
@@ -58,7 +64,9 @@ class StreamingSection extends ConsumerWidget {
             SettingsTile(
               icon: Icons.hourglass_empty_rounded,
               title: 'Connection timeout',
-              subtitle: 'How long to wait for a torrent\'s file list',
+              subtitle:
+                  'How long to wait for a torrent\'s file list '
+                  'before giving up',
               keywords: 'metadata magnet peers',
               trailing: NumberField(
                 value: s.metadataTimeoutSeconds,
@@ -73,8 +81,10 @@ class StreamingSection extends ConsumerWidget {
             SettingsTile(
               icon: Icons.timer_off_outlined,
               title: 'Stall timeout',
-              subtitle: 'How long a piece may take before the torrent fails',
-              keywords: 'piece buffering stuck',
+              subtitle:
+                  'How long playback waits on a piece before the '
+                  'torrent counts as failed',
+              keywords: 'piece buffering stuck frozen',
               trailing: NumberField(
                 value: s.pieceTimeoutSeconds,
                 min: 5,

@@ -17,6 +17,7 @@ import 'package:sentorr/torrents/providers.dart';
 import 'package:sentorr/torrents/repository.dart';
 import 'package:sentorr/ui/pages/settings/settings_category.dart';
 import 'package:sentorr/ui/pages/settings/settings_page.dart';
+import 'package:sentorr/ui/pages/settings/settings_search.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 import 'package:sentorr/watching/models.dart';
 import 'package:torrent_stream/torrent_stream.dart' show TorrentProxyKind;
@@ -123,11 +124,67 @@ void main() {
     expect(find.textContaining('No settings match'), findsOneWidget);
   });
 
+  testWidgets('search forgives typos only when nothing matches as typed', (
+    tester,
+  ) async {
+    await _pump(tester, const Size(1440, 1000));
+    await tester.enterText(find.byType(TextField).first, 'qualty');
+    await tester.pumpAndSettle();
+    expect(find.text('Preferred quality'), findsOneWidget);
+    expect(find.textContaining('No settings match'), findsNothing);
+    await tester.enterText(find.byType(TextField).first, 'seed');
+    await tester.pumpAndSettle();
+    expect(find.text('Share after downloading'), findsOneWidget);
+    // "seed" is typed exactly, so "speed" settings stay out.
+    expect(find.text('Download limit'), findsNothing);
+  });
+
+  testWidgets('a result names its category and opens it', (tester) async {
+    await _pump(tester, const Size(1440, 1000));
+    await tester.enterText(find.byType(TextField).first, 'proxy');
+    await tester.pumpAndSettle();
+    expect(find.text('Proxy and VPN'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Open Network'));
+    await tester.pumpAndSettle();
+    expect(find.text('Speed'), findsOneWidget);
+    expect(find.text('Proxy and VPN'), findsOneWidget);
+  });
+
+  group('settingsMatch', () {
+    bool match(String q, String terms, {bool fuzzy = false}) =>
+        settingsMatch(q, [terms], fuzzy: fuzzy);
+
+    test('every query word starts or sits inside a word', () {
+      expect(match('pref qual', 'Preferred quality'), isTrue);
+      expect(match('load', 'Simultaneous downloads'), isTrue);
+      expect(match('pref seed', 'Preferred quality'), isFalse);
+      expect(match('', 'anything'), isTrue);
+    });
+
+    test('words written together match words written apart', () {
+      expect(match('autodownload', 'Auto-download'), isTrue);
+      expect(match('auto download', 'Autodownload'), isTrue);
+    });
+
+    test('synonyms find each other', () {
+      expect(match('seeding', 'Share after downloading'), isTrue);
+      expect(match('directory', 'Torrent folder'), isTrue);
+      expect(match('4k', 'Preferred quality'), isTrue);
+    });
+
+    test('typos are forgiven only when fuzzy', () {
+      expect(match('notifcations', 'Allow notifications'), isFalse);
+      expect(match('notifcations', 'Allow notifications', fuzzy: true), isTrue);
+      expect(match('seders', 'Minimum seeders', fuzzy: true), isTrue);
+      expect(match('tray', 'Preferred quality', fuzzy: true), isFalse);
+    });
+  });
+
   testWidgets('a disabled source is left out of torrent searches', (
     tester,
   ) async {
     final container = await _pump(tester, const Size(1440, 1000));
-    await tester.tap(find.text('Sources').first);
+    await tester.tap(find.text('Finding torrents').first);
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Search YTS'));
     await tester.pumpAndSettle();

@@ -11,7 +11,8 @@ import '../../shared/layout/adaptive.dart';
 
 /// Settings in categories: a sidebar beside the open category from medium
 /// (narrower there), a list that opens each category on compact. Search shows
-/// matching settings from every category at once.
+/// matching settings from every category at once, each group naming its
+/// category; typos are forgiven only when nothing matches as typed.
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -28,19 +29,64 @@ class _SettingsPageState extends State<SettingsPage> {
 
   /// Keeps the field's state, and so its focus, wherever layouts place it.
   final _searchKey = GlobalKey();
-  SettingsCategory _category = SettingsCategory.playback;
+  SettingsCategory _category = SettingsCategory.torrents;
 
   /// The category opened on a narrow layout; null shows the list.
   SettingsCategory? _opened;
   String _query = '';
 
+  /// Whether the search is retried forgiving typos, after finding nothing.
+  bool _fuzzy = false;
+
+  /// Whether neither try found anything; until then results may still be
+  /// settling, so no message shows.
+  bool _nothing = false;
+  SettingsHits? _hits;
+
   @override
   void dispose() {
+    _hits?.close();
     _search.dispose();
     super.dispose();
   }
 
-  void _setQuery(String value) => setState(() => _query = value.trim());
+  void _setQuery(String value) {
+    final query = value.trim();
+    if (query == _query) return;
+    setState(() {
+      _query = query;
+      _fuzzy = false;
+      _nothing = false;
+      _renewHits();
+    });
+  }
+
+  void _renewHits() {
+    _hits?.close();
+    _hits = _query.isEmpty ? null : SettingsHits(_onSettled);
+  }
+
+  void _onSettled(bool found) {
+    if (!mounted) return;
+    if (found) {
+      if (_nothing) setState(() => _nothing = false);
+    } else if (!_fuzzy) {
+      setState(() {
+        _fuzzy = true;
+        _renewHits();
+      });
+    } else if (!_nothing) {
+      setState(() => _nothing = true);
+    }
+  }
+
+  void _openFromResults(SettingsCategory category) {
+    _clearQuery();
+    setState(() {
+      _category = category;
+      _opened = category;
+    });
+  }
 
   void _clearQuery() {
     _search.clear();
@@ -178,36 +224,27 @@ class _SettingsPageState extends State<SettingsPage> {
   ]);
 
   Widget _results() {
-    final c = context.colors;
-    final matches = [
-      for (final category in SettingsCategory.available)
-        if (settingsMatch(_query, [category.title, category.keywords]))
-          category,
-    ];
-    if (matches.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(top: Space.s24),
-        child: Text(
-          'No settings match “$_query”.',
-          style: context.type.body.copyWith(color: c.foregroundSecondary),
-        ),
-      );
-    }
+    final search = SettingsSearch(_query, fuzzy: _fuzzy);
     return _scroll([
-      for (final category in matches) ...[
+      if (_nothing)
         Padding(
-          padding: const EdgeInsets.only(bottom: Space.s12),
+          padding: const EdgeInsets.only(top: Space.s24),
           child: Text(
-            category.title,
-            style: context.type.subtitle.copyWith(color: c.foreground),
+            'No settings match “$_query”.',
+            style: context.type.body.copyWith(
+              color: context.colors.foregroundSecondary,
+            ),
           ),
         ),
-        // A category found by its own name shows everything in it.
+      for (final category in SettingsCategory.available)
         SettingsQuery(
-          query: settingsMatch(_query, [category.title]) ? null : _query,
+          // A category found by its own name shows everything in it.
+          search: search.matches([category.title]) ? null : search,
+          hits: _hits,
+          category: category.title,
+          onOpenCategory: () => _openFromResults(category),
           child: category.content,
         ),
-      ],
     ]);
   }
 

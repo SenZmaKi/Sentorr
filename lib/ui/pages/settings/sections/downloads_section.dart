@@ -12,6 +12,7 @@ import '../../../shared/open_folder.dart';
 import '../../../shared/theme/theme.dart';
 import '../settings_controls.dart';
 import '../settings_group.dart';
+import 'auto_download_group.dart';
 
 typedef _Edit = void Function(
   DownloadPreferences Function(DownloadPreferences) change,
@@ -34,7 +35,8 @@ class DownloadsSection extends ConsumerWidget {
       children: [
         SettingsGroup(
           title: 'Downloads',
-          description: 'Movies and episodes kept to watch offline',
+          description: 'Movies and episodes saved to watch offline',
+          keywords: 'offline save',
           children: [
             _FolderTile(custom: d.directory != null, edit: edit),
             SettingsTile(
@@ -67,9 +69,10 @@ class DownloadsSection extends ConsumerWidget {
             ),
           ],
         ),
+        const AutoDownloadGroup(),
         SettingsGroup(
           title: 'Sharing',
-          description: 'Uploading finished downloads to others',
+          description: 'Seeding finished downloads back to others',
           children: [
             SettingsTile(
               icon: Icons.upload_rounded,

@@ -13,12 +13,13 @@ class AppearanceSection extends ConsumerWidget {
     final mode = ref.watch(settingsProvider.select((s) => s.themeMode));
     return SettingsGroup(
       title: 'Theme',
+      description: 'How Sentorr looks',
       children: [
         SettingsTile(
           icon: Icons.contrast_rounded,
           title: 'Mode',
-          subtitle: 'Follow the system or keep one mode',
-          keywords: 'dark light theme appearance',
+          subtitle: 'Follow your system, or always use light or dark',
+          keywords: 'colors night',
           trailing: SegmentedTabs(
             value: mode,
             segments: const {

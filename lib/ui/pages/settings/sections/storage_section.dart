@@ -63,14 +63,19 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
         return Column(
           children: [
             SettingsGroup(
-              title: 'Image cache',
-              description: 'Posters and backdrops kept for quick browsing',
+              title: 'Cache',
+              description:
+                  'Kept so pages load faster. Clearing never touches '
+                  'settings, progress or downloads; watched torrents are '
+                  'cleared under Streaming',
+              keywords: 'free space disk',
               children: [
                 SettingsTile(
                   icon: Icons.image_outlined,
                   title: 'Image cache limit',
-                  subtitle: 'Using ${size((u) => u.images)}',
-                  keywords: 'artwork posters',
+                  subtitle:
+                      'Posters and backdrops; using ${size((u) => u.images)}',
+                  keywords: 'artwork',
                   trailing: LimitField(
                     value: (limit / megabyte).round(),
                     presets: const {0: 'Unlimited'},
@@ -85,18 +90,13 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
                         ),
                   ),
                 ),
-              ],
-            ),
-            SettingsGroup(
-              title: 'Clear data',
-              description:
-                  'Free space; nothing here affects your settings. Kept '
-                  'torrents are under Streaming engine',
-              children: [
                 SettingsTile(
                   icon: Icons.hide_image_outlined,
-                  title: 'Image cache',
-                  subtitle: size((u) => u.images),
+                  title: 'Clear image cache',
+                  subtitle:
+                      '${size((u) => u.images)}; artwork downloads again as '
+                      'you browse',
+                  keywords: 'artwork',
                   trailing: SButton(
                     label: 'Clear',
                     onPressed: () => _clear(
@@ -108,9 +108,11 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
                 ),
                 SettingsTile(
                   icon: Icons.http_rounded,
-                  title: 'Network cache',
-                  subtitle: size((u) => u.http),
-                  keywords: 'http responses catalog',
+                  title: 'Clear network cache',
+                  subtitle:
+                      '${size((u) => u.http)}; catalog pages load fresh from '
+                      'IMDb',
+                  keywords: 'http responses catalog imdb',
                   trailing: SButton(
                     label: 'Clear',
                     onPressed: () => _clear(
@@ -124,13 +126,15 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
             ),
             SettingsGroup(
               title: 'Reset',
+              description: 'Start over with Sentorr\'s defaults',
               children: [
                 SettingsTile(
                   icon: Icons.restart_alt_rounded,
                   title: 'Reset settings',
                   subtitle:
-                      'Restore every default except the theme. Watch '
-                      'progress and kept torrents stay',
+                      'Every setting except the theme. Progress, followed '
+                      'series and downloads stay',
+                  keywords: 'defaults factory restore',
                   trailing: SButton.destructive(
                     label: 'Reset',
                     onPressed: () async {

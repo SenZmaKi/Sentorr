@@ -103,7 +103,7 @@ class NetworkSection extends ConsumerWidget {
             SettingsTile(
               icon: Icons.public_rounded,
               title: 'Distributed hash table',
-              subtitle: 'Find peers without a tracker',
+              subtitle: 'Find peers through other peers, without a tracker',
               keywords: 'dht trackerless discovery',
               trailing: toggle('DHT', n.dht, (v) => n.copyWith(dht: v)),
             ),

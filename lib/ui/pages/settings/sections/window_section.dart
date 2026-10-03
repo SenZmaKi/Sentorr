@@ -34,9 +34,9 @@ class WindowSection extends ConsumerWidget {
       ),
     );
     return SettingsGroup(
-      title: 'Window',
-      description: 'How Sentorr opens and stays around',
-      keywords: 'desktop',
+      title: 'Startup and window',
+      description: 'How Sentorr opens, and what closing it does',
+      keywords: 'desktop window',
       children: [
         tile(
           Icons.rocket_launch_outlined,
@@ -48,7 +48,7 @@ class WindowSection extends ConsumerWidget {
         tile(
           Icons.move_to_inbox_outlined,
           'Close to tray',
-          'Keep Sentorr running when the window is closed',
+          'Keep Sentorr running, and downloads going, when the window closes',
           w.closeToTray,
           (w, v) => w.copyWith(closeToTray: v),
         ),

@@ -7,17 +7,20 @@ import '../../../components/toggle.dart';
 import '../../../../updates/controller.dart';
 import '../../../../updates/models.dart';
 import '../../../../updates/platform_installer.dart';
-import '../../../../shared/source_directory/repository.dart';
 import '../../../components/buttons.dart';
 import '../settings_group.dart';
 
+/// The running version, its update, and whether updates fetch themselves.
 class UpdatesSection extends ConsumerWidget {
   const UpdatesSection({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(updatesProvider);
     final controller = ref.read(updatesProvider.notifier);
-    final directory = ref.watch(sourceDirectoryProvider);
+    final automatic = ref.watch(
+      settingsProvider.select((s) => s.updates.automaticallyDownload),
+    );
     final busy = {
       UpdatePhase.checking,
       UpdatePhase.downloading,
@@ -25,7 +28,7 @@ class UpdatesSection extends ConsumerWidget {
       UpdatePhase.preparing,
       UpdatePhase.installing,
     }.contains(state.phase);
-    final description = switch (state.phase) {
+    final status = switch (state.phase) {
       UpdatePhase.checking => 'Checking for updates…',
       UpdatePhase.available =>
         '${state.release?.displayVersion ?? 'Update'} available',
@@ -38,31 +41,19 @@ class UpdatesSection extends ConsumerWidget {
       UpdatePhase.failed => state.error ?? 'Update failed',
       UpdatePhase.unsupported => 'Updates are unavailable on this platform',
       UpdatePhase.idle =>
-        'Updates download automatically while Sentorr is running',
+        automatic
+            ? 'New releases download in the background'
+            : 'Check for new releases when you like',
     };
     return SettingsGroup(
       title: 'Updates',
-      description: 'App releases and torrent source endpoints',
+      description: 'New releases of Sentorr, verified before they install',
       children: [
         SettingsTile(
-          title: 'Download updates automatically',
-          subtitle: 'Prepare releases while Sentorr is running; install when you are ready',
-          trailing: SToggle(
-            value: ref.watch(settingsProvider).updates.automaticallyDownload,
-            semanticLabel: 'Download updates automatically',
-            onChanged: (value) => ref
-                .read(settingsProvider.notifier)
-                .update(
-                  (s) => s.copyWith(
-                    updates: s.updates.copyWith(automaticallyDownload: value),
-                  ),
-                ),
-          ),
-        ),
-        SettingsTile(
+          icon: Icons.info_outline_rounded,
           title: 'Sentorr ${state.currentVersion}',
-          subtitle: description,
-          keywords: 'version release install restart',
+          subtitle: status,
+          keywords: 'about check install restart',
           trailing: SButton(
             label: state.phase == UpdatePhase.ready
                 ? 'Install and restart'
@@ -96,6 +87,7 @@ class UpdatesSection extends ConsumerWidget {
         ),
         if (state.phase == UpdatePhase.downloading)
           SettingsTile(
+            icon: Icons.downloading_rounded,
             title: 'Download in progress',
             trailing: SButton(
               label: 'Cancel',
@@ -103,15 +95,22 @@ class UpdatesSection extends ConsumerWidget {
             ),
           ),
         SettingsTile(
-          title: 'Source directory',
-          subtitle: directory.version == 0
-              ? 'Built-in endpoints'
-              : 'Directory version ${directory.version}',
-          keywords: 'sources providers refresh',
-          trailing: SButton(
-            label: 'Refresh',
-            onPressed: () =>
-                ref.read(sourceDirectoryProvider.notifier).refresh(),
+          icon: Icons.update_rounded,
+          title: 'Download updates automatically',
+          subtitle:
+              'Get releases ready in the background; they install '
+              'when you choose',
+          keywords: 'auto background',
+          trailing: SToggle(
+            value: automatic,
+            semanticLabel: 'Download updates automatically',
+            onChanged: (value) => ref
+                .read(settingsProvider.notifier)
+                .update(
+                  (s) => s.copyWith(
+                    updates: s.updates.copyWith(automaticallyDownload: value),
+                  ),
+                ),
           ),
         ),
       ],

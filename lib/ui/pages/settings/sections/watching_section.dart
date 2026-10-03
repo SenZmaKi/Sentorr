@@ -27,8 +27,8 @@ class WatchingSection extends ConsumerWidget {
     return SettingsGroup(
       title: 'In progress',
       description:
-          'Shown under Continue watching on Home. Progress is saved as you '
-          'watch and finished titles leave on their own',
+          'Continue watching on Home. Progress saves as you watch, and '
+          'finished titles leave on their own',
       keywords: 'continue watching history resume progress',
       trailing: entries.isEmpty
           ? null

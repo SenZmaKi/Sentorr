@@ -18,8 +18,8 @@ typedef StreamingEdit = void Function(
   StreamingSettings Function(StreamingSettings) change,
 );
 
-/// Where torrents are saved, how many stay after watching, and the space
-/// they take, together.
+/// Where streamed torrents are saved, how many stay after watching, and
+/// the space they take, together.
 class TorrentFilesGroup extends StatelessWidget {
   const TorrentFilesGroup({
     super.key,
@@ -34,8 +34,11 @@ class TorrentFilesGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     final keep = settings.keepRecentTorrents;
     return SettingsGroup(
-      title: 'Torrent files',
-      description: 'Where downloads live and how long they stay',
+      title: 'Watched torrents',
+      description:
+          'Streams are saved while you watch; Downloads keeps its own '
+          'folder',
+      keywords: 'torrent files',
       children: [
         _FolderTile(custom: settings.torrentDirectory != null, edit: edit),
         SettingsTile(
@@ -43,7 +46,7 @@ class TorrentFilesGroup extends StatelessWidget {
           title: 'Keep recent torrents',
           subtitle: keep == 0
               ? 'Each torrent is deleted when playback ends'
-              : 'Watching one again starts from what was downloaded; '
+              : 'Watching one again picks up what was already fetched; '
                     'older ones are deleted',
           keywords: 'lru cache reuse',
           trailing: LimitField(
@@ -70,10 +73,11 @@ class _FolderTile extends ConsumerWidget implements SettingsSearchable {
   final StreamingEdit edit;
 
   static const _title = 'Torrent folder';
-  static const _keywords = 'download location directory path save';
+  static const _keywords = 'stream location directory path save';
 
   @override
-  bool matches(String? query) => settingsMatch(query, [_title, _keywords]);
+  bool matches(SettingsSearch? search) =>
+      search == null || search.matches([_title, _keywords]);
 
   Future<void> _choose() async {
     final path = await FilePicker.platform.getDirectoryPath(
@@ -88,7 +92,9 @@ class _FolderTile extends ConsumerWidget implements SettingsSearchable {
     return SettingsTile(
       icon: Icons.folder_outlined,
       title: _title,
-      subtitle: custom ? 'Your folder' : 'Sentorr\'s own folder',
+      subtitle: custom
+          ? 'Your folder; torrents already there stay'
+          : 'Sentorr\'s own folder',
       trailing: Wrap(
         spacing: Space.s8,
         runSpacing: Space.s8,
@@ -120,10 +126,11 @@ class _KeptTile extends ConsumerWidget implements SettingsSearchable {
   const _KeptTile();
 
   static const _title = 'Kept torrents';
-  static const _keywords = 'clear delete space disk cache';
+  static const _keywords = 'clear delete space disk cache storage free';
 
   @override
-  bool matches(String? query) => settingsMatch(query, [_title, _keywords]);
+  bool matches(SettingsSearch? search) =>
+      search == null || search.matches([_title, _keywords]);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

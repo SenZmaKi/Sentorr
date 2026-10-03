@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../components/interactive.dart';
 import '../../components/surface.dart';
 import '../../shared/theme/theme.dart';
 import 'settings_search.dart';
 
 /// A titled group of settings on a raised surface, rows divided by fine
 /// rules. Under a search it keeps only matching rows, or every row when
-/// its own title matches, and disappears when nothing does.
+/// its title or keywords match, and disappears when nothing does. Among
+/// results from many categories it names its category above its title.
 class SettingsGroup extends StatelessWidget {
   const SettingsGroup({
     super.key,
@@ -18,6 +20,9 @@ class SettingsGroup extends StatelessWidget {
   });
 
   final String title;
+
+  /// What the group's settings share; shown, not searched, so a word in it
+  /// doesn't pull in every row.
   final String? description;
   final String keywords;
   final Widget? trailing;
@@ -28,16 +33,19 @@ class SettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final query = SettingsQuery.of(context);
-    final whole = settingsMatch(query, [title, ?description, keywords]);
+    final scope = SettingsQuery.of(context);
+    final search = scope?.search;
+    final whole = search == null || search.matches([title, keywords]);
     final rows = [
       for (final child in children)
         if (whole ||
             (child is SettingsSearchable &&
-                (child as SettingsSearchable).matches(query)))
+                (child as SettingsSearchable).matches(search)))
           child,
     ];
+    scope?.hits?.report(context, rows.isNotEmpty);
     if (rows.isEmpty) return const SizedBox.shrink();
+    final category = scope?.category;
     return Padding(
       padding: const EdgeInsets.only(bottom: Space.s24),
       child: Surface(
@@ -58,6 +66,8 @@ class SettingsGroup extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (category != null)
+                          _CategoryLink(category, scope?.onOpenCategory),
                         Text(
                           title,
                           style: context.type.label.copyWith(
@@ -83,6 +93,42 @@ class SettingsGroup extends StatelessWidget {
               Divider(height: 1, thickness: 1, color: c.borderSubtle),
               row,
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The category a search result belongs to, opening it on its own page.
+class _CategoryLink extends StatelessWidget {
+  const _CategoryLink(this.category, this.onOpen);
+
+  final String category;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Space.s4),
+      child: Interactive(
+        onTap: onOpen,
+        semanticLabel: 'Open $category',
+        builder: (context, s) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              category,
+              style: context.type.caption.copyWith(
+                color: s.hovered ? c.foreground : c.foregroundMuted,
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: IconSizes.metadata,
+              color: s.hovered ? c.foreground : c.foregroundMuted,
+            ),
           ],
         ),
       ),
@@ -119,8 +165,8 @@ class SettingsTile extends StatelessWidget implements SettingsSearchable {
   final bool enabled;
 
   @override
-  bool matches(String? query) =>
-      settingsMatch(query, [title, ?subtitle, keywords]);
+  bool matches(SettingsSearch? search) =>
+      search == null || search.matches([title, ?subtitle, keywords]);
 
   @override
   Widget build(BuildContext context) {

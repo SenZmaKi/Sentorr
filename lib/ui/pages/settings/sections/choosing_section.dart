@@ -20,12 +20,17 @@ const _languages = {
 
 String _resolution(int r) => r == 2160 ? '2160p (4K)' : '${r}p';
 
-class PlaybackSection extends ConsumerWidget {
-  const PlaybackSection({super.key});
+/// How a torrent is picked for a title, whether it is played or downloaded,
+/// and when you see the pick first.
+class ChoosingSection extends ConsumerWidget {
+  const ChoosingSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(settingsProvider.select((s) => s.torrents));
+    final reviewDownloads = ref.watch(
+      settingsProvider.select((s) => s.downloads.reviewMatches),
+    );
     final notifier = ref.read(settingsProvider.notifier);
     void edit(TorrentSettings Function(TorrentSettings) change) =>
         notifier.update((s) => s.copyWith(torrents: change(s.torrents)));
@@ -33,24 +38,14 @@ class PlaybackSection extends ConsumerWidget {
       children: [
         SettingsGroup(
           title: 'Choosing a torrent',
-          description: 'What Sentorr looks for when you press Play',
+          description: 'What Sentorr looks for when you play or download',
+          keywords: 'release pick match',
           children: [
-            SettingsTile(
-              icon: Icons.layers_outlined,
-              title: 'Compare episodes with packs',
-              subtitle: 'Consider season and finished-series batches by quality and availability',
-              keywords: 'batch complete seasons seeders',
-              trailing: SToggle(
-                value: t.includeBatchCandidates,
-                semanticLabel: 'Compare episodes with packs',
-                onChanged: (v) =>
-                    edit((t) => t.copyWith(includeBatchCandidates: v)),
-              ),
-            ),
             SettingsTile(
               icon: Icons.high_quality_outlined,
               title: 'Preferred quality',
-              subtitle: 'Closest available is used when this one is missing',
+              subtitle: 'The closest one is used when this isn\'t available',
+              keywords: 'video hd uhd',
               trailing: ChoiceField<int>(
                 value: t.preferredResolution,
                 options: TorrentSettings.resolutions,
@@ -63,6 +58,7 @@ class PlaybackSection extends ConsumerWidget {
             SettingsTile(
               icon: Icons.translate_rounded,
               title: 'Audio languages',
+              keywords: 'dubs tracks',
               subtitle: t.languages.isEmpty
                   ? 'Any language. Most releases don\'t name theirs, so '
                         'choosing one hides many results'
@@ -91,7 +87,7 @@ class PlaybackSection extends ConsumerWidget {
               icon: Icons.group_outlined,
               title: 'Minimum seeders',
               subtitle: 'Releases with fewer are never offered',
-              keywords: 'peers availability',
+              keywords: 'peers availability health dead',
               trailing: LimitField(
                 value: t.minimumSeeders,
                 presets: const {1: 'Any'},
@@ -102,18 +98,37 @@ class PlaybackSection extends ConsumerWidget {
                 onChanged: (n) => edit((t) => t.copyWith(minimumSeeders: n)),
               ),
             ),
+            SettingsTile(
+              icon: Icons.layers_outlined,
+              title: 'Consider season packs',
+              subtitle: t.includeBatchCandidates
+                  ? 'An episode can come from a whole season or series '
+                        'torrent when it is better or better seeded'
+                  : 'Episodes only come from single-episode torrents',
+              keywords: 'batch complete series bundle',
+              trailing: SToggle(
+                value: t.includeBatchCandidates,
+                semanticLabel: 'Consider season packs',
+                onChanged: (v) =>
+                    edit((t) => t.copyWith(includeBatchCandidates: v)),
+              ),
+            ),
           ],
         ),
         SettingsGroup(
-          title: 'Starting playback',
-          description: 'Close matches and misses always ask you first',
+          title: 'Confirming a match',
+          description:
+              'Close matches and misses always wait for you; exact matches '
+              'can go ahead on their own',
+          keywords: 'review show before',
           children: [
             SettingsTile(
-              icon: Icons.fact_check_outlined,
-              title: 'Show the torrent before playing',
+              icon: Icons.play_circle_outline_rounded,
+              title: 'Before playing',
               subtitle: t.reviewExactMatches
                   ? 'An exact match counts down so you can pick another'
-                  : 'Exact matches play straight away',
+                  : 'An exact match plays straight away',
+              keywords: 'show the torrent watch',
               trailing: SToggle(
                 value: t.reviewExactMatches,
                 semanticLabel: 'Show the torrent before playing',
@@ -122,11 +137,28 @@ class PlaybackSection extends ConsumerWidget {
               ),
             ),
             SettingsTile(
+              icon: Icons.download_rounded,
+              title: 'Before downloading',
+              subtitle: reviewDownloads
+                  ? 'Exact matches count down so you can pick others'
+                  : 'Exact matches download straight away',
+              keywords: 'show torrents season batch',
+              trailing: SToggle(
+                value: reviewDownloads,
+                semanticLabel: 'Show torrents before downloading',
+                onChanged: (v) => notifier.update(
+                  (s) => s.copyWith(
+                    downloads: s.downloads.copyWith(reviewMatches: v),
+                  ),
+                ),
+              ),
+            ),
+            SettingsTile(
               icon: Icons.timer_outlined,
               title: 'Countdown',
-              subtitle: 'How long an exact match waits before it plays',
-              keywords: 'delay autoplay wait',
-              enabled: t.reviewExactMatches,
+              subtitle: 'How long an exact match waits for you',
+              keywords: 'delay wait seconds',
+              enabled: t.reviewExactMatches || reviewDownloads,
               trailing: NumberField(
                 value: t.autoPlayDelaySeconds,
                 min: TorrentSettings.minAutoPlayDelay,

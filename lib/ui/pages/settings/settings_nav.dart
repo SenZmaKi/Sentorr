@@ -5,9 +5,9 @@ import '../../components/surface.dart';
 import '../../shared/theme/theme.dart';
 import 'settings_category.dart';
 
-/// Category list. As a sidebar the active category is filled and marked
-/// with a bar; on narrow layouts each row is a raised card that opens its
-/// page.
+/// Category list under area headings. As a sidebar the active category is
+/// filled and marked with a bar; on narrow layouts each row is a raised card
+/// that opens its page.
 class SettingsNav extends StatelessWidget {
   const SettingsNav({
     super.key,
@@ -22,20 +22,57 @@ class SettingsNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      for (final c in SettingsCategory.available)
+    final gap = sidebar ? Space.s4 : Space.s8;
+    SettingsArea? area;
+    final children = <Widget>[];
+    for (final c in SettingsCategory.available) {
+      if (c.area != area) {
+        area = c.area;
+        children.add(_AreaLabel(area, first: children.isEmpty, inset: sidebar));
+      } else {
+        children.add(SizedBox(height: gap));
+      }
+      children.add(
         sidebar
             ? _SidebarItem(c, c == active, onSelect)
             : _CardItem(c, onSelect),
-    ];
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final (i, item) in items.indexed) ...[
-          if (i > 0) SizedBox(height: sidebar ? Space.s4 : Space.s8),
-          item,
-        ],
-      ],
+      children: children,
+    );
+  }
+}
+
+/// Names the categories below it; later areas keep a wider gap above.
+class _AreaLabel extends StatelessWidget {
+  const _AreaLabel(this.area, {required this.first, required this.inset});
+
+  final SettingsArea area;
+  final bool first;
+
+  /// Lines the label up with sidebar item text rather than the edge.
+  final bool inset;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      header: true,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          inset ? Space.s12 : Space.s4,
+          first ? 0 : Space.s24,
+          0,
+          Space.s8,
+        ),
+        child: Text(
+          area.label,
+          style: context.type.caption.copyWith(
+            color: context.colors.foregroundMuted,
+          ),
+        ),
+      ),
     );
   }
 }

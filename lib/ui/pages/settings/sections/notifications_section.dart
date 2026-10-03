@@ -26,13 +26,13 @@ class NotificationsSection extends ConsumerWidget {
 
     return SettingsGroup(
       title: 'Notifications',
-      description: 'Shown by your system while Sentorr is open or in the tray',
+      description: 'Shown by your system while Sentorr is running',
       children: [
         SettingsTile(
           icon: Icons.notifications_outlined,
           title: 'Allow notifications',
           subtitle: 'Turn off to silence everything below',
-          keywords: 'alerts mute',
+          keywords: 'mute silence',
           trailing: SToggle(
             value: n.enabled,
             semanticLabel: 'Allow notifications',
@@ -56,8 +56,8 @@ class NotificationsSection extends ConsumerWidget {
         SettingsTile(
           icon: Icons.download_done_rounded,
           title: 'Downloads ready',
-          subtitle: 'When an episode that downloaded on its own can be watched',
-          keywords: 'auto download finished offline',
+          subtitle: 'When a download or season finishes, or a download fails',
+          keywords: 'auto download finished complete failed offline',
           enabled: n.enabled,
           trailing: SToggle(
             value: n.downloadsReady,

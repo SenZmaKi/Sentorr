@@ -38,6 +38,10 @@ Paths below are relative to `../senpwai/`. Read the relevant branch on demand ra
 - Catalog/metadata: `Electron/src/backend/imdb/`. Torrent search, selection and streaming: `Electron/src/backend/torrent/`. Configuration: `Electron/src/backend/config/`. UI/player behavior: `Electron/src/renderer/src/`. Behavioral examples: `Electron/src/test/`.
 - Playback work: consult `tool/codec_lab/README.md` and `tool/codec_lab/VALIDATION.md`, then its Flutter code. This MediaKit prototype covers local-file playback; it does not establish torrent streaming support. Check the recorded native-library findings before making codec compatibility claims.
 
+## Website
+
+- `website/` is the Astro marketing site, deployed to GitHub Pages beside the update feeds. Read `website/AGENTS.md` before changing it; it follows `DESIGN.md`'s tokens and Senpwai's `website/` layout.
+
 ## Misc
 - Keep files thin and focused instead of owning a lot of functionality, break down most things that go over 300 lines into smaller components unless justified.
 - When asked to commit use concise clear messages e.g., "Add home page" and no co-authored-by.

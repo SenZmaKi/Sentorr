@@ -805,6 +805,13 @@ jobs:
         with:
           sdk: stable
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
       - name: Download release assets
         uses: actions/download-artifact@v8
         with:
@@ -911,7 +918,11 @@ jobs:
           UPDATE_MANIFEST_PRIVATE_KEY: ${{ secrets.UPDATE_MANIFEST_PRIVATE_KEY }}
         run: |
           set -euo pipefail
+          npm ci --prefix website
+          npm run --prefix website check
+          npm run --prefix website build
           mkdir -p site
+          cp -R website/dist/. site/
           touch site/.nojekyll
           python tool/release/preserve_appcast.py site "$RELEASE_CHANNEL"
           cp "release-assets/$APPCAST_NAME" "site/$APPCAST_NAME"

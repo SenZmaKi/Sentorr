@@ -1,0 +1,38 @@
+---
+import { Image } from 'astro:assets';
+import darkIcon from '../assets/images/sentorr-icon.png';
+import lightIcon from '../assets/images/sentorr-icon-light.png';
+
+interface Props {
+  size: number;
+  eager?: boolean;
+}
+
+const { size, eager = false } = Astro.props;
+const loading = eager ? 'eager' : 'lazy';
+---
+
+<!-- Resolves like the app's SentorrBrand: dark artwork in dark mode, light in light. -->
+<span class="brand-mark" style={`--size: ${size}px`}>
+  <Image class="mark-dark" src={darkIcon} alt="" width={size} height={size} densities={[1, 2]} loading={loading} />
+  <Image class="mark-light" src={lightIcon} alt="" width={size} height={size} densities={[1, 2]} loading={loading} />
+</span>
+
+<style>
+  .brand-mark {
+    display: inline-grid;
+    width: var(--size);
+    height: var(--size);
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: calc(var(--size) / 4);
+  }
+  .brand-mark img { grid-area: 1 / 1; width: 100%; height: 100%; }
+  .mark-light { display: none; }
+  @media (prefers-color-scheme: light) {
+    :global(:root:not([data-theme='dark'])) .mark-dark { display: none; }
+    :global(:root:not([data-theme='dark'])) .mark-light { display: block; }
+  }
+  :global(:root[data-theme='light']) .mark-dark { display: none; }
+  :global(:root[data-theme='light']) .mark-light { display: block; }
+</style>

@@ -1,0 +1,71 @@
+---
+import Group from './Group.astro';
+import Icon from './Icon.astro';
+import SectionHeader from './SectionHeader.astro';
+import { url } from '../lib/site';
+
+const questions = [
+  {
+    q: 'Is Sentorr free?',
+    a: 'Yes. It’s free and open source, with no accounts, subscriptions or ads.',
+  },
+  {
+    q: 'Where do the movies and shows come from?',
+    a: 'Sentorr doesn’t host anything. It searches public torrent indexes and streams from people sharing those files over BitTorrent.',
+  },
+  {
+    q: 'Do I need a VPN?',
+    a: 'While you stream or download, your IP address is visible to other peers, and the rules differ by country. Sentorr can send torrent traffic only through your VPN’s network interface, or through a proxy.',
+  },
+  {
+    q: 'Do I need a separate video player or codecs?',
+    a: 'No. Sentorr has its own player, built on mpv and bundled with the app, with subtitles, a mini player and keyboard shortcuts.',
+  },
+  {
+    q: 'Can I download instead of streaming?',
+    a: 'Yes. Download a movie, an episode or a whole season, and watch it offline. Follow a series to have new episodes downloaded as they air.',
+  },
+  {
+    q: 'Why does my computer warn me when I install it?',
+    a: 'The Windows installer isn’t code-signed yet and the macOS app is ad-hoc signed, so SmartScreen and Gatekeeper ask first. The download page shows how to continue.',
+    link: { label: 'Download page', href: url('download') },
+  },
+];
+---
+
+<section>
+  <SectionHeader icon="help" outlined title="Questions" subtitle="The things people usually ask first" />
+  <Group class="faq">
+    {questions.map((item) => (
+      <details>
+        <summary>
+          <span class="t-label">{item.q}</span>
+          <Icon name="expand_more" class="chevron" />
+        </summary>
+        <p class="t-small secondary">
+          {item.a}
+          {item.link && <> <a class="prose-link" href={item.link.href}>{item.link.label}</a></>}
+        </p>
+      </details>
+    ))}
+  </Group>
+</section>
+
+<style>
+  details { padding: 0 16px; }
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 56px;
+    cursor: pointer;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary .t-label { font-weight: 600; }
+  summary :global(.chevron) { color: var(--fg-muted); transition: transform 150ms ease; }
+  details[open] summary :global(.chevron) { transform: rotate(180deg); }
+  summary:hover :global(.chevron) { color: var(--fg); }
+  details p { max-width: 720px; padding: 0 40px 16px 0; }
+</style>

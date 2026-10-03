@@ -1,0 +1,303 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap');
+/* The app draws Flutter's Material icons; these are the same glyph fonts. */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round|Material+Icons+Outlined&display=block');
+
+/*
+ * The site is drawn with the app's own vocabulary (DESIGN.md): the same color
+ * roles, depth recipes, Barlow type ramp and tracking (TypeFace.barlow in
+ * lib/ui/shared/theme/typography.dart), rail and settings-group anatomy.
+ */
+:root {
+  color-scheme: light;
+  --canvas: #e7e7e7;
+  --surface: #f3f3f3;
+  --surface-control: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-inset: #dcdcdc;
+  --fg: #171717;
+  --fg-secondary: #4d4d4d;
+  --fg-muted: #606060;
+  --border-subtle: #d4d4d4;
+  --border-strong: #b8b8b8;
+  --border-control: #8a8a8a;
+  --action: #171717;
+  --on-action: #ffffff;
+  --action-hover: #333333;
+  --state-hover: #f5f5f5;
+  --state-pressed: #e5e5e5;
+  --selection: #ebebeb;
+  --focus: #171717;
+  --link: #0761d1;
+  --info: #0761d1;
+  --info-surface: #eaf3ff;
+  --success: #067647;
+  --success-surface: #ecfdf3;
+  --warning: #854a0e;
+  --warning-surface: #fffaeb;
+  --edge-highlight: rgb(255 255 255 / 70%);
+  --edge-shade: rgb(0 0 0 / 8%);
+  --inset-shade: rgb(0 0 0 / 10%);
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 8%), 0 4px 12px -2px rgb(0 0 0 / 6%);
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 12%), 0 3px 6px -1px rgb(0 0 0 / 8%);
+  --shadow-floating: 0 2px 4px rgb(0 0 0 / 10%), 0 12px 32px -4px rgb(0 0 0 / 14%);
+
+  --font-sans: 'Barlow', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+  --radius-chip: 6px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+  --rail: 80px;
+  --content: 1400px;
+  --gutter: 24px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --canvas: #0d0d0d;
+    --surface: #191919;
+    --surface-control: #262626;
+    --surface-raised: #303030;
+    --surface-inset: #090909;
+    --fg: #fcfdff;
+    --fg-secondary: #b3b3b3;
+    --fg-muted: #aaaaaa;
+    --border-subtle: #333333;
+    --border-strong: #454545;
+    --border-control: #747474;
+    --action: #fcfdff;
+    --on-action: #000000;
+    --action-hover: #e5e5e5;
+    --state-hover: #333333;
+    --state-pressed: #1f1f1f;
+    --selection: #262626;
+    --focus: #fcfdff;
+    --link: #3b9eff;
+    --info: #3b9eff;
+    --info-surface: #071b30;
+    --success: #11ff99;
+    --success-surface: #052619;
+    --warning: #ffc53d;
+    --warning-surface: #2a2108;
+    --edge-highlight: rgb(255 255 255 / 8%);
+    --edge-shade: rgb(0 0 0 / 24%);
+    --inset-shade: rgb(0 0 0 / 40%);
+    --shadow-panel: 0 2px 4px rgb(0 0 0 / 24%), 0 8px 16px -4px rgb(0 0 0 / 20%);
+    --shadow-raised: 0 1px 2px rgb(0 0 0 / 32%), 0 4px 8px -2px rgb(0 0 0 / 24%);
+    --shadow-floating: 0 2px 4px rgb(0 0 0 / 36%), 0 12px 32px -4px rgb(0 0 0 / 32%);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --canvas: #0d0d0d;
+  --surface: #191919;
+  --surface-control: #262626;
+  --surface-raised: #303030;
+  --surface-inset: #090909;
+  --fg: #fcfdff;
+  --fg-secondary: #b3b3b3;
+  --fg-muted: #aaaaaa;
+  --border-subtle: #333333;
+  --border-strong: #454545;
+  --border-control: #747474;
+  --action: #fcfdff;
+  --on-action: #000000;
+  --action-hover: #e5e5e5;
+  --state-hover: #333333;
+  --state-pressed: #1f1f1f;
+  --selection: #262626;
+  --focus: #fcfdff;
+  --link: #3b9eff;
+  --info: #3b9eff;
+  --info-surface: #071b30;
+  --success: #11ff99;
+  --success-surface: #052619;
+  --warning: #ffc53d;
+  --warning-surface: #2a2108;
+  --edge-highlight: rgb(255 255 255 / 8%);
+  --edge-shade: rgb(0 0 0 / 24%);
+  --inset-shade: rgb(0 0 0 / 40%);
+  --shadow-panel: 0 2px 4px rgb(0 0 0 / 24%), 0 8px 16px -4px rgb(0 0 0 / 20%);
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 32%), 0 4px 8px -2px rgb(0 0 0 / 24%);
+  --shadow-floating: 0 2px 4px rgb(0 0 0 / 36%), 0 12px 32px -4px rgb(0 0 0 / 32%);
+}
+
+* { box-sizing: border-box; }
+
+html {
+  background: var(--canvas);
+  scroll-behavior: smooth;
+  scroll-padding-top: 24px;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--canvas);
+  color: var(--fg);
+  font: 400 16px/24px var(--font-sans);
+  letter-spacing: 0.05px;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--action); color: var(--on-action); }
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+img { display: block; max-width: 100%; height: auto; }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { font-weight: 600; text-wrap: balance; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.hidden { display: none !important; }
+
+.skip-link {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 100;
+  transform: translateY(-200%);
+  padding: 8px 16px;
+  border-radius: var(--radius-control);
+  background: var(--action);
+  color: var(--on-action);
+  font-weight: 500;
+}
+.skip-link:focus { transform: none; }
+
+/* Icons: Material glyphs at the app's 16 / 20 / 24 sizes. */
+.icon {
+  font-family: 'Material Icons Round';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  display: inline-block;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+}
+.icon.outlined { font-family: 'Material Icons Outlined'; }
+
+/* Type roles from DESIGN.md › Typography, with Barlow tracking. */
+.t-display { font-size: clamp(40px, 4.4vw, 56px); line-height: 1.12; font-weight: 600; letter-spacing: -0.6px; }
+.t-headline { font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -0.3px; }
+.t-title { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.1px; }
+.t-subtitle { font-size: 20px; line-height: 28px; font-weight: 600; }
+.t-body-large { font-size: 18px; line-height: 28px; }
+.t-label { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 0.1px; }
+.t-small { font-size: 14px; line-height: 20px; letter-spacing: 0.1px; }
+.t-caption { font-size: 12px; line-height: 16px; letter-spacing: 0.2px; }
+.technical { font-family: var(--font-mono); font-size: 13px; line-height: 20px; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.secondary { color: var(--fg-secondary); }
+.muted { color: var(--fg-muted); }
+
+/* Depth roles: fill, a fine top highlight, a bottom shade and a local shadow. */
+.panel {
+  background: var(--surface);
+  border-radius: var(--radius-panel);
+  box-shadow: inset 0 1px 0 var(--edge-highlight), inset 0 -1px 0 var(--edge-shade), var(--shadow-panel);
+}
+.raised {
+  background: var(--surface-control);
+  border-radius: var(--radius-card);
+  box-shadow: inset 0 1px 0 var(--edge-highlight), inset 0 -1px 0 var(--edge-shade), var(--shadow-raised);
+}
+.inset {
+  background: var(--surface-inset);
+  box-shadow: inset 0 3px 3px -2px var(--inset-shade), inset 0 -1px 0 var(--edge-highlight);
+}
+.floating {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  box-shadow: inset 0 1px 0 var(--edge-highlight), var(--shadow-floating);
+}
+
+/* Buttons: the app's 40-high controls, radius 8, label type. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-control);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, box-shadow 150ms ease, color 150ms ease;
+}
+.button .icon { font-size: 20px; margin-left: -4px; }
+.button.primary {
+  background: var(--action);
+  color: var(--on-action);
+  box-shadow: inset 0 1px 0 var(--edge-highlight), var(--shadow-raised);
+}
+.button.primary:hover { background: var(--action-hover); }
+.button.secondary {
+  background: var(--surface-control);
+  color: var(--fg);
+  box-shadow: inset 0 0 0 1px var(--border-strong), inset 0 1px 0 var(--edge-highlight), var(--shadow-raised);
+}
+.button.secondary:hover { background: var(--state-hover); }
+.button.ghost { background: transparent; color: var(--fg); }
+.button.ghost:hover { background: var(--state-hover); }
+.button:active { box-shadow: 0 1px 2px rgb(0 0 0 / 24%); }
+.icon-button { width: 40px; padding: 0; }
+.icon-button .icon { margin: 0; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-chip);
+  background: var(--surface-inset);
+  color: var(--fg-secondary);
+  font: 400 12px/16px var(--font-mono);
+}
+.chip.success { background: var(--success-surface); color: var(--success); }
+.chip.info { background: var(--info-surface); color: var(--info); }
+
+.prose-link {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+/* Page rhythm: 48 between major sections, content capped like the app. */
+.page-content {
+  width: min(var(--content), 100%);
+  margin-inline: auto;
+  padding: 32px var(--gutter) 48px;
+}
+.page-content > * + * { margin-top: 48px; }
+
+@media (max-width: 599px) {
+  :root { --gutter: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

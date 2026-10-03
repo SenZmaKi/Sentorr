@@ -1,0 +1,58 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import { issues } from '../lib/site';
+
+const sections = [
+  {
+    title: 'What Sentorr is',
+    body: 'Sentorr is open-source software that searches publicly available torrent indexes and plays or downloads the results using the BitTorrent protocol. It is not intended to support or promote copyright infringement.',
+  },
+  {
+    title: 'Third-party services and content',
+    body: 'Sentorr does not host, upload, distribute or control any media files, torrents or third-party websites. Title information, artwork and torrent listings come from independent third parties, whose availability, content and practices Sentorr does not control.',
+  },
+  {
+    title: 'Peer-to-peer sharing',
+    body: 'BitTorrent is peer to peer: while you stream or download, the pieces you have are shared with other people, and your IP address is visible to them. Sentorr lets you limit uploads, route torrent traffic through a proxy or bind it to a VPN interface.',
+  },
+  {
+    title: 'Your responsibility',
+    body: 'You are responsible for making sure your use of Sentorr and of any content you access complies with the laws, rights and terms of service that apply to you, and for obtaining any permissions your use requires.',
+  },
+  {
+    title: 'Intellectual property',
+    body: 'Film and series titles, artwork, screenshots and other third-party marks belong to their respective owners. Their appearance in Sentorr or on this website does not imply endorsement, affiliation or sponsorship.',
+  },
+];
+---
+
+<Layout title="Legal notice | Sentorr" description="Legal and content notice for Sentorr, the open-source torrent streaming app.">
+  <section class="legal">
+    <SectionHeader level="h1" icon="gavel" title="Legal notice" subtitle="What Sentorr does and doesn’t do, and what you’re responsible for" />
+
+    <div class="content">
+      {sections.map((section) => (
+        <section>
+          <h2>{section.title}</h2>
+          <p>{section.body}</p>
+        </section>
+      ))}
+      <section>
+        <h2>Questions and concerns</h2>
+        <p>
+          Questions about content on a third-party website should go to that website’s owner or host. For issues with the
+          Sentorr software, <a class="prose-link" href={issues} target="_blank" rel="noopener noreferrer">open an issue on GitHub</a>.
+        </p>
+      </section>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .legal { max-width: 720px; }
+  .content { display: grid; gap: 24px; margin-top: 32px; }
+  .content section + section { padding-top: 24px; border-top: 1px solid var(--border-subtle); }
+  h2 { font-size: 16px; line-height: 24px; }
+  .content p { margin-top: 4px; color: var(--fg-secondary); }
+</style>

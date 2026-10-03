@@ -1,0 +1,28 @@
+---
+// The app's SettingsGroup: a titled raised surface whose rows are divided by fine rules.
+interface Props {
+  title?: string;
+  description?: string;
+  class?: string;
+}
+
+const { title, description, class: className } = Astro.props;
+---
+
+<section class:list={['group raised', className]}>
+  {title && (
+    <header class="group-head">
+      <h3 class="t-label">{title}</h3>
+      {description && <p class="t-small secondary">{description}</p>}
+    </header>
+  )}
+  <div class="rows"><slot /></div>
+</section>
+
+<style>
+  .group { overflow: hidden; }
+  .group-head { padding: 16px 16px 12px; }
+  .group-head h3 { font-weight: 600; }
+  .rows > :global(*) { border-top: 1px solid var(--border-subtle); }
+  .group:not(:has(.group-head)) .rows > :global(*:first-child) { border-top: 0; }
+</style>

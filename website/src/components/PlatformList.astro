@@ -1,0 +1,146 @@
+---
+import Group from './Group.astro';
+import Icon from './Icon.astro';
+import Tile from './Tile.astro';
+import { platformSvgs } from '../lib/brand-icons';
+import { platforms, releaseDownloads, version } from '../lib/site';
+
+// One settings-style row per platform: a processor picker (the app's select)
+// beside the download. The visitor's platform and processor are detected.
+interface Props {
+  notes?: boolean;
+}
+
+const { notes = false } = Astro.props;
+---
+
+<Group>
+  {platforms.map((platform) => {
+    const [first] = platform.architectures;
+    return (
+      <div class="platform" id={platform.id} data-platform={platform.id}>
+        <Tile title={platform.name} subtitle={platform.requirement}>
+          <span slot="leading" class="glyph raised" set:html={platformSvgs[platform.id]} />
+          {notes && <p slot="below" class="note t-caption muted"><Icon name="info" size={16} outlined /> {platform.note}</p>}
+          <Fragment slot="trailing">
+            <span class="chip success detected hidden">Your device</span>
+            {platform.architectures.length > 1 ? (
+              <label class="select">
+                <Icon name="memory" size={16} class="lead" />
+                <select aria-label={`${platform.name} processor`} data-architecture>
+                  {platform.architectures.map((a) => (
+                    <option value={a.value} data-file={a.file}>{a.label}</option>
+                  ))}
+                </select>
+                <Icon name="unfold_more" size={16} class="chevron" />
+              </label>
+            ) : (
+              <span class="fixed t-small secondary"><Icon name="memory" size={16} /> {first.label}</span>
+            )}
+            <a class="button secondary" href={`${releaseDownloads}/${first.file}`} data-download>
+              <Icon name="download" /> {platform.format}
+            </a>
+          </Fragment>
+        </Tile>
+      </div>
+    );
+  })}
+</Group>
+<p class="version t-caption muted">Version <span class="technical">{version}</span></p>
+
+<script>
+  const os = (() => {
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes('android')) return 'android';
+    if (ua.includes('win')) return 'windows';
+    if (ua.includes('mac')) return 'macos';
+    if (ua.includes('linux') || ua.includes('x11')) return 'linux';
+    return undefined;
+  })();
+
+  // Client hints know the processor in Chromium browsers; the user agent is a fallback.
+  const detectArchitecture = async () => {
+    try {
+      const hints = await (navigator as any).userAgentData?.getHighEntropyValues?.(['architecture', 'bitness']);
+      const arch = hints?.architecture?.toLowerCase();
+      if (arch?.includes('arm')) return hints.bitness === '32' ? 'arm' : 'arm64';
+      if (arch?.includes('x86')) return 'x64';
+    } catch {}
+    const ua = navigator.userAgent.toLowerCase();
+    if (/arm64|aarch64/.test(ua)) return 'arm64';
+    if (/armv7|armeabi/.test(ua)) return 'arm';
+    if (/x86_64|amd64|win64|x64/.test(ua)) return 'x64';
+    return undefined;
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-platform]').forEach((row) => {
+    const select = row.querySelector<HTMLSelectElement>('[data-architecture]');
+    const link = row.querySelector<HTMLAnchorElement>('[data-download]');
+    select?.addEventListener('change', (event) => {
+      if (event.isTrusted) select.dataset.chosen = 'true';
+      const file = select.selectedOptions[0]?.dataset.file;
+      if (link && file) link.href = link.href.replace(/[^/]+$/, file);
+    });
+    if (row.dataset.platform === os) {
+      row.querySelector('.detected')?.classList.remove('hidden');
+      link?.classList.replace('secondary', 'primary');
+    }
+  });
+
+  detectArchitecture().then((arch) => {
+    const select = document.querySelector<HTMLSelectElement>(`[data-platform="${os}"] [data-architecture]`);
+    if (!arch || !select || select.dataset.chosen || !select.querySelector(`option[value="${arch}"]`)) return;
+    select.value = arch;
+    select.dispatchEvent(new Event('change'));
+  });
+</script>
+
+<style>
+  .glyph {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: var(--radius-control);
+  }
+  .glyph :global(svg) { width: 20px; height: 20px; }
+  .note { display: flex; gap: 4px; margin-top: 4px; }
+
+  /* The app's select: raised control, borderControl outline, radius 8, height 40. */
+  .select {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .select select {
+    appearance: none;
+    height: 40px;
+    min-width: 172px;
+    padding: 0 32px 0 34px;
+    border: 1px solid var(--border-control);
+    border-radius: var(--radius-control);
+    background: var(--surface-control);
+    color: var(--fg);
+    font: 400 14px/20px var(--font-sans);
+    letter-spacing: 0.1px;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 var(--edge-highlight), var(--shadow-raised);
+    transition: background-color 150ms ease;
+  }
+  .select select:hover { background: var(--state-hover); }
+  .select select:focus-visible { outline: none; border: 2px solid var(--focus); padding-left: 33px; }
+  .select :global(.icon) { position: absolute; pointer-events: none; color: var(--fg-muted); }
+  .select :global(.lead) { left: 12px; }
+  .select :global(.chevron) { right: 10px; }
+  .fixed { display: inline-flex; align-items: center; gap: 6px; padding: 0 8px; }
+  .fixed :global(.icon) { color: var(--fg-muted); }
+  .platform :global(.trailing) { flex-wrap: wrap; justify-content: flex-end; }
+  .version { margin-top: 8px; text-align: right; }
+  @media (max-width: 599px) {
+    .platform :global(.tile-row) { flex-wrap: wrap; }
+    .platform :global(.trailing) { flex-basis: 100%; margin-left: 0; padding-left: 0; justify-content: flex-start; flex-wrap: nowrap; }
+    .detected { white-space: nowrap; }
+    .select, .select select { flex: 1; min-width: 0; width: 100%; }
+  }
+</style>

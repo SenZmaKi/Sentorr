@@ -1,0 +1,13 @@
+---
+// A Material icon, as the app draws it (Icons.<name>_rounded / _outlined).
+interface Props {
+  name: string;
+  size?: 16 | 20 | 24;
+  outlined?: boolean;
+  class?: string;
+}
+
+const { name, size = 20, outlined = false, class: className } = Astro.props;
+---
+
+<span class:list={['icon', { outlined }, className]} style={`font-size: ${size}px`} aria-hidden="true">{name}</span>

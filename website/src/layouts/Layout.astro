@@ -1,0 +1,67 @@
+---
+import '../styles/global.css';
+import AppShell from '../components/AppShell.astro';
+import Footer from '../components/Footer.astro';
+import { url, type Destination } from '../lib/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  structuredData?: Record<string, unknown>;
+  current?: Destination;
+}
+
+const {
+  title = 'Sentorr | Stream movies and TV from torrents',
+  description = 'A free, open-source app for Windows, macOS, Linux and Android that finds the right torrent for any movie or episode and starts playing it while it downloads.',
+  structuredData,
+  current,
+} = Astro.props;
+
+const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined;
+const socialImageUrl = new URL(url('icon-512.png'), Astro.site ?? Astro.url).toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script is:inline>
+      // Apply the saved theme before paint; without one the site follows the system.
+      try {
+        const theme = localStorage.getItem('sentorr-theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
+    <link rel="icon" type="image/png" sizes="256x256" href={url('favicon.png')} />
+    <link rel="alternate icon" type="image/x-icon" href={url('favicon.ico')} />
+    <link rel="apple-touch-icon" sizes="180x180" href={url('apple-touch-icon.png')} />
+    <link rel="manifest" href={url('site.webmanifest')} />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d0d0d" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#e7e7e7" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sentorr" />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={socialImageUrl} />
+    <meta property="og:image:alt" content="Sentorr app icon" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImageUrl} />
+    {structuredData && <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />}
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <AppShell current={current}>
+      <main id="main-content" class="page-content"><slot /></main>
+      <Footer />
+    </AppShell>
+  </body>
+</html>

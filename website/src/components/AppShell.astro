@@ -1,0 +1,209 @@
+---
+import BrandMark from './BrandMark.astro';
+import { destinations, url, type Destination } from '../lib/site';
+
+// The app's shell: a rail on the canvas with the page on a panel inset 8 from
+// the window; compact widths put the page on surface with bottom navigation.
+interface Props {
+  current?: Destination;
+}
+
+const { current } = Astro.props;
+const external = { target: '_blank', rel: 'noopener noreferrer' };
+---
+
+<div class="app-shell" data-current={current}>
+  <nav class="rail" aria-label="Main navigation">
+    <a href={url()} class="rail-logo" aria-label="Sentorr home"><BrandMark size={32} eager /></a>
+    <div class="rail-items">
+      <span class="pill raised" aria-hidden="true"></span>
+      {destinations.map((d) => (
+        <a class="rail-item" href={d.href} data-destination={d.id} {...(d.external ? external : {})}>
+          <span class="icon outlined nav-glyph" aria-hidden="true">{d.icon}</span>
+          <span class="label">{d.label}</span>
+        </a>
+      ))}
+    </div>
+    <button class="button ghost icon-button theme-toggle" type="button" data-theme-toggle aria-label="Switch theme">
+      <span class="icon" aria-hidden="true" data-theme-icon>dark_mode</span>
+    </button>
+  </nav>
+
+  <header class="top-bar">
+    <a href={url()} class="top-brand"><BrandMark size={28} eager /> <span class="t-subtitle">Sentorr</span></a>
+    <button class="button ghost icon-button" type="button" data-theme-toggle aria-label="Switch theme">
+      <span class="icon" aria-hidden="true" data-theme-icon>dark_mode</span>
+    </button>
+  </header>
+
+  <div class="page panel">
+    <slot />
+  </div>
+
+  <nav class="bottom-nav" aria-label="Main navigation">
+    {destinations.map((d) => (
+      <a class="bottom-item" href={d.href} data-destination={d.id} {...(d.external ? external : {})}>
+        <span class="indicator"><span class="icon outlined nav-glyph" aria-hidden="true">{d.icon}</span></span>
+        <span class="label">{d.label}</span>
+      </a>
+    ))}
+  </nav>
+</div>
+
+<script>
+  const shell = document.querySelector<HTMLElement>('.app-shell')!;
+  const pill = shell.querySelector<HTMLElement>('.pill');
+
+  // Selected items take the filled glyph and the raised pill glides to them.
+  const select = (id: string | undefined) => {
+    shell.querySelectorAll<HTMLElement>('[data-destination]').forEach((item) => {
+      const on = item.dataset.destination === id;
+      item.classList.toggle('selected', on);
+      on ? item.setAttribute('aria-current', 'page') : item.removeAttribute('aria-current');
+      item.querySelector('.nav-glyph')?.classList.toggle('outlined', !on);
+    });
+    const index = [...shell.querySelectorAll<HTMLElement>('.rail-item')].findIndex((i) => i.dataset.destination === id);
+    if (pill) {
+      pill.style.opacity = index < 0 ? '0' : '1';
+      if (index >= 0) pill.style.transform = `translateY(${index * 64}px)`;
+    }
+  };
+  select(shell.dataset.current);
+  requestAnimationFrame(() => pill?.classList.add('animated'));
+
+  // On the home page the selection follows the section in view.
+  const features = document.getElementById('features');
+  if (features && shell.dataset.current === 'home') {
+    const onScroll = () => select(features.getBoundingClientRect().top < window.innerHeight * 0.5 ? 'features' : 'home');
+    addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  const root = document.documentElement;
+  const system = matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => (root.dataset.theme ? root.dataset.theme === 'dark' : system.matches);
+  const sync = () => {
+    const dark = isDark();
+    document.querySelectorAll('[data-theme-icon]').forEach((icon) => (icon.textContent = dark ? 'light_mode' : 'dark_mode'));
+    document.querySelectorAll('[data-theme-toggle]').forEach((b) => b.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} theme`));
+  };
+  document.querySelectorAll('[data-theme-toggle]').forEach((button) =>
+    button.addEventListener('click', () => {
+      const next = isDark() ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try { localStorage.setItem('sentorr-theme', next); } catch {}
+      sync();
+    }),
+  );
+  system.addEventListener('change', sync);
+  sync();
+</script>
+
+<style>
+  .rail {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: var(--rail);
+    padding: 16px 0;
+  }
+  .rail-logo { display: inline-flex; border-radius: var(--radius-control); }
+  .rail-items { position: relative; display: grid; gap: 8px; margin-top: 24px; }
+  .pill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 56px;
+    height: 56px;
+    opacity: 0;
+  }
+  .pill:global(.animated) { transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1); }
+  .rail-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-card);
+    color: var(--fg-muted);
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+  .rail-item .icon { font-size: 22px; }
+  .rail-item:hover:not(:global(.selected)) { background: var(--state-hover); color: var(--fg); }
+  .rail-item:global(.selected) { color: var(--fg); }
+  .label { font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.2px; }
+  .theme-toggle { margin-top: auto; color: var(--fg-muted); }
+  .theme-toggle:hover { color: var(--fg); }
+
+  .page {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 16px);
+    margin: 8px 8px 8px var(--rail);
+  }
+
+  .page > :global(main) { flex: 1; }
+  .top-bar, .bottom-nav { display: none; }
+
+  @media (max-width: 599px) {
+    .rail { display: none; }
+    .page {
+      min-height: 100vh;
+      margin: 0;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      padding: 0 8px 0 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--surface);
+    }
+    .top-brand { display: inline-flex; align-items: center; gap: 10px; }
+    .bottom-nav {
+      position: fixed;
+      inset: auto 0 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border-subtle);
+      background: var(--surface);
+    }
+    .bottom-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-height: 56px;
+      color: var(--fg-secondary);
+    }
+    .indicator {
+      display: grid;
+      place-items: center;
+      width: 56px;
+      height: 28px;
+      border-radius: 999px;
+      transition: background-color 150ms ease;
+    }
+    .indicator .icon { font-size: 24px; }
+    .bottom-item:global(.selected) { color: var(--fg); }
+    .bottom-item:global(.selected) .indicator { background: var(--selection); }
+    .bottom-item:hover .indicator { background: var(--state-hover); }
+    .bottom-item .label { font-size: 12px; line-height: 16px; }
+  }
+</style>

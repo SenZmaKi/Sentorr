@@ -1,8 +1,9 @@
-name: Deploy source directory
+name: Deploy site and source directory
 on:
   push:
     branches: [master]
     paths:
+      - website/**
       - source-directory/**
       - update-manifest/**
       - tool/release/**
@@ -28,6 +29,19 @@ jobs:
           sdk: stable
       - run: dart pub get
         working-directory: source-directory/signer
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Build website
+        working-directory: website
+        run: |
+          npm ci
+          npm run check
+          npm run build
+          mkdir -p ../site
+          cp -R dist/. ../site/
       - name: Preserve published feeds and sign configuration
         env:
           SOURCE_DIRECTORY_PRIVATE_KEY: ${{ secrets.SOURCE_DIRECTORY_PRIVATE_KEY }}

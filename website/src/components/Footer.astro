@@ -1,0 +1,43 @@
+---
+import { issues, releases, repo, url } from '../lib/site';
+
+const links = [
+  { label: 'Download', href: url('download') },
+  { label: 'Source code', href: repo, external: true },
+  { label: 'Releases', href: releases, external: true },
+  { label: 'Report an issue', href: issues, external: true },
+  { label: 'Legal notice', href: url('legal') },
+];
+---
+
+<footer class="footer">
+  <nav aria-label="Footer">
+    {links.map((link) => (
+      <a href={link.href} {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{link.label}</a>
+    ))}
+  </nav>
+  <p class="t-caption muted">© {new Date().getFullYear()} Sentorr · Sentorr does not host, upload or control any media.</p>
+</footer>
+
+<style>
+  .footer {
+    width: min(var(--content), 100%);
+    margin-inline: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding: 24px var(--gutter) 32px;
+  }
+  .footer::before {
+    content: '';
+    flex-basis: 100%;
+    height: 1px;
+    margin-bottom: 12px;
+    background: var(--border-subtle);
+  }
+  nav { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+  nav a { color: var(--fg-secondary); font-size: 14px; line-height: 20px; transition: color 150ms ease; }
+  nav a:hover { color: var(--fg); }
+</style>

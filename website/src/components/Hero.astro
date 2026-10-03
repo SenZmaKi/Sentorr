@@ -1,0 +1,101 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import { screenshots } from '../lib/screenshots';
+import { repo, url } from '../lib/site';
+
+const { desktopHome, mobileHome } = screenshots;
+const facts = [
+  { icon: 'volunteer_activism', text: 'Free' },
+  { icon: 'code', text: 'Open source' },
+  { icon: 'person_off', text: 'No accounts' },
+  { icon: 'block', text: 'No ads' },
+];
+---
+
+<section class="hero">
+  <div class="copy">
+    <p class="t-small muted">Movies and TV · Windows, macOS, Linux, Android</p>
+    <h1 class="t-display">Press play.<br />Sentorr finds the torrent.</h1>
+    <p class="t-body-large secondary">
+      Pick any movie or episode. Sentorr finds the best torrent for it and starts playing while it downloads, in a
+      proper player.
+    </p>
+    <div class="actions">
+      <a href={url('download')} class="button primary"><Icon name="download" /> Download</a>
+      <a href={repo} class="button secondary" target="_blank" rel="noopener noreferrer"><Icon name="code" /> View source</a>
+    </div>
+    <ul class="facts t-caption muted" aria-label="Sentorr is">
+      {facts.map((fact) => (
+        <li><Icon name={fact.icon} size={16} outlined /> {fact.text}</li>
+      ))}
+    </ul>
+  </div>
+
+  <div class="stage">
+    <div class="desktop raised">
+      <Image
+        src={desktopHome.src}
+        alt={desktopHome.alt}
+        widths={[640, 960, 1280, 1600]}
+        sizes="(max-width: 959px) 92vw, 50vw"
+        quality={85}
+        loading="eager"
+        fetchpriority="high"
+      />
+    </div>
+    <div class="phone floating">
+      <Image
+        src={mobileHome.src}
+        alt={mobileHome.alt}
+        widths={[240, 390, 780]}
+        sizes="(max-width: 599px) 28vw, 160px"
+        quality={85}
+        loading="eager"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 48px;
+    align-items: center;
+    padding-block: 32px 16px;
+  }
+  .copy { display: grid; justify-items: start; }
+  h1 { margin-top: 12px; }
+  .copy .t-body-large { max-width: 480px; margin-top: 16px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 24px; }
+  .facts li { display: inline-flex; align-items: center; gap: 4px; }
+
+  /* Desktop window behind, the phone in front: one app on both screens. */
+  .stage { position: relative; padding: 0 48px 40px 0; }
+  .desktop { overflow: hidden; }
+  .phone {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 22%;
+    max-width: 160px;
+    padding: 5px;
+    border-radius: 28px;
+    overflow: hidden;
+  }
+  .phone img { border-radius: 23px; }
+
+  @media (max-width: 959px) {
+    .hero { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 599px) {
+    .hero { padding-top: 8px; }
+    .actions { width: 100%; }
+    .actions .button { flex: 1; }
+    .stage { padding: 0 24px 32px 0; }
+    .phone { width: 28%; border-radius: 20px; padding: 4px; }
+    .phone img { border-radius: 16px; }
+  }
+</style>

@@ -1,0 +1,36 @@
+---
+import Icon from './Icon.astro';
+
+// The app's SectionHeader: a raised icon tile, title, explanation, optional count.
+interface Props {
+  icon: string;
+  outlined?: boolean;
+  title: string;
+  subtitle?: string;
+  count?: string;
+  id?: string;
+  level?: 'h1' | 'h2';
+}
+
+const { icon, outlined, title, subtitle, count, id, level = 'h2' } = Astro.props;
+const Heading = level;
+---
+
+<header class="section-header" id={id}>
+  <span class="tile raised"><Icon name={icon} outlined={outlined} /></span>
+  <div class="text">
+    <div class="title-row">
+      <Heading class="t-subtitle">{title}</Heading>
+      {count && <span class="chip">{count}</span>}
+    </div>
+    {subtitle && <p class="t-small muted">{subtitle}</p>}
+  </div>
+  <slot name="action" />
+</header>
+
+<style>
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .tile { display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-control); }
+  .text { flex: 1; min-width: 0; }
+  .title-row { display: flex; align-items: center; gap: 8px; }
+</style>

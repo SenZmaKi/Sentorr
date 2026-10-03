@@ -1,0 +1,29 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/Hero.astro';
+import Features from '../components/Features.astro';
+import Steps from '../components/Steps.astro';
+import Faq from '../components/Faq.astro';
+import { latestRelease, repo } from '../lib/site';
+---
+
+<Layout
+  current="home"
+  structuredData={{
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Sentorr',
+    applicationCategory: 'MultimediaApplication',
+    operatingSystem: 'Windows, macOS, Linux, Android',
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    downloadUrl: latestRelease,
+    codeRepository: repo,
+  }}
+>
+  <Hero />
+  <Features />
+  <Steps />
+  <Faq />
+</Layout>
+

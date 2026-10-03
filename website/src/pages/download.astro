@@ -1,0 +1,41 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+import PlatformList from '../components/PlatformList.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import { releases } from '../lib/site';
+---
+
+<Layout
+  current="download"
+  title="Download Sentorr | Windows, macOS, Linux and Android"
+  description="Download Sentorr for Windows, macOS, Linux and Android. Free and open source."
+>
+  <section class="download">
+    <SectionHeader level="h1" icon="download" title="Download Sentorr" subtitle="Free, with automatic updates once it’s installed" />
+    <PlatformList notes />
+    <div class="extras">
+      <p class="t-small muted">Every file has a <span class="technical">.sha256</span> checksum beside it on the release page.</p>
+      <a class="button ghost" href={releases} target="_blank" rel="noopener noreferrer">All releases <Icon name="open_in_new" size={16} /></a>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .download {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 880px;
+    min-height: calc(100vh - 220px);
+    margin-inline: auto;
+  }
+  .extras {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin-top: 16px;
+  }
+</style>

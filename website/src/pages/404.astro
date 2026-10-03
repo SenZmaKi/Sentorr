@@ -1,0 +1,26 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+import { url } from '../lib/site';
+---
+
+<Layout title="Page not found | Sentorr" description="This page doesn’t exist.">
+  <section class="missing">
+    <span class="tile raised"><Icon name="search_off" size={24} /></span>
+    <h1 class="t-title">This page doesn’t exist</h1>
+    <p class="t-small secondary">The link may be old, or the address mistyped.</p>
+    <a class="button primary" href={url()}><Icon name="home" /> Back to Sentorr</a>
+  </section>
+</Layout>
+
+<style>
+  .missing {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding-block: clamp(64px, 14vw, 160px);
+    text-align: center;
+  }
+  .tile { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 8px; border-radius: var(--radius-card); }
+  .button { margin-top: 16px; }
+</style>

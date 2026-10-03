@@ -1,0 +1,35 @@
+---
+import Icon from './Icon.astro';
+
+// The app's SettingsTile: muted 20 icon, label title, secondary description, trailing control.
+interface Props {
+  icon?: string;
+  outlined?: boolean;
+  title: string;
+  subtitle?: string;
+}
+
+const { icon, outlined, title, subtitle } = Astro.props;
+const hasLeading = Astro.slots.has('leading');
+---
+
+<div class="tile-row">
+  {hasLeading ? <slot name="leading" /> : icon && <Icon name={icon} outlined={outlined} class="lead" />}
+  <div class="text">
+    <p class="t-label">{title}</p>
+    {subtitle && <p class="t-small secondary">{subtitle}</p>}
+    <slot name="below" />
+  </div>
+  {Astro.slots.has('trailing') && <div class="trailing"><slot name="trailing" /></div>}
+</div>
+
+<style>
+  .tile-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+  .tile-row :global(.lead) { color: var(--fg-muted); }
+  .text { flex: 1; min-width: 0; }
+  .trailing { display: flex; align-items: center; gap: 8px; margin-left: 4px; flex-shrink: 0; }
+  @media (max-width: 479px) {
+    .tile-row { flex-wrap: wrap; }
+    .trailing { flex-basis: 100%; margin-left: 0; padding-left: 32px; }
+  }
+</style>

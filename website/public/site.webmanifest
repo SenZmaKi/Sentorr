@@ -1,0 +1,12 @@
+{
+  "name": "Sentorr",
+  "short_name": "Sentorr",
+  "description": "Stream movies and TV series from torrents.",
+  "icons": [
+    { "src": "favicon.png", "sizes": "256x256", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ],
+  "theme_color": "#0d0d0d",
+  "background_color": "#0d0d0d",
+  "display": "standalone"
+}

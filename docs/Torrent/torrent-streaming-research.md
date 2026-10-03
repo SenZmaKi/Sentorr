@@ -25,7 +25,7 @@ The official [torrent handle reference](https://libtorrent.org/reference-Torrent
 
 Sentorr's root [pubspec](../../pubspec.yaml) currently contains neither MediaKit nor libtorrent. [Codec lab](../../tool/codec_lab/README.md) and its [validation notes](../../tool/codec_lab/VALIDATION.md) establish local-file playback experiments, not torrent streaming or production runtime compatibility.
 
-The previous Electron implementation already uses the same broad bridge: WebTorrent `createServer`, localhost stream URLs, metadata discovery, selected files and a bounded retained-file queue. See [server.ts](../../Electron/src/backend/torrent/server/server.ts) and [manager.ts](../../Electron/src/backend/torrent/server/manager.ts). Flutter must own cancellation, scheduling and lifecycle rather than copying IPC/store boundaries.
+The previous Electron implementation already uses the same broad bridge: WebTorrent `createServer`, localhost stream URLs, metadata discovery, selected files and a bounded retained-file queue. The historical sources are `Electron/src/backend/torrent/server/server.ts` and `manager.ts` at Git commit `b18f176`. Flutter must own cancellation, scheduling and lifecycle rather than copying IPC/store boundaries.
 
 ## Approaches
 

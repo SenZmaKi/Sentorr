@@ -13,7 +13,7 @@ libtorrent session, player, torrent-file fetch, or UI is involved.
 | RARGB (`rargb.to`) | Excluded | Old endpoint returned HTTP 403. Excluded at the user's request; no Flutter adapter or default requests. |
 
 These findings are observations from this machine, not an uptime guarantee.
-The old Electron sources remain as historical migration references.
+The retired Electron sources are available in Git history at commit `b18f176`.
 
 ## Consumption
 

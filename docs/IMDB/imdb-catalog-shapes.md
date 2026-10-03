@@ -89,7 +89,8 @@ Cancellation and existing network timeouts should remain in effect.
 
 Primary source: live responses from https://api.graphql.imdb.com/ using the
 checked-in query selections and evidence described above. The consumer
-baseline is `Electron/src/backend/imdb/api.ts` and `types.ts`; those files are
+baseline was `Electron/src/backend/imdb/api.ts` and `types.ts` (available at Git
+commit `b18f176`); those historical files describe
 product requirements, not proof of the current provider schema.
 
 `__schema` returned HTTP 500 with an unauthorized-introspection error. No

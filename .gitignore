@@ -9,15 +9,12 @@ dist/
 out/
 js/
 .performance-profiles/
-electron-dists/
-src/test/results
 .github/videos
 
 
 .env
 test.sh
 crap.ts
-electron.vite.config.*.mjs
 
 .dart_tool/
 

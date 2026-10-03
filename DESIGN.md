@@ -11,7 +11,7 @@ Keep Sentorr visually coherent as features grow. Shared appearance belongs in th
 - This document owns design intent, usage rules and the reasons behind constraints.
 - Until the Flutter app is scaffolded, the tables below are the implementation specification. Once implemented, typed Dart definitions own exact runtime values; replace these value tables with code pointers while retaining the intent and usage rules. Change shared values centrally, not through screen overrides.
 - Comments next to unusual token mappings explain their purpose or tradeoff. Avoid comments that merely repeat the value.
-- Electron is a reference for behavior, not an approved visual design. Senpwai is a reference for implementation patterns, not Sentorr's identity.
+- Senpwai is a reference for implementation patterns, not Sentorr's identity.
 
 ## Locked visual direction
 
@@ -168,7 +168,7 @@ Player buttons use circular targets of at least 48, icons 24, and the hover/pres
 
 ### Player
 
-The player is a layer over the app, as in the Electron original. Code: `lib/ui/pages/player/`, presentation modes in `lib/ui/shared/player_view.dart`, playback and queue in `lib/player/`.
+The player is a layer over the app. Code: `lib/ui/pages/player/`, presentation modes in `lib/ui/shared/player_view.dart`, playback and queue in `lib/player/`.
 
 - **Modes.** Full covers the whole window, navigation included. Back or Escape closes an open panel, then leaves full screen, then docks the player as a 16:9 card (floating depth, radius 12) in the app's bottom-right corner while the app stays usable. A separate close control stops playback. Pop out turns the window itself into a frameless, always-on-top 480 × 270 video window in the screen corner; it never saves those bounds as the window's own. One player instance moves between modes, so playback never restarts.
 - **Chrome.** Top: dock control (always docks, never toggles full screen; from full screen it restores the window first, and full screen lives only on the bar's trailing control), series over `S1 E2` and episode name, then the live torrent (`TorrentStats`: a progress ring with the downloaded percentage, download and upload speeds, connected peers, each in the technical role behind a 16 icon, its tooltip carrying totals; narrow players keep progress and download only), close. Before the first frame the opening cover names the torrent stage: finding, connecting to peers, preparing, buffering, with the peer count. Bottom: scrubber, then play/pause, previous, next, volume, clock, the current item as a chip that is the only control opening Episodes / Up next; trailing at the far end a speed badge when not Normal, captions, settings, pop out, full screen. Each action has one control: docking lives only on the top-left control (and Esc / i), the queue only on the chip (and q). Chrome hides after 3 s of playback idle and stays while paused, pointed at, or a panel is open. The cursor hides with it.

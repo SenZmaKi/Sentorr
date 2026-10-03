@@ -1,17 +1,16 @@
 # Sentorr
 
-Sentorr streams movies and TV series from torrents. We are migrating the existing Svelte/Electron/TypeScript app to Flutter, borrowing and improving Senpwai's structure and reusable infrastructure.
+Sentorr streams movies and TV series from torrents. The app is built in Flutter, borrowing and improving Senpwai's structure and reusable infrastructure.
 
 ## Design
 
 - For UI, component or theme work, read `DESIGN.md` first and follow its theme ownership and component contracts. Its layered Resend/Vercel direction is locked; implement surface depth and shared appearance through the theme layer.
 
-## Migration approach
+## Implementation approach
 
 - The primary Flutter reference is `../senpwai/`(Sometimes called Sempy or Sempsth in writing). Inspect the relevant implementation before building an equivalent here.
 - Follow its feature-oriented layout: domain features with models, repositories/services and Riverpod notifiers; shared infrastructure under `lib/shared/`; presentation under `lib/ui/`. Adapt and improve the boundaries for Sentorr rather than copying anime-specific assumptions or entire subsystems.
 - Reuse suitable code, replacing Senpwai branding, package imports, storage paths and domain coupling. Sentorr must own its data and configuration independently.
-- The original pre-migration Electron project lives in `Electron/`. Use `Electron/src/` as a reference for product behavior and logic. Preserve useful functionality while improving the implementation; Electron IPC and Svelte stores need Flutter-appropriate equivalents.
 
 ## Senpwai reuse pointers
 
@@ -35,7 +34,8 @@ Paths below are relative to `../senpwai/`. Read the relevant branch on demand ra
 
 ## Existing Sentorr references
 
-- Catalog/metadata: `Electron/src/backend/imdb/`. Torrent search, selection and streaming: `Electron/src/backend/torrent/`. Configuration: `Electron/src/backend/config/`. UI/player behavior: `Electron/src/renderer/src/`. Behavioral examples: `Electron/src/test/`.
+- Catalog/metadata: `lib/imdb/` and `docs/IMDB/`. Torrent search and resolution: `lib/torrents/`; streaming and downloads: `lib/player/` and `lib/downloads/`. Configuration: `lib/settings/`. UI/player behavior: `lib/ui/`. Behavioral examples: `test/`.
+- The retired Electron app is available in Git history at commit `b18f176` when historical behavior needs investigation.
 - Playback work: consult `tool/codec_lab/README.md` and `tool/codec_lab/VALIDATION.md`, then its Flutter code. This MediaKit prototype covers local-file playback; it does not establish torrent streaming support. Check the recorded native-library findings before making codec compatibility claims.
 
 ## Website

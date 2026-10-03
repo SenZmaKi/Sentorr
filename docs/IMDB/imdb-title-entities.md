@@ -4,7 +4,7 @@ Observed 2026-10-02 against IMDb's first-party `POST https://api.graphql.imdb.co
 
 ## Combined title details
 
-[Movie request](imdb-research/title-combined-movie.request.json), [movie response](imdb-research/title-combined-movie.response.json), [series request](imdb-research/title-combined-series.request.json), [series response](imdb-research/title-combined-series.response.json) successfully returned details, principal credits, first credit page, related titles, video metadata and seasons/first episodes in one request for `tt0133093` and `tt0903747`. This can replace the two HTML-script extraction paths in `Electron/src/backend/imdb/api.ts::getMediaOrEpisode`.
+[Movie request](imdb-research/title-combined-movie.request.json), [movie response](imdb-research/title-combined-movie.response.json), [series request](imdb-research/title-combined-series.request.json), [series response](imdb-research/title-combined-series.response.json) successfully returned details, principal credits, first credit page, related titles, video metadata and seasons/first episodes in one request for `tt0133093` and `tt0903747`. This can replace the two HTML-script extraction paths in the retired `getMediaOrEpisode` implementation (`Electron/src/backend/imdb/api.ts` at Git commit `b18f176`).
 
 | Concept | Observed path under `data.title` | Proposed representation |
 | --- | --- | --- |

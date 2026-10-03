@@ -7,7 +7,7 @@ import 'package:sentorr/imdb/website.dart';
 import 'package:sentorr/shared/net/net.dart';
 
 /// Diagnostic for the exact current homepage operation, not a replacement
-/// for all Electron catalog endpoints. It requires no browser session.
+/// for all catalog endpoints. It requires no browser session.
 Future<void> main() async {
   final dio = createDio();
   try {

@@ -15,6 +15,7 @@ class DepthBox extends StatelessWidget {
     this.width,
     this.height,
     this.minHeight,
+    this.duration = Motion.hover,
   });
 
   final DepthStyle style;
@@ -28,10 +29,13 @@ class DepthBox extends StatelessWidget {
   /// Grows with its content (text scaling) instead of clipping at [height].
   final double? minHeight;
 
+  /// How long a change of [style] takes; zero switches at once.
+  final Duration duration;
+
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: Motion.hover,
+      duration: duration,
       curve: Curves.easeInOut,
       width: width,
       height: height,

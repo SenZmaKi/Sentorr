@@ -25,10 +25,13 @@ class PlayerViewNotifier extends Notifier<PlayerView> {
   @override
   PlayerView build() {
     // A new session opens full; a closed one leaves no pop-out behind.
+    // Closing otherwise keeps the view, so the player fades out as it was
+    // instead of flashing the full chrome on its way out.
     ref.listen(playerSessionProvider.select((s) => s?.request), (_, request) {
       if (request == null) {
-        if (state == PlayerView.popOut) unawaited(PopOutWindow.instance.exit());
-        state = PlayerView.full;
+        if (state != PlayerView.popOut) return;
+        unawaited(PopOutWindow.instance.exit());
+        state = PlayerView.mini;
       } else if (state == PlayerView.mini) {
         state = PlayerView.full;
       }

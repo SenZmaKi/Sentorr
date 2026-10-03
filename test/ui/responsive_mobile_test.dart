@@ -506,6 +506,24 @@ void main() {
       expect(landscape.right, lessThanOrEqualTo(844 - 44));
       expect(landscape.bottom, lessThanOrEqualTo(390 - 24));
       expect(landscape.height, lessThanOrEqualTo(390 * 0.3 + 1));
+      final left = dockedPlayerRect(
+        const Size(844, 390),
+        insets,
+        0,
+        corner: DockCorner.bottomLeft,
+      );
+      expect(left.left, greaterThan(0));
+      expect(left.right, lessThan(844 / 2));
+      expect(left.top, landscape.top);
+      final top = dockedPlayerRect(
+        const Size(844, 390),
+        const EdgeInsets.only(top: 30, right: 44),
+        0,
+        corner: DockCorner.topRight,
+      );
+      expect(top.top, greaterThan(30));
+      expect(top.bottom, lessThan(390 / 2));
+      expect(top.right, landscape.right);
     });
 
     for (final viewport in _phones) {

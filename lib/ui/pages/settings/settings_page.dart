@@ -25,6 +25,9 @@ class _SettingsPageState extends State<SettingsPage> {
   /// drifts apart, so the open category caps here.
   static const _content = 760.0;
 
+  /// Room between the content and a pointer's scrollbar.
+  static const _scrollbarGap = Space.s32;
+
   final _search = TextEditingController();
 
   /// Keeps the field's state, and so its focus, wherever layouts place it.
@@ -116,7 +119,9 @@ class _SettingsPageState extends State<SettingsPage> {
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: sidebar + gap + _content),
+        constraints: BoxConstraints(
+          maxWidth: sidebar + gap + _content + _scrollbarGap,
+        ),
         child: _sidebarLayout(sidebar, gap),
       ),
     );
@@ -252,7 +257,7 @@ class _SettingsPageState extends State<SettingsPage> {
   // view's edge; touch scrollbars only show while scrolling.
   Widget _scroll(List<Widget> children) => SingleChildScrollView(
     padding: EdgeInsets.only(
-      right: context.input.canHover ? Space.s16 : 0,
+      right: context.input.canHover ? _scrollbarGap : 0,
       bottom: Space.s24,
     ),
     child: Align(

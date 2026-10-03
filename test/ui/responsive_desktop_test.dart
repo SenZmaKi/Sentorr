@@ -279,11 +279,13 @@ void main() {
     expect(find.text('Cast'), findsOneWidget);
   });
 
-  testWidgets('wide search keeps filters open beside the grid', (tester) async {
+  testWidgets('wide search expands filters below the field', (tester) async {
     await _pumpShell(tester, _named('laptop'));
     await _go(tester, AppDestination.search);
+    expect(find.byType(SearchFilters), findsNothing);
+    await tester.tap(find.text('Filters'));
+    await tester.pumpAndSettle();
     expect(find.byType(SearchFilters), findsOneWidget);
-    expect(find.text('Filters'), findsNothing);
   });
 
   testWidgets('small windows keep filters behind the toggle', (tester) async {
@@ -300,7 +302,7 @@ void main() {
     await _go(tester, AppDestination.settings);
     final page = tester.getRect(find.byType(SettingsPage));
     final nav = tester.getRect(find.byType(SettingsNav));
-    final margin = page.left + (page.width - 1032) / 2;
+    final margin = page.left + (page.width - 1064) / 2;
     expect(nav.left, closeTo(margin, 1));
   });
 

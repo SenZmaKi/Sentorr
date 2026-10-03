@@ -147,11 +147,32 @@ extension PlayerLayoutContext on BuildContext {
   PlayerLayout get playerLayout => PlayerLayoutScope.of(this);
 }
 
-/// Where the docked player sits in a window of [size]: clear of the
-/// bottom navigation ([navExtent], measured) and of the system [insets].
-/// Phones get a smaller card, and a short window caps it by height so it
-/// covers as little of the page as it can.
-Rect dockedPlayerRect(Size size, EdgeInsets insets, double navExtent) {
+/// Which corner the docked player snaps to.
+enum DockCorner {
+  topLeft(left: true, top: true),
+  topRight(left: false, top: true),
+  bottomLeft(left: true, top: false),
+  bottomRight(left: false, top: false);
+
+  const DockCorner({required this.left, required this.top});
+
+  static DockCorner of({required bool left, required bool top}) =>
+      values.firstWhere((c) => c.left == left && c.top == top);
+
+  final bool left;
+  final bool top;
+}
+
+/// Where the docked player sits in a window of [size]: in [corner], clear
+/// of the bottom navigation ([navExtent], measured) and of the system
+/// [insets]. Phones get a smaller card, and a short window caps
+/// it by height so it covers as little of the page as it can.
+Rect dockedPlayerRect(
+  Size size,
+  EdgeInsets insets,
+  double navExtent, {
+  DockCorner corner = DockCorner.bottomRight,
+}) {
   final screen = LayoutSize(size);
   final handheld = screen.compact || screen.short;
   final width = screen.compact
@@ -163,8 +184,10 @@ Rect dockedPlayerRect(Size size, EdgeInsets insets, double navExtent) {
   final margin = handheld ? Space.s12 : Space.s24;
   final bottom = margin + (navExtent > 0 ? navExtent : insets.bottom);
   return Rect.fromLTWH(
-    size.width - width - margin - insets.right,
-    size.height - height - bottom,
+    corner.left
+        ? margin + insets.left
+        : size.width - width - margin - insets.right,
+    corner.top ? margin + insets.top : size.height - height - bottom,
     width,
     height,
   );

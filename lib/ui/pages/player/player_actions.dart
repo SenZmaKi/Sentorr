@@ -9,6 +9,7 @@ import '../../../torrents/resolution_models.dart';
 import '../../shared/player_view.dart';
 import '../../shared/window_manager.dart';
 import 'player_ui.dart';
+import 'shortcuts_dialog.dart';
 
 /// Every viewer command, shared by buttons, shortcuts and gestures so each
 /// path behaves and acknowledges the same way.
@@ -100,6 +101,12 @@ class PlayerActions {
     setRate(rates[next.clamp(0, rates.length - 1)]);
   }
 
+  /// , and . step one frame, only while paused as on YouTube.
+  void stepFrame({required bool forward}) {
+    if (_player.state.playing) return;
+    unawaited(engine.stepFrame(forward: forward));
+  }
+
   /// Captions on with the first real track, or off.
   void toggleSubtitles() {
     final selected = _player.state.track.subtitle;
@@ -148,6 +155,16 @@ class PlayerActions {
     session.chooseTorrent(item.id, torrent, options: options);
     ui.closePanel();
     unawaited(engine.streaming.switchTo(torrent, options: options));
+  }
+
+  /// Lists the keyboard shortcuts, holding playback while they are read.
+  Future<void> showShortcuts(BuildContext context) async {
+    final resume = _player.state.playing;
+    if (resume) unawaited(_player.pause());
+    final shown = showPlayerShortcuts(context);
+    ui.closePanel();
+    await shown;
+    if (resume) unawaited(_player.play());
   }
 
   void next() => session.next();

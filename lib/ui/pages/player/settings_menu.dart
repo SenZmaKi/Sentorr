@@ -4,6 +4,7 @@ import 'package:media_kit/media_kit.dart';
 
 import '../../../player/sleep_timer.dart';
 import '../../components/motion.dart';
+import '../../shared/layout/adaptive.dart';
 import '../../shared/theme/theme.dart';
 import 'menu_rows.dart';
 import 'player_actions.dart';
@@ -117,6 +118,12 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
         chevron: true,
         onTap: widget.actions.chooseTorrent,
       ),
+      if (!context.input.isTouch)
+        PlayerMenuRow(
+          icon: Icons.keyboard_outlined,
+          label: 'Keyboard shortcuts (?)',
+          onTap: () => widget.actions.showShortcuts(context),
+        ),
     ];
   }
 

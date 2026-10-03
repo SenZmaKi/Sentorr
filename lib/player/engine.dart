@@ -98,6 +98,14 @@ class PlaybackEngine {
   /// Seeks through the torrent so obsolete reads are dropped first.
   Future<void> seek(Duration position) => streaming.seek(position);
 
+  /// One frame forward or back, pausing first as mpv does. A step stays
+  /// within the buffered piece, so it skips the torrent's seek handling.
+  Future<void> stepFrame({required bool forward}) async {
+    final native = player.platform;
+    if (native is! NativePlayer) return;
+    await native.command([forward ? 'frame-step' : 'frame-back-step']);
+  }
+
   /// Restart when past the opening seconds, as a Previous press would.
   bool get pastStart => player.state.position > const Duration(seconds: 3);
 

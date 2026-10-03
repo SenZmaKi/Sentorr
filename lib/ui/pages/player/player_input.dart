@@ -7,8 +7,9 @@ import 'player_ui.dart';
 
 /// YouTube's keyboard layout: k/space play, j/l ±10 s, arrows ±5 s and
 /// volume, m mute, f full screen, c captions, Shift+N/P next and previous,
-/// </> speed, 0–9 jump to tenths, i mini player, Esc back. q toggles the
-/// episodes panel.
+/// </> speed, ,/. a frame back or forward while paused, 0–9 jump to tenths,
+/// i mini player, Esc back. q toggles the episodes panel and ? lists the
+/// shortcuts.
 class PlayerShortcuts extends StatelessWidget {
   const PlayerShortcuts({
     super.key,
@@ -25,11 +26,11 @@ class PlayerShortcuts extends StatelessWidget {
   Widget build(BuildContext context) => Focus(
     focusNode: focusNode,
     autofocus: true,
-    onKeyEvent: (_, event) => _handle(event),
+    onKeyEvent: (node, event) => _handle(node.context!, event),
     child: child,
   );
 
-  KeyEventResult _handle(KeyEvent event) {
+  KeyEventResult _handle(BuildContext context, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
     final repeat = event is KeyRepeatEvent;
     final a = actions;
@@ -77,8 +78,20 @@ class PlayerShortcuts extends StatelessWidget {
       LogicalKeyboardKey.keyP when shift => run(a.previous),
       LogicalKeyboardKey.period when shift => run(() => a.stepRate(1)),
       LogicalKeyboardKey.comma when shift => run(() => a.stepRate(-1)),
+      LogicalKeyboardKey.period => run(
+        () => a.stepFrame(forward: true),
+        repeats: true,
+      ),
+      LogicalKeyboardKey.comma => run(
+        () => a.stepFrame(forward: false),
+        repeats: true,
+      ),
       LogicalKeyboardKey.greater => run(() => a.stepRate(1)),
       LogicalKeyboardKey.less => run(() => a.stepRate(-1)),
+      LogicalKeyboardKey.question => run(() => a.showShortcuts(context)),
+      LogicalKeyboardKey.slash when shift => run(
+        () => a.showShortcuts(context),
+      ),
       LogicalKeyboardKey.escape => run(a.back),
       _ => false,
     };

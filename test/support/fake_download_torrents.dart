@@ -19,6 +19,9 @@ class FakeTorrents implements DownloadTorrents {
   bool failMetadata = false;
   Completer<void>? metadataGate;
 
+  /// Holds every release until completed, like a busy engine.
+  Completer<void>? releaseGate;
+
   FakeTorrent operator [](String title) => byHash[title]!;
   bool running(String title) {
     final t = byHash[title];
@@ -101,6 +104,7 @@ class FakeTorrents implements DownloadTorrents {
     String owner, {
     bool deleteFiles = false,
   }) async {
+    await releaseGate?.future;
     final t = byHash[infoHash]!;
     t.owners.remove(owner);
     t.paused.remove(owner);

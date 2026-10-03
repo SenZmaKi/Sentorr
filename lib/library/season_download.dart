@@ -2,13 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
-import '../app/services.dart';
 import '../following/latest_episode.dart';
 import '../imdb/models.dart';
+import '../imdb/repository.dart';
 import '../player/models.dart';
 import '../titles/episodes.dart';
 import '../torrents/resolution_models.dart';
-import 'notifier.dart';
 import 'planner.dart';
 import 'planning_cancel.dart';
 
@@ -28,16 +27,18 @@ class SeasonDownloadException implements Exception {
       : "${failed.length} of $total episodes couldn't be downloaded.";
 }
 
-/// Seasons being queued now.
+/// An episode and the torrent chosen for it.
+typedef SeasonPick = ({PlaybackItem item, TorrentCandidate torrent});
+
+/// Seasons whose chosen torrents are being queued now.
 final seasonDownloadsProvider =
     NotifierProvider<SeasonDownloads, Set<SeasonKey>>(SeasonDownloads.new);
 
-/// Queues every aired episode of a season that isn't downloaded yet, one
-/// at a time. A season pack found for one episode serves the rest, so the
-/// season shares one torrent and is searched for once.
+/// Queues a season's reviewed episodes one at a time, each from the torrent
+/// chosen for it.
 class SeasonDownloads extends Notifier<Set<SeasonKey>> {
   final _series = <SeasonKey, ImdbTitle>{};
-  ImdbTitle seriesFor(SeasonKey key) => _series[key]!;
+  ImdbTitle? seriesFor(SeasonKey key) => _series[key];
 
   final _cancellations = <SeasonKey, CancelToken>{};
 
@@ -48,41 +49,33 @@ class SeasonDownloads extends Notifier<Set<SeasonKey>> {
   @override
   Set<SeasonKey> build() => const {};
 
-  Future<void> download(ImdbTitle series, int season) async {
+  Future<void> queue(
+    ImdbTitle series,
+    int season,
+    List<SeasonPick> picks,
+  ) async {
     final key = (series.id, season);
-    if (state.contains(key)) return;
+    if (state.contains(key) || picks.isEmpty) return;
     final cancel = CancelToken();
     _cancellations[key] = cancel;
     _series[key] = series;
     state = {...state, key};
+    _log.info('Queueing ${picks.length} episodes of ${series.title} S$season');
     try {
-      final library = ref.read(libraryProvider.notifier);
-      final episodes = [
-        for (final e in await whilePlanning(_aired(series, season), cancel))
-          if (library.entry(e.id) == null) e,
-      ];
-      _log.info(
-        'Queueing ${episodes.length} episodes of ${series.title} S$season',
-      );
       final planner = ref.read(downloadPlannerProvider);
       final failed = <PlaybackItem, Object>{};
-      TorrentCandidate? pack;
-      for (final item in episodes) {
+      for (final pick in picks) {
         if (!ref.mounted || cancel.isCancelled) return;
         try {
-          final used = await whilePlanning(
-            _plan(planner, item, pack, cancel),
-            cancel,
-          );
-          if (used != null && used.release.isSeasonPack) pack = used;
+          await whilePlanning(queuePick(planner, pick, cancel: cancel), cancel);
         } catch (error) {
           if (cancel.isCancelled) return;
-          _log.info('Could not queue $item: $error');
-          failed[item] = error;
+          _log.info('Could not queue ${pick.item}: $error');
+          failed[pick.item] = error;
         }
       }
       if (failed.isNotEmpty) {
-        throw SeasonDownloadException(failed, episodes.length);
+        throw SeasonDownloadException(failed, picks.length);
       }
     } on DioException catch (error) {
       if (!CancelToken.isCancel(error)) rethrow;
@@ -92,47 +85,47 @@ class SeasonDownloads extends Notifier<Set<SeasonKey>> {
       if (ref.mounted) state = {...state}..remove(key);
     }
   }
+}
 
-  /// Plans [item] from [pack] when there is one, falling back to its own
-  /// search when the pack lacks it.
-  Future<TorrentCandidate?> _plan(
-    DownloadPlanner planner,
-    PlaybackItem item,
-    TorrentCandidate? pack,
-    CancelToken cancel,
-  ) async {
-    if (pack != null) {
-      try {
-        return await planner.download(item, torrent: pack, cancel: cancel);
-      } on DownloadPlanException {
-        _log.info('${pack.release.name} lacks $item; searching for it');
+/// Queues [pick]'s item from its torrent. A season pack that turns out to
+/// lack the episode falls back to the episode's own best torrent.
+Future<void> queuePick(
+  DownloadPlanner planner,
+  SeasonPick pick, {
+  CancelToken? cancel,
+}) async {
+  try {
+    await planner.download(pick.item, torrent: pick.torrent, cancel: cancel);
+  } on DownloadPlanException {
+    if (!pick.torrent.release.isSeasonPack) rethrow;
+    _log.info('${pick.torrent.release.name} lacks ${pick.item}; searching');
+    await planner.download(pick.item, cancel: cancel);
+  }
+}
+
+/// Aired episodes of [series]' [season], in air order.
+Future<List<PlaybackItem>> airedEpisodes(
+  ImdbRepository imdb,
+  ImdbTitle series,
+  int season, {
+  CancelToken? cancel,
+}) async {
+  final today = DateTime.now();
+  final aired = <PlaybackItem>[];
+  String? cursor;
+  do {
+    final page = await whilePlanning(
+      imdb.getEpisodes(series.id, season, limit: 50, cursor: cursor),
+      cancel,
+    );
+    for (final e in page.items) {
+      final date = airDate(e.releaseDate);
+      if (e.episodeNumber == null || date == null || date.isAfter(today)) {
+        continue;
       }
+      aired.add(PlaybackItem.episode(series, e, season: season));
     }
-    return planner.download(item, cancel: cancel);
-  }
-
-  /// Aired episodes of [series]' [season], in air order.
-  Future<List<PlaybackItem>> _aired(ImdbTitle series, int season) async {
-    final imdb = ref.read(imdbRepositoryProvider);
-    final today = DateTime.now();
-    final aired = <PlaybackItem>[];
-    String? cursor;
-    do {
-      final page = await imdb.getEpisodes(
-        series.id,
-        season,
-        limit: 50,
-        cursor: cursor,
-      );
-      for (final e in page.items) {
-        final date = airDate(e.releaseDate);
-        if (e.episodeNumber == null || date == null || date.isAfter(today)) {
-          continue;
-        }
-        aired.add(PlaybackItem.episode(series, e, season: season));
-      }
-      cursor = page.nextCursor;
-    } while (cursor != null);
-    return aired;
-  }
+    cursor = page.nextCursor;
+  } while (cursor != null);
+  return aired;
 }

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../following/notifier.dart';
 import '../../notifications/notification_service.dart';
 import '../shared/title_route.dart';
+import 'app_shell.dart';
 import '../shared/window_manager.dart';
 
 /// Brings Sentorr forward on what a clicked notification is about.
@@ -35,6 +36,8 @@ class _NotificationTapsState extends ConsumerState<NotificationTaps> {
             .where((s) => s.id == seriesId)
             .firstOrNull;
         if (followed != null) ref.openTitle(followed.series);
+      case DownloadsTarget():
+        ref.read(appDestinationProvider.notifier).go(AppDestination.downloads);
     }
   }
 

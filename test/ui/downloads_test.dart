@@ -10,20 +10,26 @@ import 'package:sentorr/downloads/queue.dart';
 import 'package:sentorr/downloads/repository.dart';
 import 'package:sentorr/following/auto_downloads.dart';
 import 'package:sentorr/imdb/models.dart';
+import 'package:sentorr/library/download_review.dart';
 import 'package:sentorr/library/models.dart';
 import 'package:sentorr/library/notifier.dart';
 import 'package:sentorr/library/planner.dart';
 import 'package:sentorr/player/models.dart';
+import 'package:sentorr/player/torrent_search.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/shared/persistence/json_file_store.dart';
 import 'package:sentorr/ui/components/download_button.dart';
+import 'package:sentorr/ui/pages/download_review/review_host.dart';
+import 'package:sentorr/ui/pages/download_review/review_row.dart';
 import 'package:sentorr/ui/pages/downloads/downloads_page.dart';
+import 'package:sentorr/ui/pages/torrent_picker/torrent_option.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
 import '../support/fake_download_torrents.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
 import '../support/fake_planner.dart';
+import '../support/fake_search.dart';
 import '../support/fake_torrents.dart';
 
 final _series = fakeTitle(2, series: true);
@@ -66,6 +72,8 @@ Future<FakePlanner> _pump(
   List<LibraryEntry> library = const [],
   List<DownloadItem> downloads = const [],
   List<AutoDownloadReview> reviews = const [],
+  FakeSearch? search,
+  bool reviewMatches = true,
 }) async {
   tester.view.physicalSize = Size(_width, 900);
   tester.view.devicePixelRatio = 1;
@@ -75,8 +83,13 @@ Future<FakePlanner> _pump(
   final planner = FakePlanner();
   final container = ProviderContainer(
     overrides: [
-      initialSettingsProvider.overrideWithValue(const AppSettings()),
+      initialSettingsProvider.overrideWithValue(
+        AppSettings(
+          downloads: DownloadPreferences(reviewMatches: reviewMatches),
+        ),
+      ),
       ...libraryOverrides(library),
+      torrentSearchProvider.overrideWithValue((search ?? FakeSearch()).call),
       downloadPlannerProvider.overrideWithValue(planner),
       downloadsProvider.overrideWith((ref) => Stream.value(downloads)),
       downloadQueueProvider.overrideWithValue(
@@ -97,7 +110,7 @@ Future<FakePlanner> _pump(
       container: container,
       child: MaterialApp(
         theme: buildSentorrTheme(Brightness.dark),
-        home: Scaffold(body: child),
+        home: DownloadReviewHost(child: Scaffold(body: child)),
       ),
     ),
   );
@@ -105,8 +118,15 @@ Future<FakePlanner> _pump(
   return planner;
 }
 
+/// Pumps past the sheet's motion; a preparing download's ring spins on.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 5; i++) {
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+}
+
 void main() {
-  testWidgets('season controls group active and paused episodes', (
+  testWidgets('a season heads its episodes with season-wide controls', (
     tester,
   ) async {
     await _pump(
@@ -118,12 +138,98 @@ void main() {
         _download('d2', DownloadStatus.paused),
       ],
     );
-    expect(find.text('Pause season'), findsOneWidget);
-    expect(find.text('Cancel season'), findsOneWidget);
-    expect(find.text('Resume season'), findsOneWidget);
+    expect(find.text('${_series.title} · Season 1'), findsOneWidget);
+    expect(find.textContaining('0 of 2 downloaded'), findsOneWidget);
+    expect(find.byTooltip('Pause season'), findsOneWidget);
+    expect(find.byTooltip('Cancel season'), findsOneWidget);
+    expect(find.byTooltip('Resume season'), findsNothing);
   });
 
-  testWidgets('pressing download plans the item', (tester) async {
+  testWidgets('cancelling an episode asks, then removes it at once', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const DownloadsPage(),
+      library: [_entry(_episode(1), 'd1'), _entry(_episode(2), 'd2')],
+      downloads: [
+        _download('d1', DownloadStatus.downloading),
+        _download('d2', DownloadStatus.downloading),
+      ],
+    );
+    await tester.tap(find.byTooltip('Cancel download').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Cancel download?'), findsOneWidget);
+    await tester.tap(find.text('Keep downloading'));
+    await tester.pumpAndSettle();
+    expect(find.text('Episode 1'), findsOneWidget);
+    await tester.tap(find.byTooltip('Cancel download').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel download'));
+    await tester.pump();
+    expect(find.text('Episode 1'), findsNothing);
+    expect(find.text('Episode 2'), findsOneWidget);
+  });
+
+  testWidgets('cancelling a season clears its unfinished episodes', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const DownloadsPage(),
+      library: [_entry(_episode(1), 'd1'), _entry(_episode(2), 'd2')],
+      downloads: [
+        _download('d1', DownloadStatus.downloading),
+        _download('d2', DownloadStatus.queued),
+      ],
+    );
+    await tester.tap(find.byTooltip('Cancel season'));
+    await tester.pumpAndSettle();
+    expect(find.text('Cancel season 1?'), findsOneWidget);
+    await tester.tap(find.text('Cancel season'));
+    await tester.pumpAndSettle();
+    expect(find.text('Episode 1'), findsNothing);
+    expect(find.text('Episode 2'), findsNothing);
+    expect(find.byTooltip('Cancel season'), findsNothing);
+  });
+
+  testWidgets('a transfer shows speeds, seeds, peers and time left', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const DownloadsPage(),
+      library: [_entry(_episode(1), 'd1')],
+      downloads: [
+        _download(
+          'd1',
+          DownloadStatus.downloading,
+        ).copyWith(downloadBytesPerSecond: 1024 * 1024, peers: 7, seeds: 3),
+      ],
+    );
+    expect(find.textContaining('1.0 MB/s'), findsWidgets);
+    expect(find.textContaining('3 seeds'), findsWidgets);
+    expect(find.textContaining('7 peers'), findsWidgets);
+    expect(find.textContaining('50s left'), findsWidgets);
+  });
+
+  testWidgets('a paused season offers resume', (tester) async {
+    await _pump(
+      tester,
+      const DownloadsPage(),
+      library: [_entry(_episode(2), 'd2'), _entry(_episode(1), 'd1')],
+      downloads: [
+        _download('d1', DownloadStatus.paused),
+        _download('d2', DownloadStatus.paused),
+      ],
+    );
+    expect(find.byTooltip('Resume season'), findsOneWidget);
+    expect(find.byTooltip('Pause season'), findsNothing);
+  });
+
+  testWidgets('pressing download shows the torrent, then downloads it', (
+    tester,
+  ) async {
     final planner = await _pump(
       tester,
       Center(
@@ -132,8 +238,78 @@ void main() {
     );
     await tester.tap(find.byTooltip('Download'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Ready to download'), findsOneWidget);
+    expect(find.byType(TorrentOption), findsOneWidget);
+    expect(planner.planned, isEmpty);
+    await tester.pump(const TorrentSettings().autoPlayDelay);
+    await tester.pumpAndSettle();
+    expect(find.text('Ready to download'), findsNothing);
     expect(planner.planned, ['tt1']);
     expect(planner.automatic.single, isFalse);
+  });
+
+  testWidgets('without review an exact match downloads straight away', (
+    tester,
+  ) async {
+    final planner = await _pump(
+      tester,
+      Center(
+        child: DownloadButton(item: PlaybackItem(title: _movie)),
+      ),
+      reviewMatches: false,
+    );
+    await tester.tap(find.byTooltip('Download'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ready to download'), findsNothing);
+    expect(planner.planned, ['tt1']);
+  });
+
+  testWidgets('a close match asks even without review', (tester) async {
+    final planner = await _pump(
+      tester,
+      Center(
+        child: DownloadButton(item: PlaybackItem(title: _movie)),
+      ),
+      reviewMatches: false,
+      search: FakeSearch(fallback: [fakeRelease(3, resolution: 720)]),
+    );
+    await tester.tap(find.byTooltip('Download'));
+    await _settle(tester);
+    expect(find.text('Closest match'), findsOneWidget);
+    expect(planner.planned, isEmpty);
+    await tester.tap(find.text('Download').last);
+    await _settle(tester);
+    expect(planner.planned, ['tt1']);
+  });
+
+  testWidgets('a season lists its episodes; a miss is skipped to download', (
+    tester,
+  ) async {
+    final planner = await _pump(
+      tester,
+      Consumer(
+        builder: (context, ref, _) => TextButton(
+          onPressed: () => ref.read(downloadReviewsProvider.notifier).review([
+            _episode(1),
+            _episode(2),
+          ]),
+          child: const Text('Review'),
+        ),
+      ),
+      search: FakeSearch(found: {'tt912': []}),
+    );
+    await tester.tap(find.text('Review'));
+    await _settle(tester);
+    expect(find.byType(ReviewRow), findsNWidgets(2));
+    expect(find.text('No torrent found'), findsOneWidget);
+    expect(find.text('1 needs a look'), findsOneWidget);
+    await tester.tap(find.text('Skip 1 not found'));
+    await _settle(tester);
+    expect(find.text('Skipped'), findsOneWidget);
+    await tester.tap(find.text('Download 1'));
+    await _settle(tester);
+    expect(planner.planned, ['tt911']);
   });
 
   testWidgets('a download in progress shows its share and a menu', (
@@ -171,7 +347,23 @@ void main() {
     expect(find.text('Delete download'), findsOneWidget);
   });
 
-  testWidgets('the page lists transfers, then episodes by series', (
+  testWidgets('with nothing ongoing the page opens on Complete', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const DownloadsPage(),
+      library: [_entry(_episode(1), 'd1')],
+      downloads: [_download('d1', DownloadStatus.completed, done: 100)],
+    );
+    expect(find.text('Episode 1'), findsOneWidget);
+    expect(find.text('Open folder'), findsOneWidget);
+    await tester.tap(find.text('Ongoing'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nothing downloading'), findsOneWidget);
+  });
+
+  testWidgets('the page lists ongoing, then complete episodes by series', (
     tester,
   ) async {
     await _pump(
@@ -193,10 +385,13 @@ void main() {
         AutoDownloadReview(_episode(5), 'No exact torrent match to download.'),
       ],
     );
+    // Something is ongoing, so the page opens there.
     expect(find.text('Needs your choice'), findsOneWidget);
-    expect(find.text('Downloading'), findsOneWidget);
     expect(find.text('Paused at 25%'), findsOneWidget);
-    expect(find.text('On this device'), findsOneWidget);
+    expect(find.text('Episode 1'), findsNothing);
+    await tester.tap(find.text('Complete  3'));
+    await tester.pumpAndSettle();
+    expect(find.text('Paused at 25%'), findsNothing);
     expect(find.text(_series.title), findsWidgets);
     final first = tester.getTopLeft(find.text('Episode 1')).dy;
     final second = tester.getTopLeft(find.text('Episode 2')).dy;
@@ -205,7 +400,7 @@ void main() {
 
   testWidgets('an empty page says how to download', (tester) async {
     await _pump(tester, const DownloadsPage());
-    expect(find.text('Nothing downloaded yet'), findsOneWidget);
+    expect(find.text('Nothing downloading'), findsOneWidget);
   });
 
   for (final width in [1100.0, 700.0, 390.0]) {

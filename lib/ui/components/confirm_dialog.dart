@@ -12,6 +12,7 @@ Future<bool> confirm(
   required String title,
   required String message,
   required String confirmLabel,
+  String cancelLabel = 'Cancel',
   bool destructive = true,
 }) async {
   final result = await showAdaptiveSheet<bool>(
@@ -39,7 +40,7 @@ Future<bool> confirm(
             DialogActions(
               children: [
                 SButton.ghost(
-                  label: 'Cancel',
+                  label: cancelLabel,
                   onPressed: () => Navigator.pop(context, false),
                 ),
                 destructive

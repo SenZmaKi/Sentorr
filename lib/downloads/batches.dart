@@ -11,23 +11,30 @@ extension DownloadBatches on DownloadQueue {
     await _commit();
   });
 
-  Future<void> cancelBatch(String batchId, {Set<String> itemIds = const {}}) =>
-      _serial(() async {
-        final releases = <Future<void>>[];
-        repository.cancelledBatches.add(batchId);
-        repository.pausedBatches.remove(batchId);
-        for (final item in _items.toList()) {
-          if ((item.job.batchId != batchId && !itemIds.contains(item.id)) ||
-              item.status.isTerminal) {
-            continue;
-          }
-          _replace(item.withStatus(DownloadStatus.cancelled));
-          releases.add(_release(item));
+  /// Cancels at once; the returned future also waits for the engine to let
+  /// the torrents go, outside the command queue.
+  Future<void> cancelBatch(
+    String batchId, {
+    Set<String> itemIds = const {},
+  }) async {
+    final releases = await _serial(() async {
+      final releases = <Future<void>>[];
+      repository.cancelledBatches.add(batchId);
+      repository.pausedBatches.remove(batchId);
+      for (final item in _items.toList()) {
+        if ((item.job.batchId != batchId && !itemIds.contains(item.id)) ||
+            item.status.isTerminal) {
+          continue;
         }
-        _reconcile();
-        await _commit();
-        await Future.wait(releases);
-      });
+        _replace(item.withStatus(DownloadStatus.cancelled));
+        releases.add(_release(item));
+      }
+      _reconcile();
+      await _commit();
+      return releases;
+    });
+    await Future.wait(releases);
+  }
 
   bool batchPaused(String batchId) =>
       repository.pausedBatches.contains(batchId);

@@ -11,6 +11,7 @@ class DownloadPreferences {
     this.seedRatio = 2,
     this.seedMinutes = 1440,
     this.maxSeeds = 5,
+    this.reviewMatches = true,
   });
 
   static const maxSlots = 10;
@@ -23,6 +24,10 @@ class DownloadPreferences {
   final double seedRatio;
   final int seedMinutes;
   final int maxSeeds;
+
+  /// Show the torrents found before they download, counting down when all
+  /// match exactly. Compromises and misses always ask.
+  final bool reviewMatches;
 
   DownloadSettings get queue => DownloadSettings(
     maxActiveDownloads: maxActive,
@@ -42,6 +47,7 @@ class DownloadPreferences {
     double? seedRatio,
     int? seedMinutes,
     int? maxSeeds,
+    bool? reviewMatches,
   }) => DownloadPreferences(
     directory: resetDirectory ? null : directory ?? this.directory,
     maxActive: maxActive ?? this.maxActive,
@@ -50,6 +56,7 @@ class DownloadPreferences {
     seedRatio: seedRatio ?? this.seedRatio,
     seedMinutes: seedMinutes ?? this.seedMinutes,
     maxSeeds: maxSeeds ?? this.maxSeeds,
+    reviewMatches: reviewMatches ?? this.reviewMatches,
   );
 
   factory DownloadPreferences.fromJson(Map<String, dynamic> json) {
@@ -71,6 +78,7 @@ class DownloadPreferences {
           : d.seedRatio,
       seedMinutes: jsonInt(json['seedMinutes'], d.seedMinutes),
       maxSeeds: jsonInt(json['maxSeeds'], d.maxSeeds, min: 1, max: maxSlots),
+      reviewMatches: jsonBool(json['reviewMatches'], d.reviewMatches),
     );
   }
 
@@ -82,5 +90,6 @@ class DownloadPreferences {
     'seedRatio': seedRatio,
     'seedMinutes': seedMinutes,
     'maxSeeds': maxSeeds,
+    'reviewMatches': reviewMatches,
   };
 }

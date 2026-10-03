@@ -103,6 +103,21 @@ String stampLabel(Duration d) {
 }
 
 /// "12,480": exact counts people read rather than compare at a glance.
+/// Time left for [remaining] bytes at [bytesPerSecond], e.g. `4m 12s
+/// left`; null while nothing is moving.
+String? etaLabel(int remaining, double bytesPerSecond) {
+  if (bytesPerSecond <= 0 || remaining <= 0) return null;
+  final s = (remaining / bytesPerSecond).round();
+  final text = s < 60
+      ? '${s}s'
+      : s < 3600
+      ? '${s ~/ 60}m ${s % 60}s'
+      : s < 86400
+      ? '${s ~/ 3600}h ${(s % 3600) ~/ 60}m'
+      : '${s ~/ 86400}d ${(s % 86400) ~/ 3600}h';
+  return '$text left';
+}
+
 String groupedCount(int n) =>
     n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
 

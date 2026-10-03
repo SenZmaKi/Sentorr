@@ -13,13 +13,16 @@ import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart' show windowManager;
 
+import '../downloads/android/service.dart';
 import '../downloads/manager.dart';
+import '../downloads/taskbar_progress.dart';
 import '../torrents/engine.dart';
 import '../following/auto_downloads.dart';
 import '../following/models.dart';
 import '../following/notifier.dart';
 import '../following/release_alerts.dart';
 import '../following/repository.dart';
+import '../library/download_alerts.dart';
 import '../library/notifier.dart';
 import '../library/repository.dart';
 import '../notifications/notification_service.dart';
@@ -172,6 +175,13 @@ class AppRuntime with WidgetsBindingObserver {
     await container
         .read(downloadQueueProvider)
         .initialize(container.read(settingsProvider).downloads.queue);
+    container.read(downloadAlertsProvider).start();
+    if (Platform.isAndroid) {
+      container
+          .read(downloadServiceProvider)
+          .start(exit: runtime.exitInBackground);
+    }
+    if (Platform.isWindows) container.read(taskbarProgressProvider).start();
     container.read(autoDownloadsProvider).start();
     WidgetsBinding.instance.addObserver(runtime);
     log.info('Application services ready in ${clock.elapsedMilliseconds}ms');
@@ -212,6 +222,7 @@ class AppRuntime with WidgetsBindingObserver {
     _quitting = true;
     Logger('sentorr.app').info('Shutting down');
     await flush();
+    await container.read(taskbarProgressProvider).dispose();
     await container.read(downloadQueueProvider).dispose();
     await container.read(torrentEngineProvider).close();
     WidgetsBinding.instance.removeObserver(this);
@@ -230,6 +241,22 @@ class AppRuntime with WidgetsBindingObserver {
   }
 
   Future<void> quit() => _quit ??= _quitApplication();
+
+  /// Ends an Android app kept running without a window, once its downloads
+  /// finish. With no frames to unmount the UI, it saves and leaves.
+  Future<void> exitInBackground() async {
+    _quitting = true;
+    Logger('sentorr.app').info('Exiting in the background');
+    await container.read(downloadAlertsProvider).shown;
+    await flush();
+    await container.read(downloadQueueProvider).dispose();
+    await container
+        .read(torrentEngineProvider)
+        .close()
+        .timeout(const Duration(seconds: 10), onTimeout: () {});
+    await flushLogs();
+    exit(0);
+  }
 
   Future<void> _quitApplication() async {
     await dispose();

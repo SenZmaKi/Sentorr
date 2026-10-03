@@ -26,6 +26,7 @@ sealed class NotificationTarget {
     final id = payload!.substring(at + 1);
     return switch (payload.substring(0, at)) {
       'series' when id.isNotEmpty => SeriesTarget(id),
+      'downloads' => const DownloadsTarget(),
       _ => null,
     };
   }
@@ -39,10 +40,18 @@ class SeriesTarget extends NotificationTarget {
   String get payload => 'series:$seriesId';
 }
 
-/// System notifications. Adapted from Senpwai's service, without the
-/// download progress and actions Sentorr does not have yet.
+class DownloadsTarget extends NotificationTarget {
+  const DownloadsTarget();
+
+  @override
+  String get payload => 'downloads:';
+}
+
+/// System notifications. Adapted from Senpwai's service; Android download
+/// progress lives in the download foreground service instead.
 class NotificationService {
   static const _newEpisodesChannel = 'new_episodes';
+  static const _downloadsChannel = 'downloads_finished';
 
   final _plugin = FlutterLocalNotificationsPlugin();
   final _taps = StreamController<NotificationTarget>.broadcast();
@@ -147,6 +156,38 @@ class NotificationService {
         windows: WindowsNotificationDetails(),
       ),
       payload: SeriesTarget(seriesId).payload,
+    );
+  }
+
+  /// A download or season finished or failed; [key] replaces an earlier
+  /// notification about the same thing.
+  Future<void> showDownload({
+    required String key,
+    required String title,
+    required String body,
+  }) async {
+    if (!await requestPermission()) {
+      _log.info('Skipped download notification for $key: not permitted');
+      return;
+    }
+    _log.info('Showing download notification for $key: $title');
+    await _plugin.show(
+      id: 'download:$key'.hashCode & 0x7fffffff,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _downloadsChannel,
+          'Finished downloads',
+          channelDescription: 'Downloads that finished or failed.',
+        ),
+        macOS: DarwinNotificationDetails(
+          presentBanner: true,
+          presentList: true,
+        ),
+        windows: WindowsNotificationDetails(),
+      ),
+      payload: const DownloadsTarget().payload,
     );
   }
 

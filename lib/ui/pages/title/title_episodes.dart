@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../imdb/models.dart';
-import '../../../library/season_download.dart';
 import '../../../titles/episodes.dart';
 import '../../../player/models.dart';
 import '../../components/buttons.dart';
@@ -16,9 +15,9 @@ import '../../components/section_header.dart';
 import '../../components/title_artwork.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
-import '../../shared/download_actions.dart';
 import '../../shared/play_route.dart';
 import '../../shared/layout/adaptive.dart';
+import 'season_download_button.dart';
 
 /// A series' episodes, one season at a time: season chips, then the
 /// season's episodes in air order, paged on request.
@@ -62,13 +61,13 @@ class _TitleEpisodesState extends ConsumerState<TitleEpisodes> {
     final key = (widget.series.id, _season);
     final episodes = ref.watch(seasonEpisodesProvider(key));
     final total = episodes.total;
-    final queuing = ref.watch(
-      seasonDownloadsProvider.select((s) => s.contains(key)),
-    );
     final today = DateTime.now();
     final anyAired = episodes.items.any(
       (e) => e.releaseDate?.dateTime?.isAfter(today) == false,
     );
+    final download = anyAired
+        ? SeasonDownloadButton(series: widget.series, season: _season)
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -79,34 +78,45 @@ class _TitleEpisodesState extends ConsumerState<TitleEpisodes> {
               ? 'Season $_season'
               : '${widget.seasons.length} seasons',
           count: total == null ? null : '$total in season $_season',
-          action: anyAired
-              ? _SeasonDownload(
-                  queuing: queuing,
-                  onPressed: () =>
-                      ref.downloadSeason(context, widget.series, _season),
-                )
-              : null,
+          // With one season there are no chips to sit beside.
+          action: widget.seasons.length == 1 ? download : null,
         ),
         if (widget.seasons.length > 1) ...[
           const SizedBox(height: Space.s16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            // Room for the chips' outset focus rings.
-            padding: const EdgeInsets.all(Space.s4),
-            child: Row(
-              spacing: Space.s8,
-              children: [
-                for (final n in widget.seasons)
-                  SChip(
-                    label: 'Season $n',
-                    selected: n == _season,
-                    onTap: () => setState(() {
-                      _season = n;
-                      _picked = true;
-                    }),
+          // The season's download sits at the end of its chips, beside
+          // the column of episode downloads below.
+          Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  // Room for the chips' outset focus rings.
+                  padding: const EdgeInsets.all(Space.s4),
+                  child: Row(
+                    spacing: Space.s8,
+                    children: [
+                      for (final n in widget.seasons)
+                        SChip(
+                          label: 'Season $n',
+                          selected: n == _season,
+                          onTap: () => setState(() {
+                            _season = n;
+                            _picked = true;
+                          }),
+                        ),
+                    ],
                   ),
+                ),
+              ),
+              if (download != null) ...[
+                const SizedBox(width: Space.s8),
+                // Lines up with the episode rows' download buttons.
+                Padding(
+                  padding: const EdgeInsets.only(right: Space.s12),
+                  child: download,
+                ),
               ],
-            ),
+            ],
           ),
         ],
         const SizedBox(height: Space.s12),
@@ -114,30 +124,6 @@ class _TitleEpisodesState extends ConsumerState<TitleEpisodes> {
       ],
     );
   }
-}
-
-/// Queues the shown season: labelled where the header has room, an icon
-/// button on compact widths.
-class _SeasonDownload extends StatelessWidget {
-  const _SeasonDownload({required this.queuing, required this.onPressed});
-
-  final bool queuing;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => context.screen.compact
-      ? SIconButton(
-          icon: Icons.download_for_offline_outlined,
-          glyph: queuing ? const DownloadRing() : null,
-          tooltip: queuing ? 'Queueing season' : 'Download season',
-          onPressed: queuing ? null : onPressed,
-        )
-      : SButton(
-          label: queuing ? 'Queueing season' : 'Download season',
-          icon: Icons.download_for_offline_outlined,
-          loading: queuing,
-          onPressed: queuing ? null : onPressed,
-        );
 }
 
 class _EpisodeList extends ConsumerWidget {

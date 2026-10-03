@@ -5,6 +5,7 @@ import '../../settings/notifier.dart';
 import '../shared/app_activity.dart';
 import '../pages/downloads/downloads_page.dart';
 import '../pages/home/home_page.dart';
+import '../pages/download_review/review_host.dart';
 import '../pages/launch/launch_host.dart';
 import '../pages/player/player_host.dart';
 import '../pages/search/search_page.dart';
@@ -38,15 +39,17 @@ class SentorrApp extends ConsumerWidget {
         ),
       ),
       home: LaunchHost(
-        child: PlayerHost(
-          child: AppShell(
-            pages: const {
-              AppDestination.home: HomePage(),
-              AppDestination.search: SearchPage(),
-              AppDestination.downloads: DownloadsPage(),
-              AppDestination.settings: SettingsPage(),
-            },
-            titlePage: (route) => TitlePage(route: route),
+        child: DownloadReviewHost(
+          child: PlayerHost(
+            child: AppShell(
+              pages: const {
+                AppDestination.home: HomePage(),
+                AppDestination.search: SearchPage(),
+                AppDestination.downloads: DownloadsPage(),
+                AppDestination.settings: SettingsPage(),
+              },
+              titlePage: (route) => TitlePage(route: route),
+            ),
           ),
         ),
       ),

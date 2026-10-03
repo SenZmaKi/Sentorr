@@ -102,20 +102,25 @@ class DownloadQueue {
   });
 
   /// Keeps files unless [deleteFiles]; a stream of the torrent keeps
-  /// running until it closes.
-  Future<void> cancel(String id, {bool deleteFiles = false}) => _serial(
-    () async {
+  /// running until it closes. The download reads as cancelled at once;
+  /// the returned future also waits for the engine to let the torrent go,
+  /// without holding up other commands meanwhile.
+  Future<void> cancel(String id, {bool deleteFiles = false}) async {
+    // Wrapped, since an async closure would await a returned future.
+    final released = await _serial<List<Future<void>>>(() async {
       final item = _item(id);
-      if (item.status.isTerminal) return;
+      if (item.status.isTerminal) return const [];
       _log.info(
         'Cancelled ${_name(item)}${deleteFiles ? ', deleting its files' : ''}',
       );
-      await _release(item, deleteFiles: deleteFiles);
       _replace(item.withStatus(DownloadStatus.cancelled));
+      final release = _release(item, deleteFiles: deleteFiles);
       _reconcile();
       await _commit();
-    },
-  );
+      return [release];
+    });
+    await Future.wait(released);
+  }
 
   Future<void> reorder(String id, int newIndex) => _serial(() async {
     final old = _index(id);

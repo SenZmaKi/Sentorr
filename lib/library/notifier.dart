@@ -52,17 +52,29 @@ class LibraryNotifier extends Notifier<List<LibraryEntry>> {
   /// Stops [id]'s download and deletes its file. Other episodes of the same
   /// torrent keep theirs, so files are removed here rather than by the
   /// torrent engine.
-  Future<void> remove(String id) async {
-    final entry = this.entry(id);
-    if (entry == null) return;
-    _log.info('Removing ${entry.item} and ${entry.path}');
+  Future<void> remove(String id) => removeAll({id});
+
+  /// Removes [ids] from the library at once, then stops their downloads and
+  /// deletes their files once the engine has let each torrent go.
+  Future<void> removeAll(Set<String> ids) async {
+    final gone = [
+      for (final e in state)
+        if (ids.contains(e.id)) e,
+    ];
+    if (gone.isEmpty) return;
+    await _commit([...state.where((e) => !ids.contains(e.id))]);
     final queue = ref.read(downloadQueueProvider);
-    // Cleared from download history, the queue no longer knows it.
-    if (queue.items.any((d) => d.id == entry.downloadId)) {
-      await queue.cancel(entry.downloadId);
-    }
-    await _commit([...state.where((e) => e.id != id)]);
-    await _delete(entry);
+    await Future.wait([
+      for (final entry in gone)
+        () async {
+          _log.info('Removing ${entry.item} and ${entry.path}');
+          // Cleared from download history, the queue no longer knows it.
+          if (queue.items.any((d) => d.id == entry.downloadId)) {
+            await queue.cancel(entry.downloadId);
+          }
+          await _delete(entry);
+        }(),
+    ]);
   }
 
   /// Queues [id]'s failed or paused download again.

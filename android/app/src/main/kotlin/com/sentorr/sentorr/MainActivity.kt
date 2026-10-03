@@ -1,18 +1,42 @@
 package com.sentorr.sentorr
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.core.content.FileProvider
+import com.pravera.flutter_foreground_task.service.ForegroundService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
 class MainActivity : FlutterActivity() {
+    private companion object {
+        const val ENGINE_ID = "main"
+    }
+
+    // Downloads and the torrent engine run in this engine's isolates. While
+    // the download service holds the process up, the engine outlives the
+    // activity, so dismissing the app keeps downloading and reopening it
+    // reattaches to the running app.
+    override fun provideFlutterEngine(context: Context): FlutterEngine? =
+        FlutterEngineCache.getInstance().get(ENGINE_ID)
+
+    override fun shouldDestroyEngineWithHost(): Boolean =
+        !isChangingConfigurations && !ForegroundService.isRunningServiceState.value
+
+    override fun onDestroy() {
+        val destroyEngine = shouldDestroyEngineWithHost()
+        super.onDestroy()
+        if (destroyEngine) FlutterEngineCache.getInstance().remove(ENGINE_ID)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        FlutterEngineCache.getInstance().put(ENGINE_ID, flutterEngine)
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             "sentorr/update_installer",

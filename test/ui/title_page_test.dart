@@ -17,6 +17,7 @@ import 'package:sentorr/downloads/repository.dart';
 import 'package:sentorr/shared/persistence/json_file_store.dart';
 import 'package:sentorr/imdb/models.dart';
 import 'package:sentorr/library/planner.dart';
+import 'package:sentorr/player/torrent_search.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/ui/components/app_shell.dart';
 import 'package:sentorr/ui/components/cards/episode_row.dart';
@@ -24,6 +25,7 @@ import 'package:sentorr/ui/components/cards/poster_card.dart';
 import 'package:sentorr/ui/components/cards/preview_card.dart';
 import 'package:sentorr/ui/components/cards/review_card.dart';
 import 'package:sentorr/ui/components/hover_preview.dart';
+import 'package:sentorr/ui/pages/download_review/review_host.dart';
 import 'package:sentorr/ui/pages/home/home_page.dart';
 import 'package:sentorr/ui/pages/search/search_page.dart';
 import 'package:sentorr/ui/pages/settings/settings_page.dart';
@@ -36,6 +38,7 @@ import '../support/fake_library.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_planner.dart';
+import '../support/fake_search.dart';
 import '../support/fake_download_torrents.dart';
 import '../support/fake_torrents.dart';
 
@@ -90,13 +93,15 @@ Future<ProviderContainer> _pump(
       container: container,
       child: MaterialApp(
         theme: buildSentorrTheme(brightness),
-        home: AppShell(
-          pages: const {
-            AppDestination.home: HomePage(),
-            AppDestination.search: SearchPage(),
-            AppDestination.settings: SettingsPage(),
-          },
-          titlePage: (route) => TitlePage(route: route),
+        home: DownloadReviewHost(
+          child: AppShell(
+            pages: const {
+              AppDestination.home: HomePage(),
+              AppDestination.search: SearchPage(),
+              AppDestination.settings: SettingsPage(),
+            },
+            titlePage: (route) => TitlePage(route: route),
+          ),
         ),
       ),
     ),
@@ -161,7 +166,9 @@ void main() {
     expect(find.byType(EpisodeRow), findsOneWidget);
   });
 
-  testWidgets('Download season queues the season after asking', (tester) async {
+  testWidgets('the season download reviews the season, then queues it', (
+    tester,
+  ) async {
     final planner = FakePlanner();
     final queue = DownloadQueue(FakeTorrents(), _SeasonQueueRepository());
     final container = await _pump(
@@ -172,15 +179,21 @@ void main() {
         ...watchHistoryOverrides(),
         downloadPlannerProvider.overrideWithValue(planner),
         downloadQueueProvider.overrideWithValue(queue),
+        torrentSearchProvider.overrideWithValue(FakeSearch().call),
       ],
     );
     container.read(titleRoutesProvider.notifier).open(_imdb.trending[1]);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Download season'));
-    await tester.pumpAndSettle();
-    expect(find.text('Download season 1?'), findsOneWidget);
-    await tester.tap(find.text('Download'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Download season 1'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    expect(find.text('Ready to download'), findsOneWidget);
+    expect(find.text('${_imdb.trending[1].title} · Season 1'), findsOneWidget);
+    await tester.tap(find.textContaining('Download in'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
     expect(planner.planned, ['tt911', 'tt912']);
   });
 

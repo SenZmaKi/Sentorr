@@ -12,6 +12,7 @@ import '../../components/title_artwork.dart';
 import '../../shared/download_actions.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
+import 'transfer_stats.dart';
 
 /// One downloaded or downloading item: its artwork, names, where the
 /// transfer stands, and what can be done with it. A row on the page plane.
@@ -49,42 +50,55 @@ class DownloadRow extends ConsumerWidget {
               : c.stateHover.clear,
           borderRadius: BorderRadius.circular(Radii.card),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-              width: compact ? 96 : 128,
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: ArtworkFrame(
-                  active: s.hovered || s.focused,
-                  artwork: item.title.poster != null
-                      ? TitleArtwork(image: item.title.poster)
-                      : TitleBackdrop(title: item.series ?? item.title),
-                  hoverOverlay: const Center(
-                    child: OverlayGlyph(
-                      Icons.play_arrow_rounded,
-                      primary: true,
-                    ),
-                  ),
-                  decorations: [
-                    if (item.isEpisode)
-                      Positioned(
-                        left: Space.s4,
-                        top: Space.s4,
-                        child: OverlayBadge(
-                          episodeCode(item.season, item.episode),
-                          technical: true,
-                          dense: true,
+            Row(
+              children: [
+                SizedBox(
+                  width: compact ? 96 : 128,
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: ArtworkFrame(
+                      active: s.hovered || s.focused,
+                      artwork: item.title.poster != null
+                          ? TitleArtwork(image: item.title.poster)
+                          : TitleBackdrop(title: item.series ?? item.title),
+                      hoverOverlay: const Center(
+                        child: OverlayGlyph(
+                          Icons.play_arrow_rounded,
+                          primary: true,
                         ),
                       ),
-                  ],
+                      decorations: [
+                        if (item.isEpisode)
+                          Positioned(
+                            left: Space.s4,
+                            top: Space.s4,
+                            child: OverlayBadge(
+                              episodeCode(item.season, item.episode),
+                              technical: true,
+                              dense: true,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: Space.s16),
+                Expanded(
+                  child: _Details(entry, state, download, stats: !compact),
+                ),
+                const SizedBox(width: Space.s8),
+                ..._actions(context, ref),
+              ],
             ),
-            const SizedBox(width: Space.s16),
-            Expanded(child: _Details(entry, state, download)),
-            const SizedBox(width: Space.s8),
-            ..._actions(context, ref),
+            // A phone's text column is too narrow for the transfer's
+            // facts; they run the row's full width beneath it.
+            if (compact) ...[
+              const SizedBox(height: Space.s8),
+              _Progress(state, download),
+            ],
           ],
         ),
       ),
@@ -108,7 +122,7 @@ class DownloadRow extends ConsumerWidget {
       SIconButton(
         icon: Icons.close_rounded,
         tooltip: 'Cancel download',
-        onPressed: () => ref.deleteDownload(context, entry, finished: false),
+        onPressed: () => ref.cancelDownload(context, entry),
       ),
     ],
     Downloaded() => [
@@ -140,11 +154,15 @@ class DownloadRow extends ConsumerWidget {
 }
 
 class _Details extends StatelessWidget {
-  const _Details(this.entry, this.state, this.download);
+  const _Details(this.entry, this.state, this.download, {this.stats = true});
 
   final LibraryEntry entry;
   final OfflineState state;
   final DownloadItem? download;
+
+  /// Includes the transfer's facts and progress; off where the row shows
+  /// them beneath.
+  final bool stats;
 
   @override
   Widget build(BuildContext context) {
@@ -181,38 +199,7 @@ class _Details extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: Space.s2),
-        MetaLine([
-          if (d != null && d.totalBytes > 0)
-            MetaItem(
-              state is Downloaded
-                  ? sizeLabel(d.totalBytes)
-                  : '${sizeLabel(d.downloadedBytes)} of ${sizeLabel(d.totalBytes)}',
-              technical: true,
-            ),
-          if (d != null && d.downloadBytesPerSecond > 0)
-            MetaItem(
-              '${sizeLabel(d.downloadBytesPerSecond.round())}/s',
-              icon: Icons.arrow_downward_rounded,
-              technical: true,
-            ),
-          if (d != null && d.uploadBytesPerSecond > 0)
-            MetaItem(
-              '${sizeLabel(d.uploadBytesPerSecond.round())}/s',
-              icon: Icons.arrow_upward_rounded,
-              technical: true,
-            ),
-          if (d != null && d.status == DownloadStatus.downloading)
-            MetaItem(
-              '${d.peers}',
-              icon: Icons.people_outline_rounded,
-              technical: true,
-            ),
-        ]),
-        if (state case Downloading(:final progress)) ...[
-          const SizedBox(height: Space.s8),
-          ProgressTrack.value(progress),
-        ],
+        if (stats) ...[const SizedBox(height: Space.s2), _Progress(state, d)],
         if (state case DownloadFailed(:final error?)) ...[
           const SizedBox(height: Space.s4),
           Text(
@@ -225,6 +212,26 @@ class _Details extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The transfer's facts, then its track while it runs.
+class _Progress extends StatelessWidget {
+  const _Progress(this.state, this.download);
+
+  final OfflineState state;
+  final DownloadItem? download;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      TransferStats(_transfer(state, download)),
+      if (state case Downloading(:final progress)) ...[
+        const SizedBox(height: Space.s8),
+        ProgressTrack.value(progress),
+      ],
+    ],
+  );
 }
 
 enum _Tone { neutral, info, success, error }
@@ -264,3 +271,54 @@ enum _Tone { neutral, info, success, error }
   ),
   _ => (Icons.download_rounded, 'Not downloaded', _Tone.neutral),
 };
+
+/// Size, then while bytes move: down and up speed, seeds and peers, and
+/// time left. Shown at fixed slots while downloading so the line does not
+/// jump as speeds touch zero.
+List<MetaItem> _transfer(OfflineState state, DownloadItem? d) {
+  if (d == null) return const [];
+  final live =
+      d.status == DownloadStatus.downloading ||
+      d.status == DownloadStatus.seeding;
+  final downloading = d.status == DownloadStatus.downloading;
+  String speed(double v) => '${sizeLabel(v.round())}/s';
+  final eta = etaLabel(
+    d.totalBytes - d.downloadedBytes,
+    d.downloadBytesPerSecond,
+  );
+  return [
+    if (d.totalBytes > 0)
+      MetaItem(
+        state is Downloaded
+            ? sizeLabel(d.totalBytes)
+            : '${sizeLabel(d.downloadedBytes)} of ${sizeLabel(d.totalBytes)}',
+        technical: true,
+      ),
+    if (downloading)
+      MetaItem(
+        speed(d.downloadBytesPerSecond),
+        icon: Icons.arrow_downward_rounded,
+        technical: true,
+      ),
+    if (live)
+      MetaItem(
+        speed(d.uploadBytesPerSecond),
+        icon: Icons.arrow_upward_rounded,
+        technical: true,
+      ),
+    if (live) ...[
+      MetaItem(
+        '${d.seeds} seeds',
+        icon: Icons.cloud_done_outlined,
+        technical: true,
+      ),
+      MetaItem(
+        '${d.peers} peers',
+        icon: Icons.people_outline_rounded,
+        technical: true,
+      ),
+    ],
+    if (downloading)
+      MetaItem(eta ?? 'Waiting for peers', icon: Icons.timer_outlined),
+  ];
+}

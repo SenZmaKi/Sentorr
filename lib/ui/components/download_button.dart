@@ -94,7 +94,7 @@ class DownloadButton extends ConsumerWidget {
         'Cancel download',
         icon: Icons.close_rounded,
         destructive: true,
-        onPressed: () => ref.deleteDownload(context, entry, finished: false),
+        onPressed: () => ref.cancelDownload(context, entry),
       ),
     ],
     Downloaded(:final entry) => [

@@ -14,7 +14,8 @@ class NotificationSettings {
   /// A new episode aired for a series the viewer is caught up on.
   final bool newEpisodes;
 
-  /// An episode that downloaded on its own is ready to watch.
+  /// A download finished or failed, including ones that started on their
+  /// own.
   final bool downloadsReady;
 
   bool get notifyNewEpisodes => enabled && newEpisodes;

@@ -79,23 +79,9 @@ Place this widget in the player controls/overlay; the core remains player indepe
 
 ## Native prerequisite
 
-This incubation package pins the streaming binding source to `de9fc4b07ff63dd3f3433497c0fb48568c86f5af`. That source needs a **matching rebuilt native bridge**; the existing 1.0.1 release binaries do not establish compatibility with the added streaming symbols. It is not yet a published drop-in package.
+This package uses the published `libtorrent_dart` 1.1.0 release, which includes the verified piece-read APIs and matching native bridge binaries. The binding's build hook downloads the binary for the target platform automatically; a sibling checkout or dependency override is unnecessary.
 
-Use a checkout of `libtorrent_dart` at that commit, with its native prerequisites/submodules as described in its `docs/BUILD.md`, then:
-
-```sh
-python3 tool/build_native.py /absolute/path/to/libtorrent_dart
-```
-
-Point this package at the rebuilt checkout through a local, ignored `pubspec_overrides.yaml`:
-
-```yaml
-dependency_overrides:
-  libtorrent_dart:
-    path: /absolute/path/to/libtorrent_dart
-```
-
-Then `dart pub get`, `dart analyze`, and `dart test`. A consuming app must set its own override; dependency overrides are not inherited from dependency packages. Before publishing, release matching binding binaries for each supported platform and replace the git pin with that released binding version. A git source pin alone does not update native artifacts.
+Run `dart pub get`, `dart analyze`, and `dart test`. For native binding development, use its `docs/BUILD.md` and this package's `tool/build_native.py` with an explicit local `pubspec_overrides.yaml`. Remove that override to verify the published release.
 
 ## Policy
 

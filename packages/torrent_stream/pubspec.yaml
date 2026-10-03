@@ -5,10 +5,7 @@ version: 0.1.0
 environment:
   sdk: '>=3.10.0 <4.0.0'
 dependencies:
-  libtorrent_dart:
-    git:
-      url: https://github.com/SenZmaKi/libtorrent_dart.git
-      ref: de9fc4b07ff63dd3f3433497c0fb48568c86f5af
+  libtorrent_dart: ^1.1.0
 dev_dependencies:
   lints: ^6.0.0
   test: ^1.25.0

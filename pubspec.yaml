@@ -35,21 +35,18 @@ dependencies:
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.7
   anitomy_dart: ^1.0.1
-  libtorrent_dart:
-    git:
-      url: https://github.com/SenZmaKi/libtorrent_dart.git
-      ref: de9fc4b07ff63dd3f3433497c0fb48568c86f5af
+  libtorrent_dart: ^1.1.0
   torrent_stream:
     path: packages/torrent_stream
   file_picker: ^9.2.1
   flutter_local_notifications: ^22.0.1
+  # Senpwai's fork, which adds a progress bar to the service notification.
+  flutter_foreground_task:
+    git:
+      url: https://github.com/SenZmaKi/flutter_foreground_task_progress
+      ref: d45cc6313b8626edc7a61f8eb210ef6dd07b6284
+  windows_taskbar: ^1.1.2
   flutter_secure_storage: ^10.3.1
-
-# torrent_stream needs the binding's streaming symbols, which only a local
-# checkout rebuilt with packages/torrent_stream/tool/build_native.py has.
-dependency_overrides:
-  libtorrent_dart:
-    path: ../libtorrent_dart
 
 dev_dependencies:
   flutter_test:

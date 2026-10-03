@@ -9,6 +9,7 @@ import '../../../player/queue_builder.dart';
 import '../../../player/session.dart';
 import '../../../player/sleep_timer.dart';
 import '../../../player/stream/torrent_playback.dart';
+import '../../../shared/app_lifecycle.dart';
 import '../../shared/player_view.dart';
 import 'captions_view.dart';
 import 'center_feedback.dart';
@@ -117,6 +118,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     ref.listen(playerViewProvider, (_, view) {
       // Keys belong to the player again once it fills the app.
       if (view != PlayerView.mini) _focus.requestFocus();
+    });
+    ref.listen(AppLifecycleNotifier.provider, (_, lifecycle) {
+      // Nobody sees a backgrounded, minimized or dismissed app, which on
+      // Android outlives its window while downloads run. The pop-out window
+      // is meant to keep playing over other apps.
+      final unseen =
+          lifecycle == AppLifecycleState.hidden ||
+          lifecycle == AppLifecycleState.paused ||
+          lifecycle == AppLifecycleState.detached;
+      if (unseen && ref.read(playerViewProvider) != PlayerView.popOut) {
+        unawaited(_engine.player.pause());
+      }
     });
     final view = ref.watch(playerViewProvider);
     final full = view == PlayerView.full;

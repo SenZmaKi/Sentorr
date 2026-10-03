@@ -102,6 +102,24 @@ void main() {
     expect(torrents.running('b'), false);
   });
 
+  test('cancel shows at once and does not wait on the engine', () async {
+    final a = await enqueue('A');
+    final b = await enqueue('B');
+    torrents.releaseGate = Completer<void>();
+    final cancelled = queue.cancel(a);
+    await settle();
+    expect(queue.items.first.status, DownloadStatus.cancelled);
+    // Other commands run while the engine is still letting go.
+    await queue.pause(b).timeout(const Duration(milliseconds: 200));
+    expect(queue.items.last.status, DownloadStatus.paused);
+    var released = false;
+    unawaited(cancelled.then((_) => released = true));
+    await settle();
+    expect(released, isFalse);
+    torrents.releaseGate!.complete();
+    await cancelled;
+  });
+
   test('reorder and cancellation keep files unless asked', () async {
     final a = await enqueue('a');
     final b = await enqueue('b');

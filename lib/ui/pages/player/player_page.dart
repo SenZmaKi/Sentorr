@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../../player/engine.dart';
+import '../../../player/focus_playback.dart';
+import '../../../settings/notifier.dart';
 import '../../../player/queue_builder.dart';
 import '../../../player/session.dart';
 import '../../../player/sleep_timer.dart';
@@ -47,6 +49,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     session: ref.read(playerSessionProvider.notifier),
     ui: _ui,
     view: ref.read(playerViewProvider.notifier),
+  );
+
+  late final _focusPlayback = FocusPlayback(
+    isPlaying: () => _engine.state.playing,
+    pause: _engine.player.pause,
+    play: _engine.player.play,
   );
 
   /// Kept so the page can finish fading out after the session closes.
@@ -99,6 +107,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
   @override
   void dispose() {
+    _focusPlayback.dispose();
     for (final s in _subscriptions) {
       s.cancel();
     }
@@ -128,16 +137,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       }
     });
     ref.listen(AppLifecycleNotifier.provider, (_, lifecycle) {
-      // Nobody sees a backgrounded, minimized or dismissed app, which on
-      // Android outlives its window while downloads run. The pop-out window
-      // is meant to keep playing over other apps.
-      final unseen =
-          lifecycle == AppLifecycleState.hidden ||
-          lifecycle == AppLifecycleState.paused ||
-          lifecycle == AppLifecycleState.detached;
-      if (unseen && ref.read(playerViewProvider) != PlayerView.popOut) {
-        unawaited(_engine.player.pause());
-      }
+      unawaited(
+        _focusPlayback.change(
+          lifecycle,
+          enabled:
+              ref.read(settingsProvider).streaming.pauseOnFocusLoss &&
+              ref.read(playerViewProvider) != PlayerView.popOut,
+        ),
+      );
     });
     final view = ref.watch(playerViewProvider);
     final full = view == PlayerView.full;
@@ -150,6 +157,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     final video = Video(
       controller: _engine.video,
       controls: NoVideoControls,
+      // Sentorr owns focus pausing, including inactive and pop-out behavior.
+      pauseUponEnteringBackgroundMode: false,
+      resumeUponEnteringForegroundMode: false,
       fill: Colors.black,
       subtitleViewConfiguration: const SubtitleViewConfiguration(
         visible: false,

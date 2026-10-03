@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../settings/models.dart';
 import '../../../../settings/notifier.dart';
+import '../../../components/toggle.dart';
 import '../settings_controls.dart';
 import '../settings_group.dart';
 import 'torrent_files_group.dart';
@@ -19,6 +20,23 @@ class StreamingSection extends ConsumerWidget {
     int mb(int bytes) => (bytes / megabyte).round();
     return Column(
       children: [
+        SettingsGroup(
+          title: 'Playback',
+          children: [
+            SettingsTile(
+              icon: Icons.pause_circle_outline_rounded,
+              title: 'Pause when leaving the app',
+              subtitle:
+                  'Resumes when you return. Pop-out playback keeps playing',
+              keywords: 'focus background alt tab resume',
+              trailing: SToggle(
+                value: s.pauseOnFocusLoss,
+                semanticLabel: 'Pause when leaving the app',
+                onChanged: (v) => edit((s) => s.copyWith(pauseOnFocusLoss: v)),
+              ),
+            ),
+          ],
+        ),
         SettingsGroup(
           title: 'Buffering',
           description:

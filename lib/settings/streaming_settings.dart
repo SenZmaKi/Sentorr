@@ -5,6 +5,7 @@ const _mb = 1024 * 1024;
 /// How streams buffer, and where their torrents are cached.
 class StreamingSettings {
   const StreamingSettings({
+    this.pauseOnFocusLoss = true,
     this.readAheadBytes = 16 * _mb,
     this.pieceCacheBytes = 24 * _mb,
     this.metadataTimeoutSeconds = 60,
@@ -12,6 +13,9 @@ class StreamingSettings {
     this.torrentDirectory,
     this.keepRecentTorrents = 3,
   });
+
+  /// Pause when leaving the app and resume when returning.
+  final bool pauseOnFocusLoss;
 
   static const maxKeptTorrents = 20;
 
@@ -32,6 +36,7 @@ class StreamingSettings {
   final int keepRecentTorrents;
 
   StreamingSettings copyWith({
+    bool? pauseOnFocusLoss,
     int? readAheadBytes,
     int? pieceCacheBytes,
     int? metadataTimeoutSeconds,
@@ -40,6 +45,7 @@ class StreamingSettings {
     bool resetTorrentDirectory = false,
     int? keepRecentTorrents,
   }) => StreamingSettings(
+    pauseOnFocusLoss: pauseOnFocusLoss ?? this.pauseOnFocusLoss,
     readAheadBytes: readAheadBytes ?? this.readAheadBytes,
     pieceCacheBytes: pieceCacheBytes ?? this.pieceCacheBytes,
     metadataTimeoutSeconds:
@@ -55,6 +61,9 @@ class StreamingSettings {
     const d = StreamingSettings();
     final directory = json['torrentDirectory'];
     return StreamingSettings(
+      pauseOnFocusLoss: json['pauseOnFocusLoss'] is bool
+          ? json['pauseOnFocusLoss'] as bool
+          : d.pauseOnFocusLoss,
       readAheadBytes: jsonInt(json['readAheadBytes'], d.readAheadBytes, min: 1),
       pieceCacheBytes: jsonInt(json['pieceCacheBytes'], d.pieceCacheBytes),
       metadataTimeoutSeconds: jsonInt(
@@ -79,6 +88,7 @@ class StreamingSettings {
   }
 
   Map<String, dynamic> toJson() => {
+    'pauseOnFocusLoss': pauseOnFocusLoss,
     'readAheadBytes': readAheadBytes,
     'pieceCacheBytes': pieceCacheBytes,
     'metadataTimeoutSeconds': metadataTimeoutSeconds,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/net/online.dart';
 import '../../components/cards/card_skeleton.dart';
 import '../../components/load_error.dart';
 import '../../components/shelf.dart';
@@ -9,7 +10,9 @@ import 'home_layout.dart';
 
 /// A home row driven by an async list: skeletons while loading, an inline
 /// retry on failure, and nothing at all when there is nothing to show.
-class AsyncShelf<T> extends StatelessWidget {
+/// Offline, a failed row steps aside: the offline notice explains it and
+/// the row reloads once the connection is back.
+class AsyncShelf<T> extends ConsumerWidget {
   const AsyncShelf({
     super.key,
     required this.icon,
@@ -34,7 +37,10 @@ class AsyncShelf<T> extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (items.hasError && !items.hasValue && !ref.watch(onlineProvider)) {
+      return const SizedBox.shrink();
+    }
     final layout = HomeLayout.of(context);
     Shelf shelf({
       int length = 0,

@@ -5,15 +5,19 @@ import '../../../home/catalog_rows.dart';
 import '../../../home/more_like.dart';
 import '../../../home/series_updates.dart';
 import '../../../home/watch_activity.dart';
+import '../../../shared/net/online.dart';
+import 'downloaded_shelf.dart';
 import 'featured_section.dart';
 import '../../shared/layout/layout_size.dart';
 import 'home_layout.dart';
 import 'home_shelves.dart';
+import 'offline_notice.dart';
 import 'spotlight_ambient.dart';
 
 /// Streaming-style landing: a trending spotlight, personal rows (resume,
 /// new episodes, more like something watched, new seasons), then IMDb
-/// catalog rows.
+/// catalog rows. Offline, a notice and the finished downloads lead instead,
+/// rows that failed step aside, and everything reloads once back online.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -37,6 +41,21 @@ class _HomePageState extends ConsumerState<HomePage> {
     CatalogShelf(CatalogRow.trending),
     MoreLikeShelf(),
     NewSeasonsShelf(),
+    ..._catalog,
+  ];
+
+  static const _offlineSections = <Widget>[
+    OfflineNotice(),
+    ContinueWatchingShelf(),
+    DownloadedShelf(),
+    NewEpisodesShelf(),
+    CatalogShelf(CatalogRow.trending),
+    MoreLikeShelf(),
+    NewSeasonsShelf(),
+    ..._catalog,
+  ];
+
+  static const _catalog = <Widget>[
     CatalogShelf(CatalogRow.newReleases),
     CatalogShelf(CatalogRow.popularSeries),
     CatalogShelf(CatalogRow.popularMovies),
@@ -49,6 +68,15 @@ class _HomePageState extends ConsumerState<HomePage> {
   ];
 
   Future<void> _refresh() async {
+    // Offline, pulling checks the connection; coming back reloads.
+    if (!ref.read(onlineProvider)) {
+      return ref.read(onlineProvider.notifier).check();
+    }
+    _reload();
+    await ref.read(featuredTitlesProvider.future);
+  }
+
+  void _reload() {
     for (final row in CatalogRow.values) {
       ref.invalidate(catalogRowProvider(row));
     }
@@ -56,24 +84,29 @@ class _HomePageState extends ConsumerState<HomePage> {
       ..invalidate(continueWatchingProvider)
       ..invalidate(moreLikeProvider)
       ..invalidate(seriesUpdatesProvider);
-    await ref.read(featuredTitlesProvider.future);
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(onlineProvider, (wasOnline, online) {
+      if (wasOnline == false && online) _reload();
+    });
+    final online = ref.watch(onlineProvider);
     return LayoutBuilder(
       builder: (context, box) => HomeLayout(
         layout: LayoutSize(box.biggest),
         textScaler: MediaQuery.textScalerOf(context),
         child: Stack(
           children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: (box.maxWidth * 0.7).clamp(560, 1000),
-              child: SpotlightAmbient(scroll: _scroll),
-            ),
+            // The wash belongs to the spotlight, which steps aside offline.
+            if (online)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: (box.maxWidth * 0.7).clamp(560, 1000),
+                child: SpotlightAmbient(scroll: _scroll),
+              ),
             RefreshIndicator(
               onRefresh: _refresh,
               child: Builder(builder: _list),
@@ -87,15 +120,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget _list(BuildContext context) {
     final layout = HomeLayout.of(context);
     final gutter = layout.gutter;
+    final sections = ref.watch(onlineProvider) ? _sections : _offlineSections;
     return ListView.builder(
       controller: _scroll,
       padding: EdgeInsets.only(top: gutter, bottom: gutter * 2),
-      itemCount: _sections.length,
+      itemCount: sections.length,
       // The hero sits in the content column; shelves span the page and
       // align their headers with it.
       itemBuilder: (context, i) => i == 0
-          ? Padding(padding: layout.insets.horizontal, child: _sections[i])
-          : _sections[i],
+          ? Padding(padding: layout.insets.horizontal, child: sections[i])
+          : sections[i],
     );
   }
 }

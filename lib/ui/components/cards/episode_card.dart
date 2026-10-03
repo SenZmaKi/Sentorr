@@ -25,8 +25,8 @@ class EpisodeCard extends StatelessWidget {
 
   final String series;
 
-  /// Mono stamp, e.g. "S4 · E8".
-  final String code;
+  /// Mono stamp, e.g. "S4 · E8"; a movie's year, or none.
+  final String? code;
   final String name;
   final List<MetaItem> meta;
   final Widget artwork;
@@ -58,7 +58,7 @@ class EpisodeCard extends StatelessWidget {
       child: Interactive(
         borderRadius: Radii.card,
         onTap: onTap,
-        semanticLabel: 'Play $series $code, $name',
+        semanticLabel: 'Play $series${code == null ? '' : ' $code'}, $name',
         builder: (context, s) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -75,11 +75,12 @@ class EpisodeCard extends StatelessWidget {
                   ),
                 ),
                 decorations: [
-                  Positioned(
-                    left: Space.s12,
-                    top: Space.s12,
-                    child: OverlayBadge(code, technical: true),
-                  ),
+                  if (code != null)
+                    Positioned(
+                      left: Space.s12,
+                      top: Space.s12,
+                      child: OverlayBadge(code!, technical: true),
+                    ),
                   if (isNew)
                     const Positioned(
                       right: Space.s12,

@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 
 import '../app/services.dart';
 import '../imdb/providers.dart';
+import '../library/playback.dart';
 import '../torrents/resolution_models.dart';
 import 'models.dart';
 import 'queue_builder.dart';
@@ -179,7 +180,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
 
   Future<void> _resolve(PlayRequest request, CancelToken cancel) async {
     try {
-      final queue = await _builder.resolve(request, cancel);
+      final queue = await _resolveOrDownloaded(request, cancel);
       if (!ref.mounted) return;
       final s = state;
       if (cancel != _cancel || s == null) return;
@@ -205,7 +206,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
     if (cancel == null) return;
     state = state?.copyWith(resolving: true);
     try {
-      final extended = await _builder.extend(queue, cancel);
+      final extended = await _extendOrDownloaded(queue, cancel);
       if (!ref.mounted) return;
       final s = state;
       if (cancel != _cancel || s?.queue == null) return;
@@ -220,6 +221,42 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
       if (!ref.mounted || cancel != _cancel || _cancelled(error)) return;
       _log.warning('Could not load the next season', error, stack);
       state = state?.copyWith(resolving: false);
+    }
+  }
+
+  /// The queue for [request], or its downloaded episodes when the episode
+  /// list cannot be fetched, e.g. offline.
+  Future<PlayQueue> _resolveOrDownloaded(
+    PlayRequest request,
+    CancelToken cancel,
+  ) async {
+    try {
+      return await _builder.resolve(request, cancel);
+    } catch (error) {
+      final downloaded = _cancelled(error)
+          ? null
+          : downloadedQueue(ref, request);
+      if (downloaded == null) rethrow;
+      _log.info('Queueing downloaded episodes instead', error);
+      return downloaded;
+    }
+  }
+
+  /// [queue] with its next season, or with the series' later downloads
+  /// when that season cannot be fetched.
+  Future<PlayQueue> _extendOrDownloaded(
+    PlayQueue queue,
+    CancelToken cancel,
+  ) async {
+    try {
+      return await _builder.extend(queue, cancel);
+    } catch (error) {
+      final downloaded = _cancelled(error)
+          ? null
+          : withDownloadedAfter(ref, queue);
+      if (downloaded == null) rethrow;
+      _log.info('Queueing later downloaded episodes instead', error);
+      return downloaded;
     }
   }
 

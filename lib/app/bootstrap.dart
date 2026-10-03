@@ -31,6 +31,7 @@ import '../settings/repository.dart';
 import '../shared/errors/error_reports.dart';
 import '../shared/log.dart';
 import '../shared/net/net.dart';
+import '../shared/net/online.dart';
 import '../shared/persistence/app_paths.dart';
 import '../shared/persistence/app_image_cache.dart';
 import '../shared/persistence/credential_store.dart';
@@ -133,6 +134,7 @@ class AppRuntime with WidgetsBindingObserver {
         libraryRepositoryProvider.overrideWithValue(library),
         initialLibraryProvider.overrideWithValue(downloaded),
         networkClientProvider.overrideWithValue(network),
+        networkFailuresProvider.overrideWithValue(network.networkFailures),
         desktopIconControllerProvider.overrideWithValue(
           DesktopIconController(tray: tray),
         ),
@@ -185,6 +187,8 @@ class AppRuntime with WidgetsBindingObserver {
     }
     if (Platform.isWindows) container.read(taskbarProgressProvider).start();
     container.read(autoDownloadsProvider).start();
+    // Listens for failed requests from the start, whatever page is open.
+    container.read(onlineProvider);
     WidgetsBinding.instance.addObserver(runtime);
     log.info('Application services ready in ${clock.elapsedMilliseconds}ms');
     return runtime;

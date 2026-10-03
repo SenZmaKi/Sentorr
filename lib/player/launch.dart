@@ -187,7 +187,17 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     final builder = ref.read(queueBuilderProvider);
     final immediate = builder.immediate(request);
     if (immediate != null) return immediate.current;
-    final queue = await builder.resolve(request, cancel);
+    PlayQueue queue;
+    try {
+      queue = await builder.resolve(request, cancel);
+    } catch (error) {
+      // Offline, a series can still start on what is downloaded.
+      final downloaded = _cancelled(error)
+          ? null
+          : downloadedQueue(ref, request);
+      if (downloaded == null) rethrow;
+      queue = downloaded;
+    }
     _prepared = queue;
     return queue.current;
   }

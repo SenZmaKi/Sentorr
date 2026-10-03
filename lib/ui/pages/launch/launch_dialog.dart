@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../player/launch.dart';
 import '../../../settings/notifier.dart';
+import '../../../shared/net/online.dart';
 import '../../../torrents/resolution_models.dart';
 import '../../components/buttons.dart';
 import '../../components/progress_track.dart';
@@ -167,8 +168,15 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
     );
   }
 
+  /// The launch failed or found nothing because the device is offline.
+  bool _offline(PlaybackLaunch launch) =>
+      !ref.watch(onlineProvider) &&
+      (launch.error != null || (!launch.searching && launch.match == null));
+
   Widget _body(PlaybackLaunch launch) {
-    if (launch.error case final error?) return LaunchFailure(error: error);
+    if (launch.error != null || _offline(launch)) {
+      return LaunchFailure(error: launch.error, offline: _offline(launch));
+    }
     final resolution = launch.resolution;
     if (resolution == null) {
       return LaunchSearching(searchText: launch.query?.searchText);
@@ -240,7 +248,7 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
   }
 
   SButton? _primary(PlaybackLaunch launch) {
-    if (launch.error != null) {
+    if (launch.error != null || _offline(launch)) {
       return SButton.primary(
         label: 'Try again',
         icon: Icons.refresh,
@@ -268,6 +276,7 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
   void _search() => _launch.retry(title: _title.text);
 
   String _heading(PlaybackLaunch launch) {
+    if (_offline(launch)) return 'You’re offline';
     if (launch.error != null) return 'Couldn’t prepare playback';
     if (launch.searching) return 'Finding a torrent';
     final match = launch.match;

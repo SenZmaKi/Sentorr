@@ -116,11 +116,13 @@ class LaunchMiss extends StatelessWidget {
   }
 }
 
-/// Playback could not be prepared at all, e.g. the episode list failed.
+/// Playback could not be prepared at all, e.g. the episode list failed or
+/// the device is [offline].
 class LaunchFailure extends StatelessWidget {
-  const LaunchFailure({super.key, required this.error});
+  const LaunchFailure({super.key, this.error, this.offline = false});
 
-  final Object error;
+  final Object? error;
+  final bool offline;
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +134,7 @@ class LaunchFailure extends StatelessWidget {
         const SizedBox(width: Space.s8),
         Expanded(
           child: Text(
-            failureMessage(error),
+            failureMessage(error, offline: offline),
             style: context.type.bodySmall.copyWith(color: c.foreground),
           ),
         ),
@@ -141,7 +143,11 @@ class LaunchFailure extends StatelessWidget {
   }
 }
 
-String failureMessage(Object error) => switch (error) {
+/// Why playback could not be prepared; offline explains what still plays.
+String failureMessage(Object? error, {bool offline = false}) => switch (error) {
+  _ when offline =>
+    'Only downloads play without a connection. Try again once you’re back '
+        'online.',
   FormatException(:final message) => message,
   DioException() => 'Couldn’t reach the network. Check your connection.',
   _ => 'Something went wrong while preparing playback.',

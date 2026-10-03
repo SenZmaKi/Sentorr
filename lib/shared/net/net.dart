@@ -4,6 +4,7 @@ import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:http_cache_file_store/http_cache_file_store.dart';
 import 'package:logging/logging.dart';
 
+import 'dart:async';
 import 'dart:io';
 
 import 'cache.dart';
@@ -11,6 +12,7 @@ import 'cache_tiers.dart';
 import 'http2_preferred_adapter.dart';
 import 'interceptors/cache_freshness.dart';
 import 'interceptors/concurrency.dart';
+import 'interceptors/network_failures.dart';
 import 'interceptors/rate_limit.dart';
 import 'interceptors/request_logging.dart';
 import 'request_cancellation_scope.dart';
@@ -43,6 +45,9 @@ class NetworkClient {
       perHost: perHost,
       logging: logging,
       ttls: (tier) => ttls(tier),
+      onNetworkFailure: () {
+        if (!_failures.isClosed) _failures.add(null);
+      },
     );
   }
   late final CacheStore cacheStore;
@@ -60,9 +65,16 @@ class NetworkClient {
     final store = cacheStore;
     if (store is SizeLimitedCacheStore) await store.trim();
   }
+
+  final _failures = StreamController<void>.broadcast();
+
+  /// A request got no answer at all, as when the device is offline. Fires
+  /// even when the cache then answers it from disk.
+  Stream<void> get networkFailures => _failures.stream;
   Future<void> clearCache() => cacheStore.clean();
   Future<void> close() async {
     dio.close(force: true);
+    await _failures.close();
     if (_ownsStore) await cacheStore.close();
   }
 }
@@ -73,6 +85,7 @@ Dio buildDio({
   int perHost = 4,
   bool logging = true,
   CacheTtls ttls = defaultCacheTtls,
+  void Function()? onNetworkFailure,
 }) {
   final dio = Dio(
     BaseOptions(
@@ -88,6 +101,8 @@ Dio buildDio({
     ..idleTimeout = const Duration(minutes: 3);
   if (http2) preferHttp2(dio);
   dio.interceptors.addAll([
+    // Ahead of the cache, which may answer a failed request from disk.
+    if (onNetworkFailure != null) NetworkFailureInterceptor(onNetworkFailure),
     const ScopedCancelTokenInterceptor(),
     CacheFreshnessInterceptor(store, ttls),
     CacheValidityGuard(),

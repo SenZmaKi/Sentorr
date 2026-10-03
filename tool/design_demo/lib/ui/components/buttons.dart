@@ -16,14 +16,29 @@ class SButton extends StatelessWidget {
     this.loading = false,
   });
 
-  const SButton.primary({super.key, required this.label, this.onPressed, this.icon, this.loading = false})
-    : variant = ButtonVariant.primary;
+  const SButton.primary({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.icon,
+    this.loading = false,
+  }) : variant = ButtonVariant.primary;
 
-  const SButton.ghost({super.key, required this.label, this.onPressed, this.icon, this.loading = false})
-    : variant = ButtonVariant.ghost;
+  const SButton.ghost({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.icon,
+    this.loading = false,
+  }) : variant = ButtonVariant.ghost;
 
-  const SButton.destructive({super.key, required this.label, this.onPressed, this.icon, this.loading = false})
-    : variant = ButtonVariant.destructive;
+  const SButton.destructive({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.icon,
+    this.loading = false,
+  }) : variant = ButtonVariant.destructive;
 
   final String label;
   final VoidCallback? onPressed;
@@ -51,7 +66,12 @@ class SButton extends StatelessWidget {
                 : s.hovered
                 ? c.actionHover
                 : c.action;
-            style = DepthStyle(fill: fill, shadows: s.pressed ? raised.shadows.take(1).toList() : raised.shadows);
+            style = DepthStyle(
+              fill: fill,
+              shadows: s.pressed
+                  ? raised.shadows.take(1).toList()
+                  : raised.shadows,
+            );
             fg = c.onAction;
           case ButtonVariant.secondary:
             style = s.pressed
@@ -71,7 +91,11 @@ class SButton extends StatelessWidget {
             );
             fg = c.foreground;
           case ButtonVariant.destructive:
-            style = DepthStyle(fill: s.pressed || s.hovered ? c.errorSurface : Colors.transparent);
+            style = DepthStyle(
+              fill: s.pressed || s.hovered
+                  ? c.errorSurface
+                  : Colors.transparent,
+            );
             fg = c.error;
             border = Border.all(color: c.error);
         }
@@ -108,7 +132,13 @@ class SButton extends StatelessWidget {
 
 /// Ghost icon button with an accessible label and tooltip.
 class SIconButton extends StatelessWidget {
-  const SIconButton({super.key, required this.icon, required this.tooltip, this.onPressed, this.selected = false});
+  const SIconButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    this.onPressed,
+    this.selected = false,
+  });
 
   final IconData icon;
   final String tooltip;
@@ -138,7 +168,11 @@ class SIconButton extends StatelessWidget {
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(Radii.control),
           ),
-          child: Icon(icon, size: IconSizes.control, color: s.enabled ? c.foreground : c.foregroundDisabled),
+          child: Icon(
+            icon,
+            size: IconSizes.control,
+            color: s.enabled ? c.foreground : c.foregroundDisabled,
+          ),
         ),
       ),
     );

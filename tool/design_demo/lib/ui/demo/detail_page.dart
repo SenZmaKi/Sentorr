@@ -42,7 +42,9 @@ class _DetailPageState extends State<DetailPage> {
           child: Text(
             'A deep-space relay engineer begins receiving transmissions from a station '
             'that went silent decades ago, and must decide whether to answer.',
-            style: context.type.bodyLarge.copyWith(color: c.foregroundSecondary),
+            style: context.type.bodyLarge.copyWith(
+              color: c.foregroundSecondary,
+            ),
           ),
         ),
         const SizedBox(height: Space.s32),
@@ -50,11 +52,18 @@ class _DetailPageState extends State<DetailPage> {
           children: [
             SegmentedTabs(
               value: _tab,
-              segments: const {'torrents': 'Sources', 'files': 'Files', 'details': 'Details'},
+              segments: const {
+                'torrents': 'Sources',
+                'files': 'Files',
+                'details': 'Details',
+              },
               onChanged: (v) => setState(() => _tab = v),
             ),
             const Spacer(),
-            Text('${sampleTorrents.length} results', style: context.type.bodySmall.copyWith(color: c.foregroundMuted)),
+            Text(
+              '${sampleTorrents.length} results',
+              style: context.type.bodySmall.copyWith(color: c.foregroundMuted),
+            ),
           ],
         ),
         const SizedBox(height: Space.s16),
@@ -63,7 +72,8 @@ class _DetailPageState extends State<DetailPage> {
           child: Column(
             children: [
               for (final (i, t) in sampleTorrents.indexed) ...[
-                if (i > 0) const Divider(indent: Space.s16, endIndent: Space.s16),
+                if (i > 0)
+                  const Divider(indent: Space.s16, endIndent: Space.s16),
                 TorrentRow(
                   filename: t.filename,
                   quality: t.quality,
@@ -73,7 +83,11 @@ class _DetailPageState extends State<DetailPage> {
                   selected: _selected == i,
                   onTap: () => setState(() => _selected = i),
                   action: t.status == TransferStatus.failed
-                      ? SIconButton(icon: Icons.refresh, tooltip: 'Retry', onPressed: () {})
+                      ? SIconButton(
+                          icon: Icons.refresh,
+                          tooltip: 'Retry',
+                          onPressed: () {},
+                        )
                       : SIconButton(
                           icon: Icons.play_arrow_rounded,
                           tooltip: 'Stream this source',
@@ -97,8 +111,14 @@ class _DetailPageState extends State<DetailPage> {
                 title: 'Remove cached data?',
                 body: 'Downloaded pieces for this title will be deleted. You can stream it again later.',
                 actions: (ctx) => [
-                  SButton.ghost(label: 'Cancel', onPressed: () => Navigator.pop(ctx)),
-                  SButton.destructive(label: 'Remove', onPressed: () => Navigator.pop(ctx)),
+                  SButton.ghost(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                  SButton.destructive(
+                    label: 'Remove',
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
                 ],
               ),
             ),
@@ -110,7 +130,12 @@ class _DetailPageState extends State<DetailPage> {
 }
 
 class _Hero extends StatelessWidget {
-  const _Hero({required this.title, required this.watchlisted, required this.onPlay, required this.onWatchlist});
+  const _Hero({
+    required this.title,
+    required this.watchlisted,
+    required this.onPlay,
+    required this.onWatchlist,
+  });
 
   final SampleTitle title;
   final bool watchlisted;
@@ -120,7 +145,8 @@ class _Hero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 960;
-    final titleStyle = (wide ? context.type.display : context.type.headline).copyWith(color: OverlayColors.foreground);
+    final titleStyle = (wide ? context.type.display : context.type.headline)
+        .copyWith(color: OverlayColors.foreground);
     return DepthBox(
       style: context.depth.of(SurfaceDepth.panel),
       radius: Radii.panel,
@@ -151,14 +177,20 @@ class _Hero extends StatelessWidget {
                   const SizedBox(height: Space.s8),
                   Text(
                     '${title.year} · ${title.kind} · 2h 14m · Sci-fi, Drama',
-                    style: context.type.bodySmall.copyWith(color: OverlayColors.foregroundSecondary),
+                    style: context.type.bodySmall.copyWith(
+                      color: OverlayColors.foregroundSecondary,
+                    ),
                   ),
                   const SizedBox(height: Space.s24),
                   ImageOverlayContext(
                     child: Row(
                       spacing: Space.s8,
                       children: [
-                        SButton.primary(label: 'Play', icon: Icons.play_arrow_rounded, onPressed: onPlay),
+                        SButton.primary(
+                          label: 'Play',
+                          icon: Icons.play_arrow_rounded,
+                          onPressed: onPlay,
+                        ),
                         SButton(
                           label: watchlisted ? 'In watchlist' : 'Watchlist',
                           icon: watchlisted ? Icons.check : Icons.add,

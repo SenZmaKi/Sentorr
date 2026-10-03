@@ -49,14 +49,20 @@ class NavItem extends StatelessWidget {
             if (!compact) ...[
               const SizedBox(width: Space.s12),
               Expanded(
-                child: Text(label, style: context.type.label.copyWith(color: fg)),
+                child: Text(
+                  label,
+                  style: context.type.label.copyWith(color: fg),
+                ),
               ),
               // Active indicator: 2 units, independent of fill color.
               AnimatedContainer(
                 duration: Motion.hover,
                 width: Borders.focus * 2,
                 height: Borders.focus * 2,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: selected ? c.foreground : Colors.transparent),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: selected ? c.foreground : Colors.transparent,
+                ),
               ),
             ],
           ],
@@ -69,7 +75,12 @@ class NavItem extends StatelessWidget {
 
 /// Segmented tabs on an inset well; active segment is raised.
 class SegmentedTabs<T> extends StatelessWidget {
-  const SegmentedTabs({super.key, required this.value, required this.segments, required this.onChanged});
+  const SegmentedTabs({
+    super.key,
+    required this.value,
+    required this.segments,
+    required this.onChanged,
+  });
 
   final T value;
   final Map<T, String> segments;
@@ -94,7 +105,9 @@ class SegmentedTabs<T> extends StatelessWidget {
               builder: (context, s) {
                 final active = key == value;
                 return DepthBox(
-                  style: active ? d.of(SurfaceDepth.raised) : DepthStyle(fill: Colors.transparent),
+                  style: active
+                      ? d.of(SurfaceDepth.raised)
+                      : DepthStyle(fill: Colors.transparent),
                   radius: Radii.control,
                   height: 30,
                   padding: const EdgeInsets.symmetric(horizontal: Space.s12),
@@ -103,7 +116,9 @@ class SegmentedTabs<T> extends StatelessWidget {
                     child: Text(
                       label,
                       style: context.type.label.copyWith(
-                        color: active || s.hovered ? c.foreground : c.foregroundSecondary,
+                        color: active || s.hovered
+                            ? c.foreground
+                            : c.foregroundSecondary,
                       ),
                     ),
                   ),

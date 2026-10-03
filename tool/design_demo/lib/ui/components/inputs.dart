@@ -57,9 +57,9 @@ class _STextFieldState extends State<STextField> {
         : focused
         ? c.focus
         : c.borderControl;
-    final textStyle = (widget.technical ? context.type.technical : context.type.bodySmall).copyWith(
-      color: c.foreground,
-    );
+    final textStyle =
+        (widget.technical ? context.type.technical : context.type.bodySmall)
+            .copyWith(color: c.foreground);
     return SizedBox(
       width: widget.width,
       child: Column(
@@ -70,12 +70,19 @@ class _STextFieldState extends State<STextField> {
             style: context.depth.of(SurfaceDepth.raised),
             radius: Radii.control,
             height: ControlHeights.standard,
-            border: Border.all(color: borderColor, width: focused || hasError ? Borders.focus : Borders.edge),
+            border: Border.all(
+              color: borderColor,
+              width: focused || hasError ? Borders.focus : Borders.edge,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: Space.s12),
             child: Row(
               children: [
                 if (widget.prefixIcon != null) ...[
-                  Icon(widget.prefixIcon, size: IconSizes.metadata, color: c.foregroundMuted),
+                  Icon(
+                    widget.prefixIcon,
+                    size: IconSizes.metadata,
+                    color: c.foregroundMuted,
+                  ),
                   const SizedBox(width: Space.s8),
                 ],
                 Expanded(
@@ -104,9 +111,16 @@ class _STextFieldState extends State<STextField> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline, size: IconSizes.metadata, color: c.error),
+                Icon(
+                  Icons.error_outline,
+                  size: IconSizes.metadata,
+                  color: c.error,
+                ),
                 const SizedBox(width: Space.s4),
-                Text(widget.errorText!, style: context.type.caption.copyWith(color: c.error)),
+                Text(
+                  widget.errorText!,
+                  style: context.type.caption.copyWith(color: c.error),
+                ),
               ],
             ),
           ],

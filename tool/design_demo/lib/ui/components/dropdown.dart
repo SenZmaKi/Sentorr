@@ -61,15 +61,22 @@ class _SDropdownState<T> extends State<SDropdown<T>> {
             height: ControlHeights.compact,
             padding: const EdgeInsets.only(left: Space.s12, right: Space.s8),
             child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: widget.minWidth - Space.s12 - Space.s8),
+              constraints: BoxConstraints(
+                minWidth: widget.minWidth - Space.s12 - Space.s8,
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(_label(widget.value), style: context.type.label.copyWith(color: c.foreground)),
+                  Text(
+                    _label(widget.value),
+                    style: context.type.label.copyWith(color: c.foreground),
+                  ),
                   const SizedBox(width: Space.s8),
                   Icon(
-                    _portal.isShowing ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    _portal.isShowing
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
                     size: IconSizes.metadata,
                     color: c.foregroundSecondary,
                   ),
@@ -87,7 +94,10 @@ class _SDropdownState<T> extends State<SDropdown<T>> {
     return Stack(
       children: [
         Positioned.fill(
-          child: GestureDetector(behavior: HitTestBehavior.translucent, onTap: () => setState(_portal.hide)),
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => setState(_portal.hide),
+          ),
         ),
         CompositedTransformFollower(
           link: _link,
@@ -104,7 +114,9 @@ class _SDropdownState<T> extends State<SDropdown<T>> {
                 padding: const EdgeInsets.all(Space.s8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [for (final item in widget.items) _item(context, item)],
+                  children: [
+                    for (final item in widget.items) _item(context, item),
+                  ],
                 ),
               ),
             ),
@@ -137,10 +149,19 @@ class _SDropdownState<T> extends State<SDropdown<T>> {
           children: [
             SizedBox(
               width: IconSizes.control,
-              child: selected ? Icon(Icons.check, size: IconSizes.metadata, color: c.foreground) : null,
+              child: selected
+                  ? Icon(
+                      Icons.check,
+                      size: IconSizes.metadata,
+                      color: c.foreground,
+                    )
+                  : null,
             ),
             const SizedBox(width: Space.s4),
-            Text(_label(item), style: context.type.bodySmall.copyWith(color: c.foreground)),
+            Text(
+              _label(item),
+              style: context.type.bodySmall.copyWith(color: c.foreground),
+            ),
             const SizedBox(width: Space.s16),
           ],
         ),

@@ -17,7 +17,14 @@ class CatalogPage extends StatefulWidget {
 
 class _CatalogPageState extends State<CatalogPage> {
   final _filters = {'Movies', '2025+'};
-  static const _all = ['Movies', 'Series', '4K', '2025+', 'Popular', 'New episodes'];
+  static const _all = [
+    'Movies',
+    'Series',
+    '4K',
+    '2025+',
+    'Popular',
+    'New episodes',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +35,10 @@ class _CatalogPageState extends State<CatalogPage> {
         Row(
           children: [
             Expanded(
-              child: Text('Discover', style: context.type.headline.copyWith(color: c.foreground)),
+              child: Text(
+                'Discover',
+                style: context.type.headline.copyWith(color: c.foreground),
+              ),
             ),
             const STextField(
               width: 320,
@@ -47,7 +57,11 @@ class _CatalogPageState extends State<CatalogPage> {
               SChip(
                 label: f,
                 selected: _filters.contains(f),
-                onTap: () => setState(() => _filters.contains(f) ? _filters.remove(f) : _filters.add(f)),
+                onTap: () => setState(
+                  () => _filters.contains(f)
+                      ? _filters.remove(f)
+                      : _filters.add(f),
+                ),
               ),
           ],
         ),
@@ -55,7 +69,9 @@ class _CatalogPageState extends State<CatalogPage> {
         LayoutBuilder(
           builder: (context, box) {
             // Column count follows available width with nominal 160–220 tiles.
-            final columns = ((box.maxWidth + Space.s16) / (190 + Space.s16)).floor().clamp(2, 8);
+            final columns = ((box.maxWidth + Space.s16) / (190 + Space.s16))
+                .floor()
+                .clamp(2, 8);
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),

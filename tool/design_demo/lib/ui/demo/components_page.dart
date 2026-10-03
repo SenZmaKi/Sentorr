@@ -27,7 +27,10 @@ class _ComponentsPageState extends State<ComponentsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Components', style: context.type.headline.copyWith(color: c.foreground)),
+        Text(
+          'Components',
+          style: context.type.headline.copyWith(color: c.foreground),
+        ),
         const SizedBox(height: Space.s8),
         Text(
           'Every surface here resolves from the theme: canvas → panel → raised, with inset wells.',
@@ -40,38 +43,94 @@ class _ComponentsPageState extends State<ComponentsPage> {
             SButton.primary(label: 'Primary', onPressed: () {}),
             SButton(label: 'Secondary', onPressed: () {}),
             SButton.ghost(label: 'Ghost', onPressed: () {}),
-            SButton.destructive(label: 'Delete', icon: Icons.delete_outline, onPressed: () {}),
+            SButton.destructive(
+              label: 'Delete',
+              icon: Icons.delete_outline,
+              onPressed: () {},
+            ),
             const SButton.primary(label: 'Loading', loading: true),
             const SButton(label: 'Disabled'),
-            SIconButton(icon: Icons.favorite_border, tooltip: 'Favourite', onPressed: () {}),
-            SIconButton(icon: Icons.grid_view, tooltip: 'Grid view', selected: true, onPressed: () {}),
+            SIconButton(
+              icon: Icons.favorite_border,
+              tooltip: 'Favourite',
+              onPressed: () {},
+            ),
+            SIconButton(
+              icon: Icons.grid_view,
+              tooltip: 'Grid view',
+              selected: true,
+              onPressed: () {},
+            ),
           ],
         ),
         _Group(
           title: 'Inputs',
           children: const [
-            STextField(width: 240, hint: 'Search', prefixIcon: Icons.search, semanticLabel: 'Search'),
-            STextField(width: 240, hint: '/Volumes/Media', technical: true, semanticLabel: 'Path'),
-            STextField(width: 240, hint: 'Port', errorText: 'Port must be 1024–65535', semanticLabel: 'Port'),
+            STextField(
+              width: 240,
+              hint: 'Search',
+              prefixIcon: Icons.search,
+              semanticLabel: 'Search',
+            ),
+            STextField(
+              width: 240,
+              hint: '/Volumes/Media',
+              technical: true,
+              semanticLabel: 'Path',
+            ),
+            STextField(
+              width: 240,
+              hint: 'Port',
+              errorText: 'Port must be 1024–65535',
+              semanticLabel: 'Port',
+            ),
           ],
         ),
         _Group(
           title: 'Selection',
           children: [
-            SCheckbox(value: _check, label: 'Prefer HDR', onChanged: (v) => setState(() => _check = v)),
-            SCheckbox(value: _check2, label: 'Hide CAM releases', onChanged: (v) => setState(() => _check2 = v)),
+            SCheckbox(
+              value: _check,
+              label: 'Prefer HDR',
+              onChanged: (v) => setState(() => _check = v),
+            ),
+            SCheckbox(
+              value: _check2,
+              label: 'Hide CAM releases',
+              onChanged: (v) => setState(() => _check2 = v),
+            ),
             const SCheckbox(value: true, label: 'Disabled', onChanged: null),
-            SSwitch(value: _switch, semanticLabel: 'Example switch', onChanged: (v) => setState(() => _switch = v)),
-            const SSwitch(value: true, semanticLabel: 'On switch', onChanged: null),
+            SSwitch(
+              value: _switch,
+              semanticLabel: 'Example switch',
+              onChanged: (v) => setState(() => _switch = v),
+            ),
+            const SSwitch(
+              value: true,
+              semanticLabel: 'On switch',
+              onChanged: null,
+            ),
           ],
         ),
-        _Group(title: 'Status', children: [for (final s in TransferStatus.values) StatusBadge(s)]),
+        _Group(
+          title: 'Status',
+          children: [for (final s in TransferStatus.values) StatusBadge(s)],
+        ),
         _Group(
           title: 'Progress',
           children: const [
-            SizedBox(width: 240, child: InsetProgress(value: 0.25, semanticLabel: 'Download')),
-            SizedBox(width: 240, child: InsetProgress(value: 0.8, semanticLabel: 'Download')),
-            SizedBox(width: 240, child: InsetProgress(value: null, semanticLabel: 'Buffering')),
+            SizedBox(
+              width: 240,
+              child: InsetProgress(value: 0.25, semanticLabel: 'Download'),
+            ),
+            SizedBox(
+              width: 240,
+              child: InsetProgress(value: 0.8, semanticLabel: 'Download'),
+            ),
+            SizedBox(
+              width: 240,
+              child: InsetProgress(value: null, semanticLabel: 'Buffering'),
+            ),
           ],
         ),
         _Group(
@@ -84,21 +143,33 @@ class _ComponentsPageState extends State<ComponentsPage> {
                 title: 'Stop streaming?',
                 body: 'Playback will end and peers will be disconnected. Cached pieces are kept.',
                 actions: (ctx) => [
-                  SButton.ghost(label: 'Keep watching', onPressed: () => Navigator.pop(ctx)),
-                  SButton.primary(label: 'Stop', onPressed: () => Navigator.pop(ctx)),
+                  SButton.ghost(
+                    label: 'Keep watching',
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                  SButton.primary(
+                    label: 'Stop',
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
                 ],
               ),
             ),
             SButton(
               label: 'Show toast',
-              onPressed: () => showSToast(context, message: 'Subtitles downloaded'),
+              onPressed: () =>
+                  showSToast(context, message: 'Subtitles downloaded'),
             ),
           ],
         ),
         _Group(
           title: 'Depth roles',
           children: [
-            for (final d in [SurfaceDepth.panel, SurfaceDepth.raised, SurfaceDepth.inset, SurfaceDepth.floating])
+            for (final d in [
+              SurfaceDepth.panel,
+              SurfaceDepth.raised,
+              SurfaceDepth.inset,
+              SurfaceDepth.floating,
+            ])
               Surface(
                 depth: d,
                 padding: const EdgeInsets.all(Space.s16),
@@ -107,7 +178,12 @@ class _ComponentsPageState extends State<ComponentsPage> {
                   height: 56,
                   child: Align(
                     alignment: Alignment.bottomLeft,
-                    child: Text(d.name, style: context.type.technical.copyWith(color: c.foregroundSecondary)),
+                    child: Text(
+                      d.name,
+                      style: context.type.technical.copyWith(
+                        color: c.foregroundSecondary,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -132,7 +208,12 @@ class _Group extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: context.type.subtitle.copyWith(color: context.colors.foreground)),
+            Text(
+              title,
+              style: context.type.subtitle.copyWith(
+                color: context.colors.foreground,
+              ),
+            ),
             const SizedBox(height: Space.s16),
             Wrap(
               spacing: Space.s16,

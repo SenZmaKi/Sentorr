@@ -42,11 +42,23 @@ Future<T?> showSDialog<T>(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: context.type.title.copyWith(color: c.foreground)),
+                    Text(
+                      title,
+                      style: context.type.title.copyWith(color: c.foreground),
+                    ),
                     const SizedBox(height: Space.s8),
-                    Text(body, style: context.type.body.copyWith(color: c.foregroundSecondary)),
+                    Text(
+                      body,
+                      style: context.type.body.copyWith(
+                        color: c.foregroundSecondary,
+                      ),
+                    ),
                     const SizedBox(height: Space.s24),
-                    Row(mainAxisAlignment: MainAxisAlignment.end, spacing: Space.s8, children: actions(context)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      spacing: Space.s8,
+                      children: actions(context),
+                    ),
                   ],
                 ),
               ),
@@ -59,7 +71,11 @@ Future<T?> showSDialog<T>(
 }
 
 /// Floating toast: radius 12, padding 16, announced politely.
-void showSToast(BuildContext context, {required String message, IconData icon = Icons.check_circle_outline}) {
+void showSToast(
+  BuildContext context, {
+  required String message,
+  IconData icon = Icons.check_circle_outline,
+}) {
   final overlay = Overlay.of(context);
   late OverlayEntry entry;
   entry = OverlayEntry(
@@ -82,9 +98,16 @@ void showSToast(BuildContext context, {required String message, IconData icon = 
                 children: [
                   Icon(icon, size: IconSizes.control, color: c.success),
                   const SizedBox(width: Space.s12),
-                  Text(message, style: context.type.bodySmall.copyWith(color: c.foreground)),
+                  Text(
+                    message,
+                    style: context.type.bodySmall.copyWith(color: c.foreground),
+                  ),
                   const SizedBox(width: Space.s16),
-                  SIconButton(icon: Icons.close, tooltip: 'Dismiss', onPressed: entry.remove),
+                  SIconButton(
+                    icon: Icons.close,
+                    tooltip: 'Dismiss',
+                    onPressed: entry.remove,
+                  ),
                 ],
               ),
             ),

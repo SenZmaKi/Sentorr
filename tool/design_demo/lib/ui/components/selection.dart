@@ -6,7 +6,12 @@ import 'surface.dart';
 
 /// Switch: thumb position expresses state; on uses action fill.
 class SSwitch extends StatelessWidget {
-  const SSwitch({super.key, required this.value, required this.onChanged, required this.semanticLabel});
+  const SSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    required this.semanticLabel,
+  });
 
   final bool value;
   final ValueChanged<bool>? onChanged;
@@ -29,7 +34,9 @@ class SSwitch extends StatelessWidget {
             children: [
               Positioned.fill(
                 child: DepthBox(
-                  style: value ? DepthStyle(fill: c.action) : d.of(SurfaceDepth.inset),
+                  style: value
+                      ? DepthStyle(fill: c.action)
+                      : d.of(SurfaceDepth.inset),
                   radius: Radii.full,
                   border: value ? null : Border.all(color: c.borderControl),
                 ),
@@ -42,7 +49,10 @@ class SSwitch extends StatelessWidget {
                   padding: const EdgeInsets.all(3),
                   child: DepthBox(
                     style: value
-                        ? DepthStyle(fill: c.onAction, shadows: d.of(SurfaceDepth.raised).shadows)
+                        ? DepthStyle(
+                            fill: c.onAction,
+                            shadows: d.of(SurfaceDepth.raised).shadows,
+                          )
                         : d.of(SurfaceDepth.raised),
                     radius: Radii.full,
                     width: 18,
@@ -77,13 +87,20 @@ class CheckIndicator extends StatelessWidget {
         color: checked ? c.action : c.surfaceInset,
         border: checked ? null : Border.all(color: c.borderControl),
       ),
-      child: checked ? Icon(Icons.check, size: size * 0.65, color: c.onAction) : null,
+      child: checked
+          ? Icon(Icons.check, size: size * 0.65, color: c.onAction)
+          : null,
     );
   }
 }
 
 class SCheckbox extends StatelessWidget {
-  const SCheckbox({super.key, required this.value, required this.onChanged, required this.label});
+  const SCheckbox({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    required this.label,
+  });
 
   final bool value;
   final ValueChanged<bool>? onChanged;
@@ -111,10 +128,15 @@ class SCheckbox extends StatelessWidget {
                   borderRadius: BorderRadius.circular(Radii.chip - 2),
                   border: value ? null : Border.all(color: c.borderControl),
                 ),
-                child: value ? Icon(Icons.check, size: 14, color: c.onAction) : null,
+                child: value
+                    ? Icon(Icons.check, size: 14, color: c.onAction)
+                    : null,
               ),
               const SizedBox(width: Space.s8),
-              Text(label, style: context.type.bodySmall.copyWith(color: c.foreground)),
+              Text(
+                label,
+                style: context.type.bodySmall.copyWith(color: c.foreground),
+              ),
             ],
           ),
         ),
@@ -169,9 +191,17 @@ class ChoiceCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: Space.s24),
-            Text(title, style: context.type.subtitle.copyWith(color: c.foreground)),
+            Text(
+              title,
+              style: context.type.subtitle.copyWith(color: c.foreground),
+            ),
             const SizedBox(height: Space.s4),
-            Text(description, style: context.type.bodySmall.copyWith(color: c.foregroundSecondary)),
+            Text(
+              description,
+              style: context.type.bodySmall.copyWith(
+                color: c.foregroundSecondary,
+              ),
+            ),
           ],
         ),
       ),
@@ -181,7 +211,12 @@ class ChoiceCard extends StatelessWidget {
 
 /// Filter chip: inset idle; selected adds a check.
 class SChip extends StatelessWidget {
-  const SChip({super.key, required this.label, required this.selected, required this.onTap});
+  const SChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
   final bool selected;
@@ -197,7 +232,10 @@ class SChip extends StatelessWidget {
       onTap: onTap,
       builder: (context, s) => AnimatedContainer(
         duration: Motion.hover,
-        padding: const EdgeInsets.symmetric(vertical: Space.s4, horizontal: Space.s8),
+        padding: const EdgeInsets.symmetric(
+          vertical: Space.s4,
+          horizontal: Space.s8,
+        ),
         decoration: BoxDecoration(
           color: selected
               ? c.selection
@@ -205,13 +243,23 @@ class SChip extends StatelessWidget {
               ? c.stateHover
               : c.surfaceInset,
           borderRadius: BorderRadius.circular(Radii.chip),
-          border: Border.all(color: selected ? c.borderStrong : Colors.transparent),
+          border: Border.all(
+            color: selected ? c.borderStrong : Colors.transparent,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (selected) ...[Icon(Icons.check, size: 14, color: c.foreground), const SizedBox(width: Space.s4)],
-            Text(label, style: context.type.label.copyWith(color: selected ? c.foreground : c.foregroundSecondary)),
+            if (selected) ...[
+              Icon(Icons.check, size: 14, color: c.foreground),
+              const SizedBox(width: Space.s4),
+            ],
+            Text(
+              label,
+              style: context.type.label.copyWith(
+                color: selected ? c.foreground : c.foregroundSecondary,
+              ),
+            ),
           ],
         ),
       ),

@@ -9,7 +9,13 @@ enum SurfaceDepth { base, panel, raised, inset, floating }
 /// Resolved appearance for one depth role.
 @immutable
 class DepthStyle {
-  const DepthStyle({required this.fill, this.shadows = const [], this.edgeHighlight, this.edgeShade, this.insetShade});
+  const DepthStyle({
+    required this.fill,
+    this.shadows = const [],
+    this.edgeHighlight,
+    this.edgeShade,
+    this.insetShade,
+  });
 
   final Color fill;
   final List<BoxShadow> shadows;
@@ -35,7 +41,9 @@ class DepthStyle {
   DepthStyle hovered() => DepthStyle(
     fill: fill,
     shadows: shadows,
-    edgeHighlight: edgeHighlight == null ? null : Color.lerp(edgeHighlight, const Color(0xFFFFFFFF), 0.12),
+    edgeHighlight: edgeHighlight == null
+        ? null
+        : Color.lerp(edgeHighlight, const Color(0xFFFFFFFF), 0.12),
     edgeShade: edgeShade,
     insetShade: insetShade,
   );
@@ -72,7 +80,12 @@ class SentorrDepth extends ThemeExtension<SentorrDepth> {
         : [shadowLayer(0, 2, 4, 0, .10), shadowLayer(0, 12, 32, -4, .14)];
     return SentorrDepth({
       SurfaceDepth.base: DepthStyle(fill: c.canvas),
-      SurfaceDepth.panel: DepthStyle(fill: c.surface, shadows: panel, edgeHighlight: highlight, edgeShade: shade),
+      SurfaceDepth.panel: DepthStyle(
+        fill: c.surface,
+        shadows: panel,
+        edgeHighlight: highlight,
+        edgeShade: shade,
+      ),
       SurfaceDepth.raised: DepthStyle(
         fill: c.surfaceControl,
         shadows: raised,
@@ -95,11 +108,15 @@ class SentorrDepth extends ThemeExtension<SentorrDepth> {
   }
 
   @override
-  SentorrDepth copyWith({Map<SurfaceDepth, DepthStyle>? styles}) => SentorrDepth(styles ?? this.styles);
+  SentorrDepth copyWith({Map<SurfaceDepth, DepthStyle>? styles}) =>
+      SentorrDepth(styles ?? this.styles);
 
   @override
   SentorrDepth lerp(SentorrDepth? other, double t) {
     if (other == null) return this;
-    return SentorrDepth({for (final d in SurfaceDepth.values) d: DepthStyle.lerp(of(d), other.of(d), t)});
+    return SentorrDepth({
+      for (final d in SurfaceDepth.values)
+        d: DepthStyle.lerp(of(d), other.of(d), t),
+    });
   }
 }

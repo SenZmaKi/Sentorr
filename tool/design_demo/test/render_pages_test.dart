@@ -16,13 +16,19 @@ Future<void> _loadFonts() async {
   ]) {
     final loader = FontLoader(family);
     for (final f in files) {
-      loader.addFont(File('assets/fonts/$f.ttf').readAsBytes().then((b) => b.buffer.asByteData()));
+      loader.addFont(
+        File('assets/fonts/$f.ttf')
+            .readAsBytes()
+            .then((b) => b.buffer.asByteData()),
+      );
     }
     await loader.load();
   }
   final icons = FontLoader('MaterialIcons');
   final root = Platform.environment['FLUTTER_ROOT'];
-  final iconFile = File('$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf');
+  final iconFile = File(
+    '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+  );
   if (iconFile.existsSync()) {
     icons.addFont(iconFile.readAsBytes().then((b) => b.buffer.asByteData()));
     await icons.load();
@@ -30,7 +36,13 @@ Future<void> _loadFonts() async {
 }
 
 void main() {
-  const pages = ['Discover', 'Title detail', 'Player', 'Settings', 'Components'];
+  const pages = [
+    'Discover',
+    'Title detail',
+    'Player',
+    'Settings',
+    'Components',
+  ];
   final out = Platform.environment['RENDER_DIR'];
 
   testWidgets('render pages', (tester) async {
@@ -51,11 +63,14 @@ void main() {
         // Let component transitions that start after the theme change finish.
         await tester.pump(const Duration(milliseconds: 300));
         if (out == null) continue;
-        final boundary = tester.renderObject<RenderRepaintBoundary>(find.byType(RepaintBoundary).first);
+        final boundary = tester.renderObject<RenderRepaintBoundary>(
+          find.byType(RepaintBoundary).first,
+        );
         await tester.runAsync(() async {
           final image = await boundary.toImage();
           final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-          final name = '${mode.toLowerCase()}_${page.toLowerCase().replaceAll(' ', '_')}.png';
+          final name =
+              '${mode.toLowerCase()}_${page.toLowerCase().replaceAll(' ', '_')}.png';
           await File('$out/$name').writeAsBytes(bytes!.buffer.asUint8List());
         });
       }

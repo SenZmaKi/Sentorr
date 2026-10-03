@@ -49,7 +49,11 @@ class SettingsPage extends StatelessWidget {
 }
 
 class _PanelHeader extends StatelessWidget {
-  const _PanelHeader({required this.icon, required this.title, required this.subtitle});
+  const _PanelHeader({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
 
   final IconData? icon;
   final String title;
@@ -72,8 +76,16 @@ class _PanelHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: context.type.subtitle.copyWith(color: c.foreground)),
-              Text(subtitle, style: context.type.bodySmall.copyWith(color: c.foregroundSecondary)),
+              Text(
+                title,
+                style: context.type.subtitle.copyWith(color: c.foreground),
+              ),
+              Text(
+                subtitle,
+                style: context.type.bodySmall.copyWith(
+                  color: c.foregroundSecondary,
+                ),
+              ),
             ],
           ),
         ),
@@ -83,7 +95,11 @@ class _PanelHeader extends StatelessWidget {
 }
 
 class _SettingRow extends StatelessWidget {
-  const _SettingRow({required this.icon, required this.label, required this.control});
+  const _SettingRow({
+    required this.icon,
+    required this.label,
+    required this.control,
+  });
 
   final IconData icon;
   final String label;
@@ -99,7 +115,10 @@ class _SettingRow extends StatelessWidget {
           Icon(icon, size: IconSizes.control, color: c.foregroundSecondary),
           const SizedBox(width: Space.s12),
           Expanded(
-            child: Text(label, style: context.type.body.copyWith(color: c.foreground)),
+            child: Text(
+              label,
+              style: context.type.body.copyWith(color: c.foreground),
+            ),
           ),
           control,
         ],
@@ -131,7 +150,11 @@ class _PlaybackPanelState extends State<_PlaybackPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _PanelHeader(icon: Icons.tune, title: 'Playback', subtitle: 'How Sentorr picks and plays torrents'),
+          const _PanelHeader(
+            icon: Icons.tune,
+            title: 'Playback',
+            subtitle: 'How Sentorr picks and plays torrents',
+          ),
           const SizedBox(height: Space.s24),
           _SettingRow(
             icon: Icons.high_quality_outlined,
@@ -207,7 +230,9 @@ class _PlaybackPanelState extends State<_PlaybackPanel> {
                     widthFactor: 1,
                     child: Text(
                       '${_buffer.round().toString().padLeft(3)} s',
-                      style: context.type.technical.copyWith(color: c.foreground),
+                      style: context.type.technical.copyWith(
+                        color: c.foreground,
+                      ),
                     ),
                   ),
                 ),
@@ -240,7 +265,8 @@ class _PlaybackPanelState extends State<_PlaybackPanel> {
               ),
               SButton(
                 label: 'Apply changes',
-                onPressed: () => showSToast(context, message: 'Playback settings saved'),
+                onPressed: () =>
+                    showSToast(context, message: 'Playback settings saved'),
               ),
             ],
           ),

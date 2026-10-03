@@ -23,13 +23,28 @@ class StoragePanel extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Stream cache', style: context.type.subtitle.copyWith(color: c.foreground)),
+                    Text(
+                      'Stream cache',
+                      style: context.type.subtitle.copyWith(
+                        color: c.foreground,
+                      ),
+                    ),
                     const SizedBox(height: Space.s2),
                     Row(
                       spacing: Space.s8,
                       children: [
-                        Text('Limit', style: context.type.bodySmall.copyWith(color: c.foregroundSecondary)),
-                        Text('50 GB', style: context.type.technical.copyWith(color: c.foreground)),
+                        Text(
+                          'Limit',
+                          style: context.type.bodySmall.copyWith(
+                            color: c.foregroundSecondary,
+                          ),
+                        ),
+                        Text(
+                          '50 GB',
+                          style: context.type.technical.copyWith(
+                            color: c.foreground,
+                          ),
+                        ),
                         const Tag('Auto clean'),
                       ],
                     ),
@@ -39,19 +54,38 @@ class StoragePanel extends StatelessWidget {
               Container(
                 width: ControlHeights.touch,
                 height: ControlHeights.touch,
-                decoration: BoxDecoration(color: c.action, shape: BoxShape.circle),
-                child: Icon(Icons.storage_rounded, color: c.onAction, size: IconSizes.navigation),
+                decoration: BoxDecoration(
+                  color: c.action,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.storage_rounded,
+                  color: c.onAction,
+                  size: IconSizes.navigation,
+                ),
               ),
             ],
           ),
           const SizedBox(height: Space.s24),
-          const InsetProgress(value: 0.63, height: 14, semanticLabel: 'Cache used'),
+          const InsetProgress(
+            value: 0.63,
+            height: 14,
+            semanticLabel: 'Cache used',
+          ),
           const SizedBox(height: Space.s24),
           Center(
-            child: Text('31.4 GB', style: context.type.headline.copyWith(color: c.foreground)),
+            child: Text(
+              '31.4 GB',
+              style: context.type.headline.copyWith(color: c.foreground),
+            ),
           ),
           Center(
-            child: Text('used of 50 GB', style: context.type.bodySmall.copyWith(color: c.foregroundSecondary)),
+            child: Text(
+              'used of 50 GB',
+              style: context.type.bodySmall.copyWith(
+                color: c.foregroundSecondary,
+              ),
+            ),
           ),
         ],
       ),
@@ -83,7 +117,11 @@ class _StreamingPanelState extends State<StreamingPanel> {
                   child: ChoiceCard(
                     title: 'Sequential',
                     description: 'Start fast, play in order',
-                    leading: Icon(Icons.play_circle_fill, size: 48, color: c.info),
+                    leading: Icon(
+                      Icons.play_circle_fill,
+                      size: 48,
+                      color: c.info,
+                    ),
                     selected: _mode == 0,
                     onTap: () => setState(() => _mode = 0),
                   ),
@@ -105,10 +143,19 @@ class _StreamingPanelState extends State<StreamingPanel> {
           Surface(
             depth: SurfaceDepth.raised,
             radius: Radii.panel,
-            padding: const EdgeInsets.fromLTRB(Space.s16, Space.s12, Space.s12, Space.s12),
+            padding: const EdgeInsets.fromLTRB(
+              Space.s16,
+              Space.s12,
+              Space.s12,
+              Space.s12,
+            ),
             child: Row(
               children: [
-                Icon(Icons.link, size: IconSizes.control, color: c.foregroundSecondary),
+                Icon(
+                  Icons.link,
+                  size: IconSizes.control,
+                  color: c.foregroundSecondary,
+                ),
                 const SizedBox(width: Space.s12),
                 Expanded(
                   child: Text(
@@ -118,7 +165,8 @@ class _StreamingPanelState extends State<StreamingPanel> {
                 ),
                 SButton.primary(
                   label: 'Open',
-                  onPressed: () => showSToast(context, message: 'Magnet added to queue'),
+                  onPressed: () =>
+                      showSToast(context, message: 'Magnet added to queue'),
                 ),
               ],
             ),

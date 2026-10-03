@@ -24,7 +24,10 @@ class _DesignDemoAppState extends State<DesignDemoApp> {
       darkTheme: buildSentorrTheme(Brightness.dark),
       themeMode: _mode,
       themeAnimationDuration: Motion.panel,
-      home: DemoShell(themeMode: _mode, onThemeMode: (m) => setState(() => _mode = m)),
+      home: DemoShell(
+        themeMode: _mode,
+        onThemeMode: (m) => setState(() => _mode = m),
+      ),
     );
   }
 }

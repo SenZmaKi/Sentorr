@@ -51,5 +51,15 @@ abstract final class FontFamilies {
 }
 
 /// Raw shadow layer `(offsetX, offsetY, blur, spread, black opacity)`.
-BoxShadow shadowLayer(double x, double y, double blur, double spread, double opacity) =>
-    BoxShadow(color: Color.fromRGBO(0, 0, 0, opacity), offset: Offset(x, y), blurRadius: blur, spreadRadius: spread);
+BoxShadow shadowLayer(
+  double x,
+  double y,
+  double blur,
+  double spread,
+  double opacity,
+) => BoxShadow(
+  color: Color.fromRGBO(0, 0, 0, opacity),
+  offset: Offset(x, y),
+  blurRadius: blur,
+  spreadRadius: spread,
+);

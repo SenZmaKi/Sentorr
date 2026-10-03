@@ -5,7 +5,12 @@ import '../shared/theme/theme.dart';
 
 /// Resolved interaction state handed to [Interactive.builder].
 class InteractionState {
-  const InteractionState({required this.hovered, required this.pressed, required this.focused, required this.enabled});
+  const InteractionState({
+    required this.hovered,
+    required this.pressed,
+    required this.focused,
+    required this.enabled,
+  });
 
   final bool hovered;
   final bool pressed;
@@ -64,14 +69,20 @@ class _InteractiveState extends State<Interactive> {
       label: widget.semanticLabel,
       child: FocusableActionDetector(
         enabled: _enabled,
-        mouseCursor: _enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        mouseCursor: _enabled
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
         onShowHoverHighlight: (v) => setState(() => _hovered = v),
         onShowFocusHighlight: (v) => setState(() => _focused = v),
         shortcuts: const {
           SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
           SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
         },
-        actions: {ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) => widget.onTap?.call())},
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) => widget.onTap?.call(),
+          ),
+        },
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTapDown: _enabled ? (_) => setState(() => _pressed = true) : null,
@@ -79,7 +90,11 @@ class _InteractiveState extends State<Interactive> {
           onTapCancel: _enabled ? () => setState(() => _pressed = false) : null,
           onTap: widget.onTap,
           child: CustomPaint(
-            foregroundPainter: _FocusRingPainter(visible: _focused, color: ring, radius: widget.borderRadius),
+            foregroundPainter: _FocusRingPainter(
+              visible: _focused,
+              color: ring,
+              radius: widget.borderRadius,
+            ),
             child: widget.builder(context, state),
           ),
         ),
@@ -89,7 +104,11 @@ class _InteractiveState extends State<Interactive> {
 }
 
 class _FocusRingPainter extends CustomPainter {
-  _FocusRingPainter({required this.visible, required this.color, required this.radius});
+  _FocusRingPainter({
+    required this.visible,
+    required this.color,
+    required this.radius,
+  });
 
   final bool visible;
   final Color color;
@@ -111,5 +130,6 @@ class _FocusRingPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_FocusRingPainter old) => old.visible != visible || old.color != color || old.radius != radius;
+  bool shouldRepaint(_FocusRingPainter old) =>
+      old.visible != visible || old.color != color || old.radius != radius;
 }

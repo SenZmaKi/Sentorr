@@ -46,7 +46,13 @@ class DepthBox extends StatelessWidget {
 
 /// Theme-selected surface for feature code: choose a role, not a recipe.
 class Surface extends StatelessWidget {
-  const Surface({super.key, this.depth = SurfaceDepth.panel, this.padding, this.radius, required this.child});
+  const Surface({
+    super.key,
+    this.depth = SurfaceDepth.panel,
+    this.padding,
+    this.radius,
+    required this.child,
+  });
 
   final SurfaceDepth depth;
   final EdgeInsetsGeometry? padding;
@@ -65,7 +71,11 @@ class Surface extends StatelessWidget {
     return DepthBox(
       style: context.depth.of(depth),
       radius: r,
-      padding: padding ?? (depth == SurfaceDepth.panel ? const EdgeInsets.all(Space.s24) : null),
+      padding:
+          padding ??
+          (depth == SurfaceDepth.panel
+              ? const EdgeInsets.all(Space.s24)
+              : null),
       child: child,
     );
   }
@@ -78,7 +88,8 @@ class _EdgeLighting extends Decoration {
   final double radius;
 
   @override
-  BoxPainter createBoxPainter([VoidCallback? onChanged]) => _EdgePainter(style, radius);
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) =>
+      _EdgePainter(style, radius);
 }
 
 class _EdgePainter extends BoxPainter {

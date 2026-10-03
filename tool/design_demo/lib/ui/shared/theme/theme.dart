@@ -11,7 +11,9 @@ export 'tokens.dart';
 export 'typography.dart';
 
 ThemeData buildSentorrTheme(Brightness brightness) {
-  final c = brightness == Brightness.dark ? SentorrColors.dark : SentorrColors.light;
+  final c = brightness == Brightness.dark
+      ? SentorrColors.dark
+      : SentorrColors.light;
   final type = SentorrType.instance;
   final scheme = ColorScheme(
     brightness: brightness,
@@ -39,7 +41,11 @@ ThemeData buildSentorrTheme(Brightness brightness) {
     hoverColor: c.stateHover,
     highlightColor: c.statePressed,
     focusColor: Colors.transparent,
-    dividerTheme: DividerThemeData(color: c.borderSubtle, thickness: 1, space: 1),
+    dividerTheme: DividerThemeData(
+      color: c.borderSubtle,
+      thickness: 1,
+      space: 1,
+    ),
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
         color: c.surfaceRaised,
@@ -54,7 +60,10 @@ ThemeData buildSentorrTheme(Brightness brightness) {
       inactiveTrackColor: c.surfaceInset,
       thumbColor: c.action,
       overlayColor: c.stateHover.withValues(alpha: 0.5),
-      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7, elevation: 1),
+      thumbShape: const RoundSliderThumbShape(
+        enabledThumbRadius: 7,
+        elevation: 1,
+      ),
     ),
     extensions: [c, SentorrDepth.resolve(c, brightness), type],
   );

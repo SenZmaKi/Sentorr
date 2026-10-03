@@ -28,7 +28,9 @@ class _PlayerPageState extends State<PlayerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final tech = context.type.technical.copyWith(color: OverlayColors.foreground);
+    final tech = context.type.technical.copyWith(
+      color: OverlayColors.foreground,
+    );
     return DepthBox(
       style: context.depth.of(SurfaceDepth.panel),
       radius: Radii.panel,
@@ -58,16 +60,25 @@ class _PlayerPageState extends State<PlayerPage> {
                   right: Space.s16,
                   child: Row(
                     children: [
-                      PlayerButton(icon: Icons.arrow_back, tooltip: 'Back', onPressed: () {}),
+                      PlayerButton(
+                        icon: Icons.arrow_back,
+                        tooltip: 'Back',
+                        onPressed: () {},
+                      ),
                       const SizedBox(width: Space.s8),
                       Expanded(
                         child: Text(
                           widget.title.title,
-                          style: context.type.subtitle.copyWith(color: OverlayColors.foreground),
+                          style: context.type.subtitle.copyWith(
+                            color: OverlayColors.foreground,
+                          ),
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: Space.s12, vertical: Space.s4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Space.s12,
+                          vertical: Space.s4,
+                        ),
                         decoration: BoxDecoration(
                           color: OverlayColors.controlSurface,
                           borderRadius: BorderRadius.circular(Radii.full),
@@ -80,7 +91,9 @@ class _PlayerPageState extends State<PlayerPage> {
                 Center(
                   child: PlayerButton(
                     large: true,
-                    icon: _playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    icon: _playing
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
                     tooltip: _playing ? 'Pause' : 'Play',
                     onPressed: () => setState(() => _playing = !_playing),
                   ),
@@ -90,7 +103,12 @@ class _PlayerPageState extends State<PlayerPage> {
                   right: 0,
                   bottom: 0,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(Space.s8, 0, Space.s8, Space.s8),
+                    padding: const EdgeInsets.fromLTRB(
+                      Space.s8,
+                      0,
+                      Space.s8,
+                      Space.s8,
+                    ),
                     child: Column(
                       children: [
                         PlayerSeekBar(
@@ -101,23 +119,49 @@ class _PlayerPageState extends State<PlayerPage> {
                         Row(
                           children: [
                             PlayerButton(
-                              icon: _playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                              icon: _playing
+                                  ? Icons.pause_rounded
+                                  : Icons.play_arrow_rounded,
                               tooltip: _playing ? 'Pause' : 'Play',
-                              onPressed: () => setState(() => _playing = !_playing),
+                              onPressed: () =>
+                                  setState(() => _playing = !_playing),
                             ),
-                            PlayerButton(icon: Icons.replay_10, tooltip: 'Back 10 seconds', onPressed: () {}),
-                            PlayerButton(icon: Icons.forward_10, tooltip: 'Forward 10 seconds', onPressed: () {}),
+                            PlayerButton(
+                              icon: Icons.replay_10,
+                              tooltip: 'Back 10 seconds',
+                              onPressed: () {},
+                            ),
+                            PlayerButton(
+                              icon: Icons.forward_10,
+                              tooltip: 'Forward 10 seconds',
+                              onPressed: () {},
+                            ),
                             PlayerButton(
                               icon: _muted ? Icons.volume_off : Icons.volume_up,
                               tooltip: _muted ? 'Unmute' : 'Mute',
                               onPressed: () => setState(() => _muted = !_muted),
                             ),
                             const SizedBox(width: Space.s8),
-                            Text('${_time(_position)} / ${_time(1)}', style: tech),
+                            Text(
+                              '${_time(_position)} / ${_time(1)}',
+                              style: tech,
+                            ),
                             const Spacer(),
-                            PlayerButton(icon: Icons.subtitles_outlined, tooltip: 'Subtitles', onPressed: () {}),
-                            PlayerButton(icon: Icons.settings_outlined, tooltip: 'Quality', onPressed: () {}),
-                            PlayerButton(icon: Icons.fullscreen, tooltip: 'Fullscreen', onPressed: () {}),
+                            PlayerButton(
+                              icon: Icons.subtitles_outlined,
+                              tooltip: 'Subtitles',
+                              onPressed: () {},
+                            ),
+                            PlayerButton(
+                              icon: Icons.settings_outlined,
+                              tooltip: 'Quality',
+                              onPressed: () {},
+                            ),
+                            PlayerButton(
+                              icon: Icons.fullscreen,
+                              tooltip: 'Fullscreen',
+                              onPressed: () {},
+                            ),
                           ],
                         ),
                       ],

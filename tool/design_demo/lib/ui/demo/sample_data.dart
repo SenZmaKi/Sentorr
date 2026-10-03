@@ -32,7 +32,13 @@ const sampleTitles = [
 ];
 
 class SampleTorrent {
-  const SampleTorrent(this.filename, this.quality, this.size, this.seeders, this.status);
+  const SampleTorrent(
+    this.filename,
+    this.quality,
+    this.size,
+    this.seeders,
+    this.status,
+  );
 
   final String filename;
   final List<String> quality;
@@ -63,7 +69,13 @@ const sampleTorrents = [
     96,
     TransferStatus.buffering,
   ),
-  SampleTorrent('The.Quiet.Orbit.2025.720p.WEBRip.x264.mp4', ['720p', 'x264'], '1.02 GB', 8, TransferStatus.waiting),
+  SampleTorrent(
+    'The.Quiet.Orbit.2025.720p.WEBRip.x264.mp4',
+    ['720p', 'x264'],
+    '1.02 GB',
+    8,
+    TransferStatus.waiting,
+  ),
   SampleTorrent(
     'The.Quiet.Orbit.2025.REMUX.2160p.DV.TrueHD.Atmos.mkv',
     ['2160p', 'DV', 'REMUX'],
@@ -71,7 +83,13 @@ const sampleTorrents = [
     0,
     TransferStatus.failed,
   ),
-  SampleTorrent('The.Quiet.Orbit.2025.480p.DVDRip.XviD.avi', ['480p', 'XviD'], '702 MB', 21, TransferStatus.queued),
+  SampleTorrent(
+    'The.Quiet.Orbit.2025.480p.DVDRip.XviD.avi',
+    ['480p', 'XviD'],
+    '702 MB',
+    21,
+    TransferStatus.queued,
+  ),
 ];
 
 /// Generated artwork. Artwork supplies the color; chrome stays neutral.
@@ -84,7 +102,10 @@ class Artwork extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(painter: _ArtworkPainter(hue, seed), child: const SizedBox.expand());
+    return CustomPaint(
+      painter: _ArtworkPainter(hue, seed),
+      child: const SizedBox.expand(),
+    );
   }
 }
 
@@ -110,11 +131,20 @@ class _ArtworkPainter extends CustomPainter {
         ).createShader(rect),
     );
     final rnd = Random(hue.toInt() * 31 + seed);
-    final sun = Offset(size.width * (0.25 + rnd.nextDouble() * 0.5), size.height * (0.28 + rnd.nextDouble() * 0.15));
+    final sun = Offset(
+      size.width * (0.25 + rnd.nextDouble() * 0.5),
+      size.height * (0.28 + rnd.nextDouble() * 0.15),
+    );
     canvas.drawCircle(
       sun,
       size.shortestSide * 0.22,
-      Paint()..color = HSLColor.fromAHSL(0.85, (hue + 60) % 360, 0.9, 0.75).toColor(),
+      Paint()
+        ..color = HSLColor.fromAHSL(
+          0.85,
+          (hue + 60) % 360,
+          0.9,
+          0.75,
+        ).toColor(),
     );
     for (var i = 0; i < 3; i++) {
       final y = size.height * (0.55 + i * 0.1);
@@ -126,7 +156,11 @@ class _ArtworkPainter extends CustomPainter {
         ..lineTo(size.width, size.height)
         ..lineTo(0, size.height)
         ..close();
-      canvas.drawPath(path, Paint()..color = HSLColor.fromAHSL(1, hue, 0.35, 0.16 - i * 0.04).toColor());
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = HSLColor.fromAHSL(1, hue, 0.35, 0.16 - i * 0.04).toColor(),
+      );
     }
   }
 

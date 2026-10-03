@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 
 import 'tokens.dart';
 
-TextStyle _sans(double size, double line, FontWeight weight, double tracking) => TextStyle(
-  fontFamily: FontFamilies.sans,
-  fontSize: size,
-  height: line / size,
-  fontWeight: weight,
-  letterSpacing: tracking,
-);
+TextStyle _sans(double size, double line, FontWeight weight, double tracking) =>
+    TextStyle(
+      fontFamily: FontFamilies.sans,
+      fontSize: size,
+      height: line / size,
+      fontWeight: weight,
+      letterSpacing: tracking,
+    );
 
 /// Named text roles from DESIGN.md "Typography", uncolored.
 @immutable

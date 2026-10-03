@@ -12,7 +12,11 @@ import 'settings_page.dart';
 enum DemoPage { catalog, detail, player, settings, components }
 
 class DemoShell extends StatefulWidget {
-  const DemoShell({super.key, required this.themeMode, required this.onThemeMode});
+  const DemoShell({
+    super.key,
+    required this.themeMode,
+    required this.onThemeMode,
+  });
 
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeMode;
@@ -42,7 +46,10 @@ class _DemoShellState extends State<DemoShell> {
         _page = DemoPage.detail;
       }),
     ),
-    DemoPage.detail => DetailPage(title: _title, onPlay: () => _go(DemoPage.player)),
+    DemoPage.detail => DetailPage(
+      title: _title,
+      onPlay: () => _go(DemoPage.player),
+    ),
     DemoPage.player => PlayerPage(title: _title),
     DemoPage.settings => const SettingsPage(),
     DemoPage.components => const ComponentsPage(),
@@ -64,8 +71,10 @@ class _DemoShellState extends State<DemoShell> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1400),
                 child: AnimatedSwitcher(
-                  layoutBuilder: (current, previous) =>
-                      Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
+                  layoutBuilder: (current, previous) => Stack(
+                    alignment: Alignment.topCenter,
+                    children: [...previous, ?current],
+                  ),
 
                   duration: Motion.panel,
                   child: KeyedSubtree(key: ValueKey(_page), child: _content()),
@@ -81,7 +90,12 @@ class _DemoShellState extends State<DemoShell> {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.all(Space.s8),
-                    child: Row(children: [for (final e in _nav.entries) _navItem(e.key, e.value, compact: true)]),
+                    child: Row(
+                      children: [
+                        for (final e in _nav.entries)
+                          _navItem(e.key, e.value, compact: true),
+                      ],
+                    ),
                   ),
                 ),
                 Divider(color: c.borderSubtle),
@@ -100,13 +114,27 @@ class _DemoShellState extends State<DemoShell> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(Space.s12, Space.s12, Space.s12, Space.s24),
+                        padding: const EdgeInsets.fromLTRB(
+                          Space.s12,
+                          Space.s12,
+                          Space.s12,
+                          Space.s24,
+                        ),
                         child: Row(
                           children: [
-                            Icon(Icons.stream, color: c.foreground, size: IconSizes.navigation),
+                            Icon(
+                              Icons.stream,
+                              color: c.foreground,
+                              size: IconSizes.navigation,
+                            ),
                             if (full) ...[
                               const SizedBox(width: Space.s8),
-                              Text('Sentorr', style: context.type.subtitle.copyWith(color: c.foreground)),
+                              Text(
+                                'Sentorr',
+                                style: context.type.subtitle.copyWith(
+                                  color: c.foreground,
+                                ),
+                              ),
                             ],
                           ],
                         ),
@@ -128,7 +156,10 @@ class _DemoShellState extends State<DemoShell> {
                           onChanged: widget.onThemeMode,
                         )
                       else
-                        _navItem(null, (Icons.contrast, 'Toggle theme'), compact: true),
+                        _navItem(null, (
+                          Icons.contrast,
+                          'Toggle theme',
+                        ), compact: true),
                     ],
                   ),
                 ),
@@ -141,13 +172,21 @@ class _DemoShellState extends State<DemoShell> {
     );
   }
 
-  Widget _navItem(DemoPage? p, (IconData, String) item, {required bool compact}) => NavItem(
+  Widget _navItem(
+    DemoPage? p,
+    (IconData, String) item, {
+    required bool compact,
+  }) => NavItem(
     icon: item.$1,
     label: item.$2,
     compact: compact,
     selected: p == _page,
     onTap: p != null
         ? () => _go(p)
-        : () => widget.onThemeMode(Theme.of(context).brightness == Brightness.dark ? ThemeMode.light : ThemeMode.dark),
+        : () => widget.onThemeMode(
+            Theme.of(context).brightness == Brightness.dark
+                ? ThemeMode.light
+                : ThemeMode.dark,
+          ),
   );
 }

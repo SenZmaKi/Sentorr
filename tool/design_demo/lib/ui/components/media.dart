@@ -38,9 +38,14 @@ class MediaTile extends StatelessWidget {
             child: DepthBox(
               style: context.depth.of(SurfaceDepth.raised),
               radius: Radii.card,
-              border: Border.all(color: s.hovered ? c.borderStrong : Colors.transparent),
+              border: Border.all(
+                color: s.hovered ? c.borderStrong : Colors.transparent,
+              ),
               // Artwork clips independently so the frame shadow is not cut off.
-              child: ClipRRect(borderRadius: BorderRadius.circular(Radii.card - 1), child: artwork),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(Radii.card - 1),
+                child: artwork,
+              ),
             ),
           ),
           const SizedBox(height: Space.s8),
@@ -48,9 +53,15 @@ class MediaTile extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.type.bodySmall.copyWith(fontWeight: FontWeight.w500, color: c.foreground),
+            style: context.type.bodySmall.copyWith(
+              fontWeight: FontWeight.w500,
+              color: c.foreground,
+            ),
           ),
-          Text(metadata, style: context.type.caption.copyWith(color: c.foregroundMuted)),
+          Text(
+            metadata,
+            style: context.type.caption.copyWith(color: c.foregroundMuted),
+          ),
         ],
       ),
     );
@@ -90,7 +101,10 @@ class TorrentRow extends StatelessWidget {
       semanticLabel: filename,
       builder: (context, s) => AnimatedContainer(
         duration: Motion.hover,
-        padding: const EdgeInsets.symmetric(vertical: Space.s12, horizontal: Space.s16),
+        padding: const EdgeInsets.symmetric(
+          vertical: Space.s12,
+          horizontal: Space.s16,
+        ),
         decoration: BoxDecoration(
           color: selected
               ? c.selection
@@ -121,11 +135,16 @@ class TorrentRow extends StatelessWidget {
                       filename,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.type.technical.copyWith(color: c.foreground),
+                      style: context.type.technical.copyWith(
+                        color: c.foreground,
+                      ),
                     ),
                   ),
                   const SizedBox(height: Space.s4),
-                  Wrap(spacing: Space.s4, children: [for (final q in quality) Tag(q)]),
+                  Wrap(
+                    spacing: Space.s4,
+                    children: [for (final q in quality) Tag(q)],
+                  ),
                 ],
               ),
             ),
@@ -149,7 +168,10 @@ class TorrentRow extends StatelessWidget {
             const SizedBox(width: Space.s16),
             SizedBox(
               width: 104,
-              child: Align(alignment: Alignment.centerLeft, child: StatusBadge(status)),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: StatusBadge(status),
+              ),
             ),
             action,
           ],

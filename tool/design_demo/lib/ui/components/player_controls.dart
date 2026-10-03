@@ -42,7 +42,11 @@ class PlayerButton extends StatelessWidget {
                 ? OverlayColors.controlSurface
                 : Colors.transparent,
           ),
-          child: Icon(icon, size: large ? 32 : IconSizes.navigation, color: OverlayColors.foreground),
+          child: Icon(
+            icon,
+            size: large ? 32 : IconSizes.navigation,
+            color: OverlayColors.foreground,
+          ),
         ),
       ),
     );
@@ -51,7 +55,12 @@ class PlayerButton extends StatelessWidget {
 
 /// Seek bar: white active track and thumb, #888 inactive over control surface.
 class PlayerSeekBar extends StatelessWidget {
-  const PlayerSeekBar({super.key, required this.position, required this.buffered, required this.onChanged});
+  const PlayerSeekBar({
+    super.key,
+    required this.position,
+    required this.buffered,
+    required this.onChanged,
+  });
 
   final double position;
   final double buffered;
@@ -72,7 +81,9 @@ class PlayerSeekBar extends StatelessWidget {
               child: Container(
                 height: 4,
                 decoration: BoxDecoration(
-                  color: OverlayColors.foregroundSecondary.withValues(alpha: 0.6),
+                  color: OverlayColors.foregroundSecondary.withValues(
+                    alpha: 0.6,
+                  ),
                   borderRadius: BorderRadius.circular(Radii.full),
                 ),
               ),
@@ -82,7 +93,9 @@ class PlayerSeekBar extends StatelessWidget {
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: OverlayColors.foreground,
-            inactiveTrackColor: OverlayColors.inactiveTrack.withValues(alpha: 0.5),
+            inactiveTrackColor: OverlayColors.inactiveTrack.withValues(
+              alpha: 0.5,
+            ),
             thumbColor: OverlayColors.foreground,
             overlayColor: const Color(0x22FFFFFF),
           ),

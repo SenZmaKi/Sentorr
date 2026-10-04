@@ -147,13 +147,15 @@ class TopBar extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (layout.stackedStats)
+                TorrentStats(status: stream, dense: true),
             ],
           ),
         ),
         const SizedBox(width: Space.s16),
         // Sized by the player, not the window. Too narrow, the title
         // keeps the room.
-        if (layout.showStats)
+        if (!layout.stackedStats)
           SizedBox(
             height: PlayerMetrics.control,
             child: TorrentStats(status: stream, compact: layout.compactStats),

@@ -9,12 +9,20 @@ import '../../shared/title_format.dart';
 /// of the file is here, transfer speeds and connected peers. Each fact's
 /// tooltip carries the detail.
 class TorrentStats extends StatelessWidget {
-  const TorrentStats({super.key, required this.status, this.compact = false});
+  const TorrentStats({
+    super.key,
+    required this.status,
+    this.compact = false,
+    this.dense = false,
+  });
 
   final ValueListenable<StreamStatus?> status;
 
   /// Only progress and download speed, for narrow players.
   final bool compact;
+
+  /// Left-aligned and tight, for sitting under a title.
+  final bool dense;
 
   @override
   Widget build(BuildContext context) => ValueListenableBuilder(
@@ -43,6 +51,7 @@ class TorrentStats extends StatelessWidget {
             children: [
               if (progress != null && file != null)
                 _Stat(
+                  dense: dense,
                   leading: progress >= 1
                       ? const Icon(Icons.check_circle_outline_rounded)
                       : _Ring(progress),
@@ -52,6 +61,7 @@ class TorrentStats extends StatelessWidget {
                       '${sizeLabel(t.selectedBytes)} of ${sizeLabel(file.length)}',
                 ),
               _Stat(
+                dense: dense,
                 leading: const Icon(Icons.arrow_downward_rounded),
                 label: _speed(t.downloadBytesPerSecond),
                 tooltip:
@@ -59,12 +69,14 @@ class TorrentStats extends StatelessWidget {
               ),
               if (!compact) ...[
                 _Stat(
+                  dense: dense,
                   leading: const Icon(Icons.arrow_upward_rounded),
                   label: _speed(t.uploadBytesPerSecond),
                   tooltip:
                       'Upload speed · ${sizeLabel(t.uploadedBytes)} shared',
                 ),
                 _Stat(
+                  dense: dense,
                   leading: const Icon(Icons.people_outline_rounded),
                   label: '$peers',
                   tooltip: peers == 0
@@ -106,8 +118,10 @@ class _Stat extends StatelessWidget {
     required this.leading,
     required this.label,
     required this.tooltip,
+    this.dense = false,
   });
 
+  final bool dense;
   final Widget leading;
   final String label;
   final String tooltip;
@@ -118,9 +132,11 @@ class _Stat extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Space.s8),
+        padding: dense
+            ? const EdgeInsets.only(right: Space.s12)
+            : const EdgeInsets.symmetric(horizontal: Space.s8),
         child: IconTheme.merge(
-          data: IconThemeData(size: 16, color: color),
+          data: IconThemeData(size: dense ? 14 : 16, color: color),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -16,6 +16,7 @@ import '../../shared/theme/theme.dart';
 import '../launch/launch_states.dart';
 import '../torrent_picker/torrent_picker.dart';
 import 'menu_rows.dart';
+import 'player_layout.dart';
 
 /// The torrents found for what is playing, beside the picture, to switch
 /// to another. Marks the one streaming and any that failed. Searching under
@@ -100,9 +101,11 @@ class _TorrentsPanelState extends ConsumerState<TorrentsPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final dense = context.playerLayout.handheld;
+    final gap = dense ? Space.s8 : Space.s16;
     // Sized by the player's panel slot.
     return PlayerMenuSurface(
-      padding: const EdgeInsets.all(Space.s16),
+      padding: EdgeInsets.all(dense ? Space.s12 : Space.s16),
       child: ValueListenableBuilder(
         valueListenable: widget.status,
         builder: (context, status, _) {
@@ -128,9 +131,9 @@ class _TorrentsPanelState extends ConsumerState<TorrentsPanel> {
                   onPressed: widget.onClose,
                 ),
               ),
-              const SizedBox(height: Space.s16),
+              SizedBox(height: gap),
               Expanded(child: _body(status, options)),
-              const SizedBox(height: Space.s16),
+              SizedBox(height: gap),
               DialogActions(
                 children: [
                   SButton.ghost(label: 'Cancel', onPressed: widget.onClose),

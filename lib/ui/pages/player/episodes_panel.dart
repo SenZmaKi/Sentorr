@@ -19,6 +19,7 @@ import '../../shared/play_route.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'menu_rows.dart';
+import 'player_layout.dart';
 
 /// The title page's Episodes section, brought beside the picture: section
 /// header, season chips and episode rows, on a floating panel. The playing
@@ -73,9 +74,18 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
     final state = series != null && season != null
         ? ref.watch(seasonEpisodesProvider((series.id, season)))
         : null;
+    final dense = context.playerLayout.handheld;
+    final downloadable =
+        episodes &&
+        series != null &&
+        season != null &&
+        state?.items.any(
+              (e) => e.releaseDate?.dateTime?.isAfter(DateTime.now()) == false,
+            ) ==
+            true;
     // Sized by the player's panel slot.
     return PlayerMenuSurface(
-      padding: const EdgeInsets.all(Space.s16),
+      padding: EdgeInsets.all(dense ? Space.s12 : Space.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -109,40 +119,35 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
               onPressed: widget.onClose,
             ),
           ),
-          if (seasons.length > 1) ...[
-            const SizedBox(height: Space.s16),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.all(Space.s4),
-              child: Row(
-                spacing: Space.s8,
-                children: [
-                  for (final n in seasons)
-                    SChip(
-                      label: 'Season $n',
-                      selected: n == season,
-                      onTap: () => setState(() => _season = n),
-                    ),
-                ],
-              ),
+          if (seasons.length > 1 || downloadable) ...[
+            SizedBox(height: dense ? Space.s8 : Space.s16),
+            Row(
+              children: [
+                Expanded(
+                  child: seasons.length > 1
+                      ? SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: EdgeInsets.all(dense ? Space.s2 : Space.s4),
+                          child: Row(
+                            spacing: dense ? Space.s4 : Space.s8,
+                            children: [
+                              for (final n in seasons)
+                                SChip(
+                                  label: 'Season $n',
+                                  selected: n == season,
+                                  onTap: () => setState(() => _season = n),
+                                ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                if (downloadable)
+                  SeasonDownloadButton(series: series, season: season),
+              ],
             ),
           ],
-          if (episodes &&
-              series != null &&
-              season != null &&
-              state?.items.any(
-                    (e) =>
-                        e.releaseDate?.dateTime?.isAfter(DateTime.now()) ==
-                        false,
-                  ) ==
-                  true) ...[
-            const SizedBox(height: Space.s8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: SeasonDownloadButton(series: series, season: season),
-            ),
-          ],
-          const SizedBox(height: Space.s12),
+          SizedBox(height: dense ? Space.s8 : Space.s12),
           Expanded(
             child: episodes && state != null
                 ? _seasonList(series!, season!, state)
@@ -214,6 +219,7 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
     return EpisodeRow(
       key: current ? _currentKey : null,
       compact: true,
+      dense: context.playerLayout.handheld,
       selected: current,
       code: code,
       name: t.title,
@@ -264,6 +270,7 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
           EpisodeRow(
             key: i == widget.queue.index ? _currentKey : null,
             compact: true,
+            dense: context.playerLayout.handheld,
             selected: i == widget.queue.index,
             name: item.name,
             nameLink: TitleLink(

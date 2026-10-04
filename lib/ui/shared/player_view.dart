@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../player/session.dart';
-import 'pop_out_window.dart';
+import 'picture_in_picture.dart';
 
 /// How the open player is presented.
 enum PlayerView {
@@ -13,7 +13,8 @@ enum PlayerView {
   /// Docked in the app's corner; the app stays usable beneath it.
   mini,
 
-  /// The window itself becomes a small always-on-top video window.
+  /// A small floating video window: the app's own on desktop, the system's
+  /// Picture-in-Picture on Android.
   popOut,
 }
 
@@ -30,28 +31,41 @@ class PlayerViewNotifier extends Notifier<PlayerView> {
     ref.listen(playerSessionProvider.select((s) => s?.request), (_, request) {
       if (request == null) {
         if (state != PlayerView.popOut) return;
-        unawaited(PopOutWindow.instance.exit());
+        unawaited(PictureInPicture.instance.exit());
         state = PlayerView.mini;
       } else if (state == PlayerView.mini) {
         state = PlayerView.full;
       }
     });
+    // The OS opens the window itself when leaving the app mid-playback and
+    // closes it when the viewer taps back into the app.
+    final changes = PictureInPicture.instance.changes.listen((active) {
+      if (active) {
+        state = PlayerView.popOut;
+      } else if (state == PlayerView.popOut) {
+        state = PlayerView.full;
+      }
+    });
+    ref.onDispose(changes.cancel);
     return PlayerView.full;
   }
 
   void expand() {
-    if (state == PlayerView.popOut) unawaited(PopOutWindow.instance.exit());
+    if (state == PlayerView.popOut) unawaited(PictureInPicture.instance.exit());
     state = PlayerView.full;
   }
 
   void minimize() {
-    if (state == PlayerView.popOut) unawaited(PopOutWindow.instance.exit());
+    if (state == PlayerView.popOut) unawaited(PictureInPicture.instance.exit());
     state = PlayerView.mini;
   }
 
   Future<void> popOut() async {
-    if (state == PlayerView.popOut || !PopOutWindow.instance.supported) return;
+    if (state == PlayerView.popOut || !PictureInPicture.instance.supported) {
+      return;
+    }
+    final previous = state;
     state = PlayerView.popOut;
-    await PopOutWindow.instance.enter();
+    if (!await PictureInPicture.instance.enter()) state = previous;
   }
 }

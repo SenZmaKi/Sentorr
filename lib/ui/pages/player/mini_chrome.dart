@@ -87,7 +87,7 @@ class _MiniChromeState extends State<MiniChrome> {
               : context.input.isTouch
               ? _toggleTouch
               : a.expand,
-          onPanStart: widget.poppedOut
+          onPanStart: widget.poppedOut && PopOutWindow.instance.supported
               ? (_) => PopOutWindow.instance.startDragging()
               : null,
           child: Stack(

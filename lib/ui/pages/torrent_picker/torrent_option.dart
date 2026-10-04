@@ -6,6 +6,7 @@ import '../../../torrents/resolution_models.dart';
 import '../../components/source_icon.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/interactive.dart';
+import '../../shared/layout/adaptive.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 
@@ -40,6 +41,7 @@ class TorrentOption extends StatelessWidget {
     final traits = ReleaseTraits.of(r.name);
     final quality = QualityBand.of(r.resolution);
     final uploaded = r.uploadedAt;
+    final dense = context.screen.compact;
     return Interactive(
       onTap: onTap,
       selected: selected,
@@ -51,9 +53,9 @@ class TorrentOption extends StatelessWidget {
       builder: (context, s) => AnimatedContainer(
         duration: Motion.hover,
         curve: Motion.change,
-        padding: const EdgeInsets.symmetric(
-          horizontal: Space.s16,
-          vertical: Space.s12,
+        padding: EdgeInsets.symmetric(
+          horizontal: dense ? Space.s8 : Space.s16,
+          vertical: dense ? Space.s8 : Space.s12,
         ),
         decoration: BoxDecoration(
           color: s.pressed
@@ -78,11 +80,11 @@ class TorrentOption extends StatelessWidget {
                 color: selected ? c.foreground : c.foregroundMuted,
               ),
             ),
-            const SizedBox(width: Space.s12),
+            SizedBox(width: dense ? Space.s8 : Space.s12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: Space.s4,
+                spacing: dense ? Space.s2 : Space.s4,
                 children: [
                   Tooltip(
                     message: r.name,

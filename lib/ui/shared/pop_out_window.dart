@@ -1,13 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/painting.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'picture_in_picture.dart';
 import 'window_manager.dart' as app;
 
 /// Turns the app window into a small, always-on-top, frameless video window
 /// in the screen's corner, and back. The player keeps playing throughout:
 /// it is the same window and the same player, only resized.
-class PopOutWindow {
+class PopOutWindow implements PictureInPicture {
   PopOutWindow._();
   static final instance = PopOutWindow._();
 
@@ -19,10 +22,24 @@ class PopOutWindow {
   bool _wasOnTop = false;
   bool _active = false;
 
+  @override
   bool get supported => app.supportsWindowCustomization;
 
-  Future<void> enter() async {
-    if (!supported || _active) return;
+  @override
+  bool get systemControls => false;
+
+  @override
+  Stream<bool> get changes => const Stream.empty();
+
+  @override
+  Stream<PipAction> get actions => const Stream.empty();
+
+  @override
+  Future<void> sync(PipControls? controls) async {}
+
+  @override
+  Future<bool> enter() async {
+    if (!supported || _active) return false;
     _active = true;
     app.WindowManager.getInstance().suspendBoundsSaving = true;
     if (await windowManager.isFullScreen()) {
@@ -55,8 +72,10 @@ class PopOutWindow {
     );
     await windowManager.setAspectRatio(16 / 9);
     await windowManager.setAlwaysOnTop(true);
+    return true;
   }
 
+  @override
   Future<void> exit() async {
     if (!supported || !_active) return;
     _active = false;

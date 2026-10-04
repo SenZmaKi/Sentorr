@@ -12,6 +12,7 @@ import '../../../player/session.dart';
 import '../../../player/sleep_timer.dart';
 import '../../../player/stream/torrent_playback.dart';
 import '../../../shared/app_lifecycle.dart';
+import '../../shared/picture_in_picture.dart';
 import '../../shared/player_view.dart';
 import '../../shared/screen_rotation.dart';
 import 'captions_view.dart';
@@ -68,7 +69,25 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     _session = ref.read(playerSessionProvider);
     final s = _engine.stream;
     _subscriptions.addAll([
-      s.playing.listen((playing) => _ui.playing = playing),
+      s.playing.listen((playing) {
+        _ui.playing = playing;
+        _syncPip();
+      }),
+      PictureInPicture.instance.actions.listen(_onPipAction),
+      // Closing the window with its X leaves the app in the background;
+      // tapping it to expand does not.
+      PictureInPicture.instance.changes
+          .where((active) => !active)
+          .asyncMap(
+            (_) => Future<void>.delayed(const Duration(milliseconds: 400)),
+          )
+          .listen((_) {
+            if (!ref
+                .read(AppLifecycleNotifier.provider.notifier)
+                .isForeground) {
+              unawaited(_engine.player.pause());
+            }
+          }),
       s.completed.listen(_onCompleted),
       s.error.listen((_) {
         // Only failures that leave nothing playing are the viewer's
@@ -79,6 +98,33 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       }),
     ]);
     _ui.wake();
+  }
+
+  void _onPipAction(PipAction action) {
+    switch (action) {
+      case PipAction.previous:
+        _actions.previous();
+      case PipAction.playPause:
+        _actions.togglePlay(acknowledge: false);
+      case PipAction.next:
+        _actions.next();
+    }
+  }
+
+  /// Keeps the OS window's buttons in step, and lets leaving the app while
+  /// playing open it.
+  void _syncPip() {
+    final session = ref.read(playerSessionProvider);
+    unawaited(
+      PictureInPicture.instance.sync(
+        session == null
+            ? null
+            : PipControls(
+                playing: _engine.state.playing,
+                hasNext: session.queue?.next != null,
+              ),
+      ),
+    );
   }
 
   void _onCompleted(bool completed) {
@@ -108,6 +154,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
   @override
   void dispose() {
+    unawaited(PictureInPicture.instance.sync(null));
     unawaited(ScreenRotation.release());
     _focusPlayback.dispose();
     for (final s in _subscriptions) {
@@ -127,6 +174,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       setState(() => _ended = false);
       _ui.itemChanged();
     });
+    ref.listen(
+      playerSessionProvider.select((s) => (s != null, s?.queue?.next != null)),
+      (_, _) => _syncPip(),
+    );
     ref.listen(playerViewProvider, (_, view) {
       // Keys belong to the player again once it fills the app.
       if (view != PlayerView.mini) {
@@ -144,7 +195,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
           lifecycle,
           enabled:
               ref.read(settingsProvider).streaming.pauseOnFocusLoss &&
-              ref.read(playerViewProvider) != PlayerView.popOut,
+              ref.read(playerViewProvider) != PlayerView.popOut &&
+              // Leaving the app while playing opens the system window,
+              // which keeps playing; pausing here would race it.
+              !PictureInPicture.instance.systemControls,
         ),
       );
     });
@@ -252,7 +306,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                           ),
                         ),
                       ),
-                      if (!full)
+                      if (!full &&
+                          !(view == PlayerView.popOut &&
+                              PictureInPicture.instance.systemControls))
                         MiniChrome(
                           player: p,
                           actions: _actions,

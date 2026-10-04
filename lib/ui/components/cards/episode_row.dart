@@ -19,6 +19,7 @@ class EpisodeRow extends StatelessWidget {
     this.plot,
     this.duration,
     this.compact = false,
+    this.dense = false,
     this.onTap,
     this.preview,
     this.selected = false,
@@ -39,6 +40,9 @@ class EpisodeRow extends StatelessWidget {
 
   /// A narrower still for compact layouts.
   final bool compact;
+
+  /// Tighter still for phones: smaller still and padding, no plot.
+  final bool dense;
   final VoidCallback? onTap;
   final WidgetBuilder? preview;
 
@@ -69,7 +73,7 @@ class EpisodeRow extends StatelessWidget {
         builder: (context, s) => AnimatedContainer(
           duration: Motion.hover,
           curve: Motion.change,
-          padding: const EdgeInsets.all(Space.s12),
+          padding: EdgeInsets.all(dense ? Space.s8 : Space.s12),
           decoration: BoxDecoration(
             color: s.pressed
                 ? c.statePressed
@@ -87,7 +91,11 @@ class EpisodeRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                width: compact ? 128 : 176,
+                width: dense
+                    ? 96
+                    : compact
+                    ? 128
+                    : 176,
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
                   child: ArtworkFrame(
@@ -138,7 +146,7 @@ class EpisodeRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: Space.s16),
+              SizedBox(width: dense ? Space.s12 : Space.s16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,17 +162,18 @@ class EpisodeRow extends StatelessWidget {
                     nameLink ?? CardTitle(name, large: true),
                     const SizedBox(height: Space.s2),
                     MetaLine(meta),
-                    if (plot case final text? when text.isNotEmpty) ...[
-                      const SizedBox(height: Space.s8),
-                      Text(
-                        text,
-                        maxLines: compact ? 2 : 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.type.bodySmall.copyWith(
-                          color: c.foregroundMuted,
+                    if (!dense)
+                      if (plot case final text? when text.isNotEmpty) ...[
+                        const SizedBox(height: Space.s8),
+                        Text(
+                          text,
+                          maxLines: compact ? 2 : 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.type.bodySmall.copyWith(
+                            color: c.foregroundMuted,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
                   ],
                 ),
               ),

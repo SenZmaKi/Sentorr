@@ -2,6 +2,7 @@ package com.sentorr.sentorr
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -28,7 +29,24 @@ class MainActivity : FlutterActivity() {
     override fun shouldDestroyEngineWithHost(): Boolean =
         !isChangingConfigurations && !ForegroundService.isRunningServiceState.value
 
+    private var pip: PipController? = null
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        pip?.onUserLeaveHint()
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration,
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        pip?.onModeChanged(isInPictureInPictureMode)
+    }
+
     override fun onDestroy() {
+        pip?.dispose()
+        pip = null
         val destroyEngine = shouldDestroyEngineWithHost()
         super.onDestroy()
         if (destroyEngine) FlutterEngineCache.getInstance().remove(ENGINE_ID)
@@ -37,6 +55,8 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         FlutterEngineCache.getInstance().put(ENGINE_ID, flutterEngine)
+        pip?.dispose()
+        pip = PipController(this, flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             "sentorr/update_installer",

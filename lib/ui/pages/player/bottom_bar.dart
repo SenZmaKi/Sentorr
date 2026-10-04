@@ -4,7 +4,7 @@ import 'package:media_kit/media_kit.dart';
 import '../../../player/models.dart';
 import '../../components/motion.dart';
 import '../../components/player_control.dart';
-import '../../shared/pop_out_window.dart';
+import '../../shared/picture_in_picture.dart';
 import '../../shared/screen_rotation.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
@@ -115,7 +115,7 @@ class BottomBar extends StatelessWidget {
         if (queue != null) BarControl.episodes,
         if (next != null || queue?.canExtend == true) BarControl.next,
         if (queue?.previous != null) BarControl.previous,
-        if (PopOutWindow.instance.supported) BarControl.popOut,
+        if (PictureInPicture.instance.supported) BarControl.popOut,
         if (layout.showVolume) BarControl.volume,
       },
     );

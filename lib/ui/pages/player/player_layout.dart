@@ -82,10 +82,11 @@ class PlayerLayout {
   /// Volume is a hover slider; touch devices have hardware keys for it.
   bool get showVolume => input.canHover;
 
-  /// The live torrent's stats in the top bar: none on a phone held upright
-  /// (the title needs the room), the short form below expanded.
-  bool get showStats => !compact;
-  bool get compactStats => !size.expanded;
+  /// The live torrent's stats in the top bar: on a phone held upright they
+  /// sit under the title, which needs the width; elsewhere they trail it,
+  /// in the short form below expanded.
+  bool get stackedStats => compact;
+  bool get compactStats => !compact && !size.expanded;
 
   /// The near-end Up next card floats over the picture's corner; phones
   /// have no corner to spare, and the end screen offers next instead.

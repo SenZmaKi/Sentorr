@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: SenZmaKi/libtorrent_dart
-          ref: de9fc4b07ff63dd3f3433497c0fb48568c86f5af
+          ref: 8763344b3c024f66db16d52fe4ccd6ad5dad42b5
           submodules: recursive
           path: native/libtorrent_dart
 

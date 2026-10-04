@@ -44,7 +44,6 @@ class AsyncShelf<T> extends ConsumerWidget {
     final layout = HomeLayout.of(context);
     Shelf shelf({
       int length = 0,
-      bool reveal = false,
       IndexedWidgetBuilder? builder,
       Widget? message,
     }) => Shelf(
@@ -59,14 +58,12 @@ class AsyncShelf<T> extends ConsumerWidget {
       itemCount: length,
       itemBuilder: builder ?? (_, _) => const SizedBox.shrink(),
       message: message,
-      reveal: reveal,
     );
     final content = items.when(
       data: (list) => list.isEmpty
           ? null
           : shelf(
               length: list.length,
-              reveal: true,
               builder: (context, i) => cardBuilder(context, list[i], i),
             ),
       error: (_, _) => shelf(

@@ -209,7 +209,9 @@ class PlayerActions {
   }
 
   Future<void> close() async {
-    unawaited(_player.pause());
+    // Muted, not paused: the controls would flip to "play" while the
+    // player fades out, and closing stops it.
+    unawaited(engine.silence());
     unawaited(ScreenRotation.release());
     if (ui.fullscreen) await toggleFullscreen();
     session.close();

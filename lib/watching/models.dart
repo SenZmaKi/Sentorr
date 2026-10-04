@@ -1,5 +1,7 @@
 import '../imdb/models.dart';
+import '../library/models.dart';
 import '../player/models.dart';
+import '../torrents/models.dart';
 import 'title_codec.dart';
 
 /// How far the viewer got through one movie or episode.
@@ -12,6 +14,7 @@ class WatchEntry {
     required this.position,
     required this.duration,
     required this.updatedAt,
+    this.release,
   });
 
   factory WatchEntry.of(
@@ -19,6 +22,7 @@ class WatchEntry {
     required Duration position,
     required Duration duration,
     DateTime? at,
+    TorrentRelease? release,
   }) => WatchEntry(
     title: item.title,
     series: item.series,
@@ -27,6 +31,7 @@ class WatchEntry {
     position: position,
     duration: duration,
     updatedAt: at ?? DateTime.now(),
+    release: release,
   );
 
   /// Past this much of the runtime the rest is usually credits.
@@ -38,6 +43,9 @@ class WatchEntry {
   final int? season, episode;
   final Duration position, duration;
   final DateTime updatedAt;
+
+  /// The torrent last streamed for this item, so resuming skips the search.
+  final TorrentRelease? release;
 
   String get id => title.id;
 
@@ -70,6 +78,7 @@ class WatchEntry {
     'positionMs': position.inMilliseconds,
     'durationMs': duration.inMilliseconds,
     'updatedAt': updatedAt.toUtc().toIso8601String(),
+    if (release != null) 'release': releaseToJson(release!),
   };
 
   /// Null when [json] is not an entry, so one bad record is skipped.
@@ -89,6 +98,7 @@ class WatchEntry {
       position: Duration(milliseconds: position),
       duration: Duration(milliseconds: duration),
       updatedAt: at.toLocal(),
+      release: releaseFromJson(json['release']),
     );
   }
 }

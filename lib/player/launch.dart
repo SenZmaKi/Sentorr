@@ -8,6 +8,7 @@ import '../torrents/match.dart';
 import '../torrents/models.dart';
 import '../torrents/providers.dart';
 import '../torrents/resolution_models.dart';
+import '../watching/notifier.dart';
 import 'models.dart';
 import 'queue_builder.dart';
 import 'session.dart';
@@ -75,7 +76,7 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
       request: request,
       preferences: torrentPreferencesFor(ref.read(settingsProvider).torrents),
     );
-    _run(cancel);
+    _run(cancel, reuseSaved: true);
   }
 
   /// Searches again, optionally under another [title].
@@ -120,7 +121,11 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     return _cancel = CancelToken();
   }
 
-  Future<void> _run(CancelToken cancel, {String? title}) async {
+  Future<void> _run(
+    CancelToken cancel, {
+    String? title,
+    bool reuseSaved = false,
+  }) async {
     try {
       final item = state!.item ?? await _item(state!.request, cancel);
       if (cancel != _cancel) return;
@@ -131,6 +136,31 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
         final request = state!.request;
         this.cancel();
         ref.read(playerSessionProvider.notifier).play(request, queue: queue);
+        return;
+      }
+      final saved = reuseSaved
+          ? ref.read(watchHistoryProvider.notifier).savedRelease(item.id)
+          : null;
+      if (saved != null) {
+        // Resuming: the torrent last streamed for it, no search.
+        _log.info('Resuming $item from ${saved.name}');
+        final queue = _prepared;
+        final request = state!.request;
+        this.cancel();
+        ref
+            .read(playerSessionProvider.notifier)
+            .play(
+              request,
+              queue: queue,
+              torrent: TorrentCandidate(
+                release: saved,
+                score: 0,
+                qualityScore: 0,
+                availabilityScore: 0,
+                sizeScore: 0,
+                requiresFileSelection: saved.isPack,
+              ),
+            );
         return;
       }
       final languages = ref.read(settingsProvider).torrents.languages;

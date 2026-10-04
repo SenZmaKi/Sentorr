@@ -16,6 +16,7 @@ class ResumeCard extends StatelessWidget {
     required this.meta,
     required this.artwork,
     required this.progress,
+    this.position,
     this.runtime,
     this.chip,
     this.chipIcon,
@@ -31,7 +32,9 @@ class ResumeCard extends StatelessWidget {
 
   /// Fraction watched, 0–1.
   final double progress;
-  final Duration? runtime;
+
+  /// Where the viewer stopped and the file's length, as the player shows.
+  final Duration? position, runtime;
 
   /// Top-left context, e.g. an episode code or the title kind.
   final String? chip;
@@ -50,7 +53,8 @@ class ResumeCard extends StatelessWidget {
   static double textHeight(CardLines l) =>
       Space.s12 + l.body + Space.s2 + l.caption;
 
-  Duration? get _left => runtime == null ? null : runtime! * (1 - progress);
+  Duration? get _left =>
+      runtime == null || position == null ? null : runtime! - position!;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +67,7 @@ class ResumeCard extends StatelessWidget {
         excludeChildSemantics: titleLink == null && metaLink == null,
         semanticLabel: [
           'Resume $title',
-          if (left != null) '${durationLabel(left)} left',
+          if (left != null) '${clockLabel(left)} left',
         ].join(', '),
         builder: (context, s) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,6 +91,7 @@ class ResumeCard extends StatelessWidget {
                     bottom: Space.s8,
                     child: _PlayerBar(
                       progress: progress,
+                      position: position,
                       runtime: runtime,
                       left: left,
                       active: s.hovered || s.focused,
@@ -109,20 +114,20 @@ class ResumeCard extends StatelessWidget {
 class _PlayerBar extends StatelessWidget {
   const _PlayerBar({
     required this.progress,
+    required this.position,
     required this.runtime,
     required this.left,
     required this.active,
   });
 
   final double progress;
-  final Duration? runtime;
-  final Duration? left;
+  final Duration? position, runtime, left;
   final bool active;
 
   @override
   Widget build(BuildContext context) {
     final type = context.type;
-    final runtime = this.runtime;
+    final runtime = this.runtime, position = this.position;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -153,20 +158,17 @@ class _PlayerBar extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (runtime != null)
+                  if (runtime != null && position != null)
                     Text(
-                      '${clockLabel(runtime * progress)} / ${clockLabel(runtime)}',
-                      style: type.technical.copyWith(
+                      '${clockLabel(position)} / ${clockLabel(runtime)}',
+                      style: type.timecode.copyWith(
                         color: OverlayColors.foregroundSecondary,
-                        fontSize: 12,
-                        height: 16 / 12,
                       ),
                     ),
                 ],
               ),
             ),
-            if (left != null)
-              OverlayBadge('${stampLabel(left!)} left', technical: true),
+            if (left != null) OverlayBadge('${clockLabel(left!)} left'),
           ],
         ),
         const SizedBox(height: Space.s8),

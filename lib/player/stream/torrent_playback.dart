@@ -143,6 +143,16 @@ class TorrentPlayback {
       _update(generation, (s) => s.copyWith(options: found));
       await _stream(generation, item, candidate, resume: start);
     } catch (error, stack) {
+      // A torrent handed in without alternatives, e.g. one saved for
+      // resuming, falls back to a search.
+      if (torrent != null && options == null && !_stale(generation)) {
+        try {
+          final found = await find(item, _cancel!);
+          _update(generation, (s) => s.copyWith(options: found));
+        } on Object {
+          // Fail without alternatives.
+        }
+      }
       _fail(generation, item, candidate, error, stack);
     }
   }

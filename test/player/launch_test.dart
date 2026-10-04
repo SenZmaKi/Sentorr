@@ -5,13 +5,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/app/services.dart';
 import 'package:sentorr/imdb/models.dart';
 import 'package:sentorr/player/launch.dart';
+import 'package:sentorr/player/models.dart';
 import 'package:sentorr/player/queue_builder.dart';
 import 'package:sentorr/player/session.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/torrents/models.dart';
 import 'package:sentorr/torrents/providers.dart';
 import 'package:sentorr/torrents/repository.dart';
+import 'package:sentorr/watching/models.dart';
 
+import '../support/fake_history.dart';
 import '../support/fake_library.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_torrents.dart';
@@ -28,10 +31,12 @@ final _series = fakeTitle(2, series: true);
 ProviderContainer _container(
   FakeTorrentSource source, {
   TorrentSettings torrents = const TorrentSettings(),
+  List<WatchEntry> watched = const [],
 }) {
   final container = ProviderContainer(
     overrides: [
       ...libraryOverrides(),
+      ...watchHistoryOverrides(watched),
       initialSettingsProvider.overrideWithValue(
         AppSettings(torrents: torrents),
       ),
@@ -81,6 +86,29 @@ void main() {
     final session = container.read(playerSessionProvider)!;
     expect(session.current!.id, 'tt1');
     expect(session.torrents['tt1'], same(found.match!.candidate));
+  });
+
+  test('resuming plays the saved torrent without searching', () async {
+    final source = FakeTorrentSource((_) async => [fakeRelease(2)]);
+    final saved = fakeRelease(1);
+    final container = _container(
+      source,
+      watched: [
+        WatchEntry.of(
+          PlaybackItem(title: _movie),
+          position: const Duration(minutes: 20),
+          duration: const Duration(hours: 1),
+          release: saved,
+        ),
+      ],
+    );
+    container.read(playbackLaunchProvider.notifier).start(PlayTitle(_movie));
+    expect(await _settled(container), isNull);
+    expect(source.queries, isEmpty);
+    expect(
+      container.read(playerSessionProvider)!.torrents['tt1']!.release.infoHash,
+      saved.infoHash,
+    );
   });
 
   test('with review off an exact match plays at once', () async {

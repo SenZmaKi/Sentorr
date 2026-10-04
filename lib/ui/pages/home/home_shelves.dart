@@ -147,6 +147,7 @@ class ContinueWatchingShelf extends ConsumerWidget {
               : kindLabel(show),
           chipIcon: kindIcon(show),
           progress: entry.progress,
+          position: entry.position,
           runtime: entry.duration,
           artwork: TitleBackdrop(title: show),
           onTap: () => ref.resume(entry),

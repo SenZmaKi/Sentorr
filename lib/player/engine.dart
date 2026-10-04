@@ -110,6 +110,13 @@ class PlaybackEngine {
     await native.command([forward ? 'frame-step' : 'frame-back-step']);
   }
 
+  /// Silences playback without a visible state change, for the moments
+  /// before the player closes and stops it.
+  Future<void> silence() async {
+    final native = player.platform;
+    if (native is NativePlayer) await native.setProperty('mute', 'yes');
+  }
+
   /// Restart when past the opening seconds, as a Previous press would.
   bool get pastStart => player.state.position > const Duration(seconds: 3);
 
@@ -160,7 +167,14 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     canRecord: () =>
         engine.streaming.status.value?.stage == StreamStage.streaming,
     save: (item, position, duration) {
-      unawaited(history.record(item, position: position, duration: duration));
+      unawaited(
+        history.record(
+          item,
+          position: position,
+          duration: duration,
+          release: engine.streaming.status.value?.torrent?.release,
+        ),
+      );
       unawaited(following.record(item, position: position, duration: duration));
     },
   );

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/imdb/models.dart';
 import 'package:sentorr/player/models.dart';
 import 'package:sentorr/shared/persistence/json_file_store.dart';
+import 'package:sentorr/torrents/models.dart';
 import 'package:sentorr/watching/models.dart';
 import 'package:sentorr/watching/notifier.dart';
 import 'package:sentorr/watching/repository.dart';
@@ -33,7 +34,43 @@ PlaybackItem _episode(int n) => PlaybackItem(
   return (container, repository);
 }
 
+final _release = TorrentRelease(
+  source: TorrentSourceId.yts,
+  name: 'Movie.1080p',
+  infoHash: 'abc',
+  magnet: Uri.parse('magnet:?xt=urn:btih:abc'),
+  seeders: 5,
+  sizeBytes: 1000,
+);
+
 void main() {
+  test('the streamed torrent is kept for resuming, until finished', () async {
+    final (container, _) = _container();
+    final history = container.read(watchHistoryProvider.notifier);
+    await history.record(
+      _movie,
+      position: const Duration(minutes: 20),
+      duration: _hour,
+      release: _release,
+    );
+    await history.record(
+      _movie,
+      position: const Duration(minutes: 25),
+      duration: _hour,
+    );
+    expect(history.savedRelease(_movie.id)?.infoHash, 'abc');
+    final restored = WatchEntry.fromJson(
+      container.read(watchHistoryProvider).single.toJson(),
+    );
+    expect(restored?.release?.magnet, _release.magnet);
+    await history.record(
+      _movie,
+      position: const Duration(minutes: 59),
+      duration: _hour,
+    );
+    expect(history.savedRelease(_movie.id), isNull);
+  });
+
   test('a sampled item is ignored; one watched past 30s is saved', () async {
     final (container, repository) = _container();
     final history = container.read(watchHistoryProvider.notifier);

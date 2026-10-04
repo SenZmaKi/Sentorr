@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
 import '../player/models.dart';
+import '../torrents/models.dart';
 import 'models.dart';
 import 'repository.dart';
 
@@ -46,15 +47,23 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
     return _entries = ref.watch(initialWatchHistoryProvider);
   }
 
-  /// Notes that [item] is at [position] of [duration].
+  /// Notes that [item] is at [position] of [duration], streamed from
+  /// [release]. Without one, the torrent noted earlier stays.
   Future<void> record(
     PlaybackItem item, {
     required Duration position,
     required Duration duration,
+    TorrentRelease? release,
   }) {
     if (duration <= Duration.zero) return Future.value();
-    final entry = WatchEntry.of(item, position: position, duration: duration);
-    final known = _entries.any((e) => e.id == item.id);
+    final previous = _entries.where((e) => e.id == item.id).firstOrNull;
+    final entry = WatchEntry.of(
+      item,
+      position: position,
+      duration: duration,
+      release: release ?? previous?.release,
+    );
+    final known = previous != null;
     // Skipping straight to the end of something never started is not
     // watching it.
     if (!known && (entry.finished || position < minimumWatched)) {
@@ -71,6 +80,13 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
     if (entry == null || entry.finished) return null;
     final at = entry.position - rewind;
     return at > Duration.zero ? at : null;
+  }
+
+  /// The torrent to resume [itemId] from; null when it is finished or none
+  /// was noted.
+  TorrentRelease? savedRelease(String itemId) {
+    final entry = _entries.where((e) => e.id == itemId).firstOrNull;
+    return entry == null || entry.finished ? null : entry.release;
   }
 
   /// Forgets a movie, or every episode of a series, by [WatchEntry.key].

@@ -46,46 +46,51 @@ class TorrentStats extends StatelessWidget {
           '$peers peers',
         ].join(', '),
         child: ExcludeSemantics(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (progress != null && file != null)
+          // Shrinks to fit narrow headers instead of overflowing.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: dense ? Alignment.centerLeft : Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (progress != null && file != null)
+                  _Stat(
+                    dense: dense,
+                    leading: progress >= 1
+                        ? const Icon(Icons.check_circle_outline_rounded)
+                        : _Ring(progress),
+                    label: progress >= 1 ? 'Downloaded' : _percent(progress),
+                    tooltip:
+                        '${_percent(progress)} of the video downloaded · '
+                        '${sizeLabel(t.selectedBytes)} of ${sizeLabel(file.length)}',
+                  ),
                 _Stat(
                   dense: dense,
-                  leading: progress >= 1
-                      ? const Icon(Icons.check_circle_outline_rounded)
-                      : _Ring(progress),
-                  label: progress >= 1 ? 'Downloaded' : _percent(progress),
+                  leading: const Icon(Icons.arrow_downward_rounded),
+                  label: _speed(t.downloadBytesPerSecond),
                   tooltip:
-                      '${_percent(progress)} of the video downloaded · '
-                      '${sizeLabel(t.selectedBytes)} of ${sizeLabel(file.length)}',
+                      'Download speed · ${sizeLabel(t.receivedBytes)} received',
                 ),
-              _Stat(
-                dense: dense,
-                leading: const Icon(Icons.arrow_downward_rounded),
-                label: _speed(t.downloadBytesPerSecond),
-                tooltip:
-                    'Download speed · ${sizeLabel(t.receivedBytes)} received',
-              ),
-              if (!compact) ...[
-                _Stat(
-                  dense: dense,
-                  leading: const Icon(Icons.arrow_upward_rounded),
-                  label: _speed(t.uploadBytesPerSecond),
-                  tooltip:
-                      'Upload speed · ${sizeLabel(t.uploadedBytes)} shared',
-                ),
-                _Stat(
-                  dense: dense,
-                  leading: const Icon(Icons.people_outline_rounded),
-                  label: '$peers',
-                  tooltip: peers == 0
-                      ? 'Looking for peers'
-                      : '$peers ${peers == 1 ? 'peer' : 'peers'} connected, '
-                            '${t.connectedSeeds} with the whole file',
-                ),
+                if (!compact) ...[
+                  _Stat(
+                    dense: dense,
+                    leading: const Icon(Icons.arrow_upward_rounded),
+                    label: _speed(t.uploadBytesPerSecond),
+                    tooltip:
+                        'Upload speed · ${sizeLabel(t.uploadedBytes)} shared',
+                  ),
+                  _Stat(
+                    dense: dense,
+                    leading: const Icon(Icons.people_outline_rounded),
+                    label: '$peers',
+                    tooltip: peers == 0
+                        ? 'Looking for peers'
+                        : '$peers ${peers == 1 ? 'peer' : 'peers'} connected, '
+                              '${t.connectedSeeds} with the whole file',
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       );

@@ -13,6 +13,7 @@ import '../models.dart';
 import 'file_choice.dart';
 import 'media_kit_adapter.dart';
 import 'offline_source.dart';
+import 'parked_stream.dart';
 import 'stream_status.dart';
 
 export 'stream_status.dart';
@@ -45,7 +46,9 @@ class TorrentPlayback {
     required this.find,
     required this.outputReady,
     OfflineLookup? offline,
-  }) : offline = offline ?? ((_) => null),
+    ParkedStreams? parked,
+  }) : parked = parked ?? ParkedStreams(),
+       offline = offline ?? ((_) => null),
        _player = player,
        _adapter = MediaKitTorrentAdapter(player);
 
@@ -65,6 +68,9 @@ class TorrentPlayback {
   final SessionConfig configFor;
   final TorrentFinder find;
 
+  /// Where a session waits, paused, after the player closes.
+  final ParkedStreams parked;
+
   /// The item's download, played or shared before any search.
   final OfflineLookup offline;
 
@@ -79,6 +85,8 @@ class TorrentPlayback {
   /// replace one that failed before playing.
   Duration? _start;
   TorrentStreamSession? _session;
+  TorrentStream? _served;
+  TorrentCandidate? _candidate;
   StreamSubscription<TorrentStreamState>? _transfer;
   CancelToken? _cancel;
   Future<void>? _closing;
@@ -101,6 +109,8 @@ class TorrentPlayback {
     _item = item;
     _start = start;
     _autoSwitches = 0;
+    if (await _resume(generation, item, torrent, start)) return;
+    if (_stale(generation)) return;
     final saved = torrent == null && options == null ? offline(item) : null;
     if (saved is LocalFile && File(saved.path).existsSync()) {
       return _playLocal(generation, item, saved.path, start);
@@ -223,6 +233,95 @@ class TorrentPlayback {
     status.value = null;
   }
 
+  /// Stops the player and leaves a streaming torrent paused for the next
+  /// play of the same item; anything else is released as [close] does.
+  Future<void> park() async {
+    final session = _session, served = _served, candidate = _candidate;
+    final item = _item,
+        streaming = status.value?.stage == StreamStage.streaming;
+    if (session == null ||
+        served == null ||
+        candidate == null ||
+        item == null ||
+        !streaming) {
+      return close();
+    }
+    _generation++;
+    _switchTimer?.cancel();
+    _item = null;
+    _start = null;
+    _cancel?.cancel();
+    _cancel = null;
+    _session = null;
+    _served = null;
+    _candidate = null;
+    final transfer = _transfer;
+    _transfer = null;
+    await _closing;
+    await _player.stop();
+    await transfer?.cancel();
+    try {
+      await session.setTransferPaused(true);
+      _log.info('Parked ${candidate.release.name}');
+      await parked.park(
+        ParkedStream(
+          itemId: item.id,
+          candidate: candidate,
+          session: session,
+          stream: served,
+        ),
+      );
+    } on Object catch (error) {
+      _log.warning('Could not park the torrent', error);
+      await session.close();
+    }
+    status.value = null;
+  }
+
+  /// Plays [item] from its parked session when [torrent] is none or the
+  /// same release; false when nothing usable was parked.
+  Future<bool> _resume(
+    int generation,
+    PlaybackItem item,
+    TorrentCandidate? torrent,
+    Duration? start,
+  ) async {
+    final held = parked.take(item.id);
+    if (held == null) return false;
+    if (torrent != null &&
+        torrent.release.infoHash != held.candidate.release.infoHash) {
+      unawaited(held.session.close());
+      return false;
+    }
+    _log.info('Resuming parked ${held.candidate.release.name}');
+    status.value = StreamStatus(
+      stage: StreamStage.preparing,
+      torrent: held.candidate,
+    );
+    try {
+      await outputReady();
+      if (_stale(generation)) {
+        unawaited(held.session.close());
+        return true;
+      }
+      await held.session.setTransferPaused(false);
+      _session = held.session;
+      _served = held.stream;
+      _candidate = held.candidate;
+      _transfer = held.session.states.listen(
+        (transfer) =>
+            _update(generation, (s) => s.copyWith(transfer: transfer)),
+      );
+      await _adapter.open(held.stream, start: start);
+      _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
+      return true;
+    } on Object catch (error) {
+      _log.info('Parked torrent unusable, starting afresh: $error');
+      await _release();
+      return false;
+    }
+  }
+
   void dispose() {
     _switchTimer?.cancel();
     status.dispose();
@@ -335,6 +434,8 @@ class TorrentPlayback {
     _update(generation, (s) => s.copyWith(stage: StreamStage.preparing));
     final stream = await session.prepareFile(file.index);
     if (_stale(generation)) return;
+    _served = stream;
+    _candidate = candidate;
     await _adapter.open(stream, start: resume);
     _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
     _log.info('Playing $item after ${clock.elapsedMilliseconds}ms');
@@ -410,6 +511,8 @@ class TorrentPlayback {
     }
     final session = _session, transfer = _transfer;
     _session = null;
+    _served = null;
+    _candidate = null;
     _transfer = null;
     if (session != null) {
       final earlier = _closing;

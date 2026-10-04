@@ -73,21 +73,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         _ui.playing = playing;
         _syncPip();
       }),
-      PictureInPicture.instance.actions.listen(_onPipAction),
-      // Closing the window with its X leaves the app in the background;
-      // tapping it to expand does not.
-      PictureInPicture.instance.changes
-          .where((active) => !active)
-          .asyncMap(
-            (_) => Future<void>.delayed(const Duration(milliseconds: 400)),
-          )
-          .listen((_) {
-            if (!ref
-                .read(AppLifecycleNotifier.provider.notifier)
-                .isForeground) {
-              unawaited(_engine.player.pause());
-            }
-          }),
       s.completed.listen(_onCompleted),
       s.error.listen((_) {
         // Only failures that leave nothing playing are the viewer's
@@ -96,8 +81,32 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
           _engine.streaming.unplayable();
         }
       }),
+      PictureInPicture.instance.actions.listen(_onPipAction),
+      PictureInPicture.instance.changes
+          .where((active) => !active)
+          .listen((_) => _awaitPipOutcome()),
     ]);
     _ui.wake();
+  }
+
+  /// The window closing is either the viewer expanding it, which brings the
+  /// app back to the foreground, or dismissing it, which sends the app to
+  /// the background: the next lifecycle change says which.
+  bool _pipClosing = false;
+
+  void _awaitPipOutcome() {
+    final lifecycle = ref.read(AppLifecycleNotifier.provider);
+    if (lifecycle == AppLifecycleState.resumed) return;
+    _pipClosing = true;
+    Future<void>.delayed(const Duration(seconds: 2), () => _pipClosing = false);
+  }
+
+  void _settlePipOutcome(AppLifecycleState lifecycle) {
+    if (!_pipClosing || lifecycle == AppLifecycleState.inactive) return;
+    _pipClosing = false;
+    if (lifecycle != AppLifecycleState.resumed) {
+      unawaited(_engine.player.pause());
+    }
   }
 
   void _onPipAction(PipAction action) {
@@ -190,6 +199,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       }
     });
     ref.listen(AppLifecycleNotifier.provider, (_, lifecycle) {
+      _settlePipOutcome(lifecycle);
       unawaited(
         _focusPlayback.change(
           lifecycle,

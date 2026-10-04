@@ -17,6 +17,7 @@ import 'hot_restart.dart';
 import 'progress_tracker.dart';
 import 'session.dart';
 import 'stream/offline_source.dart';
+import 'stream/parked_stream.dart';
 import 'stream/session_config.dart';
 import 'stream/torrent_playback.dart';
 import 'torrent_search.dart';
@@ -32,6 +33,7 @@ class PlaybackEngine {
     required SessionConfig configFor,
     required TorrentFinder find,
     OfflineLookup? offline,
+    ParkedStreams? parked,
   }) : player = Player(
          configuration: const PlayerConfiguration(
            title: 'Sentorr',
@@ -45,6 +47,7 @@ class PlaybackEngine {
       configFor: configFor,
       find: find,
       offline: offline,
+      parked: parked,
       outputReady: () => video.platform.future,
     );
     _errors = player.stream.error.listen(
@@ -139,7 +142,7 @@ class PlaybackEngine {
   Future<void> dispose() async {
     await _errors.cancel();
     await _native.cancel();
-    await streaming.close();
+    await streaming.park();
     streaming.dispose();
     await _restartReady;
     await player.dispose();
@@ -159,6 +162,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     find: (item, cancel) =>
         ref.read(torrentSearchProvider)(item, cancel: cancel),
     offline: (item) => offlineSourceFor(ref, item),
+    parked: ref.read(parkedStreamsProvider),
   );
   final history = ref.read(watchHistoryProvider.notifier);
   final following = ref.read(followedSeriesProvider.notifier);

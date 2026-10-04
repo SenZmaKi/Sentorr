@@ -51,6 +51,7 @@ class FeaturedHero extends StatelessWidget {
         final layout = LayoutSize(box.biggest);
         final wide = layout.expanded;
         final short = context.screen.short;
+        final compact = layout.compact;
         final pad = layout.pick(
           compact: Space.s16,
           medium: Space.s24,
@@ -58,7 +59,8 @@ class FeaturedHero extends StatelessWidget {
         );
         // On a phone the pager takes its own row under the actions rather
         // than squeezing the copy beside it.
-        final pagerBelow = layout.compact;
+        final pagerBelow = compact;
+        final banner = HeroFrame.stacked(context, box.maxWidth);
         final copy = AnimatedSwitcher(
           duration: Motion.reveal,
           switchInCurve: Motion.enter,
@@ -71,57 +73,68 @@ class FeaturedHero extends StatelessWidget {
             key: ValueKey(title),
             hero: this,
             wide: wide,
+            compact: compact,
             short: short,
+            banner: banner,
           ),
         );
-        return HeroFrame(
-          background: Stack(
-            fit: StackFit.expand,
-            children: [
-              artwork,
-              const ArtworkFade(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: [0.25, 1],
-              ),
-              if (wide)
+        // The artwork opens the title too, as a poster does; the actions
+        // inside keep their own taps.
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onDetails,
+          child: HeroFrame(
+            banner: banner,
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                artwork,
                 const ArtworkFade(
-                  begin: Alignment.centerRight,
-                  end: Alignment.centerLeft,
-                  stops: [0.35, 1],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: [0.25, 1],
                 ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              pad,
-              context.screen.pickHeight(short: Space.s24, regular: Space.s96),
-              pad,
-              pad,
+                if (wide)
+                  const ArtworkFade(
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                    stops: [0.35, 1],
+                  ),
+              ],
             ),
-            child: ImageOverlayContext(
-              child: pagerBelow
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        copy,
-                        if (pager != null) ...[
-                          const SizedBox(height: Space.s16),
-                          pager!,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                pad,
+                banner
+                    ? pad
+                    : HeroFrame.topPad(context, box.maxWidth, leading: false),
+                pad,
+                pad,
+              ),
+              child: ImageOverlayContext(
+                child: pagerBelow
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          copy,
+                          if (pager != null) ...[
+                            const SizedBox(height: Space.s16),
+                            Center(child: pager),
+                          ],
                         ],
-                      ],
-                    )
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(child: copy),
-                        if (pager != null) ...[
-                          const SizedBox(width: Space.s16),
-                          pager!,
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(child: copy),
+                          if (pager != null) ...[
+                            const SizedBox(width: Space.s16),
+                            pager!,
+                          ],
                         ],
-                      ],
-                    ),
+                      ),
+              ),
             ),
           ),
         );
@@ -135,14 +148,22 @@ class _Copy extends StatelessWidget {
     super.key,
     required this.hero,
     required this.wide,
+    required this.compact,
     required this.short,
+    this.banner = false,
   });
 
   final FeaturedHero hero;
   final bool wide;
 
+  /// A phone: a smaller title and actions spanning the width.
+  final bool compact;
+
   /// A short window keeps to title, facts, two lines and the actions.
   final bool short;
+
+  /// A phone banner: badge, title and actions only.
+  final bool banner;
 
   List<Widget> _parts(SentorrType type) => [
     if (hero.badge != null)
@@ -154,19 +175,24 @@ class _Copy extends StatelessWidget {
       hero.title,
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
-      style: (wide ? type.display : type.headline).copyWith(
-        color: OverlayColors.foreground,
-      ),
+      style:
+          (wide
+                  ? type.display
+                  : compact
+                  ? type.headlineCompact
+                  : type.headline)
+              .copyWith(color: OverlayColors.foreground),
     ),
-    Padding(
-      padding: const EdgeInsets.only(top: Space.s12),
-      child: MetaLine(
-        hero.facts,
-        color: OverlayColors.foreground,
-        style: type.bodySmall,
+    if (!banner)
+      Padding(
+        padding: const EdgeInsets.only(top: Space.s12),
+        child: MetaLine(
+          hero.facts,
+          color: OverlayColors.foreground,
+          style: type.bodySmall,
+        ),
       ),
-    ),
-    if (hero.genres.isNotEmpty && !short)
+    if (hero.genres.isNotEmpty && !short && !banner)
       Padding(
         padding: const EdgeInsets.only(top: Space.s12),
         child: Wrap(
@@ -175,7 +201,7 @@ class _Copy extends StatelessWidget {
           children: [for (final g in hero.genres) OverlayGenreChip(g)],
         ),
       ),
-    if (hero.synopsis.isNotEmpty)
+    if (hero.synopsis.isNotEmpty && !banner)
       Padding(
         padding: const EdgeInsets.only(top: Space.s12),
         child: Text(
@@ -190,20 +216,15 @@ class _Copy extends StatelessWidget {
         ),
       ),
     Padding(
-      padding: const EdgeInsets.only(top: Space.s24),
-      child: Wrap(
-        spacing: Space.s8,
-        runSpacing: Space.s8,
+      padding: EdgeInsets.only(top: banner ? Space.s16 : Space.s24),
+      child: HeroActions(
+        compact: compact,
+        inline: banner,
         children: [
           SButton.primary(
             label: hero.playLabel,
             icon: Icons.play_arrow_rounded,
             onPressed: hero.onPlay,
-          ),
-          SButton(
-            label: 'More info',
-            icon: Icons.info_outline_rounded,
-            onPressed: hero.onDetails,
           ),
         ],
       ),

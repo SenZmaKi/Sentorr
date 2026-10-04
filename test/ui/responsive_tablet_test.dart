@@ -297,7 +297,12 @@ void main() {
       expect(find.byType(PreviewCard), findsOneWidget);
       expect(tester.takeException(), isNull);
       // A tap inside closes it once its action has run.
-      await tester.tap(find.text('More info').last);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(PreviewCard),
+          matching: find.text('Title 1'),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(find.byType(PreviewCard), findsNothing);
       expect(find.byType(TitlePage), findsOneWidget);

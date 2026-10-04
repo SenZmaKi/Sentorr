@@ -3,6 +3,8 @@ import '../../shared/theme/theme.dart';
 /// The bottom bar's optional controls. Play/pause and the clock always
 /// show; these show while there is room and otherwise move to More.
 enum BarControl {
+  /// Phones only, where turning the picture matters most.
+  rotate,
   fullscreen,
   settings,
 

@@ -92,6 +92,11 @@ class SentorrType extends ThemeExtension<SentorrType> {
 
   TextStyle get display => _role(TextRole.display, 48, 56, FontWeight.w600);
   TextStyle get headline => _role(TextRole.headline, 32, 40, FontWeight.w600);
+
+  /// Headline on a phone, so a two-word hero title keeps one line.
+  TextStyle get headlineCompact =>
+      _role(TextRole.headline, 28, 36, FontWeight.w600);
+
   TextStyle get title => _role(TextRole.title, 24, 32, FontWeight.w600);
   TextStyle get subtitle => _role(TextRole.subtitle, 20, 28, FontWeight.w600);
   TextStyle get bodyLarge => _role(TextRole.bodyLarge, 18, 28, FontWeight.w400);

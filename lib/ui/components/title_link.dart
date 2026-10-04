@@ -72,7 +72,6 @@ class TitleLink extends ConsumerWidget {
           ? EpisodePreview(
               series: title,
               episode: episode!,
-              openLabel: 'View episode',
               artwork: episode!.title.poster != null
                   ? TitleArtwork(image: episode!.title.poster)
                   : TitleBackdrop(title: title),

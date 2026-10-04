@@ -64,14 +64,6 @@ class PlayerUi extends ChangeNotifier {
     }
   }
 
-  /// Touch: a tap on visible chrome hides it at once.
-  void sleep() {
-    _idle?.cancel();
-    if (_panel != PlayerPanel.none) _panel = PlayerPanel.none;
-    _awake = false;
-    notifyListeners();
-  }
-
   set playing(bool value) {
     if (value == _playing) return;
     _playing = value;

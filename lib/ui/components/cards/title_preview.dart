@@ -63,7 +63,6 @@ class EpisodePreview extends StatelessWidget {
     required this.artwork,
     required this.onOpen,
     this.onPlay,
-    this.openLabel = 'Series',
   });
 
   final ImdbTitle series;
@@ -71,9 +70,6 @@ class EpisodePreview extends StatelessWidget {
   final Widget artwork;
   final VoidCallback onOpen;
   final VoidCallback? onPlay;
-
-  /// Null when [onOpen] is the episode itself, e.g. on its series' page.
-  final String? openLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +94,6 @@ class EpisodePreview extends StatelessWidget {
       synopsis: e.plot,
       primaryLabel: 'Play episode',
       onPrimary: onPlay,
-      openLabel: openLabel,
       onOpen: onOpen,
       // Nothing to download before it airs.
       extraAction: onPlay == null

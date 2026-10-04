@@ -213,6 +213,44 @@ void main() {
       }
     }
 
+    testWidgets('tapping the spotlight artwork opens its title', (
+      tester,
+    ) async {
+      final viewport = _named('phone portrait');
+      useViewport(tester, viewport);
+      var opened = 0;
+      var played = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildSentorrTheme(Brightness.dark),
+          home: withInput(
+            viewport,
+            Scaffold(
+              body: ListView(
+                padding: const EdgeInsets.all(Space.s16),
+                children: [
+                  FeaturedHero(
+                    title: 'Spotlight',
+                    facts: const [],
+                    synopsis: 'A twist.',
+                    artwork: const ColoredBox(color: Colors.black),
+                    onPlay: () => played++,
+                    onDetails: () => opened++,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final hero = tester.getRect(find.byType(FeaturedHero));
+      await tester.tapAt(hero.topCenter + const Offset(0, Space.s48));
+      expect(opened, 1);
+      await tester.tap(find.text('Play'));
+      expect((opened, played), (1, 1));
+    });
+
     for (final name in ['phone landscape', 'phone landscape small']) {
       testWidgets('the title page keeps Play in view, $name', (tester) async {
         final container = await _pumpShell(tester, _named(name));
@@ -479,7 +517,7 @@ void main() {
         const usual = PlayerMetrics.control + Space.s8 + 110;
         expect(
           fitBar(available: all, width: width, fixed: usual).shown,
-          contains(BarControl.fullscreen),
+          containsAll({BarControl.rotate, BarControl.fullscreen}),
           reason: v.name,
         );
         const fixed = crowded;

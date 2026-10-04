@@ -191,4 +191,7 @@ abstract final class OverlayColors {
   static const focus = Color(0xFFFFFFFF);
   static const inactiveTrack = Color(0xFF888888);
   static const artworkFade = [Color(0x00000000), Color(0xCC000000)];
+
+  /// What artwork fades into where it ends, e.g. below a phone hero's band.
+  static const artworkBase = Color(0xFF000000);
 }

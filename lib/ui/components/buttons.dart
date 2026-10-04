@@ -117,8 +117,10 @@ class SButton extends StatelessWidget {
           border: border,
           minHeight: context.density.control,
           padding: const EdgeInsets.symmetric(horizontal: Space.s16),
+          // Centred when a layout stretches the button, e.g. a phone hero.
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (loading)
                 SizedBox.square(
@@ -176,28 +178,33 @@ class SIconButton extends StatelessWidget {
         onTap: onPressed,
         semanticLabel: label,
         selected: selected,
-        builder: (context, s) => AnimatedContainer(
-          duration: Motion.hover,
-          width: context.density.iconButton,
-          height: context.density.iconButton,
-          decoration: BoxDecoration(
-            color: s.pressed
-                ? c.statePressed
-                : s.hovered
-                ? c.stateHover
-                : selected
-                ? c.selection
-                : c.stateHover.clear,
-            borderRadius: BorderRadius.circular(Radii.control),
-          ),
+        builder: (context, s) => SizedBox.square(
+          dimension: context.density.iconButton,
           child: Center(
-            child:
-                glyph ??
-                Icon(
-                  icon,
-                  size: IconSizes.control,
-                  color: s.enabled ? c.foreground : c.foregroundDisabled,
-                ),
+            child: AnimatedContainer(
+              duration: Motion.hover,
+              width: context.density.iconFace,
+              height: context.density.iconFace,
+              decoration: BoxDecoration(
+                color: s.pressed
+                    ? c.statePressed
+                    : s.hovered
+                    ? c.stateHover
+                    : selected
+                    ? c.selection
+                    : c.stateHover.clear,
+                borderRadius: BorderRadius.circular(Radii.control),
+              ),
+              child: Center(
+                child:
+                    glyph ??
+                    Icon(
+                      icon,
+                      size: IconSizes.control,
+                      color: s.enabled ? c.foreground : c.foregroundDisabled,
+                    ),
+              ),
+            ),
           ),
         ),
       ),

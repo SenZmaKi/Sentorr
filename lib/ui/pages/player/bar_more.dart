@@ -26,7 +26,7 @@ class BarMore extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ActionMenu(
     title: 'More',
-    actions: [for (final c in controls) _action(c)],
+    actions: [for (final c in controls) _action(context, c)],
     builder: (context, menu) => PlayerControl(
       icon: Icons.more_vert_rounded,
       tooltip: 'More',
@@ -35,7 +35,12 @@ class BarMore extends StatelessWidget {
     ),
   );
 
-  MenuAction _action(BarControl c) => switch (c) {
+  MenuAction _action(BuildContext context, BarControl c) => switch (c) {
+    BarControl.rotate => MenuAction(
+      'Rotate',
+      icon: Icons.screen_rotation_rounded,
+      onPressed: () => actions.rotate(MediaQuery.orientationOf(context)),
+    ),
     BarControl.fullscreen => MenuAction(
       ui.fullscreen ? 'Exit full screen' : 'Full screen',
       icon: ui.fullscreen

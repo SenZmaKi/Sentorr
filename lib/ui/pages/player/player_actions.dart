@@ -7,6 +7,7 @@ import '../../../player/engine.dart';
 import '../../../player/session.dart';
 import '../../../torrents/resolution_models.dart';
 import '../../shared/player_view.dart';
+import '../../shared/screen_rotation.dart';
 import '../../shared/window_manager.dart';
 import 'player_ui.dart';
 import 'shortcuts_dialog.dart';
@@ -138,6 +139,9 @@ class PlayerActions {
     ui.fullscreen = await window.isFullScreen;
   }
 
+  /// Phones: turns the screen from [current] to the other orientation.
+  void rotate(Orientation current) => unawaited(ScreenRotation.rotate(current));
+
   /// Opens the torrent picker; a pending automatic switch waits for the
   /// viewer's choice.
   void chooseTorrent() {
@@ -191,6 +195,7 @@ class PlayerActions {
   /// corner card over a full-screen app is not browsing.
   Future<void> minimize() async {
     ui.closePanel();
+    unawaited(ScreenRotation.release());
     if (ui.fullscreen) await toggleFullscreen();
     view.minimize();
   }
@@ -205,6 +210,7 @@ class PlayerActions {
 
   Future<void> close() async {
     unawaited(_player.pause());
+    unawaited(ScreenRotation.release());
     if (ui.fullscreen) await toggleFullscreen();
     session.close();
   }

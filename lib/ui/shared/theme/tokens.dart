@@ -72,6 +72,9 @@ abstract final class PlayerMetrics {
   static const double control = 48;
   static const double icon = 24;
 
+  /// Phone-sized players: lighter glyphs in the same touch targets.
+  static const double iconHandheld = 20;
+
   /// Seek track at rest, and while hovered or dragged.
   static const double track = 4;
   static const double trackActive = 6;

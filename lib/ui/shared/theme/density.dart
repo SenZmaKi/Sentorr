@@ -13,6 +13,7 @@ class SentorrDensity {
   const SentorrDensity._({
     required this.control,
     required this.iconButton,
+    required this.iconFace,
     required this.menuRow,
     required this.minTarget,
   });
@@ -21,6 +22,7 @@ class SentorrDensity {
   static const pointer = SentorrDensity._(
     control: ControlHeights.standard,
     iconButton: ControlHeights.standard,
+    iconFace: ControlHeights.standard,
     menuRow: ControlHeights.compact,
     minTarget: 0,
   );
@@ -29,6 +31,7 @@ class SentorrDensity {
   static const touch = SentorrDensity._(
     control: ControlHeights.touch,
     iconButton: ControlHeights.touch,
+    iconFace: ControlHeights.standard,
     menuRow: ControlHeights.touch,
     minTarget: ControlHeights.touch,
   );
@@ -38,8 +41,13 @@ class SentorrDensity {
   /// Minimum height of buttons, inputs and selects.
   final double control;
 
-  /// Square target of icon buttons.
+  /// Square target of icon buttons: the room they take and answer in.
   final double iconButton;
+
+  /// What an icon button draws (its wash, fill or ring), centred in
+  /// [iconButton]. Touch keeps the drawing at the pointer size so a
+  /// phone's buttons do not read heavier than its text.
+  final double iconFace;
 
   /// Minimum height of menu and list rows.
   final double menuRow;

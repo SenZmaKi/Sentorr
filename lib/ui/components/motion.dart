@@ -14,21 +14,40 @@ class Reveal extends StatefulWidget {
     required this.child,
     this.delay = Duration.zero,
     this.offset = Space.s12,
+    this.shift = 0,
+    this.duration = Motion.reveal,
+    this.animate = true,
+    this.onDone,
   });
 
   final Widget child;
   final Duration delay;
+
+  /// Vertical distance travelled while fading in.
   final double offset;
+
+  /// Sideways distance travelled; with [offset] it makes a diagonal climb.
+  final double shift;
+
+  /// How long the entrance itself takes, after [delay].
+  final Duration duration;
+
+  /// False when the entrance already played; the child just shows.
+  final bool animate;
+
+  /// Called once the entrance has played.
+  final VoidCallback? onDone;
 
   @override
   State<Reveal> createState() => _RevealState();
 }
 
 class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: widget.delay + Motion.reveal,
-  );
+  late final AnimationController _controller =
+      AnimationController(vsync: this, duration: widget.delay + widget.duration)
+        ..addStatusListener((status) {
+          if (status == AnimationStatus.completed) widget.onDone?.call();
+        });
   late final Animation<double> _t = CurvedAnimation(
     parent: _controller,
     curve: Interval(
@@ -42,7 +61,7 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_controller.isAnimating || _controller.isCompleted) return;
-    if (reduceMotion(context)) {
+    if (!widget.animate || reduceMotion(context)) {
       _controller.value = 1;
     } else {
       _controller.forward();
@@ -62,7 +81,10 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
     builder: (context, child) => Opacity(
       opacity: _t.value,
       child: Transform.translate(
-        offset: Offset(0, (1 - _t.value) * widget.offset),
+        offset: Offset(
+          (1 - _t.value) * widget.shift,
+          (1 - _t.value) * widget.offset,
+        ),
         child: child,
       ),
     ),

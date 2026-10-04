@@ -220,26 +220,31 @@ class OverlayIconButton extends StatelessWidget {
         semanticLabel: tooltip,
         borderRadius: Radii.full,
         focusColor: OverlayColors.focus,
-        builder: (context, s) => AnimatedContainer(
-          duration: Motion.hover,
-          curve: Motion.change,
-          width: context.density.iconButton,
-          height: context.density.iconButton,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: s.hovered || s.pressed
-                ? OverlayColors.scrim
-                : OverlayColors.controlSurface,
-            border: Border.all(
-              color: s.hovered
-                  ? OverlayColors.foregroundSecondary
-                  : OverlayColors.inactiveTrack,
+        builder: (context, s) => SizedBox.square(
+          dimension: context.density.iconButton,
+          child: Center(
+            child: AnimatedContainer(
+              duration: Motion.hover,
+              curve: Motion.change,
+              width: context.density.iconFace,
+              height: context.density.iconFace,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: s.hovered || s.pressed
+                    ? OverlayColors.scrim
+                    : OverlayColors.controlSurface,
+                border: Border.all(
+                  color: s.hovered
+                      ? OverlayColors.foregroundSecondary
+                      : OverlayColors.inactiveTrack,
+                ),
+              ),
+              child: Icon(
+                icon,
+                size: IconSizes.control,
+                color: OverlayColors.foreground,
+              ),
             ),
-          ),
-          child: Icon(
-            icon,
-            size: IconSizes.control,
-            color: OverlayColors.foreground,
           ),
         ),
       ),

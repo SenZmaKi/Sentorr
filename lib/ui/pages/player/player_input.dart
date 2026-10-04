@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -115,8 +117,9 @@ class PlayerShortcuts extends StatelessWidget {
 
 /// Pointer input on the picture itself. Mouse: click plays or pauses at
 /// once, and a double click also toggles full screen (undoing the first
-/// click's toggle, as YouTube does). Touch: tap shows or hides chrome;
-/// double tap on either half seeks 10 s that way.
+/// click's toggle, as YouTube does). Touch: a tap shows hidden chrome, and
+/// on shown chrome plays or pauses once no second tap follows; a double tap
+/// on either half seeks 10 s that way, and taps that keep coming seek on.
 class StageGestures extends StatefulWidget {
   const StageGestures({super.key, required this.actions, required this.child});
 
@@ -130,6 +133,18 @@ class StageGestures extends StatefulWidget {
 class _StageGesturesState extends State<StageGestures> {
   static const _doubleTap = Duration(milliseconds: 300);
   DateTime? _lastTap;
+
+  /// A touch play/pause waiting out the double-tap window.
+  Timer? _pendingToggle;
+
+  /// When the last double-tap seek landed: taps that keep coming seek on.
+  DateTime? _lastSeek;
+
+  @override
+  void dispose() {
+    _pendingToggle?.cancel();
+    super.dispose();
+  }
 
   bool _isDouble() {
     final now = DateTime.now();
@@ -149,15 +164,19 @@ class _StageGesturesState extends State<StageGestures> {
       return;
     }
     if (d.kind == PointerDeviceKind.touch) {
-      if (_isDouble()) {
+      final visible = ui.controlsVisible;
+      final seeking =
+          _lastSeek != null &&
+          DateTime.now().difference(_lastSeek!) < _doubleTap;
+      if (seeking || _isDouble()) {
+        _pendingToggle?.cancel();
+        _lastSeek = DateTime.now();
         final back = d.localPosition.dx < width / 2;
         a.seekBy(back ? -PlayerActions.seekStep : PlayerActions.seekStep);
-        ui.wake();
-      } else if (ui.controlsVisible) {
-        ui.sleep();
-      } else {
-        ui.wake();
+      } else if (visible) {
+        _pendingToggle = Timer(_doubleTap, a.togglePlay);
       }
+      ui.wake();
       return;
     }
     if (_isDouble()) {

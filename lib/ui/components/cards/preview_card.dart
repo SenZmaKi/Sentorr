@@ -25,7 +25,6 @@ class PreviewCard extends StatelessWidget {
     this.primaryLabel = 'Play',
     this.primaryIcon = Icons.play_arrow_rounded,
     this.onPrimary,
-    this.openLabel = 'More info',
     this.extraAction,
   });
 
@@ -47,9 +46,6 @@ class PreviewCard extends StatelessWidget {
   final String primaryLabel;
   final IconData primaryIcon;
   final VoidCallback? onPrimary;
-
-  /// The secondary action's label; null leaves only the primary action.
-  final String? openLabel;
 
   /// Another action after the secondary one, e.g. a download button.
   final Widget? extraAction;
@@ -142,12 +138,6 @@ class PreviewCard extends StatelessWidget {
                           icon: primaryIcon,
                           onPressed: onPrimary,
                         ),
-                        if (openLabel != null)
-                          SButton(
-                            label: openLabel!,
-                            icon: Icons.info_outline_rounded,
-                            onPressed: onOpen,
-                          ),
                         ?extraAction,
                       ],
                     ),

@@ -5,6 +5,7 @@ import '../../../player/models.dart';
 import '../../components/motion.dart';
 import '../../components/player_control.dart';
 import '../../shared/pop_out_window.dart';
+import '../../shared/screen_rotation.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'player_actions.dart';
@@ -106,6 +107,7 @@ class BottomBar extends StatelessWidget {
       width: width,
       fixed: fixed,
       available: {
+        if (ScreenRotation.supported(context)) BarControl.rotate,
         BarControl.fullscreen,
         BarControl.settings,
         BarControl.captions,
@@ -217,6 +219,12 @@ class BottomBar extends StatelessWidget {
             ui: ui,
             actions: actions,
             queue: queue,
+          ),
+        if (has(BarControl.rotate))
+          PlayerControl(
+            icon: Icons.screen_rotation_rounded,
+            tooltip: 'Rotate',
+            onPressed: () => actions.rotate(MediaQuery.orientationOf(context)),
           ),
         if (has(BarControl.fullscreen))
           PlayerControl(

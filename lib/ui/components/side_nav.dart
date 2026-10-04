@@ -35,39 +35,45 @@ class SideNav extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Space.s24),
-          SizedBox(
-            width: item,
-            child: Stack(
-              children: [
-                AnimatedPositioned(
-                  duration: reduceMotion(context)
-                      ? Duration.zero
-                      : Motion.reveal,
-                  curve: Motion.change,
-                  top: current.index * (item + _gap),
-                  left: 0,
-                  width: item,
-                  height: item,
-                  child: DepthBox(
-                    style: context.depth.of(SurfaceDepth.raised),
-                    radius: Radii.card,
-                  ),
-                ),
-                Column(
+          // A phone on its side is shorter than the rail: scroll, never
+          // overflow.
+          Expanded(
+            child: SingleChildScrollView(
+              child: SizedBox(
+                width: item,
+                child: Stack(
                   children: [
-                    for (final d in AppDestination.values)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: _gap),
-                        child: RailNavItem(
-                          icon: d == current ? d.selectedIcon : d.icon,
-                          label: d.label,
-                          selected: d == current,
-                          onTap: () => onSelect(d),
-                        ),
+                    AnimatedPositioned(
+                      duration: reduceMotion(context)
+                          ? Duration.zero
+                          : Motion.reveal,
+                      curve: Motion.change,
+                      top: current.index * (item + _gap),
+                      left: 0,
+                      width: item,
+                      height: item,
+                      child: DepthBox(
+                        style: context.depth.of(SurfaceDepth.raised),
+                        radius: Radii.card,
                       ),
+                    ),
+                    Column(
+                      children: [
+                        for (final d in AppDestination.values)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: _gap),
+                            child: RailNavItem(
+                              icon: d == current ? d.selectedIcon : d.icon,
+                              label: d.label,
+                              selected: d == current,
+                              onTap: () => onSelect(d),
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ],

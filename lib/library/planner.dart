@@ -13,6 +13,7 @@ import '../downloads/queue.dart';
 import '../player/models.dart';
 import '../player/stream/file_choice.dart';
 import '../player/stream/session_config.dart';
+import '../player/stream/torrent_playback.dart';
 import '../player/torrent_search.dart';
 import '../settings/notifier.dart';
 import '../torrents/engine.dart';
@@ -43,8 +44,13 @@ class DownloadPlanner {
   DownloadPlanner(this._ref);
   final Ref _ref;
 
+  /// Automatic fallbacks after a torrent fails to queue, as many as
+  /// streaming switches to on its own.
+  static const maxFallbacks = TorrentPlayback.maxAutoSwitches;
+
   /// Queues [item] from [torrent], or the best torrent found; [automatic]
-  /// downloads take only exact matches. Returns the torrent queued from;
+  /// downloads take only exact matches. When a torrent can't be queued the
+  /// next untried one is, as in streaming. Returns the torrent queued from;
   /// does nothing when [item] is already downloaded or being prepared.
   Future<TorrentCandidate?> download(
     PlaybackItem item, {
@@ -55,9 +61,12 @@ class DownloadPlanner {
     final library = _ref.read(libraryProvider.notifier);
     final planning = _ref.read(planningProvider.notifier);
     final known = library.entry(item.id);
+    // A failed download's torrent is not the first choice of its retry.
+    final avoid = <String>{};
     if (known != null) {
       if (offlineStateOf(known, _download(known.downloadId))
           case DownloadFailed()) {
+        avoid.add(known.release.infoHash);
         await library.remove(item.id);
       } else {
         return null;
@@ -66,15 +75,13 @@ class DownloadPlanner {
     if (_ref.read(planningProvider).contains(item.id)) return null;
     planning.start(item.id);
     try {
-      final candidate =
-          torrent ??
-          await whilePlanning<TorrentCandidate>(
-            _find(item, exact: automatic, cancel: cancel),
-            cancel,
-          );
-      cancel?.throwIfCancellationRequested();
-      await _enqueue(item, candidate, automatic: automatic, cancel: cancel);
-      return candidate;
+      return await _queueFirstWorking(
+        item,
+        torrent: torrent,
+        automatic: automatic,
+        cancel: cancel,
+        avoid: avoid,
+      );
     } finally {
       planning.end(item.id);
     }
@@ -83,30 +90,89 @@ class DownloadPlanner {
   DownloadItem? _download(String id) =>
       _ref.read(downloadsProvider).value?.where((d) => d.id == id).firstOrNull;
 
-  Future<TorrentCandidate> _find(
+  /// Queues [torrent] or the best found; each torrent that fails is
+  /// skipped for the next untried one, up to [maxFallbacks] times. The
+  /// search runs once, and only when no torrent was given or all given
+  /// ones failed. Rethrows the last failure when nothing else is left.
+  Future<TorrentCandidate> _queueFirstWorking(
     PlaybackItem item, {
-    required bool exact,
+    required bool automatic,
+    required Set<String> avoid,
+    TorrentCandidate? torrent,
     CancelToken? cancel,
   }) async {
-    final resolution = await _ref.read(torrentSearchProvider)(
-      item,
-      cancel: cancel,
-    );
-    if (!exact) {
-      return resolution.best ??
-          (throw const DownloadPlanException(
-            "Couldn't find a torrent for this.",
-          ));
+    final failed = {...avoid};
+    TorrentResolution? options;
+    Object? lastError;
+    StackTrace? lastStack;
+    var candidate = torrent;
+    for (var fallbacks = 0; ; fallbacks++) {
+      if (candidate == null) {
+        try {
+          options ??= await whilePlanning(
+            _ref.read(torrentSearchProvider)(item, cancel: cancel),
+            cancel,
+          );
+        } catch (error) {
+          if (lastError == null || _cancelled(error)) rethrow;
+          Error.throwWithStackTrace(lastError, lastStack!);
+        }
+        // A first pick with every torrent avoided retries the best anyway.
+        candidate =
+            _untried(options!, failed, automatic) ??
+            (fallbacks == 0 ? _untried(options, const {}, automatic) : null);
+        if (candidate == null) {
+          if (lastError != null) {
+            Error.throwWithStackTrace(lastError, lastStack!);
+          }
+          throw DownloadPlanException(
+            automatic
+                ? 'No exact torrent match to download.'
+                : "Couldn't find a torrent for this.",
+          );
+        }
+      }
+      cancel?.throwIfCancellationRequested();
+      try {
+        await _enqueue(item, candidate, automatic: automatic, cancel: cancel);
+        return candidate;
+      } catch (error, stack) {
+        if (_cancelled(error) || fallbacks >= maxFallbacks) rethrow;
+        _log.warning(
+          'Could not queue $item from ${candidate.release.name}',
+          error,
+        );
+        failed.add(candidate.release.infoHash);
+        lastError = error;
+        lastStack = stack;
+        candidate = null;
+      }
     }
+  }
+
+  /// The best of [options] not in [failed]; automatic downloads take only
+  /// exact matches.
+  TorrentCandidate? _untried(
+    TorrentResolution options,
+    Set<String> failed,
+    bool exactOnly,
+  ) {
     final preferences = torrentPreferencesFor(
       _ref.read(settingsProvider).torrents,
     );
-    final match = TorrentMatch.of(resolution, preferences);
-    if (match == null || !match.exact) {
-      throw const DownloadPlanException('No exact torrent match to download.');
-    }
-    return match.candidate;
+    return options.candidates
+        .where(
+          (c) =>
+              !failed.contains(c.release.infoHash) &&
+              (!exactOnly || TorrentMatch.forCandidate(c, preferences).exact),
+        )
+        .firstOrNull;
   }
+
+  bool _cancelled(Object error) =>
+      (error is DioException && CancelToken.isCancel(error)) ||
+      (error is TorrentStreamException &&
+          error.code == TorrentStreamErrorCode.cancelled);
 
   Future<void> _enqueue(
     PlaybackItem item,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../shared/layout/adaptive.dart';
 import '../shared/theme/theme.dart';
 import 'surface.dart';
 
@@ -32,14 +33,21 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    // A phone's tile steps down so the heading, not the icon, leads.
+    final compact = context.screen.compact;
+    final tile = compact ? Space.s32 : ControlHeights.standard;
     return Row(
       children: [
         DepthBox(
           style: context.depth.of(SurfaceDepth.raised),
           radius: Radii.control,
-          width: ControlHeights.standard,
-          height: ControlHeights.standard,
-          child: Icon(icon, size: IconSizes.control, color: c.foreground),
+          width: tile,
+          height: tile,
+          child: Icon(
+            icon,
+            size: compact ? IconSizes.metadata : IconSizes.control,
+            color: c.foreground,
+          ),
         ),
         const SizedBox(width: Space.s12),
         Expanded(

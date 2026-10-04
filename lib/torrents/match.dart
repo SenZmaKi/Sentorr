@@ -34,7 +34,14 @@ class TorrentMatch {
     TorrentPreferences preferences,
   ) {
     final best = resolution.best;
-    if (best == null) return null;
+    return best == null ? null : forCandidate(best, preferences);
+  }
+
+  /// [best] judged against [preferences], wherever it ranked.
+  static TorrentMatch forCandidate(
+    TorrentCandidate best,
+    TorrentPreferences preferences,
+  ) {
     final quality = best.release.resolution;
     return TorrentMatch._(best, [
       if (quality == null)

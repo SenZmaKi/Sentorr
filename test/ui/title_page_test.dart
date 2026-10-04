@@ -376,6 +376,8 @@ void main() {
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       addTearDown(mouse.removePointer);
       await mouse.addPointer(location: Offset.zero);
+      // Let the tiles finish stepping in before aiming at one.
+      await tester.pumpAndSettle();
       await mouse.moveTo(tester.getCenter(_posterArt));
       return mouse;
     }
@@ -456,17 +458,18 @@ void main() {
       expect(find.byType(PreviewCard), findsNothing);
     });
 
-    testWidgets('More info opens the title page', (tester) async {
+    testWidgets('tapping the card opens the title page', (tester) async {
       final container = await _pump(tester);
       final mouse = await hoverFirstPoster(tester);
       await tester.pump(HoverPreview.delay * 2);
       await tester.pumpAndSettle();
-      await mouse.moveTo(tester.getCenter(find.text('More info').last));
-      await tester.pump();
-      await tester.tap(
-        find.text('More info').last,
-        kind: PointerDeviceKind.mouse,
+      final title = find.descendant(
+        of: find.byType(PreviewCard),
+        matching: find.text('Title 1'),
       );
+      await mouse.moveTo(tester.getCenter(title));
+      await tester.pump();
+      await tester.tap(title, kind: PointerDeviceKind.mouse);
       await tester.pumpAndSettle();
       expect(container.read(titleRoutesProvider), hasLength(1));
       expect(find.byType(PreviewCard), findsNothing);

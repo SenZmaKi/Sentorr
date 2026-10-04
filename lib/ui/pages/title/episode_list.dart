@@ -166,7 +166,6 @@ class EpisodeList extends ConsumerWidget {
         onPlay: play,
         // Upcoming episodes have nothing to open; the card stays inert.
         onOpen: play ?? () {},
-        openLabel: null,
       ),
     );
   }

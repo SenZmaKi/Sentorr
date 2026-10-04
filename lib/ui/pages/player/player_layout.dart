@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../../components/player_control.dart';
 import '../../shared/layout/adaptive.dart';
 import '../../shared/theme/theme.dart';
 
@@ -67,6 +68,9 @@ class PlayerLayout {
       panels == PanelPlacement.bottomSheet ||
       panels == PanelPlacement.sideSheet;
 
+  /// Glyph size in the player's controls; their targets stay 48.
+  double get icon => handheld ? PlayerMetrics.iconHandheld : PlayerMetrics.icon;
+
   /// Horizontal inset of the bottom bar's content.
   double get barInset => handheld ? Space.s8 : Space.s16;
 
@@ -129,8 +133,13 @@ class PlayerLayoutScope extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, box) =>
-        _Scope(layout: PlayerLayout(box.biggest, context.input), child: child),
+    builder: (context, box) {
+      final layout = PlayerLayout(box.biggest, context.input);
+      return _Scope(
+        layout: layout,
+        child: PlayerIconSize(size: layout.icon, child: child),
+      );
+    },
   );
 }
 

@@ -20,11 +20,18 @@ class _CenterFeedbackState extends State<CenterFeedback>
     duration: const Duration(milliseconds: 650),
   );
   PlayerFeedback? _shown;
+  bool _first = true;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final next = PlayerUiScope.of(context).feedback;
+    // Feedback from before this mounted (e.g. a mini-player tap) is stale.
+    if (_first) {
+      _first = false;
+      _shown = next;
+      return;
+    }
     if (next == null || identical(next, _shown)) return;
     _shown = next;
     _c.forward(from: 0);

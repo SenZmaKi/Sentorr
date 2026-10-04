@@ -48,7 +48,11 @@ class TitleHero extends StatelessWidget {
       builder: (context, box) {
         final layout = LayoutSize(box.biggest);
         final wide = layout.expanded;
-        final pad = wide ? Space.s48 : Space.s24;
+        final pad = layout.pick(
+          compact: Space.s16,
+          medium: Space.s24,
+          expanded: Space.s48,
+        );
         // Two columns from medium: the poster (carrying the rating) beside
         // the copy. Short windows give the height to the copy instead.
         final posterWidth = context.screen.short
@@ -83,7 +87,7 @@ class TitleHero extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 pad,
-                HeroFrame.topPad(context),
+                HeroFrame.topPad(context, box.maxWidth),
                 pad,
                 pad,
               ),
@@ -98,6 +102,7 @@ class TitleHero extends StatelessWidget {
                     child: _Copy(
                       hero: this,
                       wide: wide,
+                      compact: layout.compact,
                       poster: posterWidth != null,
                     ),
                   ),
@@ -150,10 +155,18 @@ class _Poster extends StatelessWidget {
 }
 
 class _Copy extends StatelessWidget {
-  const _Copy({required this.hero, required this.wide, required this.poster});
+  const _Copy({
+    required this.hero,
+    required this.wide,
+    required this.compact,
+    required this.poster,
+  });
 
   final TitleHero hero;
   final bool wide;
+
+  /// A phone: a smaller title and actions spanning the width.
+  final bool compact;
 
   /// The poster beside the copy carries the rating.
   final bool poster;
@@ -202,9 +215,13 @@ class _Copy extends StatelessWidget {
         t.title,
         maxLines: short ? 2 : 3,
         overflow: TextOverflow.ellipsis,
-        style: (wide ? type.display : type.headline).copyWith(
-          color: OverlayColors.foreground,
-        ),
+        style:
+            (wide
+                    ? type.display
+                    : compact
+                    ? type.headlineCompact
+                    : type.headline)
+                .copyWith(color: OverlayColors.foreground),
       ),
       if (original == null || original == t.title)
         const SizedBox.shrink()
@@ -265,9 +282,8 @@ class _Copy extends StatelessWidget {
         ),
       Padding(
         padding: const EdgeInsets.only(top: Space.s24),
-        child: Wrap(
-          spacing: Space.s8,
-          runSpacing: Space.s8,
+        child: HeroActions(
+          compact: compact,
           children: [
             SButton.primary(
               label: hero.playLabel,

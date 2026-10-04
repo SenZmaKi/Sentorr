@@ -113,28 +113,36 @@ class OpeningCover extends StatelessWidget {
           child: TitleBackdrop(title: subject),
         ),
         ColoredBox(color: context.player.scrim),
-        Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox.square(
-                dimension: 56,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  color: context.player.foreground,
-                  backgroundColor: context.player.trackUnloaded,
-                  strokeCap: StrokeCap.round,
+        // Scales down while the player is a small card or mid-resize,
+        // rather than overflowing.
+        Padding(
+          padding: const EdgeInsets.all(Space.s8),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox.square(
+                  dimension: 56,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: context.player.foreground,
+                    backgroundColor: context.player.trackUnloaded,
+                    strokeCap: StrokeCap.round,
+                  ),
                 ),
-              ),
-              const SizedBox(height: Space.s24),
-              Text(
-                label ?? 'Starting ${subject.title}',
-                textAlign: TextAlign.center,
-                style: context.type.body.copyWith(
-                  color: context.player.foregroundSecondary,
-                ),
-              ),
-            ],
+                if (label != '') ...[
+                  const SizedBox(height: Space.s24),
+                  Text(
+                    label ?? 'Starting ${subject.title}',
+                    textAlign: TextAlign.center,
+                    style: context.type.body.copyWith(
+                      color: context.player.foregroundSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ],

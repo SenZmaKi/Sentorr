@@ -13,6 +13,7 @@ import '../../../player/sleep_timer.dart';
 import '../../../player/stream/torrent_playback.dart';
 import '../../../shared/app_lifecycle.dart';
 import '../../shared/player_view.dart';
+import '../../shared/screen_rotation.dart';
 import 'captions_view.dart';
 import 'center_feedback.dart';
 import 'end_screen.dart';
@@ -107,6 +108,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
   @override
   void dispose() {
+    unawaited(ScreenRotation.release());
     _focusPlayback.dispose();
     for (final s in _subscriptions) {
       s.cancel();

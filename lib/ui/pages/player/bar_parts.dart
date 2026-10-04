@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
 import '../../components/motion.dart';
+import '../../components/player_control.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'player_value.dart';
@@ -102,7 +103,7 @@ class PlayPauseGlyphState extends State<PlayPauseGlyph>
   Widget build(BuildContext context) => AnimatedIcon(
     icon: AnimatedIcons.play_pause,
     progress: CurvedAnimation(parent: _c, curve: Motion.change),
-    size: PlayerMetrics.icon,
+    size: PlayerIconSize.of(context),
     color: context.player.foreground,
   );
 }

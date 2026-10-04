@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 
 import '../shared/theme/theme.dart';
 import 'interactive.dart';
@@ -65,6 +66,13 @@ class _ShelfState extends State<Shelf> {
   bool _canBack = false;
   bool _canForward = false;
 
+  // Each tile's stair, kept so rebuilds leave its wrapper (and state) alone
+  // and scrolling back does not replay the entrance.
+  final _steps = <int, int>{};
+  final _played = <int>{};
+  // Tiles entering in the current frame; each climbs one step above the last.
+  int _stairs = 0;
+
   @override
   void initState() {
     super.initState();
@@ -110,10 +118,22 @@ class _ShelfState extends State<Shelf> {
       width: widget.tileWidth,
       child: widget.itemBuilder(context, i),
     );
-    // Only the first screenful staggers; later tiles are built on scroll.
-    if (!widget.reveal || i > 8) return tile;
+    if (!widget.reveal) return tile;
+    // Tiles are built only as they near the viewport, so a tile new to the
+    // row steps up into place, one stair after the one before it.
+    final step = _steps.putIfAbsent(i, () {
+      if (_stairs == 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _stairs = 0);
+      }
+      return _stairs++;
+    });
     return Reveal(
-      delay: Duration(milliseconds: 45 * i),
+      delay: Duration(milliseconds: 80 * step),
+      offset: Space.s24 + Space.s8 * step.clamp(0, 4),
+      shift: Space.s32,
+      duration: Motion.reveal * 1.8,
+      animate: !_played.contains(i),
+      onDone: () => _played.add(i),
       child: tile,
     );
   }
@@ -153,11 +173,15 @@ class _ShelfState extends State<Shelf> {
                     children: [
                       ListView.separated(
                         controller: _scroll,
+                        // Build tiles as they enter so their entrance is seen.
+
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(
                           horizontal: widget.gutter,
                           vertical: _bleed,
                         ),
+                        // Build tiles as they enter so their entrance is seen.
+                        scrollCacheExtent: const ScrollCacheExtent.pixels(0),
                         itemCount: widget.itemCount,
                         separatorBuilder: (_, _) =>
                             const SizedBox(width: Space.s16),

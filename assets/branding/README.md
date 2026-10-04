@@ -38,9 +38,21 @@ rounding. Matching light companion, not a redesign.
 logo, desktop tray, running macOS Dock icon and Windows window/taskbar icon
 follow light/dark/system settings live. The macOS channel uses AppKit's
 `applicationIconImage`; Windows uses `window_manager.setIcon`. Linux's installed
-launcher and Android's launcher retain the dark artwork. Finder, shortcuts and
+launcher retains the dark artwork. Finder, shortcuts and
 other installed launcher resources also retain dark artwork; running icon
 updates do not modify the app bundle. Failed light updates attempt dark fallback.
+
+Android follows the resolved app theme too. The manifest launches through two
+activity aliases, `.LauncherDark` (`ic_launcher`, enabled by default) and
+`.LauncherLight` (`ic_launcher_light`); `AppAppearance.kt` enables the matching
+one when the app goes to the background. With the system mode the icon updates
+only while Sentorr runs.
+
+The launch splash shows `splash_icon_{light,dark}` on `splash_background_*`,
+which matches each icon's background, so Android 12+ shows no separate icon
+chip. The default `LaunchTheme` follows the phone's night mode; on Android 13+
+an explicit app theme persists `SplashLight`/`SplashDark` for the next launch
+via `setSplashScreenTheme`. Older versions follow the phone.
 
 The generator includes both runtime variants (PNG for logo/tray/Dock and ICO
 for Windows), while preserving dark build-time platform assets.

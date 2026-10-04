@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sentorr/app/services.dart';
+import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/ui/components/app_shell.dart';
-import 'package:sentorr/ui/components/desktop_icon_sync.dart';
+import 'package:sentorr/ui/components/app_icon_sync.dart';
 import 'package:sentorr/ui/components/side_nav.dart';
-import 'package:sentorr/ui/shared/desktop_icon_controller.dart';
+import 'package:sentorr/ui/shared/app_icon_controller.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
-class RecordingIcons extends DesktopIconController {
+class RecordingIcons extends AppIconController {
   final variants = <String>[];
+  final splashModes = <ThemeMode>[];
 
   @override
   Future<void> update(SentorrBrand brand) async => variants.add(brand.variant);
+
+  @override
+  Future<void> updateSplash(ThemeMode mode) async => splashModes.add(mode);
 }
 
 void main() {
@@ -24,14 +30,14 @@ void main() {
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [desktopIconControllerProvider.overrideWithValue(icons)],
+        overrides: [appIconControllerProvider.overrideWithValue(icons)],
         child: ValueListenableBuilder(
           valueListenable: mode,
           builder: (context, value, child) => MaterialApp(
             theme: buildSentorrTheme(Brightness.light),
             darkTheme: buildSentorrTheme(Brightness.dark),
             themeMode: value,
-            builder: (context, child) => DesktopIconSync(child: child!),
+            builder: (context, child) => AppIconSync(child: child!),
             home: Scaffold(
               body: SideNav(current: AppDestination.home, onSelect: (_) {}),
             ),
@@ -63,5 +69,36 @@ void main() {
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
     await expectVariant(SentorrBrand.dark);
     expect(icons.variants, ['dark', 'light', 'dark', 'light', 'dark']);
+  });
+
+  testWidgets('splash follows the saved theme mode', (tester) async {
+    final icons = RecordingIcons();
+    Future<void> pumpMode(ThemeMode mode) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appIconControllerProvider.overrideWithValue(icons),
+            initialSettingsProvider.overrideWithValue(
+              AppSettings(themeMode: mode),
+            ),
+          ],
+          child: MaterialApp(
+            theme: buildSentorrTheme(Brightness.dark),
+            builder: (context, child) => AppIconSync(child: child!),
+            home: const SizedBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    await pumpMode(ThemeMode.system);
+    await pumpMode(ThemeMode.light);
+    await pumpMode(ThemeMode.dark);
+    expect(icons.splashModes, [
+      ThemeMode.system,
+      ThemeMode.light,
+      ThemeMode.dark,
+    ]);
   });
 }

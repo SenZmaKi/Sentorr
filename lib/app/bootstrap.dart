@@ -39,7 +39,7 @@ import '../shared/persistence/json_file_store.dart';
 import '../shared/persistence/window_state_repository.dart';
 import '../shared/provider_log_observer.dart';
 import '../ui/shared/desktop_tray_controller.dart';
-import '../ui/shared/desktop_icon_controller.dart';
+import '../ui/shared/app_icon_controller.dart';
 import '../ui/shared/launch_at_startup_manager.dart';
 import '../ui/shared/window_manager.dart';
 import '../watching/notifier.dart';
@@ -135,8 +135,8 @@ class AppRuntime with WidgetsBindingObserver {
         initialLibraryProvider.overrideWithValue(downloaded),
         networkClientProvider.overrideWithValue(network),
         networkFailuresProvider.overrideWithValue(network.networkFailures),
-        desktopIconControllerProvider.overrideWithValue(
-          DesktopIconController(tray: tray),
+        appIconControllerProvider.overrideWithValue(
+          AppIconController(tray: tray),
         ),
       ],
     );

@@ -14,7 +14,7 @@ import '../pages/title/title_page.dart';
 import '../shared/layout/adaptive.dart';
 import '../shared/theme/theme.dart';
 import 'app_shell.dart';
-import 'desktop_icon_sync.dart';
+import 'app_icon_sync.dart';
 import 'error_toasts.dart';
 import 'notification_taps.dart';
 
@@ -33,7 +33,7 @@ class SentorrApp extends ConsumerWidget {
       builder: (context, child) => AppActivity(
         child: AdaptiveScope(
           input: InputMode.platform,
-          child: DesktopIconSync(
+          child: AppIconSync(
             child: NotificationTaps(child: ErrorToasts(child: child!)),
           ),
         ),

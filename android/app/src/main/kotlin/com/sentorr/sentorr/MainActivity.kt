@@ -30,6 +30,7 @@ class MainActivity : FlutterActivity() {
         !isChangingConfigurations && !ForegroundService.isRunningServiceState.value
 
     private var pip: PipController? = null
+    private var appearance: AppAppearance? = null
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
@@ -44,9 +45,16 @@ class MainActivity : FlutterActivity() {
         pip?.onModeChanged(isInPictureInPictureMode)
     }
 
+    override fun onStop() {
+        super.onStop()
+        appearance?.onStop()
+    }
+
     override fun onDestroy() {
         pip?.dispose()
         pip = null
+        appearance?.dispose()
+        appearance = null
         val destroyEngine = shouldDestroyEngineWithHost()
         super.onDestroy()
         if (destroyEngine) FlutterEngineCache.getInstance().remove(ENGINE_ID)
@@ -57,6 +65,8 @@ class MainActivity : FlutterActivity() {
         FlutterEngineCache.getInstance().put(ENGINE_ID, flutterEngine)
         pip?.dispose()
         pip = PipController(this, flutterEngine.dartExecutor.binaryMessenger)
+        appearance?.dispose()
+        appearance = AppAppearance(this, flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             "sentorr/update_installer",

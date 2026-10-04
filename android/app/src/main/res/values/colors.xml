@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Match each icon's background; regenerate icons via tool/generate_icons.py. -->
+    <color name="splash_background_light">#F2F2F2</color>
+    <color name="splash_background_dark">#111111</color>
+    <!-- System-following defaults; values-night points these at the dark artwork. -->
+    <color name="splash_background">@color/splash_background_light</color>
+    <drawable name="splash_icon">@drawable/splash_icon_light</drawable>
+</resources>

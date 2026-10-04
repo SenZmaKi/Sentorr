@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Theme-owned brand assets. Packaged launchers always use the dark artwork.
+/// Theme-owned brand assets. Packaged desktop launchers always use the dark
+/// artwork; Android swaps its launcher alias.
 class SentorrBrand extends ThemeExtension<SentorrBrand> {
   const SentorrBrand(this.variant);
 

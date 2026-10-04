@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageChops, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "assets/branding/sentorr-icon-source.png"
@@ -49,6 +49,28 @@ for app in (ROOT, ROOT / "tool/design_demo", ROOT / "tool/codec_lab"):
         for density, size in {"mdpi": 48, "hdpi": 72, "xhdpi": 96,
                               "xxhdpi": 144, "xxxhdpi": 192}.items():
             save_png(android_res / f"mipmap-{density}/ic_launcher.png", size)
+
+
+def save_splash(res: Path, variant: str, source) -> None:
+    """Android splash icon: the mark on its own background, fitted inside the
+    circle Android 12+ masks to (2/3 of the 288dp icon)."""
+    background = source.getpixel((4, 4))
+    distance = ImageChops.difference(source, Image.new("RGB", source.size, background))
+    left, top, right, bottom = distance.convert("L").point(lambda v: 255 if v > 24 else 0).getbbox()
+    mark = source.crop((left, top, right, bottom))
+    side = int(((right - left) ** 2 + (bottom - top) ** 2) ** 0.5 * 1.5)
+    canvas = Image.new("RGB", (side, side), background)
+    canvas.paste(mark, ((side - mark.width) // 2, (side - mark.height) // 2))
+    for density, scale in {"mdpi": 1, "hdpi": 1.5, "xhdpi": 2, "xxhdpi": 3, "xxxhdpi": 4}.items():
+        save_png(res / f"drawable-{density}/splash_icon_{variant}.png", int(288 * scale), source=canvas)
+
+
+android_res = ROOT / "android/app/src/main/res"
+save_splash(android_res, "light", light)
+save_splash(android_res, "dark", ICON)
+# The dark launcher is the default; the app swaps to this one in light themes.
+for density, size in {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}.items():
+    save_png(android_res / f"mipmap-{density}/ic_launcher_light.png", size, source=light)
 
 save_png(ROOT / "linux/packaging/com.sentorr.sentorr.png", 512)
 print("Generated Sentorr launcher and tray icons.")

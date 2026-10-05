@@ -10,7 +10,9 @@ import '../engine_models.dart';
 import 'cancellation.dart';
 import 'files.dart';
 import 'native_session.dart';
+import 'metadata_hash_cache.dart';
 import 'tracker_policy.dart';
+import 'snapshot_equality.dart';
 import 'stream_host.dart';
 import 'torrent_entry.dart';
 
@@ -32,6 +34,10 @@ class EngineCore {
   final void Function(Map<String, Object?>) send;
   final _torrents = <String, TorrentEntry>{};
   final _adds = <String, Future<void>>{};
+  late final _hashes = MetadataHashCache(
+    (bytes) => infoHashOf({'kind': 'bytes', 'value': bytes}),
+  );
+  List<TorrentSnapshot>? _published;
   final _streams = <int, TorrentEntry>{};
   final lifetime = Cancellation();
   late final Timer _timer;
@@ -47,10 +53,21 @@ class EngineCore {
   /// with its error and left for its owners to release.
   void publish() {
     if (_closed) return;
-    send({
-      'kind': 'state',
-      'value': [for (final entry in _torrents.values) _snapshot(entry)],
-    });
+    final previous = _published;
+    if (_torrents.isEmpty && previous != null && previous.isEmpty) return;
+    final next = [for (final entry in _torrents.values) _snapshot(entry)];
+    if (previous != null && previous.length == next.length) {
+      var same = true;
+      for (var i = 0; i < next.length; i++) {
+        if (!sameSnapshot(previous[i], next[i])) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return;
+    }
+    _published = next;
+    send({'kind': 'state', 'value': next});
   }
 
   TorrentSnapshot _snapshot(TorrentEntry entry) {

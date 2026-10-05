@@ -11,7 +11,9 @@ extension EngineAdditions on EngineCore {
     required List peers,
   }) async {
     lifetime.check();
-    final hash = await infoHashOf(source);
+    final hash = await (source['kind'] == 'bytes'
+        ? _hashes.hash(source['value'] as Uint8List)
+        : infoHashOf(source));
     final expected = source['expectedHash'] as String?;
     if (expected != null && hash != expected.toLowerCase()) {
       throw ArgumentError('Torrent metadata hash does not match $expected');

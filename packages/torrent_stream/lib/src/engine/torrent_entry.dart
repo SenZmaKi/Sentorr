@@ -41,10 +41,12 @@ class TorrentEntry {
   final lifetime = Cancellation();
   final ready = Completer<void>();
   List<TorrentFileEntry> files = const [];
+  List<TorrentStreamFile> _snapshotFiles = const [];
   PieceScheduler? scheduler;
   Uint8List _base = Uint8List(0);
   bool? _appliedPause;
-  Future<void> _priorities = Future.value();
+  Future<void>? _priorities;
+  Set<int>? _appliedWanted;
   TorrentStatus? _status;
   List<int> _fileBytes = const [];
 
@@ -66,20 +68,33 @@ class TorrentEntry {
         return false;
       }
     });
+    _snapshotFiles = List.unmodifiable(files.map(fileOf));
     scheduler = PieceScheduler(handle, base: (p) => _base[p]);
-    await _setFiles(until);
+    await applyWanted(until);
     if (!ready.isCompleted) ready.complete();
   }
 
   /// Downloads the files owners want, keeping stream windows in place.
   Future<void> applyWanted(Future<void> Function(bool Function()) until) {
     if (files.isEmpty) return Future.value();
-    final operation = _priorities.then((_) => _setFiles(until));
-    _priorities = operation.catchError((Object _) {});
-    return operation;
+    if (_priorities case final pending?) return pending;
+    return _priorities = Future<void>(() async {
+      do {
+        await _setFiles(until);
+      } while (!_wantedApplied());
+    }).whenComplete(() => _priorities = null);
+  }
+
+  bool _wantedApplied() {
+    final applied = _appliedWanted;
+    final next = wanted;
+    return applied != null &&
+        applied.length == next.length &&
+        applied.containsAll(next);
   }
 
   Future<void> _setFiles(Future<void> Function(bool Function()) until) async {
+    if (_wantedApplied()) return;
     final wanted = this.wanted;
     final priorities = [
       for (final f in files)
@@ -106,6 +121,7 @@ class TorrentEntry {
     }
     _base = base;
     scheduler?.reapply();
+    _appliedWanted = wanted;
   }
 
   void applyPause() {
@@ -160,7 +176,7 @@ class TorrentEntry {
         for (final e in owners.entries)
           if (e.value.paused) e.key,
       }),
-      files: List.unmodifiable(files.map(fileOf)),
+      files: _snapshotFiles,
       wanted: Set.unmodifiable(wanted),
       fileBytes: List.unmodifiable([
         for (final f in files)

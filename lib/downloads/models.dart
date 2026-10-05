@@ -145,6 +145,46 @@ class DownloadItem {
   bool get isDone =>
       files.isNotEmpty && files.every((f) => f.downloadedBytes >= f.totalBytes);
 
+  bool sameState(DownloadItem other) {
+    if ((
+              id,
+              job,
+              status,
+              infoHash,
+              downloadBytesPerSecond,
+              uploadBytesPerSecond,
+              uploadedBytes,
+              peers,
+              seeds,
+              error,
+              seedingStartedAt,
+            ) !=
+            (
+              other.id,
+              other.job,
+              other.status,
+              other.infoHash,
+              other.downloadBytesPerSecond,
+              other.uploadBytesPerSecond,
+              other.uploadedBytes,
+              other.peers,
+              other.seeds,
+              other.error,
+              other.seedingStartedAt,
+            ) ||
+        files.length != other.files.length) {
+      return false;
+    }
+    for (var i = 0; i < files.length; i++) {
+      final a = files[i], b = other.files[i];
+      if ((a.index, a.path, a.totalBytes, a.downloadedBytes) !=
+          (b.index, b.path, b.totalBytes, b.downloadedBytes)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   DownloadItem copyWith({
     DownloadStatus? status,
     String? infoHash,

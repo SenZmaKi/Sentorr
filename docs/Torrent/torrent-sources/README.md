@@ -57,8 +57,8 @@ queries. Unsupported sources are skipped without issuing a request.
   Release sizes and seeder counts must be positive. Zero-seeder releases are
   excluded. Valid rows survive malformed neighboring rows.
 - Results retain both magnets and HTTP metadata URLs. YTS supplies `torrents[].url`;
-  Bitsearch supplies `/download/torrent/<hash>` links. Relative links use the
-  configured source endpoint.
+  Bitsearch supplies `/download/torrent/<hash>` links; Nyaa supplies
+  `/download/<id>.torrent` links. Relative links use the configured source endpoint.
   APIBay supplies no torrent-file URL: its results use the HTTP iTorrents cache.
   Deduplication keeps metadata URLs from all sources, even when a different
   source has the largest observed seeder count.

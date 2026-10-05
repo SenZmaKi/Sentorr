@@ -110,6 +110,14 @@ class NyaaSource extends SpecializedTorrentSource {
           name: name,
           infoHash: hash,
           magnet: magnet!,
+          torrentUrls: [
+            ?torrentHttpUrl(
+              cells[2]
+                  .querySelector('a[href*="/download/"]')
+                  ?.attributes['href'],
+              Uri.parse(endpoint),
+            ),
+          ],
           seeders: seeds,
           sizeBytes: size,
           uploadedAt: unixDate(cells[4].attributes['data-timestamp']),

@@ -66,7 +66,7 @@ void main() {
             .prepareFile(files.single.index)
             .timeout(const Duration(seconds: 3));
         expect(stream.uri.scheme, 'http');
-      expect(engine.torrent(session.infoHash!)!.verifiedBytes, 0);
+        expect(engine.torrent(session.infoHash!)!.verifiedBytes, 0);
       } finally {
         await session.close();
         await engine.close();

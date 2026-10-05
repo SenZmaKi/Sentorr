@@ -1,0 +1,42 @@
+---
+import LegalPage from '../components/LegalPage.astro';
+import { issues } from '../lib/site';
+
+const sections = [
+  {
+    title: 'Overview',
+    body: 'Sentorr runs on your device. It has no accounts and no servers of its own that collect your information, and the people who make it do not receive your watch history, searches or files.',
+  },
+  {
+    title: 'What stays on your device',
+    body: 'Settings, watch history, followed series and downloads are stored locally on your device. You can delete them at any time from the app or by removing its data.',
+  },
+  {
+    title: 'Google Drive backup (optional)',
+    body: 'If you choose to connect Google Drive, Sentorr asks for access to its own private app folder in your Drive and nothing else. It saves your watch history there as a file, and keeps the sign-in token on your device. You can disconnect in the app or remove Sentorr’s access in your Google account at any time. Sentorr’s use of information received from Google APIs adheres to the Google API Services User Data Policy, including its Limited Use requirements.',
+  },
+  {
+    title: 'Third-party services',
+    body: 'To work, Sentorr contacts third-party services such as title catalogs, torrent indexes and other peers, and Google if you use the backup. These parties may receive information such as your IP address, and they have their own privacy practices that Sentorr does not control.',
+  },
+  {
+    title: 'Changes',
+    body: 'This policy may be updated from time to time. Continued use of Sentorr means you accept the current version.',
+  },
+];
+---
+
+<LegalPage
+  title="Privacy policy"
+  description="How Sentorr handles your information."
+  icon="shield"
+  subtitle="What Sentorr keeps, and what it doesn’t"
+  sections={sections}
+>
+  <section>
+    <h2>Contact</h2>
+    <p>
+      Questions about this policy can be raised by <a class="prose-link" href={issues} target="_blank" rel="noopener noreferrer">opening an issue on GitHub</a>.
+    </p>
+  </section>
+</LegalPage>

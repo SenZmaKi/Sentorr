@@ -1,6 +1,5 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import SectionHeader from '../components/SectionHeader.astro';
+import LegalPage from '../components/LegalPage.astro';
 import { issues } from '../lib/site';
 
 const sections = [
@@ -27,32 +26,18 @@ const sections = [
 ];
 ---
 
-<Layout title="Legal notice | Sentorr" description="Legal and content notice for Sentorr, the open-source torrent streaming app.">
-  <section class="legal">
-    <SectionHeader level="h1" icon="gavel" title="Legal notice" subtitle="What Sentorr does and doesn’t do, and what you’re responsible for" />
-
-    <div class="content">
-      {sections.map((section) => (
-        <section>
-          <h2>{section.title}</h2>
-          <p>{section.body}</p>
-        </section>
-      ))}
-      <section>
-        <h2>Questions and concerns</h2>
-        <p>
-          Questions about content on a third-party website should go to that website’s owner or host. For issues with the
-          Sentorr software, <a class="prose-link" href={issues} target="_blank" rel="noopener noreferrer">open an issue on GitHub</a>.
-        </p>
-      </section>
-    </div>
+<LegalPage
+  title="Legal notice"
+  description="Legal and content notice for Sentorr, the open-source torrent streaming app."
+  icon="gavel"
+  subtitle="What Sentorr does and doesn’t do, and what you’re responsible for"
+  sections={sections}
+>
+  <section>
+    <h2>Questions and concerns</h2>
+    <p>
+      Questions about content on a third-party website should go to that website’s owner or host. For issues with the
+      Sentorr software, <a class="prose-link" href={issues} target="_blank" rel="noopener noreferrer">open an issue on GitHub</a>.
+    </p>
   </section>
-</Layout>
-
-<style>
-  .legal { max-width: 720px; }
-  .content { display: grid; gap: 24px; margin-top: 32px; }
-  .content section + section { padding-top: 24px; border-top: 1px solid var(--border-subtle); }
-  h2 { font-size: 16px; line-height: 24px; }
-  .content p { margin-top: 4px; color: var(--fg-secondary); }
-</style>
+</LegalPage>

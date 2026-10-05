@@ -1,0 +1,39 @@
+---
+// A plain text page of titled sections, for the legal notice, privacy policy and terms.
+import Layout from '../layouts/Layout.astro';
+import SectionHeader from './SectionHeader.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  icon: string;
+  subtitle: string;
+  sections: { title: string; body: string }[];
+}
+
+const { title, description, icon, subtitle, sections } = Astro.props;
+---
+
+<Layout title={`${title} | Sentorr`} description={description}>
+  <section class="legal">
+    <SectionHeader level="h1" icon={icon} title={title} subtitle={subtitle} />
+
+    <div class="content">
+      {sections.map((section) => (
+        <section>
+          <h2>{section.title}</h2>
+          <p>{section.body}</p>
+        </section>
+      ))}
+      <slot />
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .legal { max-width: 720px; }
+  .content { display: grid; gap: 24px; margin-top: 32px; }
+  .content :global(section + section) { padding-top: 24px; border-top: 1px solid var(--border-subtle); }
+  h2 { font-size: 16px; line-height: 24px; }
+  .content :global(p) { margin-top: 4px; color: var(--fg-secondary); }
+</style>

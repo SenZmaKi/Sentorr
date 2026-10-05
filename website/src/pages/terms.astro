@@ -1,0 +1,42 @@
+---
+import LegalPage from '../components/LegalPage.astro';
+import { issues } from '../lib/site';
+
+const sections = [
+  {
+    title: 'Acceptance',
+    body: 'By downloading or using Sentorr you agree to these terms. If you do not agree, do not use it.',
+  },
+  {
+    title: 'Use at your own risk',
+    body: 'Sentorr is free, open-source software provided “as is” and “as available”, without warranties of any kind. Features, including any backup, may change, stop working or be removed at any time, and you should keep your own copies of anything you care about.',
+  },
+  {
+    title: 'Your responsibility',
+    body: 'You are responsible for how you use Sentorr and for the content you access with it, and for complying with the laws and rights that apply to you. See the legal notice for more.',
+  },
+  {
+    title: 'Limitation of liability',
+    body: 'To the fullest extent permitted by law, Sentorr’s authors and contributors are not liable for any loss or damage arising from the use of, or inability to use, the software or any third-party service it connects to.',
+  },
+  {
+    title: 'Changes',
+    body: 'These terms may be updated from time to time. Continued use of Sentorr means you accept the current version.',
+  },
+];
+---
+
+<LegalPage
+  title="Terms of service"
+  description="The terms for using Sentorr."
+  icon="description"
+  subtitle="The ground rules for using Sentorr"
+  sections={sections}
+>
+  <section>
+    <h2>Contact</h2>
+    <p>
+      Questions about these terms can be raised by <a class="prose-link" href={issues} target="_blank" rel="noopener noreferrer">opening an issue on GitHub</a>.
+    </p>
+  </section>
+</LegalPage>

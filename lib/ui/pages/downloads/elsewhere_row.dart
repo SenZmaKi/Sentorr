@@ -47,8 +47,7 @@ class ElsewhereRow extends ConsumerWidget {
           ],
         ],
       ),
-      onTap: () =>
-          e.finished ? ref.playElsewhere(e) : ref.playItem(e.item),
+      onTap: () => e.finished ? ref.playElsewhere(e) : ref.playItem(e.item),
       actions: [
         if (e.finished)
           SIconButton(

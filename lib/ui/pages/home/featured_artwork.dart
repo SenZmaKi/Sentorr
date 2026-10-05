@@ -19,14 +19,17 @@ class FeaturedArtwork extends StatelessWidget {
       if (titles.length > 1)
         Opacity(
           opacity: 0,
-          child: TitleBackdrop(title: titles[(index + 1) % titles.length]),
+          child: TitleBackdrop(
+            title: titles[(index + 1) % titles.length],
+            posterFallback: false,
+          ),
         ),
       SpotlightCrossfade(
         child: KenBurns(
           key: ValueKey(titles[index].id),
           active: true,
           duration: Motion.spotlightHold + Motion.spotlightFade,
-          child: TitleBackdrop(title: titles[index]),
+          child: TitleBackdrop(title: titles[index], posterFallback: false),
         ),
       ),
     ],

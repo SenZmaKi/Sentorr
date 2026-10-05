@@ -53,6 +53,7 @@ class TitleBackdrop extends ConsumerWidget {
     super.key,
     required this.title,
     this.waitForBackdrop = false,
+    this.posterFallback = true,
   });
 
   final ImdbTitle title;
@@ -60,6 +61,9 @@ class TitleBackdrop extends ConsumerWidget {
   /// Wait for details (or their failure) before falling back to the poster,
   /// so a poster never shows only to be swapped for a backdrop.
   final bool waitForBackdrop;
+
+  /// Allow a cropped poster when no backdrop is available.
+  final bool posterFallback;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,7 +73,8 @@ class TitleBackdrop extends ConsumerWidget {
       duration: Motion.panel,
       child: backdrop != null
           ? TitleArtwork(key: ValueKey(backdrop.url), image: backdrop)
-          : !waitForBackdrop || details.hasValue || details.hasError
+          : posterFallback &&
+                (!waitForBackdrop || details.hasValue || details.hasError)
           ? TitleArtwork(
               key: const ValueKey('poster'),
               image: title.poster,

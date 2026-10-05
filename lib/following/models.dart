@@ -19,7 +19,9 @@ class FollowedSeries {
     required this.progress,
     required this.watchedAt,
     this.notified,
+    this.notifiedAt,
     this.notify = true,
+    this.notifyAt,
     this.autoDownload,
     this.manual = false,
   });
@@ -42,8 +44,15 @@ class FollowedSeries {
   /// The episode the viewer was last told aired, by IMDb id.
   final String? notified;
 
+  /// When [notified] was set, so a synced device keeps the latest.
+  final DateTime? notifiedAt;
+
   /// Tell the viewer when a new episode airs.
   final bool notify;
+
+  /// When the viewer last switched [notify], so a synced device keeps the
+  /// latest choice.
+  final DateTime? notifyAt;
 
   /// Download new episodes on their own; null follows the settings default.
   final bool? autoDownload;
@@ -73,14 +82,17 @@ class FollowedSeries {
     );
   }
 
-  FollowedSeries notifiedOf(String episodeId) => copyWith(notified: episodeId);
+  FollowedSeries notifiedOf(String episodeId, DateTime now) =>
+      copyWith(notified: episodeId, notifiedAt: now);
 
   FollowedSeries copyWith({
     EpisodeNumber? reached,
     double? progress,
     DateTime? watchedAt,
     String? notified,
+    DateTime? notifiedAt,
     bool? notify,
+    DateTime? notifyAt,
     bool? autoDownload,
     bool resetAutoDownload = false,
     bool? manual,
@@ -90,7 +102,9 @@ class FollowedSeries {
     progress: progress ?? this.progress,
     watchedAt: watchedAt ?? this.watchedAt,
     notified: notified ?? this.notified,
+    notifiedAt: notifiedAt ?? this.notifiedAt,
     notify: notify ?? this.notify,
+    notifyAt: notifyAt ?? this.notifyAt,
     autoDownload: resetAutoDownload ? null : autoDownload ?? this.autoDownload,
     manual: manual ?? this.manual,
   );
@@ -130,7 +144,9 @@ class FollowedSeries {
     'progress': progress,
     'watchedAt': watchedAt.toUtc().toIso8601String(),
     'notified': notified,
+    if (notifiedAt != null) 'notifiedAt': notifiedAt!.toUtc().toIso8601String(),
     'notify': notify,
+    if (notifyAt != null) 'notifyAt': notifyAt!.toUtc().toIso8601String(),
     'autoDownload': autoDownload,
     'manual': manual,
   };
@@ -155,9 +171,14 @@ class FollowedSeries {
       progress: progress.toDouble().clamp(0, 1),
       watchedAt: at.toLocal(),
       notified: json['notified'] as String?,
+      notifiedAt: _time(json['notifiedAt']),
       notify: json['notify'] != false,
+      notifyAt: _time(json['notifyAt']),
       autoDownload: json['autoDownload'] as bool?,
       manual: json['manual'] == true,
     );
   }
 }
+
+DateTime? _time(Object? json) =>
+    json is String ? DateTime.tryParse(json)?.toLocal() : null;

@@ -27,6 +27,20 @@
               android:resource="@style/NormalTheme"
               />
         </activity>
+        <!-- sentorr://return, from pages Sentorr serves in the browser. -->
+        <activity
+            android:name=".ReturnActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="sentorr" android:host="return"/>
+            </intent-filter>
+        </activity>
         <!-- Launcher entries per icon variant; AppAppearance.kt enables the one
              matching the app theme. Renaming these breaks existing shortcuts. -->
         <activity-alias

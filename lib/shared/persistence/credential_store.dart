@@ -33,6 +33,23 @@ class CredentialStore {
 
   final FlutterSecureStorage _storage;
   static const _proxyKey = 'torrent_proxy_credentials';
+  static const _driveKey = 'google_drive_refresh_token';
+
+  /// Null when none is saved or the keychain cannot be read.
+  Future<String?> readDriveToken() async {
+    try {
+      final token = await _storage.read(key: _driveKey);
+      return token == null || token.isEmpty ? null : token;
+    } on PlatformException catch (error, stack) {
+      _log.warning('Could not read the Drive token', error, stack);
+      return null;
+    }
+  }
+
+  Future<void> writeDriveToken(String token) =>
+      _storage.write(key: _driveKey, value: token);
+
+  Future<void> deleteDriveToken() => _storage.delete(key: _driveKey);
 
   /// Null when none are saved or the keychain cannot be read; a corrupt
   /// entry is deleted.

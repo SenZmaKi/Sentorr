@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'backup_settings.dart';
 import 'cache_settings.dart';
 import 'download_settings.dart';
 import 'following_settings.dart';
@@ -10,6 +11,7 @@ import 'streaming_settings.dart';
 import 'torrent_settings.dart';
 import 'update_settings.dart';
 
+export 'backup_settings.dart';
 export 'cache_settings.dart';
 export 'download_settings.dart';
 export 'following_settings.dart';
@@ -77,6 +79,7 @@ class AppSettings {
     this.network = const NetworkSettings(),
     this.following = const FollowingSettings(),
     this.updates = const UpdateSettings(),
+    this.backup = const BackupSettings(),
   });
 
   static const defaultImageCacheMaxBytes = 100 * 1024 * 1024;
@@ -95,6 +98,7 @@ class AppSettings {
   final NetworkSettings network;
   final FollowingSettings following;
   final UpdateSettings updates;
+  final BackupSettings backup;
 
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -109,6 +113,7 @@ class AppSettings {
     NetworkSettings? network,
     FollowingSettings? following,
     UpdateSettings? updates,
+    BackupSettings? backup,
   }) => AppSettings(
     themeMode: themeMode ?? this.themeMode,
     window: window ?? this.window,
@@ -122,6 +127,7 @@ class AppSettings {
     network: network ?? this.network,
     following: following ?? this.following,
     updates: updates ?? this.updates,
+    backup: backup ?? this.backup,
   );
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -145,6 +151,7 @@ class AppSettings {
     ),
     following: FollowingSettings.fromJson(jsonObject(json['following'])),
     updates: UpdateSettings.fromJson(jsonObject(json['updates'])),
+    backup: BackupSettings.fromJson(jsonObject(json['backup'])),
   );
 
   Map<String, dynamic> toJson() => {
@@ -161,5 +168,6 @@ class AppSettings {
     'network': network.toJson(),
     'following': following.toJson(),
     'updates': updates.toJson(),
+    'backup': backup.toJson(),
   };
 }

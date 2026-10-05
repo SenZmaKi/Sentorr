@@ -8,6 +8,7 @@ import '../watching/notifier.dart';
 import 'latest_episode.dart';
 import 'models.dart';
 import 'repository.dart';
+import 'snapshot.dart';
 
 final _log = Logger('sentorr.following');
 
@@ -75,8 +76,10 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
   /// Notes that the viewer was told [episodeId] of [seriesId] aired.
   Future<void> markNotified(String seriesId, String episodeId) {
     _log.info('Notified of $episodeId for $seriesId');
+    final now = DateTime.now();
     return _commit([
-      for (final s in _series) s.id == seriesId ? s.notifiedOf(episodeId) : s,
+      for (final s in _series)
+        s.id == seriesId ? s.notifiedOf(episodeId, now) : s,
     ]);
   }
 
@@ -90,21 +93,25 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
     );
     if (!ref.mounted || _series.any((s) => s.id == series.id)) return;
     _log.info('Following ${series.title} (${series.id}) from its page');
+    final now = DateTime.now();
     await _commit([
       FollowedSeries(
         series: latest?.series ?? series,
         reached: latest?.number ?? (season: 1, episode: 0),
         progress: 1,
-        watchedAt: DateTime.now(),
+        watchedAt: now,
         notified: latest?.episode.title.id,
+        notifiedAt: latest == null ? null : now,
         manual: true,
       ),
       ..._series,
     ]);
   }
 
-  Future<void> setNotify(String seriesId, bool on) =>
-      _change(seriesId, (s) => s.copyWith(notify: on));
+  Future<void> setNotify(String seriesId, bool on) => _change(
+    seriesId,
+    (s) => s.copyWith(notify: on, notifyAt: DateTime.now()),
+  );
 
   /// [on] null returns the series to the settings default.
   Future<void> setAutoDownload(String seriesId, bool? on) => _change(
@@ -120,7 +127,23 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
   /// Stops looking for new episodes of [seriesId] until it is watched again.
   Future<void> unfollow(String seriesId) {
     _log.info('Unfollowing $seriesId');
+    _repository.removals[seriesId] = DateTime.now();
     return _commit(_without(seriesId));
+  }
+
+  /// Everything another device needs to match this one.
+  FollowedSnapshot get snapshot =>
+      FollowedSnapshot(_series, Map.of(_repository.removals));
+
+  /// Folds in [incoming] from another device; see
+  /// [FollowedSnapshot.merge]. Nothing is saved when it changes nothing.
+  Future<void> merge(FollowedSnapshot incoming) {
+    final current = snapshot;
+    final merged = current.merge(incoming);
+    if (merged.matches(current)) return Future.value();
+    _log.info('Merged ${incoming.series.length} followed series from a device');
+    _repository.removals = merged.removals;
+    return _commit(merged.series);
   }
 
   List<FollowedSeries> _without(String seriesId) => [

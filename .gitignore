@@ -36,3 +36,6 @@ pubspec_overrides.yaml
 site/
 
 __pycache__/
+
+# Local build-time secrets (see AGENTS.md)
+dart_defines.local.json

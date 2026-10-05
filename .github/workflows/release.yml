@@ -172,6 +172,8 @@ jobs:
             --release \
             --build-name "$VERSION" \
             --build-number "$BUILD_NUMBER" \
+            --dart-define "GOOGLE_DRIVE_CLIENT_ID=${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}" \
+            --dart-define "GOOGLE_DRIVE_CLIENT_SECRET=${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}" \
             --dart-define "UPDATE_CHANNEL=${{ needs.prepare.outputs.channel }}"
 
       - name: Verify and package macOS app
@@ -365,6 +367,8 @@ jobs:
           flutter build linux --release \
             --build-name "$VERSION" \
             --build-number "$BUILD_NUMBER" \
+            --dart-define "GOOGLE_DRIVE_CLIENT_ID=${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}" \
+            --dart-define "GOOGLE_DRIVE_CLIENT_SECRET=${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}" \
             --dart-define "UPDATE_CHANNEL=${{ needs.prepare.outputs.channel }}"
 
       - name: Package AppImage
@@ -507,6 +511,8 @@ jobs:
           flutter build apk --release --split-per-abi \
             --build-name "$VERSION" \
             --build-number "$BUILD_NUMBER" \
+            --dart-define "GOOGLE_DRIVE_CLIENT_ID=${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}" \
+            --dart-define "GOOGLE_DRIVE_CLIENT_SECRET=${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}" \
             --dart-define "UPDATE_CHANNEL=$UPDATE_CHANNEL"
 
       - name: Verify and package APKs
@@ -622,6 +628,8 @@ jobs:
           flutter build windows --release `
             --build-name $env:VERSION `
             --build-number $env:BUILD_NUMBER `
+            --dart-define "GOOGLE_DRIVE_CLIENT_ID=${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}" `
+            --dart-define "GOOGLE_DRIVE_CLIENT_SECRET=${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}" `
             --dart-define "UPDATE_CHANNEL=$env:UPDATE_CHANNEL"
 
           $bundle = "build\windows\$env:ARCHITECTURE\runner\Release"

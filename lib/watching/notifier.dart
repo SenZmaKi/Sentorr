@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
 import '../player/models.dart';
+import '../backup/watch_backup.dart';
 import '../torrents/models.dart';
 import 'models.dart';
 import 'repository.dart';
@@ -92,11 +93,30 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
   /// Forgets a movie, or every episode of a series, by [WatchEntry.key].
   Future<void> remove(String key) {
     _log.info('Removing $key from watch history');
+    _repository.removals[key] = DateTime.now();
     return _commit(_without((e) => e.key == key));
+  }
+
+  /// Everything a backup holds.
+  WatchSnapshot get snapshot =>
+      WatchSnapshot(_entries, Map.of(_repository.removals));
+
+  /// Folds in [incoming], as from a backup; each item keeps its newer
+  /// record and what either side removed stays removed. Nothing is saved
+  /// when it changes nothing.
+  Future<void> merge(WatchSnapshot incoming) {
+    final merged = snapshot.merge(incoming, capacity: capacity);
+    if (merged.matches(snapshot)) return Future.value();
+    _repository.removals = merged.removals;
+    return _commit(merged.entries);
   }
 
   Future<void> clear() {
     _log.info('Clearing watch history');
+    final now = DateTime.now();
+    for (final e in _entries) {
+      _repository.removals[e.key] = now;
+    }
     return _commit(const []);
   }
 

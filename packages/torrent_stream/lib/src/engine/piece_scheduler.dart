@@ -19,19 +19,25 @@ class PieceScheduler {
   int get urgentPieces => _deadlines.length;
   bool needs(int piece) => _active.contains(piece);
   void demand(Cancellation owner, int piece, int lastPiece, int lookahead) {
-    _consumers[owner] = (piece, min(lastPiece, piece + lookahead));
+    final window = (piece, min(lastPiece, piece + lookahead));
+    // HTTP reads within the same piece keep the same demand window.
+    if (_consumers[owner] == window &&
+        !_consumers.keys.any((consumer) => consumer.isCancelled)) {
+      return;
+    }
+    _consumers[owner] = window;
     _apply();
   }
 
   void release(Cancellation owner) {
-    _consumers.remove(owner);
-    _apply();
+    if (_consumers.remove(owner) != null) _apply();
   }
 
   /// Drops consumers already cancelled, e.g. a closed stream's reads.
   void prune() {
+    final before = _consumers.length;
     _consumers.removeWhere((owner, _) => owner.isCancelled);
-    _apply();
+    if (_consumers.length != before) _apply();
   }
 
   /// Sets every window again, after file priorities replaced them.

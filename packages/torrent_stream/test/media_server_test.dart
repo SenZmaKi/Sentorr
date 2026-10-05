@@ -8,7 +8,10 @@ import 'package:torrent_stream/src/engine/cancellation.dart';
 import 'package:torrent_stream/src/engine/media_server.dart';
 
 class TestBytes implements ByteSource {
-  final data = Uint8List.fromList(List.generate(200123, (i) => i % 251));
+  TestBytes({int length = 200123})
+    : data = Uint8List.fromList(List.generate(length, (i) => i % 251));
+  final Uint8List data;
+  int? blockAfterReads;
   bool blocked = false;
   int reads = 0;
   int releases = 0;
@@ -23,7 +26,9 @@ class TestBytes implements ByteSource {
     Cancellation cancellation,
   ) async {
     reads++;
-    if (blocked) await cancellation.wait(Completer<void>().future);
+    if (blocked || (blockAfterReads != null && reads > blockAfterReads!)) {
+      await cancellation.wait(Completer<void>().future);
+    }
     return data.sublist(offset, offset + count);
   }
 
@@ -71,6 +76,35 @@ void main() {
     );
     expect(bytes, source.data.sublist(65530, 131091));
   });
+  test('batched flushes preserve a full multi-batch response', () async {
+    await server.close();
+    source = TestBytes(length: 1024123);
+    server = MediaServer(source);
+    await server.start();
+    final (_, data) = await get();
+    expect(data, source.data);
+    expect(server.servedBytes, source.length);
+  });
+
+  test(
+    'first chunk arrives without waiting for the next missing piece',
+    () async {
+      source.blockAfterReads = 1;
+      final response = await (await client.getUrl(server.uri)).close();
+      final arrived = Completer<void>();
+      final received = BytesBuilder();
+      final subscription = response.listen((data) {
+        received.add(data);
+        if (received.length >= 64 * 1024 && !arrived.isCompleted) {
+          arrived.complete();
+        }
+      }, onError: (Object _) {});
+      await arrived.future.timeout(const Duration(seconds: 2));
+      expect(received.toBytes(), source.data.sublist(0, 64 * 1024));
+      server.cancelReads();
+      await subscription.cancel();
+    },
+  );
   test('suffix, open-ended and clipped ranges', () async {
     expect(
       (await get(range: 'bytes=-19')).$2,

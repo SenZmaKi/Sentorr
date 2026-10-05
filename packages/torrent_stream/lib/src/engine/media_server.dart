@@ -107,14 +107,23 @@ class MediaServer {
           onError: (Object _) => cancellation.cancel(),
           cancelOnError: true,
         );
+        var pendingBytes = 0;
         for (var offset = start; offset <= end;) {
           final count = min(64 * 1024, end - offset + 1);
           final bytes = await source.read(offset, count, cancellation);
           cancellation.check();
           if (bytes.length != count) throw StateError('Short byte-source read');
           socket.add(bytes);
-          await cancellation.wait(socket.flush());
-          servedBytes += count;
+          pendingBytes += count;
+          // Send the first chunk promptly; subsequent flushes have bounded
+          // backpressure without a round trip to the sink for every read.
+          if (offset == start ||
+              pendingBytes >= 256 * 1024 ||
+              offset + count > end) {
+            await cancellation.wait(socket.flush());
+            servedBytes += pendingBytes;
+            pendingBytes = 0;
+          }
           offset += count;
         }
       }

@@ -4,8 +4,8 @@ import 'package:torrent_stream/torrent_stream.dart';
 
 final _log = Logger('sentorr.player.stream');
 
-/// Plays a [TorrentStream] endpoint in MediaKit with the cache policy the
-/// streaming lab validated, and keeps engine reads in step with seeks.
+/// Plays a [TorrentStream] endpoint in MediaKit with bounded native caching,
+/// and keeps engine reads in step with seeks.
 class MediaKitTorrentAdapter {
   MediaKitTorrentAdapter(this.player);
 
@@ -13,7 +13,7 @@ class MediaKitTorrentAdapter {
   bool _configured = false;
 
   /// Seconds of playable cache mpv waits for before starting or resuming.
-  static const readySeconds = 10;
+  static const readySeconds = 5;
 
   /// Seconds mpv reads ahead of the position.
   static const forwardSeconds = 60;

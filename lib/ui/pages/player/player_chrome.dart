@@ -6,6 +6,7 @@ import '../../components/motion.dart';
 import '../../components/surface.dart';
 import '../../shared/theme/theme.dart';
 import 'bottom_bar.dart';
+import 'bar_visibility.dart';
 import 'player_actions.dart';
 import 'player_ui.dart';
 import 'player_value.dart';
@@ -41,15 +42,8 @@ class PlayerChrome extends StatelessWidget {
         !(layout.barsYieldToPanels && ui.panel != PlayerPanel.none);
     final queue = session.queue;
     final duration = reduceMotion(context) ? Duration.zero : Motion.panel;
-    Widget fade(Widget child) => IgnorePointer(
-      ignoring: !visible,
-      child: AnimatedOpacity(
-        opacity: visible ? 1 : 0,
-        duration: duration,
-        curve: Motion.change,
-        child: child,
-      ),
-    );
+    Widget fade(Widget child) =>
+        BarVisibility(visible: visible, duration: duration, child: child);
 
     return Stack(
       children: [

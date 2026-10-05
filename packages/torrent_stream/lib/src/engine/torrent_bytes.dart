@@ -44,7 +44,7 @@ class TorrentBytes implements ByteSource {
       throw RangeError('Read outside selected file');
     }
     cancellation.check();
-    final output = Uint8List(count);
+    Uint8List? output;
     for (var copied = 0; copied < count;) {
       cancellation.check();
       final absolute = file.offset + offset + copied;
@@ -60,10 +60,20 @@ class TorrentBytes implements ByteSource {
       final within = absolute % pieceLength;
       final take = min(count - copied, data.length - within);
       if (take <= 0) throw StateError('Invalid native piece layout');
+      if (copied == 0 && take == count) {
+        // Socket writes can borrow a piece; eviction only drops our reference.
+        // Keep callers from modifying the cached bytes through this view.
+        return Uint8List.sublistView(
+          data,
+          within,
+          within + take,
+        ).asUnmodifiableView();
+      }
+      output ??= Uint8List(count);
       output.setRange(copied, copied + take, data, within);
       copied += take;
     }
-    return output;
+    return output ?? Uint8List(0);
   }
 
   Future<Uint8List> _piece(int piece) async {

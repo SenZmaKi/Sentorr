@@ -16,6 +16,9 @@ class FakeTorrent {
 /// Torrents keyed by the magnet's display name.
 class FakeTorrents implements DownloadTorrents {
   final byHash = <String, FakeTorrent>{};
+  @override
+  String? failure;
+  bool failPause = false;
   bool failMetadata = false;
   Completer<void>? metadataGate;
 
@@ -95,6 +98,7 @@ class FakeTorrents implements DownloadTorrents {
 
   @override
   Future<void> setPaused(String infoHash, String owner, bool paused) async {
+    if (failPause) throw StateError('pause failed');
     final t = byHash[infoHash]!;
     paused ? t.paused.add(owner) : t.paused.remove(owner);
   }

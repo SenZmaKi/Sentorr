@@ -10,6 +10,7 @@ import 'torrents.dart';
 
 part 'batches.dart';
 part 'attachments.dart';
+part 'engine_operations.dart';
 
 final _log = Logger('sentorr.downloads');
 
@@ -29,6 +30,8 @@ class DownloadQueue {
 
   /// Downloads whose torrent has its files chosen, by id.
   final _attached = <String>{};
+  final _attempts = <String, _DownloadAttempt>{};
+  static int _attemptSequence = 0;
 
   /// Whether each attached download's hold was last left running.
   final _running = <String, bool>{};
@@ -161,42 +164,7 @@ class DownloadQueue {
   });
 
   /// Reads transfer progress from the engine and applies queue policy.
-  Future<void> tick() => _serial(() async {
-    var changed = false;
-    for (final id in _attached.toList()) {
-      final previous = _item(id);
-      final torrent = _torrent(previous);
-      if (torrent == null) continue;
-      if (torrent.error case final error?) {
-        _log.warning('${_name(previous)} failed: $error');
-        await _release(previous);
-        _replace(previous.withStatus(DownloadStatus.failed, error: error));
-        changed = true;
-        continue;
-      }
-      var next = progressOf(
-        previous,
-        torrent,
-        uploadedBefore: _uploadBefore[id] ?? 0,
-      );
-      if (next.isDone && previous.status != DownloadStatus.paused) {
-        next = await _finish(next);
-      }
-      changed |= next.status != previous.status;
-      if (next.status != previous.status) {
-        _log.info(
-          '${_name(next)}: ${previous.status.name} → ${next.status.name}',
-        );
-      }
-      _replace(next);
-    }
-    _reconcile();
-    if (changed) {
-      await _commit();
-    } else {
-      _publish();
-    }
-  });
+  Future<void> tick() => _disposed ? Future.value() : _serial(_tick);
 
   /// Seeds when settings ask, then completes and lets the torrent go.
   Future<DownloadItem> _finish(DownloadItem item) async {
@@ -253,32 +221,6 @@ class DownloadQueue {
     }
   }
 
-  void _hold(DownloadItem item, {required bool running}) {
-    final hash = item.infoHash;
-    if (hash == null || _running[item.id] == running) return;
-    _running[item.id] = running;
-    torrents.setPaused(hash, item.owner, !running).catchError((Object e) {
-      _log.warning(
-        'Could not ${running ? 'start' : 'pause'} ${_name(item)}',
-        e,
-      );
-    });
-  }
-
-  Future<void> _release(DownloadItem item, {bool deleteFiles = false}) async {
-    _attached.remove(item.id);
-    _running.remove(item.id);
-    final hash = item.infoHash;
-    if (hash == null) return;
-    try {
-      await torrents
-          .release(hash, item.owner, deleteFiles: deleteFiles)
-          .timeout(const Duration(seconds: 5));
-    } catch (error) {
-      _log.warning('Could not release ${_name(item)}', error);
-    }
-  }
-
   TorrentSnapshot? _torrent(DownloadItem item) =>
       torrents.torrents.where((t) => t.infoHash == item.infoHash).firstOrNull;
 
@@ -303,6 +245,7 @@ class DownloadQueue {
   Future<void> flush() => _serial(() => repository.save(items));
 
   Future<T> _serial<T>(Future<T> Function() task) {
+    if (_disposed) return Future.error(StateError('Download queue disposed'));
     final result = _tail.then((_) => task());
     _tail = result.then((_) {}, onError: (Object _) {});
     return result;
@@ -310,12 +253,20 @@ class DownloadQueue {
 
   String _name(DownloadItem item) => '${item.job.title} (${item.id})';
 
-  /// Saves the queue; torrents stay in the engine for it to close.
+  /// Stops queue work, releases its owners and saves the final state.
   Future<void> dispose() => _shutdown ??= _dispose();
 
   Future<void> _dispose() async {
     _disposed = true;
-    await flush();
+    await _tail;
+    final attempts = _attempts.values.toList();
+    _attempts.clear();
+    _attached.clear();
+    _running.clear();
+    await Future.wait([
+      for (final attempt in attempts) _releaseAttempt(attempt),
+    ]);
+    await repository.save(items);
     // A paused UI subscription cannot deliver done until it resumes or is
     // cancelled. Bootstrap disposes those subscribers after closing the queue,
     // so waiting for them here would deadlock application shutdown.

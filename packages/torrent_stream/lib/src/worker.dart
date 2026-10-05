@@ -74,7 +74,7 @@ Future<Object?> _run(
     case 'want':
       await core.want(hash(), owner(), (message['files'] as Set).cast<int>());
     case 'pause':
-      core.pause(hash(), owner(), message['paused'] as bool);
+      await core.pause(hash(), owner(), message['paused'] as bool);
     case 'rename':
       await core.rename(hash(), (message['names'] as Map).cast<int, String>());
     case 'move':

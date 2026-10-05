@@ -158,4 +158,116 @@ void main() {
       closeSeed();
     }
   });
+  test(
+    'kept torrents reject conflicting destinations without adding an owner',
+    () async {
+      final (metadata, _, closeSeed) = await seedFile(source);
+      final engine = loopbackEngine();
+      try {
+        final torrentSource = TorrentSource.metadata(metadata);
+        final folder = '${root.path}/downloads';
+        final hash = await engine.add(
+          torrentSource,
+          owner: 'first',
+          directory: folder,
+          storage: TorrentStorage.kept,
+        );
+        await expectLater(
+          engine.add(
+            torrentSource,
+            owner: 'conflict',
+            directory: '${root.path}/other',
+            storage: TorrentStorage.kept,
+          ),
+          throwsA(isA<TorrentStreamException>()),
+        );
+        await engine.add(
+          torrentSource,
+          owner: 'same',
+          directory: '$folder/../downloads',
+          storage: TorrentStorage.kept,
+        );
+        final snapshot = await until(
+          engine,
+          hash,
+          (t) => t.owners.contains('same'),
+        );
+        expect(snapshot.savePath, folder);
+        expect(snapshot.owners, {'first', 'same'});
+      } finally {
+        await engine.close();
+        closeSeed();
+      }
+    },
+  );
+
+  test('a concurrent kept add promotes temporary storage', () async {
+    final (metadata, _, closeSeed) = await seedFile(source);
+    final engine = loopbackEngine();
+    try {
+      final torrentSource = TorrentSource.metadata(metadata);
+      final hashes = await Future.wait([
+        engine.add(
+          torrentSource,
+          owner: 'stream',
+          directory: '${root.path}/cache',
+        ),
+        engine.add(
+          torrentSource,
+          owner: 'download',
+          directory: '${root.path}/kept',
+          storage: TorrentStorage.kept,
+        ),
+      ]);
+      expect(hashes.first, hashes.last);
+      final snapshot = await until(
+        engine,
+        hashes.first,
+        (t) => t.owners.length == 2,
+      );
+      expect(snapshot.storage, TorrentStorage.kept);
+      expect(snapshot.savePath, '${root.path}/kept');
+    } finally {
+      await engine.close();
+      closeSeed();
+    }
+  });
+  test(
+    'concurrent promotions cannot accept conflicting kept directories',
+    () async {
+      final (metadata, _, closeSeed) = await seedFile(source);
+      final engine = loopbackEngine();
+      try {
+        final torrentSource = TorrentSource.metadata(metadata);
+        final hash = await engine.add(
+          torrentSource,
+          owner: 'stream',
+          directory: '${root.path}/cache',
+        );
+        final results = await Future.wait([
+          for (final entry in {'first': 'a', 'second': 'b'}.entries)
+            engine
+                .add(
+                  torrentSource,
+                  owner: entry.key,
+                  directory: '${root.path}/${entry.value}',
+                  storage: TorrentStorage.kept,
+                )
+                .then<Object?>((value) => value, onError: (Object e) => e),
+        ]);
+        expect(results.whereType<String>(), hasLength(1));
+        expect(results.whereType<TorrentStreamException>(), hasLength(1));
+        final snapshot = await until(
+          engine,
+          hash,
+          (t) => t.storage == TorrentStorage.kept && t.owners.length == 2,
+        );
+        expect(snapshot.owners, hasLength(2));
+        expect(snapshot.owners, contains('stream'));
+      } finally {
+        await engine.close();
+        closeSeed();
+      }
+    },
+  );
 }

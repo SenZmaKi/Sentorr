@@ -230,4 +230,63 @@ void main() {
     await waitUntil(() => engine.torrents.isEmpty);
     expect(File('${root.path}/escape.bin').existsSync(), false);
   });
+  test(
+    'paused pack files stay unwanted while another owner downloads',
+    () async {
+      final folder = await Directory('${root.path}/pack-seed').create();
+      for (final name in ['first.bin', 'second.bin']) {
+        await File('${folder.path}/$name').writeAsBytes(Uint8List(1024 * 1024));
+      }
+      final data = createTorrentData(
+        sourcePath: folder.path,
+        pieceSize: 128 * 1024,
+      );
+      final seed = seedSession.addTorrentData(
+        torrentData: data,
+        savePath: root.path,
+      );
+      seed.unsetFlags(
+        LibtorrentTorrentFlags.autoManaged | LibtorrentTorrentFlags.paused,
+      );
+      await waitUntil(() => seed.getStatus().state == 5);
+      final source = TorrentSource.metadata(data);
+      final hash = await engine.add(
+        source,
+        owner: 'first',
+        directory: '${root.path}/pack-download',
+        storage: TorrentStorage.kept,
+      );
+      await engine.add(
+        source,
+        owner: 'second',
+        directory: '${root.path}/pack-download',
+        storage: TorrentStorage.kept,
+      );
+      final files = (await engine.metadata(hash))
+          .where((f) => !f.isPadFile)
+          .toList();
+      expect(files, hasLength(2));
+      await engine.want(hash, 'first', {files.first.index});
+      await engine.want(hash, 'second', {files.last.index});
+      await engine.setPaused(hash, 'second', true);
+      await engine.addPeers(hash, [peer]);
+      await waitUntil(
+        () =>
+            engine.torrent(hash)?.bytesOf(files.first.index) ==
+            files.first.length,
+      );
+      var snapshot = engine.torrent(hash)!;
+      expect(snapshot.wanted, {files.first.index});
+      expect(snapshot.bytesOf(files.last.index), lessThan(files.last.length));
+      expect(snapshot.paused, isFalse);
+      await engine.setPaused(hash, 'second', false);
+      await waitUntil(
+        () =>
+            engine.torrent(hash)?.bytesOf(files.last.index) ==
+            files.last.length,
+      );
+      snapshot = engine.torrent(hash)!;
+      expect(snapshot.wanted, {for (final f in files) f.index});
+    },
+  );
 }

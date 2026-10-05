@@ -127,7 +127,7 @@ class DownloadItem {
   final String? error;
   final DateTime? seedingStartedAt;
 
-  /// The engine owner name for this download.
+  /// Stable owner prefix; preparation appends its unique attempt number.
   String get owner => 'download:$id';
   int get totalBytes => files.fold(0, (sum, f) => sum + f.totalBytes);
   int get downloadedBytes => files.fold(0, (sum, f) => sum + f.downloadedBytes);

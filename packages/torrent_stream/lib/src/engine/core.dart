@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:libtorrent_dart/libtorrent_dart.dart';
+import 'package:path/path.dart' as p;
 
 import '../config.dart';
 import '../engine_models.dart';
@@ -11,6 +12,8 @@ import 'files.dart';
 import 'native_session.dart';
 import 'stream_host.dart';
 import 'torrent_entry.dart';
+
+part 'adds.dart';
 
 /// The engine isolate's one session and every torrent in it. Commands may
 /// interleave; each leaves the entries consistent at its awaits.
@@ -25,6 +28,7 @@ class EngineCore {
   final NativeSession native;
   final void Function(Map<String, Object?>) send;
   final _torrents = <String, TorrentEntry>{};
+  final _adds = <String, Future<void>>{};
   final _streams = <int, TorrentEntry>{};
   final lifetime = Cancellation();
   late final Timer _timer;
@@ -63,84 +67,6 @@ class EngineCore {
 
   TorrentEntry _entry(String hash) =>
       _torrents[hash] ?? (throw StateError('No torrent $hash'));
-
-  /// Adds [source] for [owner], or adds [owner] to the torrent already
-  /// holding its info hash. Returns that hash.
-  Future<String> add(
-    Map source, {
-    required String owner,
-    required String directory,
-    required TorrentStorage storage,
-    required List peers,
-  }) async {
-    lifetime.check();
-    final hash = await infoHashOf(source);
-    final known = _torrents[hash];
-    if (known != null) {
-      known.owners.putIfAbsent(owner, TorrentOwner.new);
-      if (storage.index > known.storage.index) {
-        await _move(known, directory, storage);
-      }
-      known.applyPause();
-      _addPeers(known, peers);
-      return hash;
-    }
-    final root = Directory(directory);
-    await root.create(recursive: true);
-    final Directory save;
-    final temporary = storage == TorrentStorage.temporary;
-    save = temporary ? await root.createTemp('torrent-stream-') : root;
-    // Another add of the same hash may have finished while the folder was made.
-    if (_torrents[hash] case final raced?) {
-      if (temporary) await save.delete(recursive: true);
-      raced.owners.putIfAbsent(owner, TorrentOwner.new);
-      raced.applyPause();
-      return hash;
-    }
-    final session = native.session;
-    final handle = switch (source['kind']) {
-      'magnet' => session.addMagnet(
-        magnetUri: source['value'] as String,
-        savePath: save.path,
-      ),
-      'file' => session.addTorrentFile(
-        torrentPath: source['value'] as String,
-        savePath: save.path,
-      ),
-      'bytes' => session.addTorrentData(
-        torrentData: source['value'] as Uint8List,
-        savePath: save.path,
-      ),
-      _ => throw ArgumentError('Unsupported torrent source'),
-    };
-    handle.setFlags(LibtorrentTorrentFlags.defaultDontDownload);
-    handle.unsetFlags(
-      LibtorrentTorrentFlags.autoManaged | LibtorrentTorrentFlags.paused,
-    );
-    final entry = TorrentEntry(
-      infoHash: hash,
-      handle: handle,
-      savePath: save.path,
-      storage: storage,
-    );
-    if (temporary) entry.temporary.add(save);
-    entry.owners[owner] = TorrentOwner();
-    _torrents[hash] = entry;
-    entry.applyPause();
-    _addPeers(entry, peers);
-    // Owners wait for metadata through [metadata]; failures surface there.
-    unawaited(
-      entry.prepare((ready) => waitUntil(entry.lifetime, ready)).catchError((
-        Object error,
-        StackTrace stack,
-      ) {
-        if (!entry.ready.isCompleted) entry.ready.completeError(error, stack);
-      }),
-    );
-    unawaited(entry.ready.future.catchError((Object _) {}));
-    publish();
-    return hash;
-  }
 
   /// The torrent's files, once its metadata arrives within [timeout].
   Future<List<Map<String, Object?>>> metadata(
@@ -181,11 +107,12 @@ class EngineCore {
     publish();
   }
 
-  void pause(String hash, String owner, bool paused) {
+  Future<void> pause(String hash, String owner, bool paused) async {
     final entry = _entry(hash);
     final holder = entry.owners[owner] ?? (throw StateError('Not an owner'));
     holder.paused = paused;
     entry.applyPause();
+    await entry.applyWanted((ready) => waitUntil(entry.lifetime, ready));
     publish();
   }
 

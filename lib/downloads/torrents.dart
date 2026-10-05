@@ -4,6 +4,7 @@ import 'package:torrent_stream/torrent_stream.dart';
 /// under each download's owner name.
 abstract interface class DownloadTorrents {
   List<TorrentSnapshot> get torrents;
+  String? get failure;
   Future<String> add(
     TorrentSource source, {
     required String owner,
@@ -22,6 +23,9 @@ class EngineTorrents implements DownloadTorrents {
 
   @override
   List<TorrentSnapshot> get torrents => engine.torrents;
+
+  @override
+  String? get failure => engine.failure?.toString();
 
   @override
   Future<String> add(

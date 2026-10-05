@@ -4,6 +4,15 @@ extension DownloadAttachments on DownloadQueue {
   /// Adds the torrent, waits for metadata and chooses its files, without
   /// holding up other commands.
   void _attach(String id) {
+    if (_disposed) return;
+    final attempt = _DownloadAttempt(
+      '${_item(id).owner}:${DownloadQueue._attemptSequence++}',
+    );
+    _attempts[id] = attempt;
+    bool current() =>
+        !_disposed &&
+        identical(_attempts[id], attempt) &&
+        _items.any((i) => i.id == id && i.status == DownloadStatus.preparing);
     unawaited(() async {
       String? hash;
       try {
@@ -11,38 +20,39 @@ extension DownloadAttachments on DownloadQueue {
         _uploadBefore[id] = _item(id).uploadedBytes;
         hash = await torrents.add(
           job.source,
-          owner: _item(id).owner,
+          owner: attempt.owner,
           directory: job.destinationDirectory,
         );
-        final current = await _serial(() async {
+        attempt.hash = hash;
+        if (!current()) return;
+        final accepted = await _serial(() async {
           final item = _items.where((i) => i.id == id).firstOrNull;
-          if (item == null || item.status != DownloadStatus.preparing) {
-            // Paused, cancelled or cleared while adding.
-            await torrents.release(hash!, 'download:$id');
-            return false;
-          }
+          if (item == null || !current()) return false;
           _replace(item.copyWith(infoHash: hash));
           return true;
         });
-        if (!current) return;
+        if (!accepted) return;
         final files = await torrents
             .metadata(hash)
             .timeout(
               preparationTimeout,
               onTimeout: () => throw TimeoutException('Torrent preparation'),
             );
+        if (!current()) return;
         final chosen = chooseFiles(job, files);
         if (job.renamedFiles.isNotEmpty) {
           await torrents
               .rename(hash, job.renamedFiles)
               .timeout(preparationTimeout);
         }
+        if (!current()) return;
         await torrents
-            .want(hash, _item(id).owner, chosen.keys.toSet())
+            .want(hash, attempt.owner, chosen.keys.toSet())
             .timeout(preparationTimeout);
+        if (!current()) return;
         await _serial(() async {
+          if (!current()) return;
           final item = _item(id);
-          if (item.status != DownloadStatus.preparing) return;
           _attached.add(id);
           _replace(
             item.copyWith(
@@ -70,15 +80,19 @@ extension DownloadAttachments on DownloadQueue {
           await _commit();
         });
       } catch (error, stack) {
-        if (_disposed) return;
+        if (!current()) return;
         await _serial(() async {
           final item = _items.where((i) => i.id == id).firstOrNull;
-          if (item == null || item.status != DownloadStatus.preparing) return;
+          if (item == null || !current()) return;
           _log.warning('Could not start ${item.job.title}', error, stack);
-          if (hash != null) await _release(item.copyWith(infoHash: hash));
+          await _release(item);
           _replace(item.withStatus(DownloadStatus.failed, error: '$error'));
           await _commit();
         });
+      } finally {
+        if (!identical(_attempts[id], attempt) || _disposed) {
+          await _releaseAttempt(attempt);
+        }
       }
     }());
   }

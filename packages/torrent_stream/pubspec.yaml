@@ -6,6 +6,7 @@ environment:
   sdk: '>=3.10.0 <4.0.0'
 dependencies:
   libtorrent_dart: ^1.1.0
+  path: ^1.9.0
 dev_dependencies:
   lints: ^6.0.0
   test: ^1.25.0

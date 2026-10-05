@@ -46,7 +46,10 @@ class TorrentEntry {
   TorrentStatus? _status;
   List<int> _fileBytes = const [];
 
-  Set<int> get wanted => {for (final o in owners.values) ...o.wanted};
+  Set<int> get wanted => {
+    for (final o in owners.values)
+      if (!o.paused) ...o.wanted,
+  };
 
   /// Paused only when every owner paused it, so a stream always runs.
   bool get paused => owners.values.every((o) => o.paused);
@@ -69,9 +72,9 @@ class TorrentEntry {
   /// Downloads the files owners want, keeping stream windows in place.
   Future<void> applyWanted(Future<void> Function(bool Function()) until) {
     if (files.isEmpty) return Future.value();
-    return _priorities = _priorities
-        .then((_) => _setFiles(until))
-        .catchError((Object _) {});
+    final operation = _priorities.then((_) => _setFiles(until));
+    _priorities = operation.catchError((Object _) {});
+    return operation;
   }
 
   Future<void> _setFiles(Future<void> Function(bool Function()) until) async {
@@ -106,12 +109,13 @@ class TorrentEntry {
   void applyPause() {
     final paused = this.paused;
     if (_appliedPause == paused) return;
-    _appliedPause = paused;
     if (paused) {
       handle.pause();
+      _appliedPause = true;
       return;
     }
     handle.resume();
+    _appliedPause = false;
     try {
       handle.forceReannounce();
       handle.forceDhtAnnounce();

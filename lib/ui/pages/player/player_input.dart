@@ -34,6 +34,13 @@ class PlayerShortcuts extends StatelessWidget {
 
   KeyEventResult _handle(BuildContext context, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
+    // Leave system shortcuts (including macOS Command-Q) to the platform.
+    final keyboard = HardwareKeyboard.instance;
+    if (keyboard.isMetaPressed ||
+        keyboard.isControlPressed ||
+        keyboard.isAltPressed) {
+      return KeyEventResult.ignored;
+    }
     final repeat = event is KeyRepeatEvent;
     final a = actions;
     final key = event.logicalKey;

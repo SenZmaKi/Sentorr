@@ -1,4 +1,7 @@
 import 'package:flutter/widgets.dart';
+import 'package:logging/logging.dart';
+
+final _log = Logger('sentorr.player.focus');
 
 /// Serializes focus changes so returning quickly still waits for pause.
 class FocusPlayback {
@@ -17,17 +20,21 @@ class FocusPlayback {
   Future<void> _pending = Future.value();
 
   Future<void> change(AppLifecycleState state, {required bool enabled}) {
-    return _pending = _pending.then((_) async {
-      if (_disposed) return;
-      if (state == AppLifecycleState.resumed) {
-        if (_resume) {
-          _resume = false;
-          await play();
-        }
-      } else if (enabled && !_resume && isPlaying()) {
-        _resume = true;
-        await pause();
-      }
-    });
+    return _pending = _pending
+        .then((_) async {
+          if (_disposed) return;
+          if (state == AppLifecycleState.resumed) {
+            if (_resume) {
+              await play();
+              _resume = false;
+            }
+          } else if (enabled && !_resume && isPlaying()) {
+            await pause();
+            _resume = !_disposed;
+          }
+        })
+        .catchError((Object error, StackTrace stack) {
+          _log.warning('Focus playback change failed', error, stack);
+        });
   }
 }

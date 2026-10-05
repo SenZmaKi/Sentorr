@@ -74,13 +74,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         _syncPip();
       }),
       s.completed.listen(_onCompleted),
-      s.error.listen((_) {
-        // Only failures that leave nothing playing are the viewer's
-        // problem; the torrent behind it counts as failed.
-        if (_engine.state.duration == Duration.zero) {
-          _engine.streaming.unplayable();
-        }
-      }),
       PictureInPicture.instance.actions.listen(_onPipAction),
       PictureInPicture.instance.changes
           .where((active) => !active)
@@ -178,6 +171,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   Widget build(BuildContext context) {
     // Keep the engine alive for as long as the page is mounted.
     ref.watch(playbackEngineProvider);
+    // Settings may close while a timer stays armed.
+    ref.watch(sleepTimerProvider);
     ref.listen(playerSessionProvider.select((s) => s?.current?.id), (_, id) {
       if (id == null) return;
       setState(() => _ended = false);

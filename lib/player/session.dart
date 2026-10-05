@@ -73,7 +73,8 @@ final playerSessionProvider =
     );
 
 class PlayerSessionNotifier extends Notifier<PlayerSession?> {
-  CancelToken? _cancel;
+  CancelToken? _cancel, _extending;
+  String? _advanceFrom;
 
   QueueBuilder get _builder => ref.read(queueBuilderProvider);
 
@@ -154,6 +155,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
   }
 
   void jump(int index) {
+    _advanceFrom = null;
     final s = state, queue = s?.queue;
     if (s == null || queue == null || index == queue.index) return;
     final moved = queue.at(index);
@@ -175,6 +177,8 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
 
   CancelToken _restart() {
     _cancel?.cancel();
+    _extending = null;
+    _advanceFrom = null;
     return _cancel = CancelToken();
   }
 
@@ -204,23 +208,35 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
   Future<void> _extend(PlayQueue queue, {required bool thenAdvance}) async {
     final cancel = _cancel;
     if (cancel == null) return;
+    if (thenAdvance) _advanceFrom = queue.current.id;
+    if (_extending == cancel) return;
+    _extending = cancel;
     state = state?.copyWith(resolving: true);
     try {
       final extended = await _extendOrDownloaded(queue, cancel);
       if (!ref.mounted) return;
       final s = state;
       if (cancel != _cancel || s?.queue == null) return;
-      final current = s!.queue!.index;
-      final next = extended.at(current);
+      final playing = s!.queue!.current.id;
+      final current = extended.items.indexWhere((item) => item.id == playing);
+      final next = extended.at(current < 0 ? s.queue!.index : current);
+      final advance = _advanceFrom == playing;
+      _advanceFrom = null;
+      _extending = null;
       _log.info(
         'Queue extended by ${extended.items.length - queue.items.length} items',
       );
       state = s.copyWith(queue: next, resolving: false);
-      if (thenAdvance && next.next != null) jump(current + 1);
+      if (advance && next.next != null) jump(next.index + 1);
     } catch (error, stack) {
       if (!ref.mounted || cancel != _cancel || _cancelled(error)) return;
       _log.warning('Could not load the next season', error, stack);
       state = state?.copyWith(resolving: false);
+    } finally {
+      if (_extending == cancel) {
+        _extending = null;
+        _advanceFrom = null;
+      }
     }
   }
 

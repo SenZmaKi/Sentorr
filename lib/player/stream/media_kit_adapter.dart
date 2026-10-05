@@ -22,13 +22,22 @@ class MediaKitTorrentAdapter {
   static const httpTimeoutSeconds = 60;
 
   /// Plays [stream] from [start], or its beginning.
-  Future<void> open(TorrentStream stream, {Duration? start}) async {
+  Future<void> open(
+    TorrentStream stream, {
+    Duration? start,
+    required bool Function() isCurrent,
+  }) async {
     await _configure();
+    if (!isCurrent()) return;
     await player.open(Media(stream.uri.toString(), start: start));
   }
 
   /// Cancels the engine's obsolete reads before mpv asks for [position].
-  Future<void> seek(TorrentStreamSession? session, Duration position) async {
+  Future<void> seek(
+    TorrentStreamSession? session,
+    Duration position, {
+    required bool Function() isCurrent,
+  }) async {
     _log.fine('Seeking to $position');
     try {
       await session?.prepareSeek();
@@ -36,7 +45,7 @@ class MediaKitTorrentAdapter {
       // A closing session has nothing left to cancel.
       _log.fine('Seek preparation skipped: $error');
     }
-    await player.seek(position);
+    if (isCurrent()) await player.seek(position);
   }
 
   Future<void> _configure() async {

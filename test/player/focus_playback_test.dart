@@ -47,4 +47,48 @@ void main() {
     await focus.change(AppLifecycleState.resumed, enabled: false);
     expect(pauses, 0);
   });
+  test(
+    'failed pause does not request resume or poison later changes',
+    () async {
+      var fail = true, playing = true, plays = 0;
+      final focus = FocusPlayback(
+        isPlaying: () => playing,
+        pause: () async {
+          if (fail) throw StateError('pause failed');
+          playing = false;
+        },
+        play: () async {
+          plays++;
+          playing = true;
+        },
+      );
+      await focus.change(AppLifecycleState.inactive, enabled: true);
+      await focus.change(AppLifecycleState.resumed, enabled: true);
+      expect(plays, 0);
+      fail = false;
+      await focus.change(AppLifecycleState.inactive, enabled: true);
+      await focus.change(AppLifecycleState.resumed, enabled: true);
+      expect(plays, 1);
+    },
+  );
+
+  test('failed resume retains intent for a later lifecycle change', () async {
+    var fail = true, playing = true;
+    final focus = FocusPlayback(
+      isPlaying: () => playing,
+      pause: () async {
+        playing = false;
+      },
+      play: () async {
+        if (fail) throw StateError('play failed');
+        playing = true;
+      },
+    );
+    await focus.change(AppLifecycleState.inactive, enabled: true);
+    await focus.change(AppLifecycleState.resumed, enabled: true);
+    expect(playing, false);
+    fail = false;
+    await focus.change(AppLifecycleState.resumed, enabled: true);
+    expect(playing, true);
+  });
 }

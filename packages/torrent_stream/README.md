@@ -12,6 +12,7 @@ A pure Dart torrent engine: **one libtorrent session → verified pieces → loo
 - Storage ranks `temporary < cached < kept`. Adding an owner with longer-lasting storage moves the torrent there (`moveStorage`); temporary folders are deleted when emptied or when the torrent leaves.
 - A torrent pauses only when every owner pauses it.
 - `configure` changes session-wide limits, transport and discovery while running.
+- `start` warms session discovery while the application fetches HTTP metadata.
 
 ```dart
 final engine = TorrentEngine();
@@ -31,7 +32,8 @@ final session = TorrentStreamSession(
   config: TorrentStreamConfig(cacheDirectory: applicationCacheRoot),
 );
 try {
-  final files = await session.open(TorrentSource.magnet(resolvedMagnet));
+  final files = await session.open(TorrentSource.metadata(torrentBytes,
+      expectedInfoHash: resolvedHash));
   // The resolver/application chooses a file explicitly, including TV episodes.
   final endpoint = await session.prepareFile(chosenFileIndex);
   await player.open(endpoint.uri); // Consumer-specific player operation.
@@ -85,17 +87,17 @@ Run `dart pub get`, `dart analyze`, and `dart test`. For native binding developm
 
 ## Policy
 
-Defaults are explicit configuration, with no environment-variable behavior: 5,000,000 bytes/second (40 Mbps) download cap; 16 MiB lookahead target; 24 MiB owned-piece LRU; 60-second metadata, 45-second piece and 15-second native-read waits; verified head/tail preparation; TCP-only peer transport. Zero download limit is unlimited. Mixed TCP/uTP is available through `TorrentTransport.mixedTcpUtp`; TCP-only is the demonstrated local audit baseline and can exclude uTP-only peers.
+Defaults are explicit configuration, with no environment-variable behavior: unlimited download/upload rates; 16 MiB lookahead target; 24 MiB owned-piece LRU; 60-second metadata, 45-second piece and 15-second native-read waits; background verified-header warming; mixed TCP/uTP peer transport. The original local audit used a 40 Mbps cap and TCP-only transport; those are explicit configuration choices and TCP-only can exclude uTP-only peers.
 
-Only the currently needed piece is urgent; lookahead has ordinary priority. Full piece verification remains mandatory, even for a tiny HTTP range. Read-ahead is a target and can exceed its byte budget for large pieces. The LRU limit excludes native/player/socket buffers. Pieces larger than the LRU budget are not retained and may require repeated native reads; unusually large-piece torrents need additional performance validation.
+A bounded window of up to four upcoming pieces (roughly 2 MiB, at least one whole piece) gets staggered deadlines; remaining lookahead has ordinary priority. HTTP becomes available before any piece arrives, with optional header warming in the background. Tail/index reads follow player demand. Full piece verification remains mandatory, even for a tiny HTTP range. Read-ahead is a target and can exceed its byte budget for large pieces. The LRU limit excludes native/player/socket buffers. Pieces larger than the LRU budget are not retained and may require repeated native reads; unusually large-piece torrents need additional performance validation.
 
-DHT/tracker discovery remains enabled. Local-service discovery is disabled to avoid the self-discovery/replacement behavior observed with loopback known peers. Each package session has independent native torrent/server/cache ownership, while all package-owned FFI calls share one worker. **Create all sessions in one owner Dart isolate.** The binding's process-wide registries are not generally safe for concurrent calls from unrelated isolates; direct native-binding clients must not compete with this runtime. Multi-owner-isolate coordination requires binding/runtime work before it is supported.
+DHT/tracker and local-service discovery remain enabled by default. Controlled loopback tests disable local-service discovery to avoid client/seed self-discovery. Each package session has independent native torrent/server/cache ownership, while all package-owned FFI calls share one worker. **Create all sessions in one owner Dart isolate.** The binding's process-wide registries are not generally safe for concurrent calls from unrelated isolates; direct native-binding clients must not compete with this runtime. Multi-owner-isolate coordination requires binding/runtime work before it is supported.
 
 The endpoint binds only loopback with an unpredictable path and ephemeral port. It supports single/suffix/open-ended ranges, HEAD, backpressure, bounded requests and cancellation. A read failure after HTTP headers aborts the socket; it never supplies unverified bytes, zeros or false EOF. The player observes HTTP read errors; transfer state reports fatal startup/native errors separately. Keep `close` in a `finally` path after failures. Abrupt process/worker termination can leave native jobs or temporary data; normal close provides the tested cleanup path.
 
 ## MediaKit later
 
-The core endpoint means container-probe **bytes** are verified, not that ten seconds of video are playable. A MediaKit adapter should configure a ten-second playable-cache gate, sixty-second forward cache and **sixty-second HTTP timeout** before opening. Its HTTP timeout should exceed the engine's piece wait. It then observes actual demuxer cache/cache pause and position progression.
+The core endpoint means container-probe **bytes** are verified, not that ten seconds of video are playable. Sentorr's MediaKit adapter targets two seconds of initial playable cache, sixty seconds of forward cache and **sixty-second HTTP timeout** before opening. Its HTTP timeout should exceed the engine's piece wait. It then observes actual demuxer cache/cache pause and position progression.
 
 Mute, video/audio tracks, subtitles, playback pause, time-based seeking, buffering UI and player disposal belong to the consumer. The adapter calls `prepareSeek` before `Player.seek` and closes the engine after stopping player reads. This package never owns/disposes a player's object. See the [design](../../docs/Torrent/torrent-playback-engine.md) and [audit](../../tool/streaming_lab/FINAL_AUDIT.md).
 

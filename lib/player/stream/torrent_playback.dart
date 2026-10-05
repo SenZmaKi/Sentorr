@@ -16,6 +16,7 @@ import 'playback_errors.dart';
 import 'media_kit_adapter.dart';
 import 'offline_source.dart';
 import 'parked_stream.dart';
+import 'prepared_stream.dart';
 import 'stream_status.dart';
 
 export 'stream_status.dart';
@@ -39,6 +40,11 @@ typedef SessionConfig = Future<TorrentStreamConfig> Function(
   TorrentRelease release,
 );
 
+typedef MetadataFetcher = Future<Uint8List> Function(
+  TorrentRelease release,
+  CancelToken cancel,
+);
+
 /// One torrent session at a time, feeding [player]: resolve, open, pick the
 /// item's file, prepare it and hand its endpoint to MediaKit. Starting
 /// another item stops the player before its old endpoint goes away. When a
@@ -51,8 +57,10 @@ class TorrentPlayback {
     required this.configFor,
     required this.find,
     required this.outputReady,
+    required this.fetchMetadata,
     OfflineLookup? offline,
     ParkedStreams? parked,
+    this.prepared,
   }) : parked = parked ?? ParkedStreams(),
        offline = offline ?? ((_) => null),
        _player = player,
@@ -81,15 +89,18 @@ class TorrentPlayback {
   final TorrentEngine engine;
   final SessionConfig configFor;
   final TorrentFinder find;
+  final MetadataFetcher fetchMetadata;
 
   /// Where a session waits, paused, after the player closes.
   final ParkedStreams parked;
+  final PreparedStreams? prepared;
+  PendingStream? _pendingPreparation;
 
   /// The item's download, played or shared before any search.
   final OfflineLookup offline;
 
-  /// Completes once the video output's render context exists, so torrent
-  /// preparation and playback start with the renderer ready.
+  /// Completes once the video output's render context exists. Torrent
+  /// preparation runs alongside it; opening media waits for it.
   final Future<void> Function() outputReady;
 
   final status = ValueNotifier<StreamStatus?>(null);
@@ -125,7 +136,10 @@ class TorrentPlayback {
     _item = item;
     _start = start;
     _autoSwitches = 0;
-    if (await _resume(generation, item, torrent, options, start)) return;
+    if (await _resume(generation, item, torrent, options, start)) {
+      prepared?.clear();
+      return;
+    }
     if (_stale(generation)) return;
     final saved = torrent == null && options == null ? offline(item) : null;
     if (saved is LocalFile && File(saved.path).existsSync()) {

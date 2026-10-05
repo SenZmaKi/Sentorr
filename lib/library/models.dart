@@ -83,6 +83,7 @@ Map<String, dynamic> releaseToJson(TorrentRelease r) => {
   'name': r.name,
   'infoHash': r.infoHash,
   'magnet': r.magnet.toString(),
+  'torrentUrls': r.torrentUrls.map((url) => url.toString()).toList(),
   'seeders': r.seeders,
   'size': r.sizeBytes,
   'resolution': r.resolution,
@@ -106,6 +107,10 @@ TorrentRelease? releaseFromJson(Object? json) {
     name: name,
     infoHash: hash,
     magnet: magnet,
+    torrentUrls: [
+      for (final value in (json['torrentUrls'] as List? ?? const []))
+        if (value is String) ?Uri.tryParse(value),
+    ],
     seeders: json['seeders'] as int? ?? 0,
     sizeBytes: json['size'] as int? ?? 0,
     resolution: json['resolution'] as int?,

@@ -30,9 +30,10 @@ extension DownloadEngineOperations on DownloadQueue {
       return;
     }
     var changed = false;
+    final snapshots = {for (final t in torrents.torrents) t.infoHash: t};
     for (final id in _attached.toList()) {
       final previous = _item(id);
-      final torrent = _torrent(previous);
+      final torrent = snapshots[previous.infoHash];
       if (torrent == null) continue;
       if (torrent.error case final error?) {
         _log.warning('${_name(previous)} failed: $error');

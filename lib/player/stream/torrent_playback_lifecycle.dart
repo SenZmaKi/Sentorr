@@ -98,6 +98,8 @@ extension _TorrentPlaybackLifecycle on TorrentPlayback {
       if (_stale(generation)) return true;
       _log.info('Parked torrent unusable, starting afresh: $error');
       await _release();
+      if (_stale(generation)) return true;
+      _cancel = CancelToken();
       return false;
     }
   }
@@ -118,6 +120,8 @@ extension _TorrentPlaybackLifecycle on TorrentPlayback {
   Future<void> _release() {
     _cancel?.cancel();
     _cancel = null;
+    final pending = _pendingPreparation;
+    _pendingPreparation = null;
     final local = _local;
     _local = false;
     final session = _session, transfer = _transfer;
@@ -125,13 +129,14 @@ extension _TorrentPlaybackLifecycle on TorrentPlayback {
     _served = null;
     _candidate = null;
     _transfer = null;
-    if (local || session != null || transfer != null) {
+    if (local || session != null || transfer != null || pending != null) {
       return _cleanup.run([
         // Stop reads before invalidating the endpoint; still release all
         // resources if a stop or subscription cancellation fails.
         _player.stop,
         if (transfer != null) transfer.cancel,
         if (session != null) session.close,
+        if (pending != null) pending.close,
       ]);
     }
     return _cleanup.pending;

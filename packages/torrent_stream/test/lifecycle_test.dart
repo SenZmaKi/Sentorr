@@ -62,7 +62,7 @@ void main() {
     },
   );
   test(
-    'close interrupts unavailable container preparation and releases all owned bytes',
+    'close interrupts unavailable HTTP reads and releases background header warming',
     () async {
       final root = await Directory.systemTemp.createTemp(
         'torrent-stream-preparing-',
@@ -80,19 +80,16 @@ void main() {
         engine: engine,
         config: TorrentStreamConfig(cacheDirectory: cache.path),
       );
+      final client = HttpClient();
       try {
         final files = await session.open(TorrentSource.metadata(data));
-        final pending = session.prepareFile(files.single.index);
-        final cancelled = expectLater(
-          pending,
-          throwsA(
-            isA<TorrentStreamException>().having(
-              (e) => e.code,
-              'code',
-              TorrentStreamErrorCode.cancelled,
-            ),
-          ),
+        final stream = await session.prepareFile(files.single.index);
+        final request = await client.getUrl(stream.uri);
+        request.headers.set('Range', 'bytes=0-99');
+        final pending = request.close().then(
+          (response) => response.drain<void>(),
         );
+        final cancelled = expectLater(pending, throwsA(isA<HttpException>()));
         await Future<void>.delayed(const Duration(milliseconds: 200));
         final watch = Stopwatch()..start();
         await session.close();
@@ -101,6 +98,7 @@ void main() {
         expect(await cache.list().length, 0);
         expect(await input.exists(), true);
       } finally {
+        client.close(force: true);
         await session.close();
         await engine.close();
         await root.delete(recursive: true);

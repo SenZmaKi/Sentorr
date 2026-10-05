@@ -53,8 +53,14 @@ class PieceScheduler {
     for (final entry in _consumers.entries) {
       if (entry.key.isCancelled) continue;
       final (start, end) = entry.value;
+      // Keep a bounded upcoming window time-critical, rather than waiting
+      // for the player to block on each next piece. Large pieces shrink it.
+      final urgentCount = min(
+        4,
+        max(1, (2 * 1024 * 1024 / handle.pieceLength).ceil()),
+      );
       for (var piece = start; piece <= end; piece++) {
-        final urgent = piece == start;
+        final urgent = piece - start < urgentCount;
         priorities[piece] = max(
           priorities[piece] ?? base(piece),
           urgent ? 7 : 1,

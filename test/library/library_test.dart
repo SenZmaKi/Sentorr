@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sentorr/downloads/models.dart';
@@ -28,6 +30,32 @@ LibraryEntry entry(PlaybackItem item) => LibraryEntry(
 );
 
 void main() {
+  test(
+    'saved metadata downloads retain tracker discovery without a magnet',
+    () {
+      final job = TorrentDownloadJob(
+        title: 'Movie',
+        destinationDirectory: '/downloads',
+        torrentData: Uint8List.fromList('d4:infodee'.codeUnits),
+        trackers: [Uri.parse('https://tracker.test/announce')],
+      );
+      final restored = TorrentDownloadJob.fromJson(job.toJson());
+      expect(restored.magnet, isNull);
+      expect(restored.torrentData, job.torrentData);
+      expect(restored.trackers, job.trackers);
+    },
+  );
+  test(
+    'release metadata URLs survive persistence and old records remain readable',
+    () {
+      final json = releaseToJson(fakeRelease(1));
+      json['torrentUrls'] = ['https://provider.test/movie.torrent'];
+      final release = releaseFromJson(json)!;
+      expect(releaseToJson(release)['torrentUrls'], json['torrentUrls']);
+      json.remove('torrentUrls');
+      expect(releaseFromJson(json)!.torrentUrls, isEmpty);
+    },
+  );
   test('movies get a titled folder and episodes a season folder', () {
     final movie = layoutFor(
       PlaybackItem(title: fakeTitle(1, year: 2024)),

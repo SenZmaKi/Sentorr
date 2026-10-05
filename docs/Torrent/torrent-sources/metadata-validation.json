@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-10-05",
+  "transport": "Sentorr NetworkClient with HTTP/2 preference and gzip decoding",
+  "validation": "HTTP metadata bytes parsed by libtorrent; each info hash matched the search/magnet hash. No video payload or public-swarm playback was tested.",
+  "pirateBayRoute": "APIBay provides no direct URL; the Pirate Bay sample validates its iTorrents HTTP cache route using the same known Big Buck Bunny hash.",
+  "samples": [
+    {
+      "source": "yts",
+      "status": "verified",
+      "url": "https://yts.gg/torrent/download/9D9312208AD0EF3BC558737B22197FDFD90F4E68",
+      "infoHash": "9d9312208ad0ef3bc558737b22197fdfd90f4e68",
+      "bytes": 22762,
+      "elapsedMs": 1544
+    },
+    {
+      "source": "bitsearch",
+      "status": "verified",
+      "url": "https://bitsearch.eu/download/torrent/68AC70B766FD6E8880CAB4026A7F74AB4D04DBFD?title=big.buck.bunny.1080p.surround.avi",
+      "infoHash": "68ac70b766fd6e8880cab4026a7f74ab4d04dbfd",
+      "bytes": 17829,
+      "elapsedMs": 1015
+    },
+    {
+      "source": "nyaa",
+      "status": "verified",
+      "url": "https://nyaa.si/download/2168575.torrent",
+      "infoHash": "0c9daf1c58a3f63e9759c184f0fb864a34344ed6",
+      "bytes": 9839,
+      "elapsedMs": 355
+    },
+    {
+      "source": "pirateBay",
+      "status": "verified",
+      "url": "https://itorrents.org/torrent/68AC70B766FD6E8880CAB4026A7F74AB4D04DBFD.torrent",
+      "infoHash": "68ac70b766fd6e8880cab4026a7f74ab4d04dbfd",
+      "bytes": 17935,
+      "elapsedMs": 2492
+    }
+  ]
+}

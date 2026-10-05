@@ -20,6 +20,7 @@ import '../torrents/engine.dart';
 import '../torrents/match.dart';
 import '../player/torrent_lookup.dart';
 import '../torrents/resolution_models.dart';
+import '../torrents/providers.dart';
 import 'layout.dart';
 import 'models.dart';
 import 'notifier.dart';
@@ -205,8 +206,16 @@ class DownloadPlanner {
     final release = candidate.release;
     final planner = 'plan:${item.id}';
     _log.info('Preparing $item from ${release.name}');
+    final metadata = await _ref
+        .read(torrentMetadataProvider)
+        .fetch(release, cancel ?? CancelToken());
+    cancel?.throwIfCancellationRequested();
     final hash = await engine.add(
-      TorrentSource.magnet(release.magnet),
+      TorrentSource.metadata(
+        metadata,
+        expectedInfoHash: release.infoHash,
+        trackers: release.trackers,
+      ),
       owner: planner,
       directory: _ref.read(torrentDirectoryProvider),
     );
@@ -246,7 +255,8 @@ class DownloadPlanner {
               batchId: item.series == null || item.season == null
                   ? null
                   : '${item.series!.id}:season:${item.season}',
-              magnet: release.magnet,
+              torrentData: metadata,
+              trackers: release.trackers,
               destinationDirectory: layout.directory,
               selectedFileIndices: [file.index],
               renamedFiles: {file.index: layout.name},

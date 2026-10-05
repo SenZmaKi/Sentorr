@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
@@ -53,6 +54,7 @@ void main() {
     playback = TorrentPlayback(
       player: player,
       engine: engine,
+      fetchMetadata: (release, cancel) async => Uint8List.fromList([100, 101]),
       parked: parked,
       configFor: (release) async {
         if (failSecond && release.infoHash == second.release.infoHash) {
@@ -75,6 +77,38 @@ void main() {
     await player.dispose();
     await engine.updates.close();
   });
+
+  test(
+    'HTTP metadata is added before renderer readiness; media waits',
+    () async {
+      final renderer = Completer<void>();
+      ready = () => renderer.future;
+      final playing = playback.play(item, torrent: first);
+      await settlePlayback();
+      expect(engine.sources.single, isA<TorrentMetadataSource>());
+      expect(engine.owners, hasLength(1));
+      expect(native.opened, isEmpty);
+      renderer.complete();
+      await playing;
+      expect(native.opened, hasLength(1));
+    },
+  );
+
+  test(
+    'closing while renderer is pending releases prepared metadata session',
+    () async {
+      final renderer = Completer<void>();
+      ready = () => renderer.future;
+      final playing = playback.play(item, torrent: first);
+      await settlePlayback();
+      expect(engine.owners, hasLength(1));
+      await playback.close();
+      await playing.timeout(const Duration(seconds: 2));
+      expect(engine.owners, isEmpty);
+      expect(native.opened, isEmpty);
+      renderer.complete();
+    },
+  );
 
   test('delayed seek cannot reach replacement playback', () async {
     await playback.play(item, torrent: first);

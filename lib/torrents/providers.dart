@@ -4,12 +4,17 @@ import '../app/services.dart';
 import '../settings/notifier.dart';
 import '../shared/source_directory/repository.dart';
 import 'models.dart';
+import 'metadata_fetcher.dart';
 import 'sources/pirate_bay.dart';
 import 'sources/yts.dart';
 import 'sources/bitsearch.dart';
 import 'filters.dart';
 import 'repository.dart';
 import 'resolver.dart';
+
+final torrentMetadataProvider = Provider<TorrentMetadataFetcher>(
+  (ref) => TorrentMetadataFetcher(ref.watch(networkClientProvider).dio),
+);
 
 final torrentRepositoryProvider = Provider<TorrentRepository>((ref) {
   final dio = ref.watch(networkClientProvider).dio;

@@ -232,7 +232,7 @@ Future<void> main() async {
     );
     final stream = await session.prepareFile(files.first.index);
     final adapter = MediaKitTorrentAdapter(player);
-    await adapter.open(stream);
+    await adapter.open(stream, isCurrent: () => true);
     await waitFor(() => player.state.position.inSeconds >= 2);
     emit({
       'event': 'playback',
@@ -240,7 +240,11 @@ Future<void> main() async {
       'position': player.state.position.inMilliseconds,
     });
     await dwell('stream_playing', 25);
-    await adapter.seek(session, const Duration(seconds: 50));
+    await adapter.seek(
+      session,
+      const Duration(seconds: 50),
+      isCurrent: () => true,
+    );
     await dwell('stream_seek', 15);
     final native = player.platform as NativePlayer;
     emit({

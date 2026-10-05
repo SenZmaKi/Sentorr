@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../imdb/models.dart';
 import '../../../imdb/providers.dart';
 import '../../../player/models.dart';
+import '../../../player/prefetch.dart';
+import '../../../player/queue_builder.dart';
 import '../../../titles/pick_up.dart';
 import '../../components/download_button.dart';
 import '../../components/follow_button.dart';
@@ -94,7 +96,14 @@ class _TitlePageState extends ConsumerState<TitlePage> {
     final details = ref.watch(titleDetailsProvider(_title.id));
     final d = details.value;
     final seasons = [...?d?.seasons.where((n) => n >= 0)]..sort();
-    final pick = ref.watch(pickUpProvider(_title.id)).value;
+    final pickUp = ref.watch(pickUpProvider(_title.id));
+    final pick = pickUp.value;
+    if (!pickUp.isLoading) {
+      final request = pick?.item == null
+          ? PlayTitle(d?.title ?? _title)
+          : requestFor(pick!.item!);
+      ref.watch(mediaTorrentPrefetchProvider(PrefetchRequest(request)));
+    }
     if (seasons.isNotEmpty) _seekEpisodeSection();
     return CallbackShortcuts(
       bindings: {const SingleActivator(LogicalKeyboardKey.escape): _back},

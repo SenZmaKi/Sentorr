@@ -1,0 +1,131 @@
+{
+  "checkedAt": "2026-10-05T18:17:42.059517Z",
+  "route": "iTorrents HTTP cache only; no provider download fallback",
+  "sourceErrors": [],
+  "results": [
+    {
+      "source": "Bitsearch",
+      "title": "Big Buck Bunny 1080p",
+      "hash": "68ac70b766fd6e8880cab4026a7f74ab4d04dbfd",
+      "status": "verified_hit",
+      "bytes": 17935,
+      "elapsedMs": 1694,
+      "initialStatus": "verified_hit"
+    },
+    {
+      "source": "Nyaa",
+      "title": "[ToonsHub] JoJos Bizarre Adventure S06E03 1080p NF WEB-DL DUAL AAC2.0 H.264 (JoJo no Kimyou na Bouken: Steel Ball Run - 2nd - 3rd STAGE, Dual-Audio, Multi-Subs)",
+      "hash": "0c9daf1c58a3f63e9759c184f0fb864a34344ed6",
+      "status": "verified_hit",
+      "bytes": 12989,
+      "elapsedMs": 2105,
+      "initialStatus": "verified_hit"
+    },
+    {
+      "source": "Nyaa",
+      "title": "[ToonsHub] JoJos Bizarre Adventure S06E02 1080p NF WEB-DL DUAL AAC2.0 H.264 (JoJo no Kimyou na Bouken: Steel Ball Run - 2nd - 3rd STAGE, Dual-Audio, Multi-Subs)",
+      "hash": "33e1289b8f6735ab748c7e43d85348d9910db0b2",
+      "status": "verified_hit",
+      "bytes": 13002,
+      "elapsedMs": 14186,
+      "initialStatus": "verified_hit"
+    },
+    {
+      "source": "Nyaa",
+      "title": "[ToonsHub] The Apothecary Diaries S03E01 1080p CR WEB-DL AAC2.0 H.264 (Kusuriya no Hitorigoto, Multi-Subs)",
+      "hash": "f5f1d0c744116a434779476ea0347ca31811f092",
+      "status": "verified_hit_after_retry",
+      "elapsedMs": 15006,
+      "initialStatus": "timeout"
+    },
+    {
+      "source": "YTS",
+      "title": "Kidô Senshi Gandamu Senkô no Hasauei Kirukê no Majo (2026) 720p",
+      "hash": "9d9312208ad0ef3bc558737b22197fdfd90f4e68",
+      "status": "verified_hit_after_retry",
+      "elapsedMs": 15005,
+      "initialStatus": "timeout"
+    },
+    {
+      "source": "YTS",
+      "title": "Het smelt (2023) 720p",
+      "hash": "10fdb0278e10ff4906c3b9823244e6bd9031600b",
+      "status": "timeout",
+      "elapsedMs": 15009,
+      "initialStatus": "timeout"
+    },
+    {
+      "source": "YTS",
+      "title": "Mommo (2009) 720p",
+      "hash": "25d0d8cc8dfa309969d302b59eebaab9dd0c4601",
+      "status": "timeout",
+      "elapsedMs": 15010,
+      "initialStatus": "timeout"
+    },
+    {
+      "source": "Pirate Bay",
+      "title": "The Matrix (1999) 1080p BrRip x264 - 1.85GB - YIFY",
+      "hash": "d7a46713eaee18c746b3254b7d1492a50fd9d6ce",
+      "status": "verified_hit_after_retry",
+      "elapsedMs": 15010,
+      "initialStatus": "timeout"
+    },
+    {
+      "source": "Pirate Bay",
+      "title": "The Matrix Reloaded (1999) 1080p BrRip x264 - 1.85GB - YIFY",
+      "hash": "5f67a9966aa41c5e3cfd7c25226d49e1a656c982",
+      "status": "timeout",
+      "elapsedMs": 15003,
+      "initialStatus": "timeout"
+    },
+    {
+      "source": "Pirate Bay",
+      "title": "Breaking Bad (2008) Season 1-5 S01-S05 (1080p BluRay x265 HEVC 1",
+      "hash": "b43df67a93863ea91f2f773f00361072da771dd3",
+      "status": "timeout",
+      "elapsedMs": 15003,
+      "initialStatus": "timeout"
+    },
+    {
+      "source": "Pirate Bay",
+      "title": "Breaking Bad (2008) Season 3 S03 + Extras (1080p BluRay x265 HEV",
+      "hash": "4d496c059b1b6472ed23e3447568254c3da1f823",
+      "status": "timeout",
+      "elapsedMs": 15004,
+      "initialStatus": "timeout"
+    }
+  ],
+  "independentRetries": [
+    {
+      "source": "YTS",
+      "hash": "9d9312208ad0ef3bc558737b22197fdfd90f4e68",
+      "status": "verified_hit",
+      "bytes": 25846
+    },
+    {
+      "source": "Pirate Bay",
+      "hash": "d7a46713eaee18c746b3254b7d1492a50fd9d6ce",
+      "status": "verified_hit",
+      "bytes": 27342
+    },
+    {
+      "source": "Nyaa",
+      "hash": "f5f1d0c744116a434779476ea0347ca31811f092",
+      "status": "verified_hit",
+      "bytes": 18084
+    },
+    {
+      "source": "Bitsearch",
+      "hash": "68ac70b766fd6e8880cab4026a7f74ab4d04dbfd",
+      "status": "request_failed",
+      "error": "The read operation timed out"
+    }
+  ],
+  "summary": {
+    "sampledHashes": 11,
+    "confirmedCached": 6,
+    "unknownAfterTimeout": 5,
+    "confirmedMissing": 0
+  },
+  "scope": "Only .torrent metadata was downloaded. Matching info hashes were verified with libtorrent. Timeouts do not establish that metadata is missing; this sample does not estimate overall cache coverage or video playback."
+}

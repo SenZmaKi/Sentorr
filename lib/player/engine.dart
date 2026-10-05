@@ -10,9 +10,12 @@ import 'package:torrent_stream/torrent_stream.dart';
 import '../library/playback.dart';
 import '../torrents/engine.dart';
 import '../torrents/resolution_models.dart';
+import '../torrents/providers.dart';
 import '../following/notifier.dart';
 import '../watching/notifier.dart';
 import 'models.dart';
+import 'preparation.dart';
+import 'stream/prepared_stream.dart';
 import 'hot_restart.dart';
 import 'progress_tracker.dart';
 import 'session.dart';
@@ -32,8 +35,10 @@ class PlaybackEngine {
     required TorrentEngine torrents,
     required SessionConfig configFor,
     required TorrentFinder find,
+    required MetadataFetcher fetchMetadata,
     OfflineLookup? offline,
     ParkedStreams? parked,
+    PreparedStreams? prepared,
   }) : player = Player(
          configuration: const PlayerConfiguration(
            title: 'Sentorr',
@@ -46,8 +51,10 @@ class PlaybackEngine {
       engine: torrents,
       configFor: configFor,
       find: find,
+      fetchMetadata: fetchMetadata,
       offline: offline,
       parked: parked,
+      prepared: prepared,
       outputReady: () => video.platform.future,
     );
     _errors = player.stream.error.listen(
@@ -161,8 +168,11 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     configFor: (release) => sessionConfigFor(ref, release),
     find: (item, cancel) =>
         ref.read(torrentSearchProvider)(item, cancel: cancel),
+    fetchMetadata: (release, cancel) =>
+        ref.read(torrentMetadataProvider).fetch(release, cancel),
     offline: (item) => offlineSourceFor(ref, item),
     parked: ref.read(parkedStreamsProvider),
+    prepared: ref.read(preparedStreamsProvider),
   );
   final history = ref.read(watchHistoryProvider.notifier);
   final following = ref.read(followedSeriesProvider.notifier);

@@ -100,6 +100,17 @@ class TorrentEngine {
     return _send(await _start(), op, args);
   }
 
+  /// Initialize discovery while a caller fetches HTTP torrent metadata.
+  Future<void> start() async {
+    if (_closed) {
+      throw const TorrentStreamException(
+        TorrentStreamErrorCode.invalidState,
+        'Engine is closed',
+      );
+    }
+    await _start();
+  }
+
   /// Changes limits and discovery for every torrent.
   Future<void> configure(TorrentEngineSettings settings) async {
     settings.validate();
@@ -127,6 +138,10 @@ class TorrentEngine {
               TorrentMetadataSource() => {
                 'kind': 'bytes',
                 'value': source.bytes,
+                'expectedHash': source.expectedInfoHash,
+                'trackers': source.trackers
+                    .map((uri) => uri.toString())
+                    .toList(),
               },
             },
             'owner': owner,

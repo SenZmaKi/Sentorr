@@ -13,7 +13,7 @@ class MediaKitTorrentAdapter {
   bool _configured = false;
 
   /// Seconds of playable cache mpv waits for before starting or resuming.
-  static const readySeconds = 5;
+  static const readySeconds = 2;
 
   /// Seconds mpv reads ahead of the position.
   static const forwardSeconds = 60;

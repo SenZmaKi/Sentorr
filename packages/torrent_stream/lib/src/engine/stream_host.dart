@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:libtorrent_dart/libtorrent_dart.dart';
 
 import '../config.dart';
@@ -48,14 +50,18 @@ class StreamHost {
   final lifetime = Cancellation();
   MediaServer? server;
 
-  /// Fetches the container's probes when [prepare], then serves; returns
-  /// the URL.
+  /// Serves immediately and optionally warms the header in the background.
+  /// Read errors surface through HTTP; warming cannot prevent serving.
   Future<String> start(bool prepare) async {
-    if (prepare) await bootstrapMedia(bytes, lifetime, (_) {});
     lifetime.check();
     final server = this.server = MediaServer(bytes);
     await server.start();
     lifetime.check();
+    if (prepare) {
+      unawaited(
+        bootstrapMedia(bytes, lifetime, (_) {}).catchError((Object _) {}),
+      );
+    }
     return server.uri.toString();
   }
 

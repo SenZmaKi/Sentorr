@@ -26,9 +26,11 @@ class TorrentEntry {
     required this.handle,
     required this.savePath,
     required this.storage,
+    this.private = false,
   });
   final String infoHash;
   final TorrentHandle handle;
+  final bool private;
   String savePath;
   TorrentStorage storage;
 

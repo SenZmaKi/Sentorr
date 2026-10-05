@@ -104,6 +104,7 @@ class PirateBaySource implements DiagnosticTorrentSource {
           name: name,
           infoHash: hash,
           magnet: magnetFor(hash, name),
+          torrentUrls: [torrentCacheUrl(hash)],
           seeders: seeds,
           sizeBytes: size,
           resolution: resolutionOf(name),

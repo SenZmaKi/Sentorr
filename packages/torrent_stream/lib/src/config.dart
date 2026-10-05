@@ -38,6 +38,7 @@ class TorrentEngineSettings {
     this.listenInterfaces = '0.0.0.0:0',
     this.proxy = const TorrentProxy(),
     this.networkInterface,
+    this.defaultTrackers = const [],
   });
 
   /// Zero means unlimited.
@@ -52,13 +53,22 @@ class TorrentEngineSettings {
 
   final TorrentProxy proxy;
 
+  /// Extra discovery for public torrents. Provider trackers are preserved.
+  final List<String> defaultTrackers;
+
   /// A device name, e.g. a VPN's `utun4` or `wg0`, that all traffic is bound
   /// to. While it is down nothing connects, so traffic never leaves another
   /// way. Null uses any interface.
   final String? networkInterface;
 
   void validate() {
-    if (downloadBytesPerSecond < 0 ||
+    if (defaultTrackers.any((url) {
+          final uri = Uri.tryParse(url);
+          return uri == null ||
+              !const {'udp', 'http', 'https'}.contains(uri.scheme) ||
+              uri.host.isEmpty;
+        }) ||
+        downloadBytesPerSecond < 0 ||
         uploadBytesPerSecond < 0 ||
         maxConnections < 1 ||
         listenInterfaces.isEmpty ||
@@ -97,8 +107,8 @@ class StreamOptions {
   final int pieceCacheBytes;
   final Duration pieceTimeout, nativeReadTimeout;
 
-  /// Fetch the file's head and tail before serving, where containers keep
-  /// their index.
+  /// Warm the file's header alongside HTTP serving. Container tail/index
+  /// reads are driven by the player's requests.
   final bool prepareContainer;
 }
 

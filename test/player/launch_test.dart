@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +8,10 @@ import 'package:sentorr/app/services.dart';
 import 'package:sentorr/imdb/models.dart';
 import 'package:sentorr/player/launch.dart';
 import 'package:sentorr/player/models.dart';
+import 'package:sentorr/player/prefetch.dart';
+import 'package:sentorr/player/preparation.dart';
+import 'package:sentorr/player/stream/prepared_stream.dart';
+import 'package:torrent_stream/torrent_stream.dart';
 import 'package:sentorr/player/queue_builder.dart';
 import 'package:sentorr/player/session.dart';
 import 'package:sentorr/settings/models.dart';
@@ -15,6 +21,7 @@ import 'package:sentorr/torrents/repository.dart';
 import 'package:sentorr/watching/models.dart';
 
 import '../support/fake_history.dart';
+import '../support/fake_playback.dart';
 import '../support/fake_library.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_torrents.dart';
@@ -35,6 +42,21 @@ ProviderContainer _container(
 }) {
   final container = ProviderContainer(
     overrides: [
+      preparedStreamsProvider.overrideWith((ref) {
+        final engine = FakeStreamingEngine();
+        final prepared = PreparedStreams(
+          create: (item, candidate) => PendingStream(
+            item: item,
+            candidate: candidate,
+            engine: engine,
+            configFor: (_) async =>
+                TorrentStreamConfig(cacheDirectory: Directory.systemTemp.path),
+            fetchMetadata: (_, _) async => Uint8List.fromList([100, 101]),
+          ),
+        );
+        ref.onDispose(prepared.clear);
+        return prepared;
+      }),
       ...libraryOverrides(),
       ...watchHistoryOverrides(watched),
       initialSettingsProvider.overrideWithValue(
@@ -68,6 +90,75 @@ Future<PlaybackLaunch?> _settled(ProviderContainer container) async {
 }
 
 void main() {
+  test(
+    'page prefetch is reused by Play without another source search',
+    () async {
+      final source = FakeTorrentSource((_) async => [fakeRelease(1)]);
+      final container = _container(source);
+      final request = PlayTitle(_movie);
+      final subscription = container.listen(
+        mediaTorrentPrefetchProvider(PrefetchRequest(request)),
+        (_, _) {},
+        fireImmediately: true,
+      );
+      final entry = container.read(
+        mediaTorrentPrefetchProvider(PrefetchRequest(request)),
+      );
+      await entry.result;
+      expect(source.queries, hasLength(1));
+      container.read(playbackLaunchProvider.notifier).start(request);
+      final found = (await _settled(container))!;
+      expect(found.match!.exact, true);
+      expect(source.queries, hasLength(1));
+      subscription.close();
+      expect(entry.cancel.isCancelled, false);
+      container.read(playbackLaunchProvider.notifier).cancel();
+      expect(entry.cancel.isCancelled, true);
+    },
+  );
+
+  test('Play joins an unfinished page search and cancel stops it', () async {
+    final gate = Completer<List<TorrentRelease>>();
+    final source = FakeTorrentSource((_) => gate.future);
+    final container = _container(source);
+    final request = PlayTitle(_movie);
+    final subscription = container.listen(
+      mediaTorrentPrefetchProvider(PrefetchRequest(request)),
+      (_, _) {},
+      fireImmediately: true,
+    );
+    final entry = container.read(
+      mediaTorrentPrefetchProvider(PrefetchRequest(request)),
+    );
+    await settlePlayback();
+    container.read(playbackLaunchProvider.notifier).start(request);
+    subscription.close();
+    await settlePlayback();
+    expect(source.queries, hasLength(1));
+    container.read(playbackLaunchProvider.notifier).cancel();
+    expect(entry.cancel.isCancelled, true);
+    gate.complete([fakeRelease(1)]);
+    await settlePlayback();
+    expect(container.read(playbackLaunchProvider), isNull);
+    expect(container.read(playerSessionProvider), isNull);
+  });
+
+  test('leaving a page cancels its unclaimed search', () async {
+    final gate = Completer<List<TorrentRelease>>();
+    final container = _container(FakeTorrentSource((_) => gate.future));
+    final key = PrefetchRequest(PlayTitle(_movie));
+    final subscription = container.listen(
+      mediaTorrentPrefetchProvider(key),
+      (_, _) {},
+    );
+    final entry = container.read(mediaTorrentPrefetchProvider(key));
+    subscription.close();
+    await container.pump();
+    expect(entry.cancel.isCancelled, true);
+    gate.complete([]);
+    await settlePlayback();
+  });
+
   test('an exact match waits for the viewer, then opens the player', () async {
     final source = FakeTorrentSource((_) async => [fakeRelease(1)]);
     final container = _container(source);

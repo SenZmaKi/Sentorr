@@ -11,7 +11,7 @@ import 'resolution_models.dart';
 
 final _log = Logger('sentorr.torrents');
 
-/// Resolves video search intent to ranked magnets; does not start transfers.
+/// Resolves video search intent to ranked releases; does not start transfers.
 /// Source adapters own identity validation, including provider-attested IMDb IDs.
 class TorrentResolver {
   TorrentResolver(this.repository);
@@ -45,9 +45,7 @@ class TorrentResolver {
         final release = candidate.release;
         final key = release.infoHash.toLowerCase();
         final previous = byHash[key];
-        if (previous == null || release.seeders > previous.seeders) {
-          byHash[key] = release;
-        }
+        byHash[key] = previous?.merge(release) ?? release;
       }
       failures.addAll(result.failures);
       if (rejected.isNotEmpty) {

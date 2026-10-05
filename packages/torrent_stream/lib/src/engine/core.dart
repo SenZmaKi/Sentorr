@@ -10,6 +10,7 @@ import '../engine_models.dart';
 import 'cancellation.dart';
 import 'files.dart';
 import 'native_session.dart';
+import 'tracker_policy.dart';
 import 'stream_host.dart';
 import 'torrent_entry.dart';
 
@@ -19,13 +20,15 @@ part 'adds.dart';
 /// interleave; each leaves the entries consistent at its awaits.
 class EngineCore {
   EngineCore(TorrentEngineSettings settings, this.send)
-    : native = NativeSession(settings) {
+    : native = NativeSession(settings),
+      _defaultTrackers = List.unmodifiable(settings.defaultTrackers) {
     _timer = Timer.periodic(
       const Duration(milliseconds: 500),
       (_) => publish(),
     );
   }
   final NativeSession native;
+  List<String> _defaultTrackers;
   final void Function(Map<String, Object?>) send;
   final _torrents = <String, TorrentEntry>{};
   final _adds = <String, Future<void>>{};
@@ -35,7 +38,10 @@ class EngineCore {
   int _streamIds = 0;
   bool _closed = false;
 
-  void configure(TorrentEngineSettings settings) => native.configure(settings);
+  void configure(TorrentEngineSettings settings) {
+    native.configure(settings);
+    _defaultTrackers = List.unmodifiable(settings.defaultTrackers);
+  }
 
   /// Sends every torrent's state; a torrent whose handle fails is reported
   /// with its error and left for its owners to release.

@@ -118,6 +118,14 @@ class BitsearchSource implements DiagnosticTorrentSource {
           name: name,
           infoHash: hash,
           magnet: uri!,
+          torrentUrls: [
+            ?torrentHttpUrl(
+              card
+                  .querySelector('a[href*="/download/torrent/"]')
+                  ?.attributes['href'],
+              Uri.parse(endpoint),
+            ),
+          ],
           seeders: seeds,
           sizeBytes: size,
           resolution: resolutionOf(name),

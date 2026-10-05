@@ -1,7 +1,7 @@
 # Torrent sources
 
-Flutter source-only migration, validated on 2026-10-02. No download manager,
-libtorrent session, player, torrent-file fetch, or UI is involved.
+Flutter search adapters and HTTP torrent metadata delivery. Search parsing was
+validated on 2026-10-02; metadata download routes were checked on 2026-10-05.
 
 ## Providers
 
@@ -56,8 +56,32 @@ queries. Unsupported sources are skipped without issuing a request.
 - Hashes must be nonzero 40-character hexadecimal BitTorrent v1 hashes.
   Release sizes and seeder counts must be positive. Zero-seeder releases are
   excluded. Valid rows survive malformed neighboring rows.
-- Results use magnet URIs consistently, including YTS. Search does not retrieve
-  torrent files. Bitsearch's supplied magnet trackers are preserved.
+- Results retain both magnets and HTTP metadata URLs. YTS supplies `torrents[].url`;
+  Bitsearch supplies `/download/torrent/<hash>` links. Relative links use the
+  configured source endpoint.
+  APIBay supplies no torrent-file URL: its results use the HTTP iTorrents cache.
+  Deduplication keeps metadata URLs from all sources, even when a different
+  source has the largest observed seeder count.
+- Playback and download planning fetch only the chosen release's `.torrent`
+  through the shared HTTP transport, then supply metadata bytes to the engine.
+  Provider URLs are tried before the hash cache. Older saved releases without
+  URLs also use that cache. Requests are cancellable, limited to 15 seconds per
+  location and 8 MiB of received metadata. Native parsing checks the expected
+  info hash before torrent storage is created. Magnets remain available in
+  results and persisted records, but these new paths never open them; failure
+  to retrieve metadata uses the existing release-fallback flow. APIBay/cache
+  coverage is therefore a dependency, and missing cache entries can fail.
+- Discovery initializes alongside HTTP and renderer preparation. Streams expose
+  HTTP while the header warms, fetch tails on player demand, prioritize a bounded
+  upcoming piece window with deadlines, and target two seconds of initial playable
+  buffer while continuing to read ahead. Faster startup can increase early stalls;
+  public-swarm time to first frame has not been benchmarked by these checks.
+- Tracker hints from magnets survive source deduplication and are supplied with
+  HTTP metadata, including persisted download jobs. The magnet itself is not
+  used for metadata acquisition. The shared HTTP/2 adapter decodes gzip before
+  parsing source HTML or metadata, while avoiding double decoding after its
+  HTTP/1 fallback. [Live metadata checks](metadata-validation.json) record
+  matching native-parsed hashes for all four routes on 2026-10-05.
 - Deduplicate by normalized info hash across providers, retain the largest
   observed seeder count, then sort by seeders and hash for deterministic ties.
   Different releases at the same resolution remain available.

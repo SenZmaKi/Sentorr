@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:torrent_stream/torrent_stream.dart';
 
+import 'trackers.dart';
 import '../settings/models.dart';
 import '../settings/notifier.dart';
 
@@ -13,6 +14,7 @@ TorrentEngineSettings engineSettingsOf(AppSettings settings) {
     downloadBytesPerSecond: n.downloadLimitBytesPerSecond,
     uploadBytesPerSecond: n.uploadLimitBytesPerSecond,
     maxConnections: n.maxConnections,
+    defaultTrackers: defaultTorrentTrackers,
     transport: n.utp ? TorrentTransport.mixedTcpUtp : TorrentTransport.tcpOnly,
     enableDht: n.dht,
     enableLsd: n.lsd,

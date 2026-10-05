@@ -90,7 +90,8 @@ void main() {
         config: TorrentStreamConfig(
           cacheDirectory: cache.path,
           readAheadBytes: 512 * 1024,
-          pieceTimeout: const Duration(seconds: 10),
+          // A paused seed can incur multiple five-second reconnect backoffs.
+          pieceTimeout: const Duration(seconds: 30),
           pieceCacheBytes: 1024 * 1024,
         ),
       );

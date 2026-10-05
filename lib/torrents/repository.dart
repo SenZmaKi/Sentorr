@@ -113,9 +113,7 @@ class TorrentRepository {
     final byHash = <String, TorrentRelease>{};
     for (final release in batches.expand((b) => b.releases)) {
       final previous = byHash[release.infoHash];
-      if (previous == null || release.seeders > previous.seeders) {
-        byHash[release.infoHash] = release;
-      }
+      byHash[release.infoHash] = previous?.merge(release) ?? release;
     }
     final releases = byHash.values.toList()
       ..sort((a, b) {

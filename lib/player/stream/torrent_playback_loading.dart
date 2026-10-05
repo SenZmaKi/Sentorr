@@ -42,9 +42,46 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
       (s) => s.copyWith(stage: StreamStage.connecting, torrent: candidate),
     );
     final clock = Stopwatch()..start();
-    await outputReady();
-    if (_stale(generation)) return;
-    final config = await configFor(candidate.release);
+    final cancel = _cancel!;
+    final rendererReady = Future<void>.sync(outputReady);
+    // Observe early errors now, then propagate them when media is opened.
+    unawaited(rendererReady.then<void>((_) {}, onError: (Object _) {}));
+    final pending = prepared?.take(item.id, candidate.release.infoHash);
+    if (pending != null) {
+      _pendingPreparation = pending;
+      try {
+        final held = await Future.any([
+          pending.ready,
+          cancel.whenCancel.then<ParkedStream>((error) => throw error),
+        ]);
+        if (_stale(generation)) return;
+        _session = held.session;
+        _pendingPreparation = null;
+        _served = held.stream;
+        _candidate = candidate;
+        _transfer = held.session.states.listen(
+          (transfer) =>
+              _update(generation, (s) => s.copyWith(transfer: transfer)),
+        );
+        await Future.any([
+          rendererReady,
+          cancel.whenCancel.then<void>((error) => throw error),
+        ]);
+        if (_stale(generation)) return;
+        await _openStream(generation, held.stream, resume);
+        _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
+        return;
+      } on Object {
+        // Let the normal playback failure/recovery path handle preparation errors.
+        rethrow;
+      }
+    }
+    final acquired = await Future.wait<Object>([
+      configFor(candidate.release),
+      fetchMetadata(candidate.release, cancel),
+      engine.start().then((_) => true),
+    ]);
+    final config = acquired[0] as TorrentStreamConfig;
     if (_stale(generation)) return;
     final session = _session = TorrentStreamSession(
       engine: engine,
@@ -58,7 +95,13 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
       'Streaming $item from ${release.name} '
       '(${release.infoHash}, ${release.seeders} seeders)',
     );
-    final files = await session.open(TorrentSource.magnet(release.magnet));
+    final files = await session.open(
+      TorrentSource.metadata(
+        acquired[1] as Uint8List,
+        expectedInfoHash: release.infoHash,
+        trackers: release.trackers,
+      ),
+    );
     if (_stale(generation)) return;
     _log.info(
       'Metadata: ${files.length} files in ${clock.elapsedMilliseconds}ms',
@@ -88,6 +131,11 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     if (_stale(generation)) return;
     _served = stream;
     _candidate = candidate;
+    await Future.any([
+      rendererReady,
+      cancel.whenCancel.then<void>((error) => throw error),
+    ]);
+    if (_stale(generation)) return;
     await _openStream(generation, stream, resume);
     _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
     _log.info('Playing $item after ${clock.elapsedMilliseconds}ms');

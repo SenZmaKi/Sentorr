@@ -7,6 +7,7 @@ import '../imdb/providers.dart';
 import '../library/playback.dart';
 import '../torrents/resolution_models.dart';
 import 'models.dart';
+import 'preparation.dart';
 import 'queue_builder.dart';
 
 final _log = Logger('sentorr.player');
@@ -170,6 +171,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
   }
 
   void close() {
+    ref.read(preparedStreamsProvider).clear();
     if (state != null) _log.info('Closing player');
     _restart();
     state = null;

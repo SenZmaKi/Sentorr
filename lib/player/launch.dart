@@ -10,6 +10,8 @@ import '../torrents/providers.dart';
 import '../torrents/resolution_models.dart';
 import '../watching/notifier.dart';
 import 'models.dart';
+import 'prefetch.dart';
+import 'preparation.dart';
 import 'queue_builder.dart';
 import 'session.dart';
 import 'stream/offline_source.dart';
@@ -64,10 +66,14 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
 
   /// The whole queue, when building it was needed to find the first item.
   PlayQueue? _prepared;
+  LaunchPrefetchEntry? _prefetched;
 
   @override
   PlaybackLaunch? build() {
-    ref.onDispose(() => _cancel?.cancel());
+    ref.onDispose(() {
+      _cancel?.cancel();
+      _prefetched?.cancel.cancel();
+    });
     return null;
   }
 
@@ -77,6 +83,7 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     _log.info('Launching ${request.subject.title} (${request.subject.id})');
     final cancel = _restart();
     _prepared = null;
+    _prefetched = ref.read(launchPrefetchProvider).take(request);
     state = PlaybackLaunch(
       request: request,
       preferences: torrentPreferencesFor(ref.read(settingsProvider).torrents),
@@ -136,7 +143,9 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     if (s == null || s.item == null) return;
     final queue = _prepared;
     _log.info('Playing ${s.item} from ${torrent.release.name}');
-    cancel();
+    _restart(keepPreparation: true);
+    _prepared = null;
+    state = null;
     ref
         .read(playerSessionProvider.notifier)
         .play(s.request, queue: queue, torrent: torrent, options: s.resolution);
@@ -148,7 +157,10 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     state = null;
   }
 
-  CancelToken _restart() {
+  CancelToken _restart({bool keepPreparation = false}) {
+    if (!keepPreparation) ref.read(preparedStreamsProvider).clear();
+    _prefetched?.cancel.cancel();
+    _prefetched = null;
     _cancel?.cancel();
     return _cancel = CancelToken();
   }
@@ -160,7 +172,22 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     bool skipPeer = false,
   }) async {
     try {
-      final item = state!.item ?? await _item(state!.request, cancel);
+      PrefetchedLaunch? prefetched;
+      final entry = _prefetched;
+      if (entry != null) {
+        try {
+          prefetched = await entry.result;
+          if (cancel != _cancel) return;
+          _prepared = prefetched.queue;
+        } on Object {
+          if (cancel != _cancel) return;
+          // A failed page lookup never prevents an ordinary launch search.
+        }
+      }
+      final item =
+          state!.item ??
+          prefetched?.item ??
+          await _item(state!.request, cancel);
       if (cancel != _cancel) return;
       final offline = offlineSourceFor(ref, item);
       if (offline is PeerFile) {
@@ -222,9 +249,11 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
         item: item,
         query: query,
       );
-      final resolution = await ref
-          .read(torrentResolverProvider)
-          .resolve(query, preferences: preferences, cancelToken: cancel);
+      final resolution =
+          prefetched?.resolution ??
+          await ref
+              .read(torrentResolverProvider)
+              .resolve(query, preferences: preferences, cancelToken: cancel);
       if (cancel != _cancel) return;
       final match = TorrentMatch.of(resolution, preferences);
       _log.info(
@@ -242,6 +271,9 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
         resolution: resolution,
         match: match,
       );
+      if (match != null && match.exact) {
+        ref.read(preparedStreamsProvider).start(item, match.candidate);
+      }
       final review = ref.read(settingsProvider).torrents.reviewExactMatches;
       if (match != null && match.exact && !review) play(match.candidate);
     } catch (error, stack) {

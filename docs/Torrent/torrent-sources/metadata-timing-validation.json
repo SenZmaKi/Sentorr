@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-10-05T18:24:42.172300Z",
+  "scope": "Metadata only. Fresh native engines with DHT and normal TCP/uTP, source magnets unchanged. LSD and NAT mapping disabled. HTTP cache files are not added to a swarm, preventing self-discovery from biasing magnet timings. Timeout 45 seconds magnet, 15 seconds HTTP. Not first-frame timing.",
+  "results": [
+    {
+      "title": "Nyaa sample",
+      "hash": "0c9daf1c58a3f63e9759c184f0fb864a34344ed6",
+      "magnetIncludesTrackers": true,
+      "httpMs": 1752,
+      "httpStatus": "verified",
+      "magnetMs": 2228,
+      "magnetStatus": "metadata_ready",
+      "fileCount": 1
+    },
+    {
+      "title": "The Matrix",
+      "hash": "d7a46713eaee18c746b3254b7d1492a50fd9d6ce",
+      "magnetIncludesTrackers": false,
+      "httpMs": 353,
+      "httpStatus": "verified",
+      "magnetMs": 4013,
+      "magnetStatus": "metadata_ready",
+      "fileCount": 6
+    }
+  ]
+}

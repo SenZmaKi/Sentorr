@@ -5,6 +5,20 @@ import 'package:torrent_stream/src/engine/piece_scheduler.dart';
 import 'read_support.dart';
 
 void main() {
+  test('deadlines cover a bounded upcoming window and move on seek', () {
+    final handle = TestHandle(pieceLength: 1024 * 1024);
+    final scheduler = PieceScheduler(handle);
+    final owner = Cancellation();
+    scheduler.demand(owner, 0, 30, 8);
+    expect(handle.deadlines, {0: 0, 1: 500});
+    expect(handle.priorities[2], 1);
+    scheduler.demand(owner, 20, 30, 8);
+    expect(handle.deadlines, {20: 0, 21: 500});
+    expect(handle.priorities[0], 0);
+    scheduler.release(owner);
+    expect(handle.deadlines, isEmpty);
+    expect(handle.priorities[20], 0);
+  });
   test('repeated demand in a piece avoids recomputing priority windows', () {
     final handle = TestHandle();
     var baseReads = 0;
@@ -26,7 +40,8 @@ void main() {
     scheduler.demand(owner, 3, 20, 3);
     expect(handle.priorities[2], 0);
     expect(handle.priorities[3], 7);
-    expect(handle.priorities[6], 1);
+    expect(handle.priorities[6], 7);
+    expect(handle.deadlines, {3: 0, 4: 500, 5: 1000, 6: 1500});
   });
 
   test('unchanged demand still removes cancelled consumers priorities', () {
@@ -51,7 +66,7 @@ void main() {
     scheduler.demand(owner, 1, 20, 2);
     base = 4;
     scheduler.reapply();
-    expect(handle.priorities[2], 4);
+    expect(handle.priorities[2], 7);
     scheduler.release(owner);
     expect(handle.priorities[1], 4);
     expect(handle.deadlines, isEmpty);

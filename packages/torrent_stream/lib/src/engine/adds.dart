@@ -12,6 +12,16 @@ extension EngineAdditions on EngineCore {
   }) async {
     lifetime.check();
     final hash = await infoHashOf(source);
+    final expected = source['expectedHash'] as String?;
+    if (expected != null && hash != expected.toLowerCase()) {
+      throw ArgumentError('Torrent metadata hash does not match $expected');
+    }
+    if (source['kind'] != 'magnet') {
+      final bytes = source['kind'] == 'bytes'
+          ? source['value'] as Uint8List
+          : await File(source['value'] as String).readAsBytes();
+      source = {...source, 'private': isPrivateTorrent(bytes)};
+    }
     // Reserve each hash while filesystem work yields. Two promotions must
     // not both accept different destinations before either move completes.
     final operation = (_adds[hash] ?? Future<void>.value()).then(
@@ -51,6 +61,10 @@ extension EngineAdditions on EngineCore {
       known.lifetime.check();
       known.owners.putIfAbsent(owner, TorrentOwner.new);
       known.applyPause();
+      _addTrackers(known.handle, {
+        ...source,
+        if (known.private) 'private': true,
+      });
       _addPeers(known, peers);
       publish();
       return hash;
@@ -81,11 +95,13 @@ extension EngineAdditions on EngineCore {
     handle.unsetFlags(
       LibtorrentTorrentFlags.autoManaged | LibtorrentTorrentFlags.paused,
     );
+    _addTrackers(handle, source);
     final entry = TorrentEntry(
       infoHash: hash,
       handle: handle,
       savePath: save.path,
       storage: storage,
+      private: source['private'] == true,
     );
     if (temporary) entry.temporary.add(save);
     entry.owners[owner] = TorrentOwner();
@@ -104,6 +120,17 @@ extension EngineAdditions on EngineCore {
     unawaited(entry.ready.future.catchError((Object _) {}));
     publish();
     return hash;
+  }
+
+  void _addTrackers(TorrentHandle handle, Map source) {
+    final existing = handle.getTrackers().toSet();
+    final candidates = {
+      ...(source['trackers'] as List? ?? const []).cast<String>(),
+      if (source['private'] != true) ..._defaultTrackers,
+    };
+    for (final tracker in candidates.difference(existing)) {
+      handle.addTracker(tracker);
+    }
   }
 
   void _checkDestination(

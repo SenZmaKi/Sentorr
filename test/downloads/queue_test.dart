@@ -500,4 +500,49 @@ void main() {
       throwsArgumentError,
     );
   });
+  test('unchanged ticks emit nothing but progress and queue commands still publish', () async {
+    final a = await enqueue('a');
+    final b = await enqueue('b');
+    final events = <List<DownloadItem>>[];
+    final subscription = queue.changes.listen(events.add);
+    try {
+      for (var i = 0; i < 10; i++) {
+        await queue.tick();
+      }
+      await settle();
+      expect(events, isEmpty);
+      torrents['a'].done = 10;
+      await queue.tick();
+      await settle();
+      expect(events, hasLength(1));
+      expect(events.single.first.downloadedBytes, 10);
+      await queue.reorder(b, 0);
+      await queue.pause(b);
+      await queue.resume(b);
+      await settle();
+      expect(events.last.first.id, b);
+      expect(events.last.first.status, DownloadStatus.downloading);
+      await queue.cancel(a);
+      await queue.clearHistory();
+      expect(queue.items.map((i) => i.id), [b]);
+      await queue.pause(b);
+      expect(queue.items.single.status, DownloadStatus.paused);
+    } finally {
+      await subscription.cancel();
+    }
+  });
+
+  test('overlapping ticks share one queued operation', () async {
+    await enqueue('a');
+    torrents['a'].done = 100;
+    torrents.releaseGate = Completer<void>();
+    final first = queue.tick();
+    await settle();
+    for (var i = 0; i < 100; i++) {
+      expect(identical(queue.tick(), first), isTrue);
+    }
+    torrents.releaseGate!.complete();
+    await first;
+    expect(queue.items.single.status, DownloadStatus.completed);
+  });
 }

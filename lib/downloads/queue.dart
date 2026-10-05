@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:logging/logging.dart';
-import 'package:torrent_stream/torrent_stream.dart';
 
 import 'models.dart';
 import 'repository.dart';
@@ -27,6 +26,8 @@ class DownloadQueue {
   final DownloadTorrents torrents;
   final DownloadRepository repository;
   final _items = <DownloadItem>[];
+  final _indices = <String, int>{};
+  List<DownloadItem>? _published;
 
   /// Downloads whose torrent has its files chosen, by id.
   final _attached = <String>{};
@@ -44,6 +45,7 @@ class DownloadQueue {
   int _sequence = 0;
   bool _disposed = false;
   Future<void>? _shutdown;
+  Future<void>? _pendingTick;
 
   List<DownloadItem> get items => List.unmodifiable(_items);
   Stream<List<DownloadItem>> get changes => _changes.stream;
@@ -52,6 +54,7 @@ class DownloadQueue {
     initial.validate();
     settings = initial;
     _items.addAll(await repository.load());
+    _reindex();
     for (final item in _items.toList()) {
       if (item.status != DownloadStatus.preparing) continue;
       // Apply saved sharing progress before adding the torrent again. A
@@ -82,6 +85,7 @@ class DownloadQueue {
         status: paused ? DownloadStatus.paused : DownloadStatus.preparing,
       ),
     );
+    _indices[id] = _items.length - 1;
     _log.info('Queued ${job.title} ($id) to ${job.destinationDirectory}');
     if (!paused) _attach(id);
     await _commit();
@@ -142,6 +146,7 @@ class DownloadQueue {
       throw RangeError.index(newIndex, _items);
     }
     _items.insert(newIndex, _items.removeAt(old));
+    _reindex();
     _reconcile();
     await _commit();
   });
@@ -149,6 +154,7 @@ class DownloadQueue {
   /// Forgets finished, failed and cancelled downloads; files stay.
   Future<void> clearHistory() => _serial(() async {
     _items.removeWhere((i) => i.status.isTerminal);
+    _reindex();
     await _commit();
   });
 
@@ -164,7 +170,11 @@ class DownloadQueue {
   });
 
   /// Reads transfer progress from the engine and applies queue policy.
-  Future<void> tick() => _disposed ? Future.value() : _serial(_tick);
+  Future<void> tick() {
+    if (_disposed) return Future.value();
+    return _pendingTick ??= _serial(_tick)
+        .whenComplete(() => _pendingTick = null);
+  }
 
   /// Seeds when settings ask, then completes and lets the torrent go.
   Future<DownloadItem> _finish(DownloadItem item) async {
@@ -221,20 +231,40 @@ class DownloadQueue {
     }
   }
 
-  TorrentSnapshot? _torrent(DownloadItem item) =>
-      torrents.torrents.where((t) => t.infoHash == item.infoHash).firstOrNull;
-
   int _index(String id) {
-    final n = _items.indexWhere((i) => i.id == id);
-    if (n < 0) throw ArgumentError('Unknown download: $id');
+    final n = _indices[id];
+    if (n == null) throw ArgumentError('Unknown download: $id');
     return n;
   }
 
   DownloadItem _item(String id) => _items[_index(id)];
-  void _replace(DownloadItem item) => _items[_index(item.id)] = item;
+  void _reindex() {
+    _indices.clear();
+    for (var i = 0; i < _items.length; i++) {
+      _indices[_items[i].id] = i;
+    }
+  }
+
+  void _replace(DownloadItem item) {
+    final index = _index(item.id);
+    if (!_items[index].sameState(item)) _items[index] = item;
+  }
 
   void _publish() {
-    if (!_changes.isClosed) _changes.add(items);
+    if (_changes.isClosed) return;
+    final previous = _published;
+    if (previous != null && previous.length == _items.length) {
+      var same = true;
+      for (var i = 0; i < _items.length; i++) {
+        if (!identical(previous[i], _items[i])) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return;
+    }
+    _published = items;
+    _changes.add(_published!);
   }
 
   Future<void> _commit() async {

@@ -38,9 +38,13 @@ class FakeStreamingEngine implements TorrentEngine {
   final updates = StreamController<List<TorrentSnapshot>>.broadcast();
   final owners = <String, String>{};
   final released = <String>[];
+  final sources = <TorrentSource>[];
   Completer<void>? seekGate, resumeGate;
   bool failRelease = false;
   int _streams = 0;
+
+  @override
+  Future<void> start() async {}
 
   @override
   Stream<List<TorrentSnapshot>> get states => updates.stream;
@@ -57,7 +61,12 @@ class FakeStreamingEngine implements TorrentEngine {
     TorrentStorage storage = TorrentStorage.temporary,
     List<TorrentPeer> peers = const [],
   }) async {
-    final hash = (source as MagnetSource).uri.queryParameters['xt']!;
+    sources.add(source);
+    final hash = switch (source) {
+      TorrentMetadataSource(:final expectedInfoHash) => expectedInfoHash!,
+      MagnetSource(:final uri) => uri.queryParameters['xt']!,
+      _ => throw StateError('Unexpected source'),
+    };
     owners[owner] = hash;
     return hash;
   }

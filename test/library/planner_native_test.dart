@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,7 @@ import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/shared/persistence/app_paths.dart';
 import 'package:sentorr/torrents/engine.dart';
 import 'package:sentorr/torrents/models.dart';
+import 'package:sentorr/shared/net/net.dart';
 import 'package:sentorr/torrents/resolution_models.dart';
 import 'package:test/test.dart';
 import 'package:torrent_stream/torrent_stream.dart';
@@ -47,7 +49,27 @@ void main() {
       );
       final source = await File('${seedDir.path}/Show.S01E03.1080p.mkv')
           .writeAsBytes(bytes);
-      final metadata = createTorrentData(
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      final base = 'http://127.0.0.1:${server.port}';
+      var seedPort = 0, metadataRequests = 0;
+      late Uint8List metadata;
+      server.listen((request) async {
+        if (request.uri.path == '/movie.torrent') {
+          metadataRequests++;
+          request.response.add(metadata);
+        } else {
+          final peers = seedPort == 0
+              ? <int>[]
+              : [127, 0, 0, 1, seedPort >> 8, seedPort & 255];
+          request.response.add([
+            ...ascii.encode('d8:intervali60e5:peers${peers.length}:'),
+            ...peers,
+            101,
+          ]);
+        }
+        await request.response.close();
+      });
+      metadata = createTorrentData(
         sourcePath: source.path,
         pieceSize: 64 * 1024,
       );
@@ -76,14 +98,16 @@ void main() {
       await waitUntil(
         () => seed.getStatus().state == 5 && seedSession.listenPort != 0,
       );
+      seedPort = seedSession.listenPort;
       final magnet = Uri.parse(
-        '${seed.makeMagnetUri()}&x.pe=127.0.0.1:${seedSession.listenPort}',
+        '${seed.makeMagnetUri()}&tr=${Uri.encodeComponent('$base/announce')}',
       );
       final release = TorrentRelease(
         source: TorrentSourceId.pirateBay,
         name: 'Show S01E03 1080p',
         infoHash: parseMagnetUri(magnet.toString()).infohashHex,
         magnet: magnet,
+        torrentUrls: [Uri.parse('$base/movie.torrent')],
         seeders: 1,
         sizeBytes: bytes.length,
         resolution: 1080,
@@ -99,6 +123,7 @@ void main() {
         ),
       );
       final library = MemoryLibrary();
+      final network = NetworkClient(http2: false, logging: false);
       final container = ProviderContainer(
         overrides: [
           appPathsProvider.overrideWithValue(
@@ -106,6 +131,7 @@ void main() {
           ),
           initialSettingsProvider.overrideWithValue(const AppSettings()),
           torrentEngineProvider.overrideWithValue(engine),
+          networkClientProvider.overrideWithValue(network),
           torrentSearchProvider.overrideWithValue(
             (item, {title, cancel}) async => TorrentResolution(
               query: TorrentQuery(title: 'Show'),
@@ -148,6 +174,11 @@ void main() {
         container.listen(downloadsProvider, (_, _) {});
         await container.read(downloadPlannerProvider).download(item);
         final entry = container.read(libraryProvider).single;
+        expect(metadataRequests, 1);
+        expect(
+          container.read(downloadQueueProvider).items.single.job.magnet,
+          isNull,
+        );
         expect(entry.path, expected);
         expect(library.saved.single.id, 'tt90');
         await waitUntil(
@@ -169,6 +200,8 @@ void main() {
         container.dispose();
         await engine.close();
         seedSession.close();
+        await network.close();
+        await server.close(force: true);
         await root.delete(recursive: true);
       }
     },

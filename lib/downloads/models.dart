@@ -32,11 +32,13 @@ class TorrentDownloadJob {
     this.batchId,
     this.magnet,
     Uint8List? torrentData,
+    Iterable<Uri> trackers = const [],
     List<int> selectedFileIndices = const [],
     Map<int, String> renamedFiles = const {},
   }) : torrentData = torrentData == null
            ? null
            : Uint8List.fromList(torrentData),
+       trackers = List.unmodifiable(trackers),
        selectedFileIndices = List.unmodifiable(selectedFileIndices),
        renamedFiles = Map.unmodifiable(renamedFiles) {
     if ((magnet == null) == (torrentData == null)) {
@@ -47,19 +49,22 @@ class TorrentDownloadJob {
   final String? batchId;
   final Uri? magnet;
   final Uint8List? torrentData;
+  final List<Uri> trackers;
   final String destinationDirectory;
   final List<int> selectedFileIndices;
   final Map<int, String> renamedFiles;
 
   TorrentSource get source => magnet != null
       ? TorrentSource.magnet(magnet!)
-      : TorrentSource.metadata(torrentData!);
+      : TorrentSource.metadata(torrentData!, trackers: trackers);
 
   Map<String, dynamic> toJson() => {
     'title': title,
     if (batchId != null) 'batch': batchId,
     if (magnet != null) 'magnet': magnet.toString(),
     if (torrentData != null) 'torrent': base64Encode(torrentData!),
+    if (trackers.isNotEmpty)
+      'trackers': trackers.map((uri) => uri.toString()).toList(),
     'directory': destinationDirectory,
     'selection': selectedFileIndices,
     'renames': {for (final e in renamedFiles.entries) '${e.key}': e.value},
@@ -76,6 +81,10 @@ class TorrentDownloadJob {
           final String t => base64Decode(t),
           _ => null,
         },
+        trackers: [
+          for (final value in (json['trackers'] as List? ?? const []))
+            if (value is String) ?Uri.tryParse(value),
+        ],
         destinationDirectory: json['directory'] as String,
         selectedFileIndices: (json['selection'] as List).cast<int>(),
         renamedFiles: (json['renames'] as Map<String, dynamic>).map(

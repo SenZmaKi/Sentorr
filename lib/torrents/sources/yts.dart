@@ -104,6 +104,7 @@ class YtsSource implements DiagnosticTorrentSource {
             name: name,
             infoHash: hash,
             magnet: magnetFor(hash, name),
+            torrentUrls: [?torrentHttpUrl(row['url'], Uri.parse(endpoint))],
             seeders: seeds,
             sizeBytes: size,
             resolution: resolutionOf('${row['quality']}'),

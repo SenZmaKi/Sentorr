@@ -46,7 +46,7 @@ All native C++ calls, disk/session destruction and the single alert pump per nat
 
 Required configuration: application-supplied cache root. The engine creates a unique child folder for each session; all lifetime/cleanup ownership remains internal. Do not hard-code Sentorr directory names or discover platform app directories in the library.
 
-Initial delivery defaults from the audit: 40 Mbps (5,000,000 bytes/second) download ceiling, 16 MiB read-ahead target, 24 MiB owned-piece LRU, 60-second metadata wait, 45-second piece wait, 15-second native read completion, bounded head/tail preparation and current-piece-only urgent scheduling. Unlimited transfer is explicit. Validate configuration at runtime; use byte units in the library rather than UI Mbps units.
+Initial delivery defaults from the audit: 40 Mbps (5,000,000 bytes/second) download ceiling, 16 MiB read-ahead target, 24 MiB owned-piece LRU, 60-second metadata wait, 45-second piece wait, 15-second native read completion, bounded head/tail preparation and current-piece-only urgent scheduling. The 2026-10-05 startup update instead serves HTTP immediately with background header warming and staggered deadlines for a bounded upcoming piece window. Unlimited transfer is explicit. Validate configuration at runtime; use byte units in the library rather than UI Mbps units.
 
 Transport is explicit (`tcpOnly` or `mixedTcpUtp`). TCP-only is the demonstrated local lab baseline, not a universal recommendation: it can exclude uTP-only peers. Preserve mixed compatibility and UDP DHT/tracker discovery. Investigate/adapt the transport policy on real devices before production rollout.
 
@@ -58,7 +58,7 @@ Keep time-critical scheduler details internal. A sixteen-megabyte window is a ta
 
 The adapter accepts an existing MediaKit Player and engine session. Ownership is explicit: closing playback releases the engine endpoint; disposing an externally supplied Player remains the caller's responsibility unless an owned-player constructor is used later.
 
-Player options are separate configuration: ten-second playable ready target, sixty-second forward-cache target, 64 MiB demuxer cache and 16 MiB back cache, sixty-second HTTP timeout. A ready target is not a mandatory wall-clock delay, and player EOF/cache behavior can resume with less data. Expose mute and playback pause at the player/application layer, not the torrent engine.
+Player options are separate configuration: the original audit used a ten-second playable ready target; Sentorr now uses two seconds, sixty-second forward-cache target, 64 MiB demuxer cache and 16 MiB back cache, sixty-second HTTP timeout. A ready target is not a mandatory wall-clock delay, and player EOF/cache behavior can resume with less data. Expose mute and playback pause at the player/application layer, not the torrent engine.
 
 Sequence: create session → open source → choose file → prepare file → configure player → open endpoint → observe actual demuxer cache/playback readiness. Stop is available at every stage. For a seek: cancel obsolete engine reads → request player seek → observe playable progression/cache waiting. Keep metadata/byte readiness and player readiness distinct in names and UI.
 
@@ -91,3 +91,17 @@ The optional MediaKit adapter needs native release playback verification for mut
 ## Implemented verification
 
 The pure Dart package has a pinned binding dependency and explicit local-native-build instructions. Fourteen tests pass on macOS, including exact bytes from a real controlled seed, seed interruption/recovery, independent sessions sharing the native worker, close during metadata/container preparation, and caller/source-file preservation. Analysis is clean. Local-service discovery is disabled after controlled loopback peers were replaced by self-discovery; explicit peers and DHT/trackers remain supported. No app dependency or MediaKit adapter has been wired.
+
+### Public tracker defaults
+
+Sentorr bundles six public trackers in `lib/torrents/trackers.dart`, selected from [ngosang/trackerslist](https://github.com/ngosang/trackerslist) on 2026-10-05. The shared engine adds these to streaming and download torrents, preserving provider trackers and deduplicating URLs. No tracker-list request is needed at startup, and DHT continues to follow the network setting.
+
+Metadata bytes and torrent files with `info.private` set skip the defaults, including when reattached by magnet. A fresh magnet cannot reveal its private flag before metadata retrieval; defaults apply to that discovery path, intended for Sentorr's public sources. Generic package consumers receive no defaults unless they configure `TorrentEngineSettings.defaultTrackers`.
+
+### Detail-page prefetch and launch preparation
+
+The title page watches `mediaTorrentPrefetchProvider` for its current Play target (movie, resumed/next episode, or the first episode of a new series). This performs one cancellable source search, including first-episode queue resolution when needed, without fetching torrent metadata or video. Play takes the same completed or in-flight result. Changing the target, source preferences, or leaving the page cancels an unclaimed lookup. Failed prefetches fall back to the normal launch path; downloaded and saved-release targets keep their existing behavior.
+
+Once Play finds an exact match, `preparedStreamsProvider` begins HTTP metadata retrieval, native session opening, file selection, and header-piece warming while the existing review countdown runs. No media player is created or opened by preparation. Playback claims the same session/endpoint, including preparations still in flight, rather than repeating discovery. Cancel, retry, a different selected torrent, or closing the player cancels speculative work. One pending preparation is held, with a one-minute expiry for an unclaimed handoff. Pausing the countdown to inspect its options does not cancel preparation; closing the launch does.
+
+Validation includes source-search reuse, cancelled/late results, in-flight session handoff, replacement cleanup, and a native loopback tracker/seed proving verified video pieces arrive during preparation and the endpoint serves exact bytes. This does not establish public-swarm first-frame latency.

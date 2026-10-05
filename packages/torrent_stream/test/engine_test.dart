@@ -22,6 +22,60 @@ void main() {
   tearDown(() => root.delete(recursive: true));
 
   test(
+    'mismatched HTTP metadata is rejected before adding or creating storage',
+    () async {
+      final (metadata, _, closeSeed) = await seedFile(source);
+      final engine = loopbackEngine();
+      final destination = '${root.path}/must-not-exist';
+      try {
+        await expectLater(
+          engine.add(
+            TorrentSource.metadata(metadata, expectedInfoHash: '1' * 40),
+            owner: 'stream:wrong',
+            directory: destination,
+          ),
+          throwsA(
+            isA<TorrentStreamException>().having(
+              (e) => e.message,
+              'message',
+              contains('does not match'),
+            ),
+          ),
+        );
+        expect(engine.torrents, isEmpty);
+        expect(Directory(destination).existsSync(), false);
+      } finally {
+        await engine.close();
+        closeSeed();
+      }
+    },
+  );
+
+  test(
+    'container preparation exposes HTTP before any peer sends a piece',
+    () async {
+      final (metadata, _, closeSeed) = await seedFile(source);
+      final engine = loopbackEngine();
+      final session = TorrentStreamSession(
+        engine: engine,
+        config: TorrentStreamConfig(cacheDirectory: '${root.path}/cold'),
+      );
+      try {
+        final files = await session.open(TorrentSource.metadata(metadata));
+        final stream = await session
+            .prepareFile(files.single.index)
+            .timeout(const Duration(seconds: 3));
+        expect(stream.uri.scheme, 'http');
+      expect(engine.torrent(session.infoHash!)!.verifiedBytes, 0);
+      } finally {
+        await session.close();
+        await engine.close();
+        closeSeed();
+      }
+    },
+  );
+
+  test(
     'a download and a stream share one torrent; the stream leaves it running',
     () async {
       final (metadata, peer, closeSeed) = await seedFile(source);

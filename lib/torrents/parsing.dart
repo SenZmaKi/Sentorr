@@ -4,6 +4,11 @@ import 'release_metadata.dart';
 import 'batch_matching.dart';
 
 int? integer(Object? value) => int.tryParse('$value');
+
+/// HTTP metadata cache for APIBay and older saved releases without URLs.
+Uri torrentCacheUrl(String hash) =>
+    Uri.parse('https://itorrents.org/torrent/${hash.toUpperCase()}.torrent');
+
 String? infoHash(Object? value) {
   final text = '$value';
   if (!RegExp(r'^[a-fA-F0-9]{40}$').hasMatch(text) ||
@@ -256,3 +261,14 @@ List<String> languageTokens(String language) =>
       'it' => ['italian', 'ita', 'it'],
       _ => [normalizeLanguage(language)],
     };
+
+/// Resolve a provider's metadata link without accepting scripts or magnets.
+Uri? torrentHttpUrl(Object? value, Uri endpoint) {
+  if (value is! String || value.trim().isEmpty) return null;
+  final relative = Uri.tryParse(value.trim());
+  if (relative == null) return null;
+  final uri = endpoint.resolveUri(relative);
+  return (uri.scheme == 'https' || uri.scheme == 'http') && uri.host.isNotEmpty
+      ? uri
+      : null;
+}

@@ -64,6 +64,7 @@ void main() {
                           'torrents': [
                             {
                               'hash': hash.toUpperCase(),
+                              'url': 'https://yts.example/download/$hash',
                               'seeds': 8,
                               'size_bytes': 500,
                               'quality': '720p',
@@ -85,6 +86,10 @@ void main() {
       expect(result.releases, hasLength(1));
       expect(result.releases.single.source, TorrentSourceId.yts);
       expect(result.releases.single.seeders, 8);
+      expect(
+        result.releases.single.torrentUrls,
+        contains(Uri.parse('https://yts.example/download/$hash')),
+      );
     },
   );
 
@@ -231,6 +236,10 @@ void main() {
       startsWith('urn:btih:'),
     );
     expect(releases.first.uploadedAt, isNull);
+    expect(
+      releases.first.torrentUrls.single.toString(),
+      startsWith('https://bitsearch.eu/download/torrent/68AC70'),
+    );
   });
   test(
     'Bitsearch empty search container is success; challenge is failure',

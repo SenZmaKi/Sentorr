@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:dio_http2_adapter/dio_http2_adapter.dart';
 import 'package:http2/transport.dart';
 
+import 'compressed_response.dart';
+
 /// Prefers HTTP/2 for every request and falls back to the configured adapter.
 ///
 /// [Http2Adapter] owns its HTTP/2 connections but does not close its fallback
@@ -35,7 +37,9 @@ class Http2PreferredAdapter implements HttpClientAdapter {
     }
 
     try {
-      return await _http2Adapter.fetch(options, requestStream, cancelFuture);
+      return decodeCompressedResponse(
+        await _http2Adapter.fetch(options, requestStream, cancelFuture),
+      );
     } on TransportConnectionException {
       if (!_canReplay(options, requestStream)) rethrow;
 

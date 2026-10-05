@@ -82,20 +82,61 @@ class TorrentRelease {
     required this.magnet,
     required this.seeders,
     required this.sizeBytes,
+    Iterable<Uri> torrentUrls = const [],
     this.resolution,
     this.uploadedAt,
     this.isSeasonPack = false,
     this.isSeriesPack = false,
-  });
+  }) : torrentUrls = List.unmodifiable(torrentUrls);
   final TorrentSourceId source;
   final String name, infoHash;
   final Uri magnet;
+
+  /// Discovery hints may be present in a magnet but absent from its file.
+  List<Uri> get trackers => [
+    for (final value in magnet.queryParametersAll['tr'] ?? const <String>[])
+      if (Uri.tryParse(value) case final uri?)
+        if ({'http', 'https', 'udp'}.contains(uri.scheme) &&
+            uri.host.isNotEmpty)
+          uri,
+  ];
+
+  /// HTTP metadata locations, retained across duplicate search results.
+  final List<Uri> torrentUrls;
   final int seeders, sizeBytes;
   final int? resolution;
   final DateTime? uploadedAt;
   final bool isSeasonPack;
   final bool isSeriesPack;
   bool get isPack => isSeasonPack || isSeriesPack;
+
+  /// Keep the strongest swarm's description and all metadata locations.
+  TorrentRelease merge(TorrentRelease other) {
+    if (infoHash.toLowerCase() != other.infoHash.toLowerCase()) {
+      throw ArgumentError('Cannot merge different torrents');
+    }
+    final best = other.seeders > seeders ? other : this;
+    final discovery = {...trackers, ...other.trackers};
+    return TorrentRelease(
+      source: best.source,
+      name: best.name,
+      infoHash: best.infoHash,
+      magnet: best.magnet.replace(
+        queryParameters: {
+          ...best.magnet.queryParametersAll,
+          if (discovery.isNotEmpty)
+            'tr': discovery.map((uri) => uri.toString()).toList(),
+        },
+      ),
+      torrentUrls: {...best.torrentUrls, ...torrentUrls, ...other.torrentUrls},
+      seeders: best.seeders,
+      sizeBytes: best.sizeBytes,
+      resolution: best.resolution,
+      uploadedAt: best.uploadedAt,
+      isSeasonPack: best.isSeasonPack,
+      isSeriesPack: best.isSeriesPack,
+    );
+  }
 }
 
 class SourceFailure {

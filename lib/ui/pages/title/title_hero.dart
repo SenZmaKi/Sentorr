@@ -62,7 +62,7 @@ class TitleHero extends StatelessWidget {
           background: Stack(
             fit: StackFit.expand,
             children: [
-              TitleBackdrop(title: title),
+              TitleBackdrop(title: title, waitForBackdrop: true),
               const ArtworkFade(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,

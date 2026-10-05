@@ -6,6 +6,7 @@ import '../../../titles/episodes.dart';
 import '../../../player/models.dart';
 import '../../components/buttons.dart';
 import '../../components/download_button.dart';
+import '../../components/elsewhere_button.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_row.dart';
 import '../../components/cards/title_preview.dart';
@@ -130,42 +131,45 @@ class EpisodeList extends ConsumerWidget {
     final still = e.poster != null
         ? TitleArtwork(image: e.poster)
         : TitleBackdrop(title: series);
-    return EpisodeRow(
-      code: code,
-      name: e.title,
-      compact: compact,
-      meta: [
-        if (aired != null)
-          MetaItem(
-            upcoming ? 'Airs ${dateLabel(aired)}' : dateLabel(aired),
-            icon: Icons.event_outlined,
-          ),
-        if (e.rating != null)
-          MetaItem(
-            e.rating!.toStringAsFixed(1),
-            icon: Icons.star_rounded,
-            technical: true,
-          ),
-      ],
-      plot: e.plot,
-      duration: e.runtimeSeconds == null
-          ? null
-          : stampLabel(Duration(seconds: e.runtimeSeconds!)),
-      artwork: still,
-      semanticLabel: 'Play $code, ${e.title}',
-      onTap: play,
-      trailing: upcoming
-          ? null
-          : DownloadButton(
-              item: PlaybackItem.episode(series, episode, season: season),
+    return Consumer(
+      builder: (context, ref, _) => EpisodeRow(
+        code: code,
+        name: e.title,
+        compact: compact,
+        meta: [
+          if (aired != null)
+            MetaItem(
+              upcoming ? 'Airs ${dateLabel(aired)}' : dateLabel(aired),
+              icon: Icons.event_outlined,
             ),
-      preview: (_) => EpisodePreview(
-        series: series,
-        episode: episode,
+          if (e.rating != null)
+            MetaItem(
+              e.rating!.toStringAsFixed(1),
+              icon: Icons.star_rounded,
+              technical: true,
+            ),
+          ?elsewhereFact(ref, e.id),
+        ],
+        plot: e.plot,
+        duration: e.runtimeSeconds == null
+            ? null
+            : stampLabel(Duration(seconds: e.runtimeSeconds!)),
         artwork: still,
-        onPlay: play,
-        // Upcoming episodes have nothing to open; the card stays inert.
-        onOpen: play ?? () {},
+        semanticLabel: 'Play $code, ${e.title}',
+        onTap: play,
+        trailing: upcoming
+            ? null
+            : DownloadButton(
+                item: PlaybackItem.episode(series, episode, season: season),
+              ),
+        preview: (_) => EpisodePreview(
+          series: series,
+          episode: episode,
+          artwork: still,
+          onPlay: play,
+          // Upcoming episodes have nothing to open; the card stays inert.
+          onOpen: play ?? () {},
+        ),
       ),
     );
   }

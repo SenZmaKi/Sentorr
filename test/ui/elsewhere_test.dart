@@ -14,6 +14,8 @@ import 'package:sentorr/library/notifier.dart';
 import 'package:sentorr/library/planner.dart';
 import 'package:sentorr/player/launch.dart';
 import 'package:sentorr/player/models.dart';
+import 'package:sentorr/player/queue_builder.dart';
+import 'package:sentorr/player/session.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/shared/persistence/json_file_store.dart';
 import 'package:sentorr/sync/copies.dart';
@@ -175,8 +177,8 @@ void main() {
     await tester.tap(find.byTooltip('Downloaded on Laptop · plays from there'));
     await tester.pumpAndSettle();
     expect(find.text('Play from Laptop'), findsOneWidget);
-    expect(find.text('Download from a torrent'), findsOneWidget);
-    await tester.tap(find.text('Copy to this device'));
+    expect(find.text('Download instead'), findsOneWidget);
+    await tester.tap(find.text('Copy here from Laptop'));
     await tester.pumpAndSettle();
     expect(copies.started, [_movie.id]);
   });
@@ -254,6 +256,8 @@ void main() {
       await tester.pump();
     }
 
+    // The row says where it is, without a tooltip.
+    expect(find.textContaining('On Laptop'), findsWidgets);
     await pick(3);
     expect(jumps, 1, reason: 'nothing elsewhere: a jump within the queue');
     expect(container.read(playbackLaunchProvider), isNull);
@@ -263,6 +267,25 @@ void main() {
     expect(container.read(playbackLaunchProvider), isNotNull);
     container.read(playbackLaunchProvider.notifier).cancel();
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('choosing Play from Laptop plays without asking again', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      Center(child: DownloadButton(item: _movie)),
+      finished: [_movie],
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(DownloadButton)),
+    );
+    await tester.tap(find.byTooltip('Downloaded on Laptop · plays from there'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Play from Laptop'));
+    await tester.pump();
+    expect(container.read(playbackLaunchProvider), isNull);
+    expect(container.read(playerSessionProvider)?.request, isA<PlayTitle>());
   });
 
   testWidgets("this device's own download wins", (tester) async {
@@ -306,7 +329,7 @@ void main() {
     );
     // Episode 2 is here, so only this device's row shows it.
     expect(find.text('Episode 2'), findsOneWidget);
-    await tester.tap(find.byTooltip('Copy to this device'));
+    await tester.tap(find.byTooltip('Copy here from Laptop'));
     await tester.pumpAndSettle();
     expect(copies.started, [_movie.id]);
   });

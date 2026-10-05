@@ -113,8 +113,12 @@ local download always wins.
 - **Download buttons** (episode rows, the player's episodes panel, previews,
   the title hero) become `ElsewhereButton`: "On MacBook" with a devices glyph
   when it's finished there, or a quieter ring and "On MacBook 42%" while it
-  downloads there. The menu offers Play from MacBook, Copy to this device and
-  Download from a torrent, or Show in Downloads and Download here too.
+  downloads there. Episode rows also name the device in their facts ("On
+  MacBook", "On MacBook · 42%"), so touch screens see it without a tooltip.
+  The menu offers Play from MacBook, Copy here from MacBook and Download
+  instead, or Show in Downloads and Download here too. Play from MacBook opens
+  the player straight away: the viewer chose the copy, so the launch doesn't
+  offer streaming instead.
 - **The Downloads page** ends each tab with a section per device for what
   this device lacks: downloads under way on Ongoing, finished ones on
   Complete, each row playing on tap and offering a copy or a download here.

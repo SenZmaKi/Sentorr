@@ -292,6 +292,49 @@ void main() {
     expect(statuses().every((s) => s == DownloadStatus.downloading), true);
   });
 
+  test('parked streams release bandwidth and preserve manual pauses', () async {
+    final a = await enqueue('a');
+    await enqueue('b');
+    await enqueue('c');
+    await queue.pause(a);
+    torrents['c'].streaming = true;
+    await queue.tick();
+    expect(statuses(), [
+      DownloadStatus.paused,
+      DownloadStatus.queued,
+      DownloadStatus.downloading,
+    ]);
+    torrents['c'].paused.add('stream:1');
+    await queue.tick();
+    await settle();
+    expect(statuses(), [
+      DownloadStatus.paused,
+      DownloadStatus.downloading,
+      DownloadStatus.queued,
+    ]);
+    expect(torrents.running('b'), isTrue);
+    torrents['c'].paused.remove('stream:1');
+    await queue.tick();
+    expect(queue.items[1].status, DownloadStatus.queued);
+  });
+
+  test('a fully downloaded streamed file releases bandwidth', () async {
+    await enqueue('a');
+    await enqueue('b');
+    // Retain the completed torrent for playback, as the real stream does.
+    torrents['b'].owners.add('stream:1');
+    torrents['b'].streaming = true;
+    torrents['b'].done = 99;
+    await queue.tick();
+    expect(queue.items.first.status, DownloadStatus.queued);
+    torrents['b'].done = 100;
+    await queue.tick();
+    await settle();
+    expect(torrents.torrents.last.streams, isNotEmpty);
+    expect(queue.items.first.status, DownloadStatus.downloading);
+    expect(torrents.running('a'), isTrue);
+  });
+
   test('failures release the torrent and can be retried', () async {
     torrents.failMetadata = true;
     final a = await enqueue('a');

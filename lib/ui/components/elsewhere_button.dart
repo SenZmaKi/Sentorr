@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../library/models.dart';
+import '../../library/notifier.dart';
 import '../../sync/elsewhere.dart';
 import '../../sync/payload.dart';
 import '../shared/download_actions.dart';
-import '../shared/play_route.dart';
 import '../shared/theme/theme.dart';
 import 'app_shell.dart';
+import 'cards/card_parts.dart';
 import 'download_button.dart';
 import 'menu.dart';
 
@@ -69,7 +71,7 @@ class ElsewhereButton extends ConsumerWidget {
     void showDownloads() =>
         ref.read(appDestinationProvider.notifier).go(AppDestination.downloads);
     if (!menu) {
-      return trigger(e.finished ? () => ref.playItem(e.item) : showDownloads);
+      return trigger(e.finished ? () => ref.playElsewhere(e) : showDownloads);
     }
     return ActionMenu(
       actions: [
@@ -77,10 +79,10 @@ class ElsewhereButton extends ConsumerWidget {
           MenuAction(
             'Play from ${e.device}',
             icon: Icons.play_arrow_rounded,
-            onPressed: () => ref.playItem(e.item),
+            onPressed: () => ref.playElsewhere(e),
           ),
           MenuAction(
-            'Copy to this device',
+            'Copy here from ${e.device}',
             icon: Icons.devices_rounded,
             onPressed: () => ref.copyHere(e),
           ),
@@ -91,7 +93,7 @@ class ElsewhereButton extends ConsumerWidget {
             onPressed: showDownloads,
           ),
         MenuAction(
-          e.finished ? 'Download from a torrent' : 'Download here too',
+          e.finished ? 'Download instead' : 'Download here too',
           icon: Icons.download_rounded,
           onPressed: () => ref.download(context, e.item, offerCopy: false),
         ),
@@ -100,4 +102,19 @@ class ElsewhereButton extends ConsumerWidget {
           trigger(() => menu.isOpen ? menu.close() : menu.open()),
     );
   }
+}
+
+/// A row's fact naming the paired device that has [id] while this one does
+/// not, e.g. "On MacBook" or "On MacBook · 42%", so the row says so without
+/// a tooltip. Null otherwise.
+MetaItem? elsewhereFact(WidgetRef ref, String id) {
+  if (ref.watch(offlineStateProvider(id)) is! NotDownloaded) return null;
+  final e = ref.watch(elsewhereOfProvider(id));
+  if (e == null) return null;
+  return MetaItem(
+    e.finished
+        ? 'On ${e.device}'
+        : 'On ${e.device} · ${(e.progress * 100).floor()}%',
+    icon: Icons.devices_rounded,
+  );
 }

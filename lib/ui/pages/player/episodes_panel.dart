@@ -13,6 +13,7 @@ import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_row.dart';
 import '../../components/chips.dart';
 import '../../components/download_button.dart';
+import '../../components/elsewhere_button.dart';
 import '../../components/title_link.dart';
 import '../title/season_download_button.dart';
 import '../../components/load_error.dart';
@@ -228,47 +229,50 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
     final still = t.poster != null
         ? TitleArtwork(image: t.poster)
         : TitleBackdrop(title: series);
-    return EpisodeRow(
-      key: current ? _currentKey : null,
-      compact: true,
-      dense: context.playerLayout.handheld,
-      selected: current,
-      code: code,
-      name: t.title,
-      nameLink: TitleLink(
-        title: series,
-        episode: e,
-        season: season,
-        beforeOpen: widget.onBrowse,
-        child: CardTitle(t.title, large: true),
-      ),
-      trailing: upcoming
-          ? null
-          : DownloadButton(
-              item: PlaybackItem.episode(series, e, season: season),
+    return Consumer(
+      builder: (context, ref, _) => EpisodeRow(
+        key: current ? _currentKey : null,
+        compact: true,
+        dense: context.playerLayout.handheld,
+        selected: current,
+        code: code,
+        name: t.title,
+        nameLink: TitleLink(
+          title: series,
+          episode: e,
+          season: season,
+          beforeOpen: widget.onBrowse,
+          child: CardTitle(t.title, large: true),
+        ),
+        trailing: upcoming
+            ? null
+            : DownloadButton(
+                item: PlaybackItem.episode(series, e, season: season),
+              ),
+        meta: [
+          if (aired != null)
+            MetaItem(
+              upcoming ? 'Airs ${dateLabel(aired)}' : dateLabel(aired),
+              icon: Icons.event_outlined,
             ),
-      meta: [
-        if (aired != null)
-          MetaItem(
-            upcoming ? 'Airs ${dateLabel(aired)}' : dateLabel(aired),
-            icon: Icons.event_outlined,
-          ),
-        if (t.rating != null)
-          MetaItem(
-            t.rating!.toStringAsFixed(1),
-            icon: Icons.star_rounded,
-            technical: true,
-          ),
-      ],
-      plot: t.plot,
-      duration: t.runtimeSeconds == null
-          ? null
-          : stampLabel(Duration(seconds: t.runtimeSeconds!)),
-      artwork: still,
-      semanticLabel: current
-          ? 'Now playing: $code, ${t.title}'
-          : 'Play $code, ${t.title}',
-      onTap: play,
+          if (t.rating != null)
+            MetaItem(
+              t.rating!.toStringAsFixed(1),
+              icon: Icons.star_rounded,
+              technical: true,
+            ),
+          ?elsewhereFact(ref, t.id),
+        ],
+        plot: t.plot,
+        duration: t.runtimeSeconds == null
+            ? null
+            : stampLabel(Duration(seconds: t.runtimeSeconds!)),
+        artwork: still,
+        semanticLabel: current
+            ? 'Now playing: $code, ${t.title}'
+            : 'Play $code, ${t.title}',
+        onTap: play,
+      ),
     );
   }
 
@@ -279,45 +283,48 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
       children: [
         for (final (i, item) in items.indexed) ...[
           if (i > 0) const Divider(),
-          EpisodeRow(
-            key: i == widget.queue.index ? _currentKey : null,
-            compact: true,
-            dense: context.playerLayout.handheld,
-            selected: i == widget.queue.index,
-            name: item.name,
-            nameLink: TitleLink(
-              title: item.series ?? item.title,
-              episode: item.isEpisode
-                  ? ImdbEpisode(
-                      title: item.title,
-                      seasonNumber: item.season,
-                      episodeNumber: item.episode,
-                    )
-                  : null,
-              season: item.season,
-              beforeOpen: widget.onBrowse,
-              child: CardTitle(item.name, large: true),
+          Consumer(
+            builder: (context, ref, _) => EpisodeRow(
+              key: i == widget.queue.index ? _currentKey : null,
+              compact: true,
+              dense: context.playerLayout.handheld,
+              selected: i == widget.queue.index,
+              name: item.name,
+              nameLink: TitleLink(
+                title: item.series ?? item.title,
+                episode: item.isEpisode
+                    ? ImdbEpisode(
+                        title: item.title,
+                        seasonNumber: item.season,
+                        episodeNumber: item.episode,
+                      )
+                    : null,
+                season: item.season,
+                beforeOpen: widget.onBrowse,
+                child: CardTitle(item.name, large: true),
+              ),
+              trailing: DownloadButton(item: item),
+              meta: [
+                if (item.title.rating != null)
+                  MetaItem(
+                    item.title.rating!.toStringAsFixed(1),
+                    icon: Icons.star_rounded,
+                    technical: true,
+                  ),
+                if (item.title.genres.isNotEmpty)
+                  MetaItem(item.title.genres.take(2).join(', ')),
+                ?elsewhereFact(ref, item.id),
+              ],
+              plot: item.title.plot,
+              duration: item.runtime == null ? null : stampLabel(item.runtime!),
+              artwork: TitleBackdrop(title: item.title),
+              semanticLabel: 'Play ${item.name}',
+              onTap: i == widget.queue.index
+                  ? null
+                  : () => _onlyElsewhere(item)
+                        ? ref.playItem(item)
+                        : widget.onJump(i),
             ),
-            trailing: DownloadButton(item: item),
-            meta: [
-              if (item.title.rating != null)
-                MetaItem(
-                  item.title.rating!.toStringAsFixed(1),
-                  icon: Icons.star_rounded,
-                  technical: true,
-                ),
-              if (item.title.genres.isNotEmpty)
-                MetaItem(item.title.genres.take(2).join(', ')),
-            ],
-            plot: item.title.plot,
-            duration: item.runtime == null ? null : stampLabel(item.runtime!),
-            artwork: TitleBackdrop(title: item.title),
-            semanticLabel: 'Play ${item.name}',
-            onTap: i == widget.queue.index
-                ? null
-                : () => _onlyElsewhere(item)
-                      ? ref.playItem(item)
-                      : widget.onJump(i),
           ),
         ],
       ],

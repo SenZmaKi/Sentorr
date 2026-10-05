@@ -40,7 +40,29 @@ class _PairingSheetState extends ConsumerState<_PairingSheet> {
   Widget? _shown;
 
   @override
+  void initState() {
+    super.initState();
+    // Showing the sheet makes this device findable, so neither person has to
+    // pick who waits and who joins.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reopen());
+  }
+
+  void _reopen() {
+    if (!mounted || ModalRoute.of(context)?.isActive != true) return;
+    if (ref.read(pairingProvider) is PairingIdle) {
+      ref.read(pairingProvider.notifier).open();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Back to idle (e.g. the window ran out, or "Try again") while still
+    // showing: become findable again.
+    ref.listen(pairingProvider, (_, next) {
+      if (next is PairingIdle) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _reopen());
+      }
+    });
     final closing = ModalRoute.of(context)?.isActive == false;
     final state = ref.watch(pairingProvider);
     if (closing && _shown != null) return _shown!;
@@ -55,18 +77,7 @@ class _PairingSheetState extends ConsumerState<_PairingSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: switch (state) {
-          PairingIdle() => _choose(context),
-          PairingOpen() => [
-            _heading(context, 'Waiting for your other device'),
-            _text(
-              context,
-              'On it, open Settings → Devices → Pair a device and choose '
-              '${ref.watch(devicesProvider).identity.name}. Pairing stays '
-              'open for five minutes.',
-            ),
-            const _Addresses(),
-            _actions([SButton.ghost(label: 'Cancel', onPressed: done)]),
-          ],
+          PairingIdle() || PairingOpen() => _choose(context),
           PairingConnecting(:final name) => [
             _heading(context, 'Connecting to $name'),
             const _Spinner(),
@@ -128,38 +139,54 @@ class _PairingSheetState extends ConsumerState<_PairingSheet> {
   }
 
   List<Widget> _choose(BuildContext context) {
-    final open = [
+    // Every device found, those waiting first: the announcement that one is
+    // waiting can lag behind, and the host refuses if it is not.
+    final devices = ref.watch(devicesProvider);
+    final nearby = [
       for (final d in ref.watch(nearbyDevicesProvider).values)
-        if (d.pairing) d,
-    ];
-    final pairing = ref.read(pairingProvider.notifier);
+        if (devices.byId(d.id) == null) d,
+    ]..sort((a, b) => (b.pairing ? 1 : 0) - (a.pairing ? 1 : 0));
+    final name = devices.identity.name;
     return [
       _heading(context, 'Pair a device'),
       _text(
         context,
-        'Choose a device that is waiting to pair, or let another device '
-        'find this one. Both must be on the same network.',
+        'Open this screen on your other device too, then tap it below. '
+        'Both must be on the same network. This device shows up there as '
+        '$name.',
       ),
       const SizedBox(height: Space.s16),
-      if (open.isEmpty)
-        _text(context, 'No device is waiting to pair nearby.')
+      if (nearby.isEmpty)
+        Row(
+          spacing: Space.s12,
+          children: [
+            SizedBox.square(
+              dimension: IconSizes.control,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: context.colors.action,
+              ),
+            ),
+            Expanded(child: _text(context, 'Looking for devices…')),
+          ],
+        )
       else
-        for (final d in open)
+        for (final d in nearby)
           Padding(
             padding: const EdgeInsets.only(bottom: Space.s8),
             child: SButton(
               label: d.name,
               icon: Icons.devices_rounded,
-              onPressed: () => pairing.join(d.address, name: d.name),
+              onPressed: () => ref
+                  .read(pairingProvider.notifier)
+                  .join(d.address, name: d.name),
             ),
           ),
       const SizedBox(height: Space.s16),
       const _AddressForm(),
+      const _Addresses(),
       _actions([
-        SButton.primary(
-          label: 'Let another device pair',
-          onPressed: pairing.open,
-        ),
+        SButton.ghost(label: 'Cancel', onPressed: () => Navigator.pop(context)),
       ]),
     ];
   }
@@ -265,7 +292,7 @@ class _Addresses extends ConsumerWidget {
         return Padding(
           padding: const EdgeInsets.only(top: Space.s16),
           child: Text(
-            'If it isn’t listed there, enter ${addresses.join(' or ')}',
+            'Not listed? On the other device, enter ${addresses.join(' or ')}',
             style: context.type.bodySmall.copyWith(
               color: context.colors.foregroundSecondary,
             ),

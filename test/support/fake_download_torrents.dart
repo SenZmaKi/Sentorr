@@ -39,6 +39,7 @@ class FakeTorrents implements DownloadTorrents {
           savePath: '/downloads',
           storage: TorrentStorage.kept,
           owners: t.owners,
+          pausedOwners: t.paused,
           fileBytes: [0, t.done],
           uploadedBytes: t.uploaded,
           error: t.error,

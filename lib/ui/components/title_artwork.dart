@@ -57,7 +57,8 @@ class TitleBackdrop extends ConsumerWidget {
 
   final ImdbTitle title;
 
-  /// Wait for details before using the poster when no backdrop is available.
+  /// Wait for details (or their failure) before falling back to the poster,
+  /// so a poster never shows only to be swapped for a backdrop.
   final bool waitForBackdrop;
 
   @override
@@ -68,7 +69,7 @@ class TitleBackdrop extends ConsumerWidget {
       duration: Motion.panel,
       child: backdrop != null
           ? TitleArtwork(key: ValueKey(backdrop.url), image: backdrop)
-          : !waitForBackdrop || details.hasValue
+          : !waitForBackdrop || details.hasValue || details.hasError
           ? TitleArtwork(
               key: const ValueKey('poster'),
               image: title.poster,

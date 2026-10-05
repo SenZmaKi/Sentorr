@@ -12,6 +12,7 @@ import '../../library/download_review.dart';
 import '../../library/season_download.dart';
 import '../../imdb/models.dart';
 import '../../player/models.dart';
+import '../../player/session.dart';
 import '../../settings/notifier.dart';
 import '../../shared/errors/error_reports.dart';
 import '../../sync/copies.dart';
@@ -86,6 +87,11 @@ extension DownloadActions on WidgetRef {
       () => "Couldn't download ${series.title} season $season",
     );
   }
+
+  /// Plays [held] from its device at once: the viewer chose it, so there
+  /// is no offer to stream instead.
+  void playElsewhere(Elsewhere held) =>
+      read(playerSessionProvider.notifier).play(requestFor(held.item));
 
   /// Copies [held]'s finished file from its device without asking.
   void copyHere(Elsewhere held) {

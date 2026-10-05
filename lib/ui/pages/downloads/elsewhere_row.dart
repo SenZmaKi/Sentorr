@@ -47,12 +47,13 @@ class ElsewhereRow extends ConsumerWidget {
           ],
         ],
       ),
-      onTap: () => ref.playItem(e.item),
+      onTap: () =>
+          e.finished ? ref.playElsewhere(e) : ref.playItem(e.item),
       actions: [
         if (e.finished)
           SIconButton(
             icon: Icons.download_rounded,
-            tooltip: 'Copy to this device',
+            tooltip: 'Copy here from ${e.device}',
             onPressed: () => ref.copyHere(e),
           )
         else

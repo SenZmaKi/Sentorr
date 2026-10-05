@@ -90,4 +90,17 @@ void main() {
     await phone.read(pairingProvider.notifier).join(addressOf(laptop));
     expect(phone.read(pairingProvider), isA<PairingFailed>());
   });
+
+  test('a host whose joiner backs out waits for another', () async {
+    final laptop = await syncDevice('Laptop'),
+        phone = await syncDevice('Phone');
+    await compareCodes(laptop, phone);
+    // The joiner closes its sheet before choosing.
+    phone.read(pairingProvider.notifier).close();
+    await until(() => laptop.read(pairingProvider) is PairingFailed);
+    expect(laptop.read(devicesProvider).paired, isEmpty);
+    // Pairing can be started again straight away.
+    laptop.read(pairingProvider.notifier).open();
+    expect(laptop.read(pairingProvider), isA<PairingOpen>());
+  });
 }

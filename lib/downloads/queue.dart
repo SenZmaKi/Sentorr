@@ -217,11 +217,16 @@ class DownloadQueue {
   }
 
   /// Gives queue slots in order; a download being watched always runs, and
-  /// while anything streams the others can wait.
+  /// while an active stream needs more bytes the others can wait.
   void _reconcile() {
     final watched = {
       for (final t in torrents.torrents)
-        if (t.streams.isNotEmpty) t.infoHash,
+        if (t.streams.any(
+          (s) =>
+              !t.pausedOwners.contains(s.owner) &&
+              t.bytesOf(s.file.index) < s.file.length,
+        ))
+          t.infoHash,
     };
     final yieldToPlayback = settings.pauseWhileStreaming && watched.isNotEmpty;
     var downloads = settings.maxActiveDownloads;

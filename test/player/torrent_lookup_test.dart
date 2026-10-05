@@ -8,7 +8,12 @@ void main() {
   test('a movie searches its title, year and IMDb identity', () {
     final query = torrentQueryFor(
       PlaybackItem(
-        title: ImdbTitle(id: 'tt1', title: 'Movie', releaseYear: 2020),
+        title: ImdbTitle(
+          id: 'tt1',
+          title: 'Movie',
+          releaseYear: 2020,
+          genres: ['Animation'],
+        ),
       ),
       languages: {'en'},
     );
@@ -16,13 +21,19 @@ void main() {
     expect(query.imdbId, 'tt1');
     expect(query.isSeries, isFalse);
     expect(query.languages, {'en'});
+    expect(query.hasGenre('animation'), isTrue);
   });
 
   test('an episode searches its series with both identities', () {
     final query = torrentQueryFor(
       PlaybackItem(
         title: ImdbTitle(id: 'tt9', title: 'Pilot'),
-        series: ImdbTitle(id: 'tt2', title: 'Show', releaseYear: 2005),
+        series: ImdbTitle(
+          id: 'tt2',
+          title: 'Show',
+          releaseYear: 2005,
+          genres: ['Animation'],
+        ),
         season: 1,
         episode: 3,
       ),
@@ -31,6 +42,7 @@ void main() {
     expect(query.imdbId, 'tt2');
     expect(query.episodeImdbId, 'tt9');
     expect(query.year, 2005);
+    expect(query.hasGenre('Animation'), isTrue);
   });
 
   test('a typed title replaces the catalog name, not the identity', () {

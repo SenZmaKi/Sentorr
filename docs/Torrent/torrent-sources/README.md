@@ -142,3 +142,26 @@ nonzero process exit status; a valid zero-match search is still success.
 Recorded snapshots are in `live-validation.json`. Seeders/results change over
 time. Live checks validate metadata search and parsing, not peer availability,
 file contents, codec compatibility, or playback. No browser inspection was used.
+
+### Specialized sources
+
+`SpecializedTorrentSource` separates an adapter's `appliesTo(TorrentQuery)`
+condition from its search/parser implementation. Query genres come from the movie
+or parent series catalog record and survive alternate searches and pack fallbacks.
+Unknown genres do not activate genre-specific sources. General sources continue
+searching alongside applicable specialized sources; source settings can disable
+either kind.
+
+Nyaa activates for the `Animation` genre and searches the English-translated anime
+category (`1_2`), sorted by seeders, on the first page. Its shared
+`SourceRequestGate(5)` caps concurrent requests across adapter instances and
+endpoint mirrors, including retry waits; queued cancellation removes pending work.
+The app transport may impose a lower per-host limit. New specialized adapters can
+reuse the condition contract and give their source a shared request gate.
+
+Nyaa uses the same conservative title/year/season/episode checks as other indexes.
+Absolute anime episode numbering is not inferred to equal IMDb's season numbering;
+those releases require a future explicit mapping. Empty result tables are successful
+searches; access challenges or unrecognized layouts are source failures. Older
+signed endpoint directories retain the built-in Nyaa endpoint until an entry is
+provided by a newer directory.

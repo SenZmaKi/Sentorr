@@ -26,7 +26,10 @@ void main() {
   test(
     'all adapters have entries and only HTTPS allowlisted hosts are accepted',
     () {
-      expect(SourceDirectory.fromJson(directory()).endpoints.length, 3);
+      expect(
+        SourceDirectory.fromJson(directory()).endpoints.length,
+        TorrentSourceId.values.length,
+      );
       for (final endpoint in [
         'http://new.example/q',
         'https://user@new.example/q',
@@ -47,6 +50,14 @@ void main() {
       expect(() => SourceDirectory.fromJson(missing), throwsFormatException);
     },
   );
+  test('older directories retain the built-in Nyaa endpoint', () {
+    final old = directory();
+    (old['sources'] as Map).remove('nyaa');
+    expect(
+      SourceDirectory.fromJson(old).endpoints[TorrentSourceId.nyaa],
+      'https://nyaa.si/',
+    );
+  });
   test(
     'first search waits for refresh and uses endpoint changed during that wait',
     () async {

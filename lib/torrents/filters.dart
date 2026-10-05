@@ -50,6 +50,7 @@ extension TorrentSourceLabel on TorrentSourceId {
     TorrentSourceId.pirateBay => 'Pirate Bay',
     TorrentSourceId.yts => 'YTS',
     TorrentSourceId.bitsearch => 'Bitsearch',
+    TorrentSourceId.nyaa => 'Nyaa',
   };
 }
 

@@ -14,6 +14,8 @@ String _about(TorrentSourceId id) => switch (id) {
   TorrentSourceId.pirateBay => 'Movies and series from a large general index',
   TorrentSourceId.yts => 'Movies only, small encodes',
   TorrentSourceId.bitsearch => 'Movies and series from a search aggregator',
+  TorrentSourceId.nyaa =>
+    'English-translated anime, searched for Animation titles',
 };
 
 /// The sites searched, and the list of where to reach them.

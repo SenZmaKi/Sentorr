@@ -1,6 +1,6 @@
 import 'diagnostics.dart';
 
-enum TorrentSourceId { pirateBay, yts, bitsearch }
+enum TorrentSourceId { pirateBay, yts, bitsearch, nyaa }
 
 enum TorrentSearchStyle { scene, longForm, crossForm }
 
@@ -17,7 +17,9 @@ class TorrentQuery {
     this.seriesEnded = false,
     this.searchSeriesPacks = false,
     Set<String> languages = const {},
-  }) : languages = Set.unmodifiable(languages) {
+    Set<String> genres = const {},
+  }) : genres = Set.unmodifiable(genres),
+       languages = Set.unmodifiable(languages) {
     if (title.trim().isEmpty ||
         ((seriesEnded || searchSeriesPacks) && season == null) ||
         (searchSeriesPacks && episode != null) ||
@@ -40,6 +42,10 @@ class TorrentQuery {
 
   /// Empty means unrestricted. Unknown languages never satisfy an explicit filter.
   final Set<String> languages;
+  final Set<String> genres;
+  bool hasGenre(String genre) => genres.any(
+    (value) => value.trim().toLowerCase() == genre.trim().toLowerCase(),
+  );
   bool get isSeries => season != null;
   bool get isSeasonPack => isSeries && episode == null && !searchSeriesPacks;
   String get searchText {
@@ -68,6 +74,7 @@ class TorrentQuery {
     season: season,
     episode: episode,
     languages: languages,
+    genres: genres,
     searchStyle: style,
     seriesEnded: seriesEnded,
     searchSeriesPacks: searchSeriesPacks,

@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'models.dart';
 import 'diagnostics.dart';
 import 'sources/bitsearch.dart';
+import 'sources/nyaa.dart';
 import 'sources/pirate_bay.dart';
 import 'sources/source.dart';
 import 'sources/yts.dart';
@@ -21,6 +22,7 @@ class TorrentRepository {
     PirateBaySource(dio),
     YtsSource(dio),
     BitsearchSource(dio),
+    NyaaSource(dio),
   ]);
   final List<TorrentSource> sources;
   final Future<void> Function()? beforeSearch;

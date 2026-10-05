@@ -13,6 +13,7 @@ class SourceDirectory {
         TorrentSourceId.yts:
             'https://movies-api.accel.li/api/v2/list_movies.json',
         TorrentSourceId.bitsearch: 'https://bitsearch.eu/search',
+        TorrentSourceId.nyaa: 'https://nyaa.si/',
       });
 
   factory SourceDirectory.fromJson(Map<String, dynamic> json) {
@@ -29,6 +30,11 @@ class SourceDirectory {
     final endpoints = <TorrentSourceId, String>{};
     for (final id in TorrentSourceId.values) {
       final entry = sources[id.name];
+      // Older signed directories predate specialized sources.
+      if (entry == null && id == TorrentSourceId.nyaa) {
+        endpoints[id] = SourceDirectory.defaults().endpoints[id]!;
+        continue;
+      }
       if (entry is! Map ||
           entry['apiEntryPoint'] is! String ||
           entry['allowedHosts'] is! List) {

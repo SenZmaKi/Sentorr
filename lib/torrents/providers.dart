@@ -8,6 +8,7 @@ import 'metadata_fetcher.dart';
 import 'sources/pirate_bay.dart';
 import 'sources/yts.dart';
 import 'sources/bitsearch.dart';
+import 'sources/nyaa.dart';
 import 'filters.dart';
 import 'repository.dart';
 import 'resolver.dart';
@@ -32,6 +33,10 @@ final torrentRepositoryProvider = Provider<TorrentRepository>((ref) {
     BitsearchSource(
       dio,
       endpointResolver: () => directory.endpointFor(TorrentSourceId.bitsearch),
+    ),
+    NyaaSource(
+      dio,
+      endpointResolver: () => directory.endpointFor(TorrentSourceId.nyaa),
     ),
   ], beforeSearch: ref.read(sourceDirectoryProvider.notifier).waitForRefresh);
 });

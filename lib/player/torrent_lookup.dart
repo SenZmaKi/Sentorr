@@ -19,6 +19,7 @@ TorrentQuery torrentQueryFor(
       title: title ?? item.name,
       imdbId: id(item.id),
       year: item.title.releaseYear,
+      genres: item.title.genres.toSet(),
       languages: languages,
     );
   }
@@ -31,6 +32,7 @@ TorrentQuery torrentQueryFor(
     episodeImdbId: id(item.id),
     // Releases that carry a year use the series' first, e.g. Doctor Who 2005.
     year: series.releaseYear,
+    genres: series.genres.toSet(),
     season: item.season,
     episode: item.episode,
     languages: languages,

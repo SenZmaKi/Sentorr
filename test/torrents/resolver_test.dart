@@ -48,6 +48,25 @@ class FakeSource implements TorrentSource {
 
 void main() {
   final movie = TorrentQuery(title: 'Example Movie', year: 2020);
+  test(
+    'specialized media conditions survive alternate and batch searches',
+    () async {
+      final source = FakeSource(TorrentSourceId.nyaa, (_, _) async => []);
+      await TorrentResolver(TorrentRepository([source])).resolve(
+        TorrentQuery(
+          title: 'Example Show',
+          genres: {'Animation'},
+          season: 2,
+          episode: 3,
+          seriesEnded: true,
+        ),
+        preferences: TorrentPreferences(includeBatchCandidates: true),
+      );
+      expect(source.queries.any((q) => q.isSeasonPack), isTrue);
+      expect(source.queries.any((q) => q.searchSeriesPacks), isTrue);
+      expect(source.queries.every((q) => q.hasGenre('Animation')), isTrue);
+    },
+  );
   test('preferred quality outranks over-sized higher resolution', () {
     final ranked = TorrentResolver.rank([
       release(1, resolution: 2160, seeders: 100, size: 20000000000),

@@ -14,6 +14,7 @@ class SourceIcon extends StatelessWidget {
     TorrentSourceId.pirateBay => 'assets/images/sources/pirate_bay.png',
     TorrentSourceId.yts => 'assets/images/sources/yts.png',
     TorrentSourceId.bitsearch => 'assets/images/sources/bitsearch.png',
+    TorrentSourceId.nyaa => 'assets/images/sources/nyaa.png',
   };
 
   @override

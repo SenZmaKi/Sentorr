@@ -1,21 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../watching/models.dart';
 import '../../../../watching/notifier.dart';
 import '../../../components/buttons.dart';
 import '../../../components/confirm_dialog.dart';
-import '../../../shared/theme/theme.dart';
-import '../../../shared/title_format.dart';
-import '../../../shared/title_icons.dart';
 import '../settings_group.dart';
-
-/// "S1 E3 · Pilot · 32 min left · Today".
-String _progressLine(WatchEntry e) => [
-  if (e.isEpisode) ...[episodeCode(e.season, e.episode), e.title.title],
-  '${durationLabel(e.remaining)} left',
-  relativeDay(e.updatedAt),
-].join(' · ');
+import 'watch_progress_row.dart';
 
 class WatchingSection extends ConsumerWidget {
   const WatchingSection({super.key});
@@ -54,49 +44,8 @@ class WatchingSection extends ConsumerWidget {
             subtitle: 'Titles you start appear here',
           ),
         for (final e in entries)
-          SettingsTile(
-            icon: kindIcon(e.series ?? e.title),
-            title: (e.series ?? e.title).title,
-            subtitle: _progressLine(e),
-            below: _ProgressBar(e.progress),
-            trailing: SIconButton(
-              icon: Icons.close_rounded,
-              tooltip: 'Remove from Continue watching',
-              onPressed: () => history.remove(e.key),
-            ),
-          ),
+          WatchProgressRow(entry: e, onRemove: () => history.remove(e.key)),
       ],
-    );
-  }
-}
-
-/// A recessed track with the watched share filled.
-class _ProgressBar extends StatelessWidget {
-  const _ProgressBar(this.progress);
-
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Padding(
-      padding: const EdgeInsets.only(top: Space.s4),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(Radii.full),
-        child: SizedBox(
-          height: 4,
-          width: 240,
-          child: Stack(
-            children: [
-              Positioned.fill(child: ColoredBox(color: c.surfaceInset)),
-              FractionallySizedBox(
-                widthFactor: progress,
-                child: ColoredBox(color: c.action),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

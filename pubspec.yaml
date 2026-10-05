@@ -47,6 +47,9 @@ dependencies:
       ref: d45cc6313b8626edc7a61f8eb210ef6dd07b6284
   windows_taskbar: ^1.1.2
   flutter_secure_storage: ^10.3.1
+  url_launcher: ^6.3.3
+  bonsoir: ^7.1.5
+  basic_utils: ^5.8.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

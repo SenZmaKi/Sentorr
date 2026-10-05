@@ -8,9 +8,11 @@ import 'package:sentorr/app/services.dart';
 import 'package:sentorr/downloads/manager.dart';
 import 'package:sentorr/downloads/models.dart';
 import 'package:sentorr/library/models.dart';
+import 'package:sentorr/library/playback.dart';
 import 'package:sentorr/player/models.dart';
 import 'package:sentorr/player/launch.dart';
 import 'package:sentorr/player/session.dart';
+import 'package:sentorr/player/stream/offline_source.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/torrents/models.dart';
 import 'package:sentorr/torrents/providers.dart';
@@ -27,13 +29,14 @@ import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_torrents.dart';
 
-final _autoPlayDelay = const TorrentSettings().autoPlayDelay;
+final _autoActionDelay = const TorrentSettings().autoActionDelay;
 
 Future<ProviderContainer> _pump(
   WidgetTester tester,
   Future<List<TorrentRelease>> Function(TorrentQuery) answer, {
   List<LibraryEntry> library = const [],
   List<DownloadItem> downloads = const [],
+  String? peer,
 }) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
@@ -44,6 +47,10 @@ Future<ProviderContainer> _pump(
       ...followedSeriesOverrides(),
       ...libraryOverrides(library),
       downloadsProvider.overrideWith((ref) => Stream.value(downloads)),
+      if (peer != null)
+        peerSourceProvider.overrideWithValue(
+          (_) => PeerFile(Uri.parse('http://127.0.0.1:1/media'), peer),
+        ),
       ...watchHistoryOverrides(),
       imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
       torrentRepositoryProvider.overrideWithValue(
@@ -83,7 +90,7 @@ void main() {
     expect(find.text('Play in 4s'), findsOneWidget);
     expect(container.read(playerSessionProvider), isNull);
 
-    await tester.pump(_autoPlayDelay);
+    await tester.pump(_autoActionDelay);
     await tester.pumpAndSettle();
     expect(find.byType(LaunchDialog), findsNothing);
     expect(container.read(playerSessionProvider)!.torrents, contains('tt1'));
@@ -95,7 +102,7 @@ void main() {
       (_) async => [fakeRelease(1), fakeRelease(2, resolution: 720)],
     );
     await tester.tap(find.text('Show 1 more'));
-    await tester.pump(_autoPlayDelay * 2);
+    await tester.pump(_autoActionDelay * 2);
     expect(find.text('Play'), findsOneWidget);
     expect(container.read(playerSessionProvider), isNull);
 
@@ -153,7 +160,7 @@ void main() {
     );
     expect(find.text('Closest match'), findsOneWidget);
     expect(find.textContaining('Not available in 1080p.'), findsOneWidget);
-    await tester.pump(_autoPlayDelay * 2);
+    await tester.pump(_autoActionDelay * 2);
     expect(find.byType(LaunchDialog), findsOneWidget);
     expect(container.read(playerSessionProvider), isNull);
   });
@@ -179,7 +186,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(LaunchDialog), findsNothing);
     expect(container.read(playbackLaunchProvider), isNull);
-    await tester.pump(_autoPlayDelay);
+    await tester.pump(_autoActionDelay);
     expect(container.read(playerSessionProvider), isNull);
   });
 
@@ -225,5 +232,43 @@ void main() {
     expect(find.byType(LaunchDialog), findsNothing);
     expect(searched, isFalse);
     expect(container.read(playerSessionProvider)!.current!.id, 'tt1');
+  });
+
+  testWidgets('a copy on another device plays when the countdown ends', (
+    tester,
+  ) async {
+    var searched = false;
+    final container = await _pump(tester, (_) async {
+      searched = true;
+      return [fakeRelease(1)];
+    }, peer: 'Laptop');
+    expect(find.text('Play from Laptop?'), findsOneWidget);
+    expect(find.text('Play in 4s'), findsOneWidget);
+    expect(container.read(playerSessionProvider), isNull);
+
+    await tester.pump(_autoActionDelay);
+    await tester.pumpAndSettle();
+    expect(find.byType(LaunchDialog), findsNothing);
+    expect(searched, isFalse);
+    final session = container.read(playerSessionProvider)!;
+    expect(session.current!.id, 'tt1');
+    expect(session.torrents, isEmpty);
+  });
+
+  testWidgets('or a torrent is streamed instead', (tester) async {
+    final container = await _pump(
+      tester,
+      (_) async => [fakeRelease(1)],
+      peer: 'Laptop',
+    );
+    await tester.tap(find.text('Stream instead'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Ready to play'), findsOneWidget);
+    expect(find.text('Play in 4s'), findsOneWidget);
+
+    await tester.pump(_autoActionDelay);
+    await tester.pumpAndSettle();
+    expect(container.read(playerSessionProvider)!.torrents, contains('tt1'));
   });
 }

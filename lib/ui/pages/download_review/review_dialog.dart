@@ -47,7 +47,7 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog>
     super.initState();
     _countdown = AnimationController(
       vsync: this,
-      duration: ref.read(settingsProvider).torrents.autoPlayDelay,
+      duration: ref.read(settingsProvider).torrents.autoActionDelay,
     )..addStatusListener(_onCountdown);
     _sync(_reviews.byId(widget.id));
     ref.listenManual(

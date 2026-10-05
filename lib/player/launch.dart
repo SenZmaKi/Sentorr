@@ -12,6 +12,7 @@ import '../watching/notifier.dart';
 import 'models.dart';
 import 'queue_builder.dart';
 import 'session.dart';
+import 'stream/offline_source.dart';
 import 'torrent_lookup.dart';
 
 final _log = Logger('sentorr.launch');
@@ -27,6 +28,7 @@ class PlaybackLaunch {
     this.resolution,
     this.match,
     this.error,
+    this.peer,
   });
 
   final PlayRequest request;
@@ -45,7 +47,10 @@ class PlaybackLaunch {
   /// The item or search could not be prepared at all.
   final Object? error;
 
-  bool get searching => resolution == null && error == null;
+  /// The paired device that has [item], offered before any search.
+  final String? peer;
+
+  bool get searching => resolution == null && error == null && peer == null;
 }
 
 /// The launch in progress; null when nothing is being prepared.
@@ -95,7 +100,34 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     _log.info(
       'Retrying search for ${s.item}${name == null ? '' : ' as "$name"'}',
     );
-    _run(cancel, title: name == null || name.isEmpty ? null : name);
+    _run(
+      cancel,
+      title: name == null || name.isEmpty ? null : name,
+      skipPeer: true,
+    );
+  }
+
+  /// Opens the player on the paired device's copy the launch offers.
+  void playFromPeer() {
+    final s = state;
+    if (s == null || s.peer == null) return;
+    final queue = _prepared;
+    _log.info('Playing ${s.item} from ${s.peer}');
+    cancel();
+    ref.read(playerSessionProvider.notifier).play(s.request, queue: queue);
+  }
+
+  /// Passes on the paired device's copy and finds a torrent instead.
+  void streamInstead() {
+    final s = state;
+    if (s == null || s.peer == null) return;
+    final cancel = _restart();
+    state = PlaybackLaunch(
+      request: s.request,
+      preferences: s.preferences,
+      item: s.item,
+    );
+    _run(cancel, reuseSaved: true, skipPeer: true);
   }
 
   /// Opens the player on the launch's item with [torrent].
@@ -125,11 +157,25 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     CancelToken cancel, {
     String? title,
     bool reuseSaved = false,
+    bool skipPeer = false,
   }) async {
     try {
       final item = state!.item ?? await _item(state!.request, cancel);
       if (cancel != _cancel) return;
-      if (offlineSourceFor(ref, item) != null) {
+      final offline = offlineSourceFor(ref, item);
+      if (offline is PeerFile) {
+        if (!skipPeer) {
+          // Another device's copy: the viewer gets a moment to stream instead.
+          _log.info('Offering $item from ${offline.deviceName}');
+          state = PlaybackLaunch(
+            request: state!.request,
+            preferences: state!.preferences,
+            item: item,
+            peer: offline.deviceName,
+          );
+          return;
+        }
+      } else if (offline != null) {
         // Downloaded or downloading: the player uses that, no search.
         _log.info('Playing $item from its download');
         final queue = _prepared;

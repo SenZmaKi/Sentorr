@@ -248,7 +248,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Ready to download'), findsOneWidget);
-    await tester.pump(const TorrentSettings().autoPlayDelay);
+    await tester.pump(const TorrentSettings().autoActionDelay);
     await _settle(tester);
     expect(planner.planned, [_episode(2).id]);
     expect(jumps, 0);
@@ -370,7 +370,7 @@ void main() {
     expect(find.text('Ready to download'), findsOneWidget);
     expect(find.byType(TorrentOption), findsOneWidget);
     expect(planner.planned, isEmpty);
-    await tester.pump(const TorrentSettings().autoPlayDelay);
+    await tester.pump(const TorrentSettings().autoActionDelay);
     await tester.pumpAndSettle();
     expect(find.text('Ready to download'), findsNothing);
     expect(planner.planned, ['tt1']);

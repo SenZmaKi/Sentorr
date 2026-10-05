@@ -7,13 +7,13 @@ class TorrentSettings {
     this.preferredResolution = 1080,
     this.languages = const {},
     this.reviewExactMatches = true,
-    this.autoPlayDelaySeconds = 4,
+    this.autoActionDelaySeconds = 4,
     this.minimumSeeders = 1,
     this.includeBatchCandidates = true,
   });
 
   static const resolutions = [2160, 1080, 720, 480];
-  static const minAutoPlayDelay = 1, maxAutoPlayDelay = 30;
+  static const minAutoActionDelay = 1, maxAutoActionDelay = 30;
 
   final int preferredResolution;
 
@@ -24,27 +24,30 @@ class TorrentSettings {
   /// matches and misses always ask the viewer.
   final bool reviewExactMatches;
 
-  /// How long that countdown runs.
-  final int autoPlayDelaySeconds;
+  /// How long a prompt waits before going ahead with its suggestion: an
+  /// exact match playing or downloading, or a paired device's copy being
+  /// played or copied.
+  final int autoActionDelaySeconds;
 
   /// Releases with fewer seeders are never offered.
   final int minimumSeeders;
   final bool includeBatchCandidates;
 
-  Duration get autoPlayDelay => Duration(seconds: autoPlayDelaySeconds);
+  Duration get autoActionDelay => Duration(seconds: autoActionDelaySeconds);
 
   TorrentSettings copyWith({
     int? preferredResolution,
     Set<String>? languages,
     bool? reviewExactMatches,
-    int? autoPlayDelaySeconds,
+    int? autoActionDelaySeconds,
     int? minimumSeeders,
     bool? includeBatchCandidates,
   }) => TorrentSettings(
     preferredResolution: preferredResolution ?? this.preferredResolution,
     languages: languages ?? this.languages,
     reviewExactMatches: reviewExactMatches ?? this.reviewExactMatches,
-    autoPlayDelaySeconds: autoPlayDelaySeconds ?? this.autoPlayDelaySeconds,
+    autoActionDelaySeconds:
+        autoActionDelaySeconds ?? this.autoActionDelaySeconds,
     minimumSeeders: minimumSeeders ?? this.minimumSeeders,
     includeBatchCandidates:
         includeBatchCandidates ?? this.includeBatchCandidates,
@@ -64,11 +67,12 @@ class TorrentSettings {
             }
           : const {},
       reviewExactMatches: jsonBool(json['reviewExactMatches'], true),
-      autoPlayDelaySeconds: jsonInt(
-        json['autoPlayDelaySeconds'],
+      autoActionDelaySeconds: jsonInt(
+        // Saved as autoPlayDelaySeconds before it timed every prompt.
+        json['autoActionDelaySeconds'] ?? json['autoPlayDelaySeconds'],
         4,
-        min: minAutoPlayDelay,
-        max: maxAutoPlayDelay,
+        min: minAutoActionDelay,
+        max: maxAutoActionDelay,
       ),
       minimumSeeders: jsonInt(json['minimumSeeders'], 1, min: 1),
       includeBatchCandidates: jsonBool(json['includeBatchCandidates'], true),
@@ -79,7 +83,7 @@ class TorrentSettings {
     'preferredResolution': preferredResolution,
     'languages': languages.toList(),
     'reviewExactMatches': reviewExactMatches,
-    'autoPlayDelaySeconds': autoPlayDelaySeconds,
+    'autoActionDelaySeconds': autoActionDelaySeconds,
     'minimumSeeders': minimumSeeders,
     'includeBatchCandidates': includeBatchCandidates,
   };

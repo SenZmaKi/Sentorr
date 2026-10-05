@@ -155,18 +155,19 @@ class ChoosingSection extends ConsumerWidget {
             ),
             SettingsTile(
               icon: Icons.timer_outlined,
-              title: 'Countdown',
-              subtitle: 'How long an exact match waits for you',
-              keywords: 'delay wait seconds',
-              enabled: t.reviewExactMatches || reviewDownloads,
+              title: 'Auto action countdown',
+              subtitle:
+                  'How long a prompt waits before going ahead, e.g. playing '
+                  'an exact match or a copy on another device',
+              keywords: 'delay wait seconds timeout autoplay copy device',
               trailing: NumberField(
-                value: t.autoPlayDelaySeconds,
-                min: TorrentSettings.minAutoPlayDelay,
-                max: TorrentSettings.maxAutoPlayDelay,
+                value: t.autoActionDelaySeconds,
+                min: TorrentSettings.minAutoActionDelay,
+                max: TorrentSettings.maxAutoActionDelay,
                 unit: 's',
-                semanticLabel: 'Countdown seconds',
+                semanticLabel: 'Auto action countdown seconds',
                 onSubmitted: (n) =>
-                    edit((t) => t.copyWith(autoPlayDelaySeconds: n)),
+                    edit((t) => t.copyWith(autoActionDelaySeconds: n)),
               ),
             ),
           ],

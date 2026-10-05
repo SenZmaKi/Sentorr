@@ -170,6 +170,12 @@ Future<(FakePlanner, _Copies)> _pump(
   return (planner, copies);
 }
 
+/// Shows the prompt without running out its countdown.
+Future<void> _open(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+}
+
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 6; i++) {
     await tester.pump(const Duration(milliseconds: 200));
@@ -184,13 +190,38 @@ void main() {
       onLaptop: [_movie],
     );
     await tester.tap(find.byTooltip('Download'));
-    await tester.pumpAndSettle();
+    await _open(tester);
     expect(find.text('Copy from Laptop?'), findsOneWidget);
-    await tester.tap(find.text('Copy'));
+    await tester.tap(find.text('Copy in 4s'));
     await _settle(tester);
     expect(copies.started, ['tt1']);
     expect(planner.planned, isEmpty);
     expect(find.byTooltip('Copying from Laptop · 0%'), findsOneWidget);
+  });
+
+  testWidgets('the copy starts when the countdown ends', (tester) async {
+    final (planner, copies) = await _pump(
+      tester,
+      const _Asks(),
+      onLaptop: [_movie],
+    );
+    await tester.tap(find.byTooltip('Download'));
+    await tester.pump();
+    await tester.pump(const TorrentSettings().autoActionDelay);
+    await _settle(tester);
+    expect(find.textContaining('Copy from'), findsNothing);
+    expect(copies.started, ['tt1']);
+    expect(planner.planned, isEmpty);
+  });
+
+  testWidgets('touching the prompt stops the countdown', (tester) async {
+    final (_, copies) = await _pump(tester, const _Asks(), onLaptop: [_movie]);
+    await tester.tap(find.byTooltip('Download'));
+    await _open(tester);
+    await tester.tap(find.text('Copy from Laptop?'));
+    await tester.pump(const TorrentSettings().autoActionDelay * 2);
+    expect(find.text('Copy'), findsOneWidget);
+    expect(copies.started, isEmpty);
   });
 
   testWidgets('or downloaded anyway', (tester) async {
@@ -200,7 +231,7 @@ void main() {
       onLaptop: [_movie],
     );
     await tester.tap(find.byTooltip('Download'));
-    await tester.pumpAndSettle();
+    await _open(tester);
     await tester.tap(find.text('Download instead'));
     await _settle(tester);
     expect(copies.started, isEmpty);
@@ -216,7 +247,7 @@ void main() {
       onLaptop: [_episode(1), _episode(3), _otherSeason()],
     );
     await tester.tap(find.byTooltip('Download season 1'));
-    await tester.pumpAndSettle();
+    await _open(tester);
     expect(
       find.text(
         'Episodes 1 and 3 are already on Laptop. Copy them over your '
@@ -224,7 +255,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tester.tap(find.text('Copy and download the rest'));
+    await tester.tap(find.text('Copy and download the rest in 4s'));
     await _settle(tester);
     expect(copies.started, ['tt911', 'tt913']);
     // Queueing a season saves its batch to disk, which takes real time.

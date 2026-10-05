@@ -14,9 +14,9 @@ import 'launch_states.dart';
 import '../torrent_picker/torrent_option.dart';
 import '../torrent_picker/torrent_picker.dart';
 
-/// The torrent about to play, from the moment Play is pressed: searching,
-/// then an exact match counting down, a close match to confirm, or a miss
-/// the viewer can help with. Any touch, scroll or key stops the countdown.
+/// The torrent about to play, from the moment Play is pressed: a paired
+/// device's copy counting down, searching, then an exact match counting
+/// down, a close match to confirm, or a miss the viewer can help with. Any touch, scroll or key stops the countdown.
 /// Pops itself once the launch ends.
 class LaunchDialog extends ConsumerStatefulWidget {
   const LaunchDialog({super.key});
@@ -33,7 +33,8 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
   late final AnimationController _countdown;
   final _title = TextEditingController();
 
-  TorrentResolution? _shown;
+  /// The paired device or the result last applied.
+  Object? _shown;
   TorrentCandidate? _selected;
   bool _counting = false, _countdownSpent = false, _showAll = false;
 
@@ -45,7 +46,7 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
     super.initState();
     _countdown = AnimationController(
       vsync: this,
-      duration: ref.read(settingsProvider).torrents.autoPlayDelay,
+      duration: ref.read(settingsProvider).torrents.autoActionDelay,
     )..addStatusListener(_onCountdown);
     final launch = ref.read(playbackLaunchProvider);
     if (launch != null) {
@@ -69,17 +70,19 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
     super.dispose();
   }
 
-  /// Takes in a new result; picks its best candidate and, for an exact
-  /// match the viewer has not interrupted, starts counting down.
+  /// Takes in a new result; picks its best candidate and, for a paired
+  /// device's copy or an exact match the viewer has not interrupted, starts
+  /// counting down.
   void _apply(PlaybackLaunch launch) {
-    final resolution = launch.resolution;
-    if (identical(resolution, _shown)) return;
-    _shown = resolution;
+    final shown = launch.peer ?? launch.resolution;
+    if (identical(shown, _shown)) return;
+    _shown = shown;
     _title.text = launch.query?.title ?? _title.text;
     final match = launch.match;
     _selected = match?.candidate;
     _showAll = match != null && !match.exact;
-    if (match != null && match.exact && !_countdownSpent) {
+    final ready = launch.peer != null || (match != null && match.exact);
+    if (ready && !_countdownSpent) {
       _counting = true;
       _countdown.forward(from: 0);
     } else {
@@ -102,8 +105,17 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
   }
 
   void _play() {
+    if (ref.read(playbackLaunchProvider)?.peer != null) {
+      return _launch.playFromPeer();
+    }
     final selected = _selected;
     if (selected != null) _launch.play(selected);
+  }
+
+  /// Passing on the device's copy is no reason to hold an exact match back.
+  void _streamInstead() {
+    _countdownSpent = false;
+    _launch.streamInstead();
   }
 
   void _close() {
@@ -158,6 +170,12 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
                 animation: _countdown,
                 builder: (context, _) => LaunchActions(
                   onCancel: _launch.cancel,
+                  secondary: launch.peer == null
+                      ? null
+                      : SButton(
+                          label: 'Stream instead',
+                          onPressed: _streamInstead,
+                        ),
                   primary: _primary(launch),
                 ),
               ),
@@ -170,12 +188,22 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
 
   /// The launch failed or found nothing because the device is offline.
   bool _offline(PlaybackLaunch launch) =>
+      launch.peer == null &&
       !ref.watch(onlineProvider) &&
       (launch.error != null || (!launch.searching && launch.match == null));
 
   Widget _body(PlaybackLaunch launch) {
     if (launch.error != null || _offline(launch)) {
       return LaunchFailure(error: launch.error, offline: _offline(launch));
+    }
+    if (launch.peer case final peer?) {
+      return Text(
+        'It’s already on $peer. Playing it from there over your network '
+        'skips finding a torrent.',
+        style: context.type.bodySmall.copyWith(
+          color: context.colors.foregroundSecondary,
+        ),
+      );
     }
     final resolution = launch.resolution;
     if (resolution == null) {
@@ -256,6 +284,17 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
       );
     }
     if (launch.searching) return null;
+    final seconds =
+        (_countdown.duration!.inMilliseconds * (1 - _countdown.value) / 1000)
+            .ceil();
+    final label = _counting ? 'Play in ${seconds}s' : 'Play';
+    if (launch.peer != null) {
+      return SButton.primary(
+        label: label,
+        icon: Icons.play_arrow_rounded,
+        onPressed: _launch.playFromPeer,
+      );
+    }
     if (launch.match == null) {
       return SButton.primary(
         label: 'Search',
@@ -263,11 +302,8 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
         onPressed: _search,
       );
     }
-    final seconds =
-        (_countdown.duration!.inMilliseconds * (1 - _countdown.value) / 1000)
-            .ceil();
     return SButton.primary(
-      label: _counting ? 'Play in ${seconds}s' : 'Play',
+      label: label,
       icon: Icons.play_arrow_rounded,
       onPressed: _selected == null ? null : _play,
     );
@@ -278,6 +314,7 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
   String _heading(PlaybackLaunch launch) {
     if (_offline(launch)) return 'You’re offline';
     if (launch.error != null) return 'Couldn’t prepare playback';
+    if (launch.peer case final peer?) return 'Play from $peer?';
     if (launch.searching) return 'Finding a torrent';
     final match = launch.match;
     if (match == null) return 'Couldn’t find a torrent';

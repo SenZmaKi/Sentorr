@@ -84,7 +84,13 @@ shows its address and the joiner can type it in.
 A device shares its finished downloads whose files are still on disk
 (`/v1/library`, and `/v1/media/<imdb id>` with byte ranges).
 `offlineSourceFor` looks up a local file first, then a download in progress,
-then `peerSourceProvider`, which bootstrap points at a reachable peer. mpv
+then `peerSourceProvider`, which bootstrap points at a reachable peer. When
+Play finds only a peer's copy, the launch dialog asks before using it: it
+plays once the auto action countdown (`TorrentSettings.autoActionDelay`) runs
+out, and Stream instead searches for a torrent. The player's own lookup, e.g.
+for the next episode, uses a peer's copy without asking. Picking such an
+episode in the player's episodes panel goes through the launch instead of
+jumping within the queue, so it asks too. mpv
 can't pin a self-signed certificate, so `MediaProxy` serves a loopback URL
 with a token and forwards each range request over the pinned connection.
 Downloads that aren't finished can't be streamed from yet, but they are
@@ -122,6 +128,9 @@ here (`downloadable` in `lib/library/notifier.dart`). Each item comes from the
 first device that has it, so one season can draw from several devices.
 `CopyOffer` (`copy_offer.dart`) puts what it found into words, such as
 "Episodes 1–3 and 5 are already on MacBook".
+
+The prompt copies once the auto action countdown runs out; any touch or key
+stops it.
 
 - **One item** (`ref.download`, e.g. retrying a failed download): the prompt
   offers Copy, Download instead or Cancel. An item's download button already

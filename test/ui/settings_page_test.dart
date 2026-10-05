@@ -308,30 +308,34 @@ void main() {
   test('settings survive a round trip and fall back on bad values', () {
     final settings = AppSettings.fromJson(
       const AppSettings(
-        torrents: TorrentSettings(autoPlayDelaySeconds: 9, minimumSeeders: 5),
+        torrents: TorrentSettings(autoActionDelaySeconds: 9, minimumSeeders: 5),
         sources: SourceSettings(disabled: {TorrentSourceId.bitsearch}),
         streaming: StreamingSettings(keepRecentTorrents: 0),
         network: NetworkSettings(utp: false),
       ).toJson(),
     );
-    expect(settings.torrents.autoPlayDelaySeconds, 9);
+    expect(settings.torrents.autoActionDelaySeconds, 9);
     expect(settings.torrents.minimumSeeders, 5);
     expect(settings.sources.enabled(TorrentSourceId.bitsearch), isFalse);
     expect(settings.streaming.keepRecentTorrents, 0);
     expect(settings.network.utp, isFalse);
     final bad = AppSettings.fromJson({
-      'torrents': {'autoPlayDelaySeconds': 999},
+      'torrents': {'autoActionDelaySeconds': 999},
       'sources': {
         'disabled': ['gone', 'yts'],
       },
       'streaming': {'readAheadBytes': -1, 'torrentDirectory': ''},
     });
-    expect(bad.torrents.autoPlayDelaySeconds, 4);
+    expect(bad.torrents.autoActionDelaySeconds, 4);
     expect(bad.sources.disabled, {TorrentSourceId.yts});
     expect(
       bad.streaming.readAheadBytes,
       const StreamingSettings().readAheadBytes,
     );
     expect(bad.streaming.torrentDirectory, isNull);
+    final older = AppSettings.fromJson({
+      'torrents': {'autoPlayDelaySeconds': 7},
+    });
+    expect(older.torrents.autoActionDelaySeconds, 7);
   });
 }

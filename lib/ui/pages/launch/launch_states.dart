@@ -194,10 +194,15 @@ class LaunchNote extends StatelessWidget {
 
 /// Cancel and the step forward, the forward one dominant.
 class LaunchActions extends StatelessWidget {
-  const LaunchActions({super.key, required this.onCancel, this.primary});
+  const LaunchActions({
+    super.key,
+    required this.onCancel,
+    this.secondary,
+    this.primary,
+  });
 
   final VoidCallback onCancel;
-  final SButton? primary;
+  final SButton? secondary, primary;
 
   @override
   Widget build(BuildContext context) => Wrap(
@@ -206,6 +211,7 @@ class LaunchActions extends StatelessWidget {
     runSpacing: Space.s8,
     children: [
       SButton.ghost(label: 'Cancel', onPressed: onCancel),
+      ?secondary,
       ?primary,
     ],
   );

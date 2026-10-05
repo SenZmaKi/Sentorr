@@ -141,7 +141,8 @@ class PeerClient {
   }
 
   /// Forgets [fingerprint]'s connections, e.g. once unpaired.
-  void forget(String fingerprint) => _pinned.remove(fingerprint)?.close();
+  void forget(String fingerprint) =>
+      _pinned.remove(fingerprint)?.close(force: true);
 
   void close() {
     for (final client in _pinned.values) {

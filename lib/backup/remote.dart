@@ -15,13 +15,13 @@ class BackupConflict implements Exception {
   const BackupConflict();
 }
 
-/// Where the one shared backup lives.
+/// Where the shared backup state lives.
 abstract interface class BackupRemote {
   /// Null when nothing was backed up yet.
   Future<RemoteBackup?> download();
 
-  /// Replaces the remote backup, but only if it is still the version
-  /// [basedOn] was read from (null: still none). Throws [BackupConflict]
-  /// otherwise, so a device never overwrites what it has not merged.
+  /// Publishes state based on [basedOn]. A mutable backend must atomically
+  /// refuse an outdated revision with [BackupConflict]. An immutable backend
+  /// may publish concurrently, retaining every unobserved snapshot.
   Future<void> upload(BackupBundle bundle, {required String? basedOn});
 }

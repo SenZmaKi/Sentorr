@@ -7,6 +7,7 @@ import '../downloads/models.dart';
 import '../library/models.dart';
 import '../library/notifier.dart';
 import 'payload.dart';
+import 'file_version.dart';
 
 /// What this device offers paired devices: its finished downloads whose
 /// files are still on disk, and those still on their way.
@@ -26,7 +27,11 @@ PeerLibrary sharedLibrary(Ref ref) {
     switch (offlineStateOf(e, download)) {
       case Downloaded():
         final file = File(e.path);
-        if (file.existsSync()) media.add(PeerMedia.of(e, file.lengthSync()));
+        if (file.existsSync()) {
+          media.add(
+            PeerMedia.of(e, file.lengthSync(), version: fileVersion(file)),
+          );
+        }
       case Downloading(:final status, :final progress):
         coming.add(
           PeerDownload(

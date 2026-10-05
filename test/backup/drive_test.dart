@@ -172,16 +172,84 @@ void main() {
       return _tokens(o);
     }
 
-    test('updates and downloads the existing file', () async {
+    test('publishes before compacting the existing file', () async {
       final adapter = _Adapter(existing);
       final auth = await _connected(adapter);
       final client = DriveBackupClient(dio: _dio(adapter), auth: auth);
       final held = (await client.download())!;
       expect(held.bundle.watch.entries.single.id, 'tt1');
-      expect(held.revision, 'm1');
+      expect(held.revision, 'f1');
       await client.upload(_bundle, basedOn: held.revision);
-      expect(adapter.requests.last.method, 'PATCH');
-      expect(adapter.requests.last.path, endsWith('/upload/drive/v3/files/f1'));
+      expect(adapter.requests.last.method, 'DELETE');
+      final publish = adapter.requests.indexWhere(
+        (r) => r.method == 'POST' && r.path.contains('/upload/'),
+      );
+      final cleanup = adapter.requests.indexWhere((r) => r.method == 'DELETE');
+      expect(publish, greaterThan(0));
+      expect(cleanup, greaterThan(publish));
+    });
+
+    test('concurrent publishers retain both states and compact only observed files', () async {
+      var sequence = 0;
+      final files = <String, String>{'f0': _bundle.encode()};
+      final adapter = _Adapter((o) {
+        if (o.path.endsWith('/drive/v3/files') && o.method == 'GET') {
+          return (
+            200,
+            {
+              'files': [
+                for (final id in files.keys) {'id': id},
+              ],
+            },
+          );
+        }
+        if (o.path.contains('/upload/') && o.method == 'POST') {
+          final source = (o.data as String)
+              .split('\r\n\r\n')[2]
+              .split('\r\n--')[0];
+          files['f${++sequence}'] = source;
+          return (200, {});
+        }
+        final id = o.path.split('/').last;
+        if (o.method == 'GET' && files.containsKey(id)) return (200, files[id]);
+        if (o.method == 'DELETE') {
+          return (files.remove(id) == null ? 404 : 204, {});
+        }
+        return _tokens(o);
+      });
+      final auth = await _connected(adapter);
+      DriveBackupClient client() =>
+          DriveBackupClient(dio: _dio(adapter), auth: auth);
+      final a = client(), b = client();
+      final ra = (await a.download())!, rb = (await b.download())!;
+      BackupBundle bundle(int id) => BackupBundle(
+        watch: WatchSnapshot([
+          ..._snapshot.entries,
+          WatchEntry(
+            title: fakeTitle(id),
+            position: const Duration(minutes: 10),
+            duration: const Duration(minutes: 90),
+            updatedAt: DateTime.now(),
+          ),
+        ], {}),
+        following: const FollowedSnapshot([], {}),
+      );
+      await Future.wait([
+        a.upload(bundle(2), basedOn: ra.revision),
+        b.upload(bundle(3), basedOn: rb.revision),
+      ]);
+      expect(files.keys, containsAll(['f1', 'f2']));
+      final reader = client();
+      final merged = (await reader.download())!;
+      expect(merged.bundle.watch.entries.map((e) => e.id).toSet(), {
+        'tt1',
+        'tt2',
+        'tt3',
+      });
+      await reader.upload(merged.bundle, basedOn: merged.revision);
+      expect(files, hasLength(1));
+      expect((await client().download())!.bundle.watch.entries, hasLength(3));
+      expect(adapter.requests.any((r) => r.method == 'PATCH'), false);
     });
 
     test('will not overwrite a version it has not read', () async {

@@ -1,9 +1,18 @@
 import 'dart:io';
 
+import 'file_version.dart';
+
 /// Sends [file] in answer to [request], honouring a single byte range so
 /// the player on the other device can seek.
 Future<void> sendFile(HttpRequest request, File file) async {
   final response = request.response;
+  final version = '"${fileVersion(file)}"';
+  final expected = request.headers.value(HttpHeaders.ifMatchHeader);
+  if (expected != null && expected != version) {
+    response.statusCode = HttpStatus.preconditionFailed;
+    return response.close();
+  }
+  response.headers.set(HttpHeaders.etagHeader, version);
   final length = await file.length();
   response.headers
     ..set(HttpHeaders.acceptRangesHeader, 'bytes')

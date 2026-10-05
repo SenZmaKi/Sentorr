@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
+
 import 'dart:math';
 
 import 'package:dio/dio.dart';
@@ -23,6 +27,7 @@ class _Remote implements BackupRemote {
   String? _content;
   int revision = 0;
   int uploads = 0;
+  Future<void> Function()? afterUpload;
 
   /// Runs once after the next download, as if another device synced then.
   Future<void> Function()? afterDownload;
@@ -47,6 +52,9 @@ class _Remote implements BackupRemote {
     _content = bundle.encode();
     revision++;
     uploads++;
+    final hook = afterUpload;
+    afterUpload = null;
+    await hook?.call();
   }
 }
 
@@ -95,6 +103,57 @@ List<String> _ids(ProviderContainer d) => [
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'changes and a sync request during upload run once more afterwards',
+    () async {
+      final remote = _Remote();
+      final device = _device(remote);
+      final entered = Completer<void>(), release = Completer<void>();
+      remote.afterUpload = () async {
+        entered.complete();
+        await release.future;
+      };
+      final first = _sync(device);
+      await entered.future;
+      await device
+          .read(watchHistoryProvider.notifier)
+          .record(
+            _watched(1, Duration.zero).item,
+            position: const Duration(minutes: 20),
+            duration: const Duration(minutes: 90),
+          );
+      final queued = _sync(device);
+      release.complete();
+      await Future.wait([first, queued]);
+      expect(remote.uploads, 2);
+      expect((await remote.download())!.bundle.watch.entries.single.id, 'tt1');
+      expect(device.read(backupProvider).busy, false);
+    },
+  );
+
+  testWidgets('backgrounding pushes dirty playback despite a recent backup', (
+    tester,
+  ) async {
+    final remote = _Remote();
+    final device = _device(remote);
+    await _sync(device);
+    final initialUploads = remote.uploads;
+    await device
+        .read(watchHistoryProvider.notifier)
+        .record(
+          _watched(1, Duration.zero).item,
+          position: const Duration(minutes: 20),
+          duration: const Duration(minutes: 90),
+        );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    await tester.pump();
+    await tester.pump();
+    expect(remote.uploads, initialUploads + 1);
+    expect((await remote.download())!.bundle.watch.entries.single.id, 'tt1');
+    device.dispose();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+  });
 
   test('devices that sync in turn end up with the same history', () async {
     final remote = _Remote();

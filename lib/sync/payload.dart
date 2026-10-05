@@ -36,10 +36,11 @@ class PeerMedia {
     required this.name,
     required this.release,
     required this.fileIndex,
+    this.version,
   });
 
   /// What [entry]'s finished file of [size] bytes offers.
-  PeerMedia.of(LibraryEntry entry, this.size)
+  PeerMedia.of(LibraryEntry entry, this.size, {this.version})
     : item = entry.item,
       name = p.basename(entry.path),
       release = entry.release,
@@ -52,6 +53,7 @@ class PeerMedia {
   final String name;
   final TorrentRelease release;
   final int fileIndex;
+  final String? version;
 
   String get id => item.id;
 
@@ -61,6 +63,7 @@ class PeerMedia {
     'name': name,
     'release': releaseToJson(release),
     'file': fileIndex,
+    if (version != null) 'version': version,
   };
 
   static PeerMedia? fromJson(Object? json) {
@@ -81,6 +84,7 @@ class PeerMedia {
       name: name,
       release: release,
       fileIndex: file,
+      version: json['version'] is String ? json['version'] as String : null,
     );
   }
 }

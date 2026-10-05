@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,6 +95,16 @@ void main() {
         ..createSync(recursive: true)
         ..writeAsBytesSync(_bytes(2).sublist(0, 50000));
 
+      final media = offer.copies.firstWhere((c) => c.media.id == 'tt102');
+      File('$target.part.json').writeAsStringSync(
+        jsonEncode([
+          media.deviceId,
+          media.media.version,
+          media.media.size,
+          media.media.release.infoHash,
+          media.media.fileIndex,
+        ]),
+      );
       copies.start(offer);
       expect(
         phone.read(offlineStateProvider('tt101')),
@@ -117,6 +128,43 @@ void main() {
       );
       expect(File('$target.part').existsSync(), false);
       expect(phone.read(copyingProvider), isEmpty);
+    },
+  );
+
+  test(
+    'a partial from another source is restarted instead of spliced',
+    () async {
+      final (_, phone) = await devices();
+      final copies = phone.read(peerCopiesProvider);
+      final layout = layoutFor(
+        _episode(1),
+        p.join(temp.path, 'phone'),
+        'E1.mkv',
+      );
+      final target = p.join(layout.directory, layout.name);
+      File('$target.part')
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(List.filled(50000, 255));
+      File('$target.part.json')
+          .writeAsStringSync('["old-source","old-version"]');
+      copies.start(copies.offer((i) => i.id == 'tt101'));
+      await until(() => phone.read(libraryProvider).length == 1);
+      expect(File(target).readAsBytesSync(), _bytes(1));
+      expect(File('$target.part.json').existsSync(), false);
+    },
+  );
+
+  test(
+    'a changed file invalidates the advertised copy before transfer',
+    () async {
+      final (laptop, phone) = await devices();
+      final copies = phone.read(peerCopiesProvider);
+      final offer = copies.offer((i) => i.id == 'tt101');
+      final entry = laptop.read(libraryProvider.notifier).entry('tt101')!;
+      File(entry.path).writeAsBytesSync(List.filled(_bytes(1).length, 255));
+      copies.start(offer);
+      await until(() => phone.read(copyingProvider).isEmpty);
+      expect(phone.read(libraryProvider), isEmpty);
     },
   );
 

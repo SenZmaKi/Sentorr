@@ -1,3 +1,5 @@
+import '../shared/state_clock.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
@@ -39,13 +41,19 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
 
   late WatchHistoryRepository _repository;
 
+  late StateClock _clock;
+
   /// The latest entries, readable after disposal; see [_commit].
   List<WatchEntry> _entries = const [];
 
   @override
   List<WatchEntry> build() {
+    _clock = ref.read(stateClockProvider);
     _repository = ref.watch(watchHistoryRepositoryProvider);
-    return _entries = ref.watch(initialWatchHistoryProvider);
+    _entries = ref.watch(initialWatchHistoryProvider);
+    _clock.observe([_repository.clock]);
+    _observe(snapshot);
+    return _entries;
   }
 
   /// Notes that [item] is at [position] of [duration], streamed from
@@ -63,6 +71,7 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
       position: position,
       duration: duration,
       release: release ?? previous?.release,
+      revision: _clock.next(),
     );
     final known = previous != null;
     // Skipping straight to the end of something never started is not
@@ -94,28 +103,41 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
   Future<void> remove(String key) {
     _log.info('Removing $key from watch history');
     _repository.removals[key] = DateTime.now();
+    _repository.removalRevisions[key] = _clock.next();
     return _commit(_without((e) => e.key == key));
   }
 
   /// Everything a backup holds.
-  WatchSnapshot get snapshot =>
-      WatchSnapshot(_entries, Map.of(_repository.removals));
+  WatchSnapshot get snapshot => WatchSnapshot(
+    _entries,
+    Map.of(_repository.removals),
+    Map.of(_repository.removalRevisions),
+  );
 
   /// Folds in [incoming], as from a backup; each item keeps its newer
   /// record and what either side removed stays removed. Nothing is saved
   /// when it changes nothing.
   Future<void> merge(WatchSnapshot incoming) {
+    _observe(incoming);
     final merged = snapshot.merge(incoming, capacity: capacity);
     if (merged.matches(snapshot)) return Future.value();
     _repository.removals = merged.removals;
+    _repository.removalRevisions = merged.removalRevisions;
     return _commit(merged.entries);
   }
+
+  void _observe(WatchSnapshot value) => _clock.observe([
+    ...value.entries.map((e) => e.revision),
+    ...value.removalRevisions.values,
+  ]);
 
   Future<void> clear() {
     _log.info('Clearing watch history');
     final now = DateTime.now();
+    final revision = _clock.next();
     for (final e in _entries) {
       _repository.removals[e.key] = now;
+      _repository.removalRevisions[e.key] = revision;
     }
     return _commit(const []);
   }
@@ -130,6 +152,7 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
     // The player saves its last position as the app shuts down, which may
     // come after this notifier is disposed; the file still gets it.
     if (ref.mounted) state = entries;
+    _repository.clock = _clock.current;
     return _repository.save(entries);
   }
 }

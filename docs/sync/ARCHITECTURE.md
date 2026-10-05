@@ -25,15 +25,24 @@ nobody else holds anyone's history.
 ## What syncs
 
 The whole state is small, so each sync sends all of it. Both sides merge with
-functions that give the same result in any order and when repeated.
+functions that give the same result in any order and when repeated. Upgraded
+records use Lamport revisions (`lib/shared/state_clock.dart`) rather than device
+wall clocks to order changes. Every local change advances past all observed
+revisions; concurrent ties have deterministic content winners, with a removal
+winning over a record at the same revision. The logical high-water mark is persisted even when records are pruned. Wall timestamps remain for display
+and the 90-day removal retention policy. Legacy records without revisions retain
+their timestamp ordering until updated.
 
 - **Watch history.** This reuses the backup's `WatchSnapshot.merge`: each item
-  keeps its most recently updated record, and removals are remembered for
+  keeps its latest revision, and removals are remembered for
   90 days so a device that was away can't bring them back.
 - **Followed series.** `FollowedSnapshot.merge` (`lib/following/snapshot.dart`)
   keeps the furthest episode reached and the latest `notify` / `notified`
-  choice (stamped with `notifyAt` / `notifiedAt`). An unfollow is remembered
-  until the series is watched or followed again.
+  choice (separate `notifyRevision` / `notifiedRevision` counters). An unfollow is remembered
+  for 90 days, or until the series is watched or followed again. Merged records
+  retain flattened, deduplicated original contributions so a removal received
+  later can discard obsolete progress regardless of three-device merge order.
+  A local playback update acknowledges the merged progress as a new event.
 - **Stays on each device:** `autoDownload`, settings and the download library.
 
 A sync is one round trip: `POST /v1/sync` carries this device's state and its
@@ -44,7 +53,10 @@ after a watch or follow change, 2 s after a download is added, removed,
 started, paused or finished (`sharedLibraryShapeProvider`, which ignores bytes
 arriving), when a paired device appears or calls in, when the app resumes, and
 every 3 minutes. A sync requested while one is running runs once more
-afterwards.
+afterwards. Pending deadlines keep the earliest request. Unpairing invalidates
+in-flight request generations; late results cannot merge or republish peer state.
+Library polls are serialized per peer and invalidated by newer syncs. Discovery
+loss marks a peer offline; a changed/reappearing address triggers a fresh sync.
 
 ## Pairing
 
@@ -150,7 +162,13 @@ stops it.
 Copies run one at a time and show as `OfflineProgress.copying`, with the
 source device's name, wherever downloads show (`copyingProvider`). A copy
 writes `<path>.part` in the normal download layout and resumes from that
-file's length with a byte range. When the file is complete it is renamed and
+file's length only when its `.part.json` metadata matches the source device,
+file version, size, torrent hash and file index. The source publishes a file
+version based on path and filesystem metadata and enforces it using `If-Match`;
+the copier verifies ETag and Content-Range, then rechecks the source version
+with HEAD before publishing the completed file. Changed sources or unversioned old
+partials restart; a changed file offer is rejected. Old devices without file
+versions must be updated before copying. When the file is complete it is renamed and
 joins the library as a normal entry (`downloadId: copy:<device>:<item>`, with
 the peer's release and file index). Deleting it is the same as deleting any
 download. Cancelling a copy, or cancelling its season, deletes the partial
@@ -172,3 +190,26 @@ file. A failure keeps the partial file so the next attempt resumes it.
 - Streaming a peer's download while it's still in progress.
 - Pausing or cancelling another device's download from this one.
 - A movie watchlist.
+
+## Drive state sync and compatibility
+
+Drive uses immutable `sentorr-backup.json` snapshots in appDataFolder. Downloads
+list every matching file (including all pages and duplicate legacy files), then
+merge their contents. An upload publishes its merged snapshot first and removes
+only the snapshot ids that writer read. Concurrent publishers retain each other's
+new files; later publication compacts the observed files. Failed cleanup is safe
+and retried through a later publication. A read that races compaction relists the
+files rather than treating missing snapshots as an empty backup.
+
+Background/resume sync pushes dirty state even after a recent successful sync,
+and requests/changes during an upload queue a follow-up pass.
+
+Backup and watch exchange formats now emit version 2; version 1 remains readable.
+Older builds refuse version 2 so they cannot overwrite/drop revision and merge
+contribution metadata. Update participating devices together. Local autoDownload
+preferences still remain per-device, including within contribution metadata.
+
+The new Drive implementation uses documented [file creation/upload](https://developers.google.com/workspace/drive/api/guides/manage-uploads)
+and file deletion rather than relying on an unchecked conditional PATCH.
+Concurrency and transport are tested with adapters and loopback devices; live
+Google Drive and separate physical-device validation remain outstanding.

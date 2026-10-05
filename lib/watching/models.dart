@@ -15,6 +15,7 @@ class WatchEntry {
     required this.duration,
     required this.updatedAt,
     this.release,
+    this.revision = 0,
   });
 
   factory WatchEntry.of(
@@ -23,6 +24,7 @@ class WatchEntry {
     required Duration duration,
     DateTime? at,
     TorrentRelease? release,
+    int revision = 0,
   }) => WatchEntry(
     title: item.title,
     series: item.series,
@@ -32,6 +34,7 @@ class WatchEntry {
     duration: duration,
     updatedAt: at ?? DateTime.now(),
     release: release,
+    revision: revision,
   );
 
   /// Past this much of the runtime the rest is usually credits.
@@ -43,6 +46,7 @@ class WatchEntry {
   final int? season, episode;
   final Duration position, duration;
   final DateTime updatedAt;
+  final int revision;
 
   /// The torrent last streamed for this item, so resuming skips the search.
   final TorrentRelease? release;
@@ -78,6 +82,7 @@ class WatchEntry {
     'positionMs': position.inMilliseconds,
     'durationMs': duration.inMilliseconds,
     'updatedAt': updatedAt.toUtc().toIso8601String(),
+    if (revision != 0) 'revision': revision,
     if (release != null) 'release': releaseToJson(release!),
   };
 
@@ -99,6 +104,7 @@ class WatchEntry {
       duration: Duration(milliseconds: duration),
       updatedAt: at.toLocal(),
       release: releaseFromJson(json['release']),
+      revision: json['revision'] is int ? json['revision'] as int : 0,
     );
   }
 }

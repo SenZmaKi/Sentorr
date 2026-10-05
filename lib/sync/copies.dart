@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,6 +84,8 @@ class PeerCopies {
     // A copy under way notices between chunks and deletes it.
     final partial = File(_partial(copy.entry));
     if (await partial.exists()) await partial.delete();
+    final metadata = File('${partial.path}.json');
+    if (await metadata.exists()) await metadata.delete();
   }
 
   bool _wanted(String id) =>
@@ -98,7 +101,23 @@ class PeerCopies {
         throw PeerException("${copy.deviceName} can't be reached");
       }
       await partial.parent.create(recursive: true);
-      var have = await partial.exists() ? await partial.length() : 0;
+      final version = copy.media.version;
+      if (version == null) {
+        throw const PeerException('Update the source device before copying');
+      }
+      final metadata = File('${partial.path}.json');
+      final identity = jsonEncode([
+        copy.deviceId,
+        version,
+        copy.media.size,
+        copy.media.release.infoHash,
+        copy.media.fileIndex,
+      ]);
+      final same =
+          await metadata.exists() && await metadata.readAsString() == identity;
+      if (!same && await partial.exists()) await partial.delete();
+      var have = same && await partial.exists() ? await partial.length() : 0;
+      await metadata.writeAsString(identity, flush: true);
       if (have >= copy.media.size) have = 0;
       final response = await _ref
           .read(syncServiceProvider)
@@ -107,7 +126,10 @@ class PeerCopies {
             route.address,
             route.fingerprint,
             '/v1/media/$id',
-            headers: {if (have > 0) HttpHeaders.rangeHeader: 'bytes=$have-'},
+            headers: {
+              HttpHeaders.ifMatchHeader: '"$version"',
+              if (have > 0) HttpHeaders.rangeHeader: 'bytes=$have-',
+            },
           );
       if (response.statusCode == HttpStatus.ok) {
         have = 0;
@@ -117,6 +139,15 @@ class PeerCopies {
           "${copy.deviceName} doesn't have it any more",
           status: response.statusCode,
         );
+      }
+      final expectedRange =
+          'bytes $have-${copy.media.size - 1}/${copy.media.size}';
+      if (response.headers.value(HttpHeaders.etagHeader) != '"$version"' ||
+          (response.statusCode == HttpStatus.partialContent &&
+              response.headers.value(HttpHeaders.contentRangeHeader) !=
+                  expectedRange)) {
+        await response.drain<void>();
+        throw const PeerException('The source file changed; refresh and retry');
       }
       final sink = partial.openWrite(
         mode: have > 0 ? FileMode.append : FileMode.write,
@@ -137,15 +168,43 @@ class PeerCopies {
       }
       if (!_wanted(id)) {
         if (await partial.exists()) await partial.delete();
+        if (await metadata.exists()) await metadata.delete();
         return;
       }
       if (have != copy.media.size) {
         throw PeerException('The copy from ${copy.deviceName} stopped early');
       }
+      // A replacement between the server's precondition check and opening
+      // the stream must not publish a partial assembled from different files.
+      if (_ref.read(peersProvider.notifier).route(copy.deviceId)?.fingerprint !=
+          route.fingerprint) {
+        throw const PeerException('The source device is no longer paired');
+      }
+      final verified = await _ref
+          .read(syncServiceProvider)
+          .client
+          .open(
+            route.address,
+            route.fingerprint,
+            '/v1/media/$id',
+            method: 'HEAD',
+            headers: {HttpHeaders.ifMatchHeader: '"$version"'},
+          );
+      final unchanged =
+          verified.statusCode == HttpStatus.ok &&
+          verified.headers.value(HttpHeaders.etagHeader) == '"$version"';
+      await verified.drain<void>();
+      if (!unchanged) {
+        await partial.delete();
+        if (await metadata.exists()) await metadata.delete();
+        throw const PeerException('The source file changed during copying');
+      }
+      if (!_wanted(id)) return;
       final target = File(entry.path);
       // Windows will not rename over a file.
       if (await target.exists()) await target.delete();
       await partial.rename(entry.path);
+      if (await metadata.exists()) await metadata.delete();
       await _ref
           .read(libraryProvider.notifier)
           .add(

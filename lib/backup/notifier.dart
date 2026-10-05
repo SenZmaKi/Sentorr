@@ -9,6 +9,8 @@ import 'package:logging/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app/services.dart';
+import '../watching/notifier.dart';
+import '../following/notifier.dart';
 import '../shared/persistence/credential_store.dart';
 import '../settings/notifier.dart';
 import '../shared/app_lifecycle.dart';
@@ -99,6 +101,9 @@ class BackupNotifier extends Notifier<BackupState> {
   static const _staleAfter = Duration(minutes: 10);
 
   Timer? _timer;
+  bool _dirty = false, _again = false;
+  int _changes = 0;
+  Future<void>? _running;
 
   @override
   BackupState build() {
@@ -106,6 +111,14 @@ class BackupNotifier extends Notifier<BackupState> {
     ref.listen(settingsProvider.select((s) => s.backup.interval), (_, _) {
       if (state.connected) _arm();
     });
+    void changed() {
+      _dirty = true;
+      _changes++;
+      if (state.busy) _again = true;
+    }
+
+    ref.listen(watchHistoryProvider, (_, _) => changed());
+    ref.listen(followedSeriesProvider, (_, _) => changed());
     // Leaving pushes what was watched here; coming back pulls what was
     // watched elsewhere, so a switch between devices finds them in step.
     ref.listen(AppLifecycleNotifier.provider, (_, now) {
@@ -168,18 +181,22 @@ class BackupNotifier extends Notifier<BackupState> {
     }
   }
 
-  /// Brings this device and the backup level with each other: merge what
-  /// the backup holds into the app, then replace the backup with the
-  /// result. Merging only ever adds, and every device pushes what it has
-  /// merged, so devices converge whatever the order they sync in. If
-  /// another device replaces the backup in between, merge again.
+  /// Pulls and merges the remote state, then publishes the result. Mutable
+  /// backends can request a retry; Drive retains concurrent snapshots instead.
+  /// Changes during an upload cause a follow-up pass.
   Future<void> _sync() async {
     final remote = ref.read(backupRemoteProvider);
     final data = ref.read(backupDataProvider);
     for (var attempt = 0; attempt < _attempts; attempt++) {
-      final held = await remote.download();
+      final RemoteBackup? held;
+      try {
+        held = await remote.download();
+      } on BackupConflict {
+        continue;
+      }
       if (held != null) await data.apply(held.bundle);
       final merged = data.current();
+      final changes = _changes;
       if (held == null || !merged.matches(held.bundle)) {
         try {
           await remote.upload(merged, basedOn: held?.revision);
@@ -187,6 +204,7 @@ class BackupNotifier extends Notifier<BackupState> {
           continue;
         }
       }
+      _dirty = _changes != changes;
       state = state.copyWith(lastBackup: DateTime.now(), error: () => null);
       return;
     }
@@ -195,26 +213,42 @@ class BackupNotifier extends Notifier<BackupState> {
     );
   }
 
-  Future<void> _run(Future<void> Function() action) async {
-    if (state.busy) return;
+  Future<void> _run(Future<void> Function() action) {
+    if (_running case final running?) {
+      _again = true;
+      return running;
+    }
+    return _running = _runRepeatedly(action).whenComplete(() {
+      _running = null;
+    });
+  }
+
+  Future<void> _runRepeatedly(Future<void> Function() action) async {
     state = state.copyWith(busy: true, error: () => null);
     try {
-      await action();
+      do {
+        _again = false;
+        await action();
+        action = _sync;
+      } while (_again && ref.mounted && ref.read(driveAuthProvider).connected);
     } catch (error, stack) {
-      _fail(error, stack);
+      if (ref.mounted) _fail(error, stack);
     } finally {
-      // Signed out meanwhile, as when Google drops the access.
-      state = state.copyWith(
-        busy: false,
-        connected: ref.read(driveAuthProvider).connected,
-      );
+      if (ref.mounted) {
+        state = state.copyWith(
+          busy: false,
+          connected: ref.read(driveAuthProvider).connected,
+        );
+      }
     }
   }
 
   void _syncIfStale() {
     final last = state.lastBackup;
-    if (!state.connected || state.busy) return;
-    if (last == null || DateTime.now().difference(last) > _staleAfter) {
+    if (!state.connected) return;
+    if (_dirty ||
+        last == null ||
+        DateTime.now().difference(last) > _staleAfter) {
       unawaited(syncNow());
     }
   }

@@ -1,3 +1,5 @@
+import '../shared/state_clock.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
@@ -32,13 +34,19 @@ final followedSeriesProvider =
 class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
   late FollowedSeriesRepository _repository;
 
+  late StateClock _clock;
+
   /// The latest records, readable after disposal; see [_commit].
   List<FollowedSeries> _series = const [];
 
   @override
   List<FollowedSeries> build() {
+    _clock = ref.read(stateClockProvider);
     _repository = ref.watch(followedSeriesRepositoryProvider);
-    return _series = ref.watch(initialFollowedSeriesProvider);
+    _series = ref.watch(initialFollowedSeriesProvider);
+    _clock.observe([_repository.clock]);
+    _observe(snapshot);
+    return _series;
   }
 
   /// Notes that [item] is at [position] of [duration]; anything but a
@@ -58,7 +66,7 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
     final known = _series.where((s) => s.id == item.series!.id).firstOrNull;
     final FollowedSeries next;
     if (known != null) {
-      next = known.watched(at, fraction, now);
+      next = known.watched(at, fraction, now, revision: _clock.next());
       if (identical(next, known)) return Future.value();
     } else {
       if (position < WatchHistoryNotifier.minimumWatched) return Future.value();
@@ -67,6 +75,7 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
         reached: at,
         progress: fraction,
         watchedAt: now,
+        revision: _clock.next(),
       );
       _log.info('Following ${item.series!.title} (${next.id})');
     }
@@ -79,7 +88,9 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
     final now = DateTime.now();
     return _commit([
       for (final s in _series)
-        s.id == seriesId ? s.notifiedOf(episodeId, now) : s,
+        s.id == seriesId
+            ? s.notifiedOf(episodeId, now, revision: _clock.next())
+            : s,
     ]);
   }
 
@@ -100,6 +111,7 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
         reached: latest?.number ?? (season: 1, episode: 0),
         progress: 1,
         watchedAt: now,
+        revision: _clock.next(),
         notified: latest?.episode.title.id,
         notifiedAt: latest == null ? null : now,
         manual: true,
@@ -110,7 +122,11 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
 
   Future<void> setNotify(String seriesId, bool on) => _change(
     seriesId,
-    (s) => s.copyWith(notify: on, notifyAt: DateTime.now()),
+    (s) => s.copyWith(
+      notify: on,
+      notifyAt: DateTime.now(),
+      notifyRevision: _clock.next(),
+    ),
   );
 
   /// [on] null returns the series to the settings default.
@@ -128,23 +144,38 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
   Future<void> unfollow(String seriesId) {
     _log.info('Unfollowing $seriesId');
     _repository.removals[seriesId] = DateTime.now();
+    _repository.removalRevisions[seriesId] = _clock.next();
     return _commit(_without(seriesId));
   }
 
   /// Everything another device needs to match this one.
-  FollowedSnapshot get snapshot =>
-      FollowedSnapshot(_series, Map.of(_repository.removals));
+  FollowedSnapshot get snapshot => FollowedSnapshot(
+    _series,
+    Map.of(_repository.removals),
+    Map.of(_repository.removalRevisions),
+  );
 
   /// Folds in [incoming] from another device; see
   /// [FollowedSnapshot.merge]. Nothing is saved when it changes nothing.
   Future<void> merge(FollowedSnapshot incoming) {
+    _observe(incoming);
     final current = snapshot;
     final merged = current.merge(incoming);
     if (merged.matches(current)) return Future.value();
     _log.info('Merged ${incoming.series.length} followed series from a device');
     _repository.removals = merged.removals;
+    _repository.removalRevisions = merged.removalRevisions;
     return _commit(merged.series);
   }
+
+  void _observe(FollowedSnapshot value) => _clock.observe([
+    ...value.removalRevisions.values,
+    for (final s in value.series) ...[
+      s.revision,
+      s.notifyRevision,
+      s.notifiedRevision,
+    ],
+  ]);
 
   List<FollowedSeries> _without(String seriesId) => [
     for (final s in _series)
@@ -156,6 +187,7 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
     // The player saves its last position as the app shuts down, which may
     // come after this notifier is disposed; the file still gets it.
     if (ref.mounted) state = series;
+    _repository.clock = _clock.current;
     return _repository.save(series);
   }
 }

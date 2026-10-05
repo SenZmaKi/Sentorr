@@ -84,8 +84,12 @@ class SyncService implements SyncRoutes {
     final before = _ref.read(nearbyDevicesProvider);
     _ref.read(nearbyDevicesProvider.notifier).set(found);
     final paired = _ref.read(devicesProvider);
+    for (final id in before.keys) {
+      if (!found.containsKey(id)) _ref.read(peersProvider.notifier).lost(id);
+    }
     for (final id in found.keys) {
-      if (!before.containsKey(id) && paired.byId(id) != null) {
+      if (before[id]?.address != found[id]?.address &&
+          paired.byId(id) != null) {
         _ref.read(peersProvider.notifier).found(id);
       }
     }

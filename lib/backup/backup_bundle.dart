@@ -13,7 +13,7 @@ class BackupBundle {
   final FollowedSnapshot following;
 
   static const _format = 'sentorr-backup';
-  static const _version = 1;
+  static const _version = 2;
 
   /// Whether [other] holds the same records, for skipping a pointless upload.
   bool matches(BackupBundle other) =>
@@ -24,7 +24,7 @@ class BackupBundle {
   /// downloading by itself, so that is left out, or two devices would
   /// rewrite the backup at each other forever.
   static String _shared(FollowedSnapshot f) {
-    final json = f.toJson();
+    final json = f.canonicalJson();
     return jsonEncode({
       ...json,
       'series': [

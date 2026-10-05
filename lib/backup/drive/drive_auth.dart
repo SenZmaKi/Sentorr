@@ -24,6 +24,7 @@ class DriveAuth {
     required this.openBrowser,
     this.bringBack,
     this.returnLink,
+    this.inFront,
     this.clientId = driveClientId,
     this.clientSecret = driveClientSecret,
     this.authorizeEndpoint = 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -44,6 +45,10 @@ class DriveAuth {
   /// A link the sign-in page follows back to the app, where the app cannot
   /// come forward itself, as on Android.
   final String? returnLink;
+
+  /// Completes once the app is in front again. Some Android builds cut a
+  /// background app off the network, so the code is exchanged only then.
+  final Future<void> Function()? inFront;
   final String clientId, clientSecret;
   final String authorizeEndpoint, tokenEndpoint, revokeEndpoint;
   final Duration signInTimeout;
@@ -87,10 +92,15 @@ class DriveAuth {
       if (!opened) {
         throw const BackupException('Could not open the browser to sign in.');
       }
-      final granted = await code.timeout(
-        signInTimeout,
-        onTimeout: () => throw const BackupException('Sign-in timed out.'),
-      );
+      final granted = await code
+          .then((code) async {
+            await inFront?.call();
+            return code;
+          })
+          .timeout(
+            signInTimeout,
+            onTimeout: () => throw const BackupException('Sign-in timed out.'),
+          );
       await _grant({
         'grant_type': 'authorization_code',
         'code': granted,

@@ -35,6 +35,7 @@ class PeerClient {
     String fingerprint,
     String path, {
     Map<String, dynamic>? body,
+    Map<String, String> headers = const {},
     Duration timeout = const Duration(seconds: 20),
   }) async {
     final response = await open(
@@ -42,6 +43,7 @@ class PeerClient {
       fingerprint,
       path,
       body: body,
+      headers: headers,
     ).timeout(timeout);
     return _decode(response).timeout(timeout);
   }

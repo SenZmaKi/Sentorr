@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 
 import '../backup/watch_backup.dart';
@@ -141,12 +144,24 @@ class PeerDownload {
 /// What a device shares with paired devices: finished files to stream or
 /// copy, and downloads still on their way.
 class PeerLibrary {
-  const PeerLibrary({this.media = const [], this.downloads = const []});
+  const PeerLibrary({
+    this.media = const [],
+    this.downloads = const [],
+    this.revision,
+  });
 
   final List<PeerMedia> media;
   final List<PeerDownload> downloads;
+  final String? revision;
 
   Map<String, dynamic> toJson() => {
+    'revision':
+        revision ??
+        sha256
+            .convert(
+              utf8.encode(jsonEncode([for (final m in media) m.toJson()])),
+            )
+            .toString(),
     'media': [for (final m in media) m.toJson()],
     'downloads': [for (final d in downloads) d.toJson()],
   };
@@ -159,6 +174,7 @@ class PeerLibrary {
       if (list is List) ...list.map(read).nonNulls,
     ];
     return PeerLibrary(
+      revision: json['revision'] as String?,
       media: all(json['media'], PeerMedia.fromJson),
       downloads: all(json['downloads'], PeerDownload.fromJson),
     );

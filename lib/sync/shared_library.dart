@@ -6,14 +6,15 @@ import '../downloads/manager.dart';
 import '../downloads/models.dart';
 import '../library/models.dart';
 import '../library/notifier.dart';
+import '../shared/parallel.dart';
 import 'payload.dart';
 import 'file_version.dart';
 
 /// What this device offers paired devices: its finished downloads whose
 /// files are still on disk, and those still on their way.
-PeerLibrary sharedLibrary(Ref ref) {
+Future<PeerLibrary> sharedLibrary(Ref ref) async {
   final downloads = _downloads(ref);
-  final media = <PeerMedia>[];
+  final completed = <LibraryEntry>[];
   final coming = <PeerDownload>[
     for (final c in ref.read(copyingProvider).values)
       PeerDownload(
@@ -26,12 +27,7 @@ PeerLibrary sharedLibrary(Ref ref) {
     final download = downloads[e.downloadId];
     switch (offlineStateOf(e, download)) {
       case Downloaded():
-        final file = File(e.path);
-        if (file.existsSync()) {
-          media.add(
-            PeerMedia.of(e, file.lengthSync(), version: fileVersion(file)),
-          );
-        }
+        completed.add(e);
       case Downloading(:final status, :final progress):
         coming.add(
           PeerDownload(
@@ -44,7 +40,22 @@ PeerLibrary sharedLibrary(Ref ref) {
       default:
     }
   }
-  return PeerLibrary(media: media, downloads: coming);
+  final media = await parallelMapOrdered<LibraryEntry, PeerMedia?>(
+    completed,
+    maxConcurrent: 4,
+    operation: (entry) async {
+      final file = File(entry.path);
+      final stat = await file.stat();
+      return stat.type == FileSystemEntityType.file
+          ? PeerMedia.of(
+              entry,
+              stat.size,
+              version: fileVersionFromStat(file, stat),
+            )
+          : null;
+    },
+  );
+  return PeerLibrary(media: media.nonNulls.toList(), downloads: coming);
 }
 
 /// [itemId]'s finished file, or null when this device has none to share.
@@ -54,7 +65,7 @@ File? sharedFile(Ref ref, String itemId) {
   final download = _downloads(ref)[entry.downloadId];
   if (offlineStateOf(entry, download) is! Downloaded) return null;
   final file = File(entry.path);
-  return file.existsSync() ? file : null;
+  return file;
 }
 
 /// Changes when what this device shares does: an item added, removed,
@@ -67,7 +78,7 @@ final sharedLibraryShapeProvider = Provider<String>((ref) {
   return [
     for (final id in ref.watch(copyingProvider).keys) '$id:copying',
     for (final e in ref.watch(libraryProvider))
-      '${e.id}:${downloads[e.downloadId]?.name}',
+      '${e.id}:${e.path}:${e.release.infoHash}:${e.fileIndex}:${downloads[e.downloadId]?.name}',
   ].join(',');
 });
 

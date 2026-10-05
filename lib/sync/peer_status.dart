@@ -6,11 +6,13 @@ class PeerStatus {
     this.online = false,
     this.syncing = false,
     this.error,
+    this.libraryRevision,
     this.media = const [],
     this.downloads = const [],
   });
 
   /// Answered its last request.
+  final String? libraryRevision;
   final bool online;
   final bool syncing;
 
@@ -32,6 +34,7 @@ class PeerStatus {
     online: online ?? this.online,
     syncing: syncing ?? this.syncing,
     error: error == null ? this.error : error(),
+    libraryRevision: library == null ? libraryRevision : library.revision,
     media: library?.media ?? media,
     downloads: library?.downloads ?? downloads,
   );

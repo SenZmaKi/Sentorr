@@ -6,14 +6,15 @@ import 'file_version.dart';
 /// the player on the other device can seek.
 Future<void> sendFile(HttpRequest request, File file) async {
   final response = request.response;
-  final version = '"${fileVersion(file)}"';
+  final stat = await file.stat();
+  final version = '"${fileVersionFromStat(file, stat)}"';
   final expected = request.headers.value(HttpHeaders.ifMatchHeader);
   if (expected != null && expected != version) {
     response.statusCode = HttpStatus.preconditionFailed;
     return response.close();
   }
   response.headers.set(HttpHeaders.etagHeader, version);
-  final length = await file.length();
+  final length = stat.size;
   response.headers
     ..set(HttpHeaders.acceptRangesHeader, 'bytes')
     ..set(HttpHeaders.cacheControlHeader, 'no-store')

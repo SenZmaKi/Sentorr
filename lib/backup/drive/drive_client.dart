@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../shared/parallel.dart';
 import '../backup_bundle.dart';
 import '../remote.dart';
 import 'drive_auth.dart';
@@ -21,6 +22,7 @@ class DriveBackupClient implements BackupRemote {
 
   List<String> _observed = const [];
   String? _revision;
+  final _cache = <String, ({String checksum, BackupBundle bundle})>{};
 
   @override
   Future<RemoteBackup?> download() async {
@@ -29,14 +31,31 @@ class DriveBackupClient implements BackupRemote {
       final files = await _files();
       BackupBundle? merged;
       try {
-        for (final id in files) {
-          final response = await _send<String>(
-            'GET',
-            '$api/drive/v3/files/$id',
-            query: {'alt': 'media'},
-            type: ResponseType.plain,
-          );
-          final bundle = BackupBundle.decode(response.data ?? '');
+        _cache.removeWhere((id, _) => !files.containsKey(id));
+        await auth.accessToken();
+        final bundles = await parallelMapOrdered(
+          files.keys,
+          maxConcurrent: 4,
+          operation: (id) async {
+            final checksum = files[id];
+            final cached = _cache[id];
+            if (checksum != null && cached?.checksum == checksum) {
+              return cached!.bundle;
+            }
+            final response = await _send<String>(
+              'GET',
+              '$api/drive/v3/files/$id',
+              query: {'alt': 'media'},
+              type: ResponseType.plain,
+            );
+            final bundle = BackupBundle.decode(response.data ?? '');
+            if (checksum != null) {
+              _cache[id] = (checksum: checksum, bundle: bundle);
+            }
+            return bundle;
+          },
+        );
+        for (final bundle in bundles) {
           merged = merged == null
               ? bundle
               : BackupBundle(
@@ -48,8 +67,8 @@ class DriveBackupClient implements BackupRemote {
         if (error.response?.statusCode == 404) continue;
         rethrow;
       }
-      _observed = files;
-      _revision = files.isEmpty ? null : files.join(',');
+      _observed = files.keys.toList();
+      _revision = files.isEmpty ? null : files.keys.join(',');
       return merged == null ? null : RemoteBackup(merged, _revision);
     }
     throw const BackupConflict();
@@ -75,19 +94,24 @@ class DriveBackupClient implements BackupRemote {
           '--$_boundary--',
       contentType: 'multipart/related; boundary=$_boundary',
     );
-    for (final id in covered) {
-      try {
-        await _send<void>('DELETE', '$api/drive/v3/files/$id');
-      } on DioException {
-        // Cleanup is optional; redundant snapshots are safe to merge again.
-      }
-    }
+    await parallelMapOrdered(
+      covered,
+      maxConcurrent: 4,
+      operation: (id) async {
+        try {
+          await _send<void>('DELETE', '$api/drive/v3/files/$id');
+        } on DioException {
+          // Cleanup is optional; redundant snapshots are safe to merge again.
+        }
+        _cache.remove(id);
+      },
+    );
     _observed = const [];
     _revision = null;
   }
 
-  Future<List<String>> _files() async {
-    final ids = <String>[];
+  Future<Map<String, String?>> _files() async {
+    final ids = <String, String?>{};
     String? page;
     do {
       final response = await _send<Map<String, dynamic>>(
@@ -96,7 +120,7 @@ class DriveBackupClient implements BackupRemote {
         query: {
           'spaces': 'appDataFolder',
           'q': "name = '$fileName' and trashed = false",
-          'fields': 'nextPageToken,files(id)',
+          'fields': 'nextPageToken,files(id,md5Checksum)',
           'pageSize': '1000',
           'pageToken': ?page,
         },
@@ -105,13 +129,13 @@ class DriveBackupClient implements BackupRemote {
       if (files is List) {
         for (final file in files) {
           if (file case {'id': final String id}) {
-            ids.add(id);
+            ids[id] = file['md5Checksum'] as String?;
           }
         }
       }
       page = response.data?['nextPageToken'] as String?;
     } while (page != null);
-    return ids..sort();
+    return {for (final id in ids.keys.toList()..sort()) id: ids[id]};
   }
 
   /// Sends with the viewer's token, retrying once on a fresh one if Google

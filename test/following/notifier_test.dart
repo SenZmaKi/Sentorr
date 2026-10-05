@@ -4,6 +4,7 @@ import 'package:sentorr/following/models.dart';
 import 'package:sentorr/following/notifier.dart';
 import 'package:sentorr/imdb/models.dart';
 import 'package:sentorr/player/models.dart';
+import 'package:sentorr/shared/state_clock.dart';
 import 'package:sentorr/watching/models.dart';
 
 import '../support/fake_following.dart';
@@ -18,15 +19,24 @@ PlaybackItem _episode(int season, int n) => PlaybackItem(
   episode: n,
 );
 
+class _CountingRepository extends MemoryFollowedSeries {
+  int writes = 0;
+  @override
+  Future<void> save(List<FollowedSeries> series) async {
+    writes++;
+    await super.save(series);
+  }
+}
+
 void main() {
   late ProviderContainer container;
-  late MemoryFollowedSeries repository;
+  late _CountingRepository repository;
   FollowedSeriesNotifier notifier() =>
       container.read(followedSeriesProvider.notifier);
   FollowedSeries only() => container.read(followedSeriesProvider).single;
 
   setUp(() {
-    repository = MemoryFollowedSeries();
+    repository = _CountingRepository();
     container = ProviderContainer(
       overrides: followedSeriesOverrides(const [], repository),
     );
@@ -78,6 +88,20 @@ void main() {
       duration: _hour,
     );
     expect(only().reached, (season: 2, episode: 4));
+  });
+
+  test('unchanged progress avoids saves and logical revisions', () async {
+    await notifier().record(_episode(1, 1), position: _hour, duration: _hour);
+    final revision = container.read(stateClockProvider).current;
+    final watchedAt = only().watchedAt;
+    for (var i = 0; i < 20; i++) {
+      await notifier().record(_episode(1, 1), position: _hour, duration: _hour);
+    }
+    expect(repository.writes, 1);
+    expect(container.read(stateClockProvider).current, revision);
+    expect(only().watchedAt, watchedAt);
+    await notifier().record(_episode(1, 2), position: _hour, duration: _hour);
+    expect(repository.writes, 2);
   });
 
   test('marks notified and unfollows', () async {

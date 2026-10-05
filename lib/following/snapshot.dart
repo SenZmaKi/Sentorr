@@ -58,21 +58,22 @@ class FollowedSnapshot {
     }
 
     final local = {for (final s in series) s.id: s};
-    final merged = <String, FollowedSeries>{};
+    final contributions = <String, List<FollowedSeries>>{};
     for (final record in [...series, ...other.series]) {
-      final contributions = record.versions.isEmpty
-          ? [record]
-          : record.versions;
-      for (final contribution in contributions.where(alive)) {
-        final held = merged[contribution.id];
-        merged[contribution.id] = held == null
-            ? contribution.copyWith(
-                autoDownload: local[contribution.id]?.autoDownload,
-                resetAutoDownload: local[contribution.id]?.autoDownload == null,
-              )
-            : mergeFollowed(held, contribution);
+      for (final value
+          in record.versions.isEmpty ? [record] : record.versions) {
+        if (alive(value)) {
+          (contributions[value.id] ??= []).add(value);
+        }
       }
     }
+    final merged = {
+      for (final entry in contributions.entries)
+        entry.key: mergeFollowedMany(entry.value).copyWith(
+          autoDownload: local[entry.key]?.autoDownload,
+          resetAutoDownload: local[entry.key]?.autoDownload == null,
+        ),
+    };
     final kept = merged.values.where((s) {
       final at = removed[s.id];
       return at == null ||
@@ -131,7 +132,29 @@ class FollowedSnapshot {
 
 /// One series as two devices hold it, [mine] keeping its own
 /// [FollowedSeries.autoDownload].
-FollowedSeries mergeFollowed(FollowedSeries mine, FollowedSeries theirs) {
+FollowedSeries mergeFollowed(FollowedSeries mine, FollowedSeries theirs) =>
+    mergeFollowedMany([mine, theirs]).copyWith(
+      autoDownload: mine.autoDownload,
+      resetAutoDownload: mine.autoDownload == null,
+    );
+
+FollowedSeries mergeFollowedMany(Iterable<FollowedSeries> values) {
+  final records = <String, FollowedSeries>{};
+  for (final record in values) {
+    for (final v in record.versions.isEmpty ? [record] : record.versions) {
+      records[jsonEncode(v.toJson()..remove('autoDownload'))] = v;
+    }
+  }
+  final keys = records.keys.toList()..sort();
+  final versions = [
+    for (final key in keys) records[key]!.copyWith(resetAutoDownload: true),
+  ];
+  return versions
+      .reduce(_mergeFields)
+      .copyWith(versions: versions.length == 1 ? const [] : versions);
+}
+
+FollowedSeries _mergeFields(FollowedSeries mine, FollowedSeries theirs) {
   final order = compareEpisodes(mine.reached, theirs.reached);
   final ahead =
       order > 0 ||
@@ -181,7 +204,7 @@ FollowedSeries mergeFollowed(FollowedSeries mine, FollowedSeries theirs) {
     notifyAt: notify.notifyAt,
     autoDownload: mine.autoDownload,
     manual: ahead.manual,
-    versions: _versions(mine, theirs),
+
     revision: fresher.revision,
     notifyRevision: notify.notifyRevision,
     notifiedRevision: notified.notifiedRevision,
@@ -199,16 +222,4 @@ int compareFollowed(FollowedSeries a, FollowedSeries b) {
   final left = a.toJson()..remove('autoDownload');
   final right = b.toJson()..remove('autoDownload');
   return jsonEncode(left).compareTo(jsonEncode(right));
-}
-
-List<FollowedSeries> _versions(FollowedSeries a, FollowedSeries b) {
-  final records = <String, FollowedSeries>{};
-  for (final record in [a, b]) {
-    for (final v in record.versions.isEmpty ? [record] : record.versions) {
-      final json = v.toJson()..remove('autoDownload');
-      records[jsonEncode(json)] = v.copyWith(resetAutoDownload: true);
-    }
-  }
-  final keys = records.keys.toList()..sort();
-  return keys.length == 1 ? const [] : [for (final key in keys) records[key]!];
 }

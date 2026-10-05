@@ -50,7 +50,7 @@ abstract interface class SyncRoutes {
   );
 
   /// What this device shares: finished files and downloads under way.
-  Map<String, dynamic> library(PairedDevice device);
+  FutureOr<Map<String, dynamic>> library(PairedDevice device);
   File? media(PairedDevice device, String itemId);
 }
 
@@ -119,7 +119,24 @@ class SyncServer {
         case ('POST', ['v1', 'sync']):
           await _json(request, await routes.sync(device, await _body(request)));
         case ('GET', ['v1', 'library']):
-          await _json(request, routes.library(device));
+          final library = await routes.library(device);
+          if (routes.paired(device.fingerprint) == null) {
+            throw const SyncRefusal(
+              'Not paired with this device',
+              status: HttpStatus.forbidden,
+            );
+          }
+          if (library['revision'] != null &&
+              request.headers.value('x-sentorr-library-revision') ==
+                  library['revision']) {
+            await _json(request, {
+              'revision': library['revision'],
+              'unchanged': true,
+              'downloads': library['downloads'],
+            });
+          } else {
+            await _json(request, library);
+          }
         case ('GET' || 'HEAD', ['v1', 'media', final id]):
           final file = routes.media(device, id);
           if (file == null || !await file.exists()) {

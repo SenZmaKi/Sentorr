@@ -116,6 +116,7 @@ class FollowedSeries {
     bool? autoDownload,
     bool resetAutoDownload = false,
     bool? manual,
+    List<FollowedSeries>? versions,
     int? revision,
     notifyRevision,
     notifiedRevision,
@@ -133,22 +134,24 @@ class FollowedSeries {
     revision: revision ?? this.revision,
     notifyRevision: notifyRevision ?? this.notifyRevision,
     notifiedRevision: notifiedRevision ?? this.notifiedRevision,
-    versions: reached != null || progress != null || watchedAt != null
-        ? const []
-        : [
-            for (final v in versions)
-              v.copyWith(
-                notified: notified,
-                notifiedAt: notifiedAt,
-                notify: notify,
-                notifyAt: notifyAt,
-                autoDownload: autoDownload,
-                resetAutoDownload: resetAutoDownload,
-                manual: manual,
-                notifyRevision: notifyRevision,
-                notifiedRevision: notifiedRevision,
-              ),
-          ],
+    versions:
+        versions ??
+        (reached != null || progress != null || watchedAt != null
+            ? const []
+            : [
+                for (final v in this.versions)
+                  v.copyWith(
+                    notified: notified,
+                    notifiedAt: notifiedAt,
+                    notify: notify,
+                    notifyAt: notifyAt,
+                    autoDownload: autoDownload,
+                    resetAutoDownload: resetAutoDownload,
+                    manual: manual,
+                    notifyRevision: notifyRevision,
+                    notifiedRevision: notifiedRevision,
+                  ),
+              ]),
   );
 
   /// [item]'s episode number, or null when it is not a numbered episode.

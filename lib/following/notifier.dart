@@ -66,6 +66,11 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
     final known = _series.where((s) => s.id == item.series!.id).firstOrNull;
     final FollowedSeries next;
     if (known != null) {
+      final order = compareEpisodes(at, known.reached);
+      if (order < 0 ||
+          (order == 0 && fraction <= known.progress && !known.manual)) {
+        return Future.value();
+      }
       next = known.watched(at, fraction, now, revision: _clock.next());
       if (identical(next, known)) return Future.value();
     } else {

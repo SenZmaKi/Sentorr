@@ -121,7 +121,13 @@ class DriveAuth {
 
   /// Gets a fresh token. A refusal means the viewer revoked access, which
   /// signs out.
-  Future<String> refresh() async {
+  Future<String>? _refreshing;
+
+  Future<String> refresh() => _refreshing ??= _refresh().whenComplete(() {
+    _refreshing = null;
+  });
+
+  Future<String> _refresh() async {
     final token = _refreshToken;
     if (token == null) {
       throw const BackupException('Google Drive is not connected.');

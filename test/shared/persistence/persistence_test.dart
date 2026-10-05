@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +6,18 @@ import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/settings/repository.dart';
 import 'package:sentorr/shared/persistence/app_paths.dart';
 import 'package:sentorr/shared/persistence/json_file_store.dart';
+
+class _CountingStore extends JsonFileStore {
+  _CountingStore(super.file);
+  int writes = 0;
+  Completer<void>? gate;
+  @override
+  Future<void> replace(String contents) async {
+    writes++;
+    await gate?.future;
+    await super.replace(contents);
+  }
+}
 
 void main() {
   late Directory root;
@@ -52,6 +65,33 @@ void main() {
           .toList();
       expect(preserved, hasLength(1));
       expect(await File(preserved.single.path).readAsString(), '{broken');
+    },
+  );
+
+  test('a burst shares one durable replacement', () async {
+    final store = _CountingStore(File('${root.path}/state.json'));
+    final saves = List.generate(20, (i) => store.write({'value': i}));
+    await Future.wait(saves);
+    expect(store.writes, 1);
+    expect(await store.read(), {'value': 19});
+  });
+
+  test(
+    'writes arriving during IO coalesce and flushed waits for them',
+    () async {
+      final store = _CountingStore(File('${root.path}/state.json'));
+      final gate = store.gate = Completer<void>();
+      final first = store.write({'value': 0});
+      await Future<void>.delayed(Duration.zero);
+      final saves = List.generate(20, (i) => store.write({'value': i + 1}));
+      var flushed = false;
+      final flush = store.flushed.then((_) => flushed = true);
+      await Future<void>.delayed(Duration.zero);
+      expect(flushed, false);
+      gate.complete();
+      await Future.wait([first, ...saves, flush]);
+      expect(store.writes, 2);
+      expect(await store.read(), {'value': 20});
     },
   );
 

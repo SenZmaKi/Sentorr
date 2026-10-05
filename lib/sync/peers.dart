@@ -138,11 +138,13 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
     _set(id, (s) => s.copyWith(syncing: true));
     final client = ref.read(syncServiceProvider).client;
     try {
+      final payload = await localSyncPayload(ref);
+      if (!_valid(id, epoch, to.fingerprint)) return;
       final answer = await client.call(
         to.address,
         to.fingerprint,
         '/v1/sync',
-        body: localSyncPayload(ref),
+        body: payload,
       );
       if (!_valid(id, epoch, to.fingerprint)) return;
       await mergePeerState(
@@ -165,6 +167,7 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
         id,
         (_) => PeerStatus(
           online: true,
+          libraryRevision: library.revision,
           media: library.media,
           downloads: library.downloads,
         ),
@@ -211,7 +214,9 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
         ),
       );
     }
-    return localSyncPayload(ref);
+    final payload = await localSyncPayload(ref);
+    if (!valid()) throw StateError('Device is no longer paired');
+    return payload;
   }
 
   /// Fetches the libraries of devices with downloads under way, so their
@@ -239,17 +244,33 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
       final library = await ref
           .read(syncServiceProvider)
           .client
-          .call(to.address, to.fingerprint, '/v1/library');
+          .call(
+            to.address,
+            to.fingerprint,
+            '/v1/library',
+            headers: {
+              'x-sentorr-library-revision': ?state[id]?.libraryRevision,
+            },
+          );
       // A sync that started meanwhile brings a newer one.
       if (!valid()) return;
+      if (library['unchanged'] == true) {
+        if (library['revision'] != state[id]?.libraryRevision) {
+          throw StateError('Unrecognized library revision');
+        }
+      }
+      final incoming = PeerLibrary.fromJson(library);
+      final updated = library['unchanged'] == true
+          ? PeerLibrary(
+              media: state[id]!.media,
+              downloads: incoming.downloads,
+              revision: incoming.revision,
+            )
+          : incoming;
       _requests.invalidateLibrary(id);
       _set(
         id,
-        (s) => s.copyWith(
-          online: true,
-          error: () => null,
-          library: PeerLibrary.fromJson(library),
-        ),
+        (s) => s.copyWith(online: true, error: () => null, library: updated),
       );
     } catch (error) {
       if (!valid()) return;

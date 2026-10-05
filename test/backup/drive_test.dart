@@ -20,7 +20,7 @@ typedef _Reply = (int, Object?);
 /// Answers requests from [handler] and records them.
 class _Adapter implements HttpClientAdapter {
   _Adapter(this.handler);
-  final _Reply Function(RequestOptions options) handler;
+  final FutureOr<_Reply> Function(RequestOptions options) handler;
   final requests = <RequestOptions>[];
 
   @override
@@ -30,7 +30,7 @@ class _Adapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     requests.add(options);
-    final (status, body) = handler(options);
+    final (status, body) = await handler(options);
     return ResponseBody.fromString(
       body is String ? body : jsonEncode(body ?? {}),
       status,
@@ -171,6 +171,76 @@ void main() {
       if (o.method == 'PATCH') return (200, {});
       return _tokens(o);
     }
+
+    test(
+      'unchanged checksums reuse snapshots and changed checksums refetch',
+      () async {
+        var checksum = 'm1';
+        final adapter = _Adapter((o) {
+          if (o.path.endsWith('/drive/v3/files')) {
+            return (
+              200,
+              {
+                'files': [
+                  {'id': 'f1', 'md5Checksum': checksum},
+                ],
+              },
+            );
+          }
+          return existing(o);
+        });
+        final auth = await _connected(adapter);
+        final client = DriveBackupClient(dio: _dio(adapter), auth: auth);
+        await client.download();
+        await client.download();
+        expect(
+          adapter.requests.where((o) => o.path.endsWith('/files/f1')),
+          hasLength(1),
+        );
+        checksum = 'm2';
+        await client.download();
+        expect(
+          adapter.requests.where((o) => o.path.endsWith('/files/f1')),
+          hasLength(2),
+        );
+      },
+    );
+
+    test('snapshot requests are bounded and overlap', () async {
+      var active = 0, peak = 0;
+      final gate = Completer<void>();
+      final started = Completer<void>();
+      final adapter = _Adapter((o) async {
+        if (o.path.endsWith('/drive/v3/files')) {
+          return (
+            200,
+            {
+              'files': [
+                for (var i = 0; i < 9; i++) {'id': 'f$i'},
+              ],
+            },
+          );
+        }
+        if (o.path.contains('/drive/v3/files/')) {
+          active++;
+          if (active > peak) peak = active;
+          if (active == 4 && !started.isCompleted) started.complete();
+          await gate.future;
+          active--;
+          return (200, _bundle.encode());
+        }
+        return _tokens(o);
+      });
+      final auth = await _connected(adapter);
+      final client = DriveBackupClient(dio: _dio(adapter), auth: auth);
+      final download = client.download();
+      await started.future.timeout(const Duration(seconds: 5));
+      expect(peak, 4);
+      gate.complete();
+      expect(await download, isNotNull);
+      expect(active, 0);
+      expect(peak, 4);
+    });
 
     test('publishes before compacting the existing file', () async {
       final adapter = _Adapter(existing);

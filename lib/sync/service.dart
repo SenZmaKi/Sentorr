@@ -143,8 +143,8 @@ class SyncService implements SyncRoutes {
   ) => _ref.read(peersProvider.notifier).answer(device, body);
 
   @override
-  Map<String, dynamic> library(PairedDevice device) =>
-      sharedLibrary(_ref).toJson();
+  Future<Map<String, dynamic>> library(PairedDevice device) async =>
+      (await sharedLibrary(_ref)).toJson();
 
   @override
   File? media(PairedDevice device, String itemId) => sharedFile(_ref, itemId);

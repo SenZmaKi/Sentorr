@@ -17,6 +17,24 @@ FollowedSnapshot _snap(
 ]) => FollowedSnapshot(series, removed);
 
 void main() {
+  test('batch provenance is deduplicated and stable across input order', () {
+    final values = List.generate(
+      200,
+      (i) => following(
+        _a,
+        episode: i + 1,
+        progress: .5,
+        watchedAt: _ago(i),
+      ).copyWith(revision: i + 1),
+    );
+    final left = mergeFollowedMany([...values, ...values]);
+    final right = mergeFollowedMany(values.reversed);
+    expect(left.toJson(), right.toJson());
+    expect(left.versions, hasLength(200));
+    expect(left.reached.episode, 200);
+    expect(mergeFollowed(left, right).toJson(), left.toJson());
+  });
+
   test('keeps the furthest episode and the latest watch', () {
     final mine = following(_a, episode: 3, progress: .5, watchedAt: _ago(5));
     final theirs = following(_a, episode: 2, progress: 1, watchedAt: _ago(1));

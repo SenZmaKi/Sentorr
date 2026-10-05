@@ -21,6 +21,7 @@ import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
 import '../support/fake_sync.dart';
+import '../support/fake_torrents.dart';
 
 final _shapeProvider = NotifierProvider<_Shape, String>(_Shape.new);
 
@@ -46,6 +47,7 @@ class _BlockingHistory extends MemoryWatchHistory {
 class _Client extends PeerClient {
   _Client() : super(DeviceIdentity.generate('Local'), port: () => 1);
   final calls = <(String, Completer<Map<String, dynamic>>)>[];
+  final sentHeaders = <Map<String, String>>[];
 
   @override
   Future<Map<String, dynamic>> call(
@@ -53,10 +55,12 @@ class _Client extends PeerClient {
     String fingerprint,
     String path, {
     Map<String, dynamic>? body,
+    Map<String, String> headers = const {},
     Duration timeout = const Duration(seconds: 20),
   }) {
     final result = Completer<Map<String, dynamic>>();
     calls.add((path, result));
+    sentHeaders.add(headers);
     return result.future;
   }
 }
@@ -129,8 +133,42 @@ void main() {
     client.close();
   });
 
+  test('unchanged polls preserve media and update download progress', () async {
+    final body = _payload();
+    final library = body['library'] as Map<String, dynamic>;
+    final media = PeerMedia(
+      item: PlaybackItem(title: fakeTitle(1)),
+      size: 12,
+      name: 'movie.mkv',
+      release: fakeRelease(1),
+      fileIndex: 0,
+    );
+    library['media'] = [media.toJson()];
+    library['revision'] = 'media-r1';
+    await peers.answer(peer, body);
+    final before = container.read(peersProvider)[peer.id]!;
+    final poll = peers.refreshLibrary(peer.id);
+    expect(
+      client.sentHeaders.single['x-sentorr-library-revision'],
+      before.libraryRevision,
+    );
+    final reply = Map<String, dynamic>.of(
+      (_payload(progress: .95)['library'] as Map).cast<String, dynamic>(),
+    );
+    reply.remove('media');
+    reply['unchanged'] = true;
+    reply['revision'] = 'media-r1';
+    client.calls.single.$2.complete(reply);
+    await poll;
+    final after = container.read(peersProvider)[peer.id]!;
+    expect(identical(after.media, before.media), true);
+    expect(after.media.single.id, media.id);
+    expect(after.downloads.single.progress, .95);
+  });
+
   test('unpair ignores a delayed outgoing response', () async {
     final pending = peers.syncWith(peer.id);
+    await Future<void>.delayed(Duration.zero);
     expect(client.calls, hasLength(1));
     await container.read(syncServiceProvider).unpair(peer.id);
     client.calls.single.$2.complete(_payload(item: 1));
@@ -170,6 +208,7 @@ void main() {
       await peers.refreshLibrary(peer.id);
       expect(client.calls, hasLength(1));
       final sync = peers.syncWith(peer.id);
+      await Future<void>.delayed(Duration.zero);
       client.calls[1].$2.complete(_payload(progress: .9));
       await sync;
       client.calls[0].$2.complete(
@@ -188,6 +227,7 @@ void main() {
     () async {
       final poll = peers.refreshLibrary(peer.id);
       final sync = peers.syncWith(peer.id);
+      await Future<void>.delayed(Duration.zero);
       client.calls[1].$2.complete(_payload());
       await sync;
       client.calls[0].$2.completeError(const PeerException('old timeout'));

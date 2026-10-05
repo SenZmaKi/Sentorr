@@ -29,7 +29,13 @@ class _Routes implements SyncRoutes {
   ) async => {'echo': body['n']};
 
   @override
-  Map<String, dynamic> library(PairedDevice device) => const {};
+  Map<String, dynamic> library(PairedDevice device) => const {
+    'revision': 'r1',
+    'media': [
+      {'id': 'tt1'},
+    ],
+    'downloads': [],
+  };
 
   @override
   File? media(PairedDevice device, String itemId) =>
@@ -95,6 +101,30 @@ void main() {
     expect(answer, {'echo': 7});
     expect(routes.seenFrom.last, (host: '127.0.0.1', port: 4242));
   });
+
+  test(
+    'matching library revision omits media and retains progress payload',
+    () async {
+      final client = PeerClient(phone, port: () => 1);
+      addTearDown(client.close);
+      final full = await client.call(at, host.fingerprint, '/v1/library');
+      expect(full['media'], isNotEmpty);
+      final unchanged = await client.call(
+        at,
+        host.fingerprint,
+        '/v1/library',
+        headers: {'x-sentorr-library-revision': 'r1'},
+      );
+      expect(unchanged, {'revision': 'r1', 'unchanged': true, 'downloads': []});
+      final changed = await client.call(
+        at,
+        host.fingerprint,
+        '/v1/library',
+        headers: {'x-sentorr-library-revision': 'old'},
+      );
+      expect(changed['media'], full['media']);
+    },
+  );
 
   test('a device that is not paired is refused', () async {
     final client = PeerClient(stranger, port: () => 1);

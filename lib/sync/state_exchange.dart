@@ -5,12 +5,12 @@ import '../watching/notifier.dart';
 import 'payload.dart';
 import 'shared_library.dart';
 
-Map<String, dynamic> localSyncPayload(Ref ref) => {
+Future<Map<String, dynamic>> localSyncPayload(Ref ref) async => {
   ...SyncPayload(
     watch: ref.read(watchHistoryProvider.notifier).snapshot,
     following: ref.read(followedSeriesProvider.notifier).snapshot,
   ).toJson(),
-  'library': sharedLibrary(ref).toJson(),
+  'library': (await sharedLibrary(ref)).toJson(),
 };
 
 Future<void> mergePeerState(

@@ -22,6 +22,7 @@ import 'package:sentorr/ui/shared/title_route.dart';
 
 import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
+import '../support/fake_sync.dart';
 
 void main() {
   final title = fakeTitle(2, series: true);
@@ -38,6 +39,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         ...libraryOverrides(),
+        ...syncOverrides(),
         imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
         pickUpProvider(title.id).overrideWith((ref) async => null),
       ],
@@ -159,6 +161,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ...libraryOverrides(),
+          ...syncOverrides(),
           imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
           continueWatchingProvider.overrideWithValue(
             AsyncData([

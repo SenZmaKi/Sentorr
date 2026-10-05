@@ -34,7 +34,12 @@ class AppDestinationNotifier extends Notifier<AppDestination> {
   @override
   AppDestination build() => AppDestination.home;
 
-  void go(AppDestination destination) => state = destination;
+  /// Shows [destination], leaving any title page open over the current
+  /// one, even when it is already shown.
+  void go(AppDestination destination) {
+    ref.read(titleRoutesProvider.notifier).closeAll();
+    state = destination;
+  }
 }
 
 /// Destinations whose page takes Back itself, e.g. settings returning from
@@ -67,12 +72,8 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(appDestinationProvider);
     final title = ref.watch(titleRoutesProvider).lastOrNull;
-    final titles = ref.read(titleRoutesProvider.notifier);
-    // Choosing a destination, even the current one, leaves any title page.
-    void go(AppDestination d) {
-      titles.closeAll();
-      ref.read(appDestinationProvider.notifier).go(d);
-    }
+    void go(AppDestination d) =>
+        ref.read(appDestinationProvider.notifier).go(d);
 
     final body = Stack(
       fit: StackFit.expand,
@@ -112,7 +113,7 @@ class AppShell extends ConsumerWidget {
       onPopInvokedWithResult: (didPop, _) {
         if (didPop || playing || pageBack) return;
         if (title != null) {
-          titles.back();
+          ref.read(titleRoutesProvider.notifier).back();
         } else {
           go(AppDestination.home);
         }

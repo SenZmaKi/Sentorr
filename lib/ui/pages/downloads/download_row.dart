@@ -2,18 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../downloads/models.dart';
-import '../../../imdb/models.dart';
 import '../../../library/models.dart';
-import '../../components/artwork_frame.dart';
 import '../../components/buttons.dart';
 import '../../components/cards/card_parts.dart';
-import '../../components/interactive.dart';
 import '../../components/progress_track.dart';
-import '../../components/title_artwork.dart';
-import '../../components/title_link.dart';
 import '../../shared/download_actions.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
+import 'row_frame.dart';
 import 'transfer_stats.dart';
 
 /// One downloaded or downloading item: its artwork, names, where the
@@ -33,80 +29,18 @@ class DownloadRow extends ConsumerWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.colors;
-    final item = entry.item;
-    return Interactive(
-      borderRadius: Radii.card,
-      onTap: () => ref.playDownload(entry),
-      excludeChildSemantics: false,
-      semanticLabel: 'Play ${itemLabel(item)}, ${_status(state, download).$2}',
-      builder: (context, s) => AnimatedContainer(
-        duration: Motion.hover,
-        curve: Motion.change,
-        padding: const EdgeInsets.all(Space.s12),
-        decoration: BoxDecoration(
-          color: s.pressed
-              ? c.statePressed
-              : s.hovered
-              ? c.stateHover
-              : c.stateHover.clear,
-          borderRadius: BorderRadius.circular(Radii.card),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                SizedBox(
-                  width: compact ? 96 : 128,
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: ArtworkFrame(
-                      active: s.hovered || s.focused,
-                      artwork: item.title.poster != null
-                          ? TitleArtwork(image: item.title.poster)
-                          : TitleBackdrop(title: item.series ?? item.title),
-                      hoverOverlay: const Center(
-                        child: OverlayGlyph(
-                          Icons.play_arrow_rounded,
-                          primary: true,
-                        ),
-                      ),
-                      decorations: [
-                        if (item.isEpisode)
-                          Positioned(
-                            left: Space.s4,
-                            top: Space.s4,
-                            child: OverlayBadge(
-                              episodeCode(item.season, item.episode),
-                              technical: true,
-                              dense: true,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: Space.s16),
-                Expanded(
-                  child: _Details(entry, state, download, stats: !compact),
-                ),
-                const SizedBox(width: Space.s8),
-                ..._actions(context, ref),
-              ],
-            ),
-            // A phone's text column is too narrow for the transfer's
-            // facts; they run the row's full width beneath it.
-            if (compact) ...[
-              const SizedBox(height: Space.s8),
-              _Progress(state, download),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context, WidgetRef ref) => DownloadRowFrame(
+    item: entry.item,
+    status: _status(state, download),
+    facts: _Progress(state, download),
+    note: switch (state) {
+      DownloadFailed(:final error) => error,
+      _ => null,
+    },
+    onTap: () => ref.playDownload(entry),
+    actions: _actions(context, ref),
+    compact: compact,
+  );
 
   List<Widget> _actions(BuildContext context, WidgetRef ref) => switch (state) {
     Downloading(status: OfflineProgress.copying) => [
@@ -163,83 +97,6 @@ class DownloadRow extends ConsumerWidget {
   };
 }
 
-class _Details extends StatelessWidget {
-  const _Details(this.entry, this.state, this.download, {this.stats = true});
-
-  final LibraryEntry entry;
-  final OfflineState state;
-  final DownloadItem? download;
-
-  /// Includes the transfer's facts and progress; off where the row shows
-  /// them beneath.
-  final bool stats;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final item = entry.item;
-    final (icon, label, tone) = _status(state, download);
-    final color = switch (tone) {
-      _Tone.neutral => c.foregroundSecondary,
-      _Tone.info => c.info,
-      _Tone.success => c.success,
-      _Tone.error => c.error,
-    };
-    final d = download;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (item.series case final series?)
-          TitleLink(
-            title: series,
-            season: item.season,
-            child: CardEyebrow(series.title),
-          ),
-        TitleLink(
-          title: item.series ?? item.title,
-          episode: item.isEpisode
-              ? ImdbEpisode(
-                  title: item.title,
-                  seasonNumber: item.season,
-                  episodeNumber: item.episode,
-                )
-              : null,
-          season: item.season,
-          child: CardTitle(item.name, large: true),
-        ),
-        const SizedBox(height: Space.s4),
-        Row(
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: Space.s4),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.type.caption.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-        if (stats) ...[const SizedBox(height: Space.s2), _Progress(state, d)],
-        if (state case DownloadFailed(:final error?)) ...[
-          const SizedBox(height: Space.s4),
-          Text(
-            error,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: context.type.caption.copyWith(color: c.foregroundMuted),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
 /// The transfer's facts, then its track while it runs.
 class _Progress extends StatelessWidget {
   const _Progress(this.state, this.download);
@@ -260,47 +117,45 @@ class _Progress extends StatelessWidget {
   );
 }
 
-enum _Tone { neutral, info, success, error }
-
-/// Queued and paused are neutral, moving is info, done is success and a
-/// failure is error, each with its own icon and words.
-(IconData, String, _Tone) _status(
-  OfflineState state,
-  DownloadItem? d,
-) => switch (state) {
+/// Each state's icon, words and tone.
+RowStatus _status(OfflineState state, DownloadItem? d) => switch (state) {
   Downloading(:final status, :final progress, :final from) => switch (status) {
     OfflineProgress.preparing => (
       Icons.hourglass_empty_rounded,
       'Preparing',
-      _Tone.neutral,
+      RowTone.neutral,
     ),
-    OfflineProgress.queued => (Icons.schedule_rounded, 'Queued', _Tone.neutral),
+    OfflineProgress.queued => (
+      Icons.schedule_rounded,
+      'Queued',
+      RowTone.neutral,
+    ),
     OfflineProgress.paused => (
       Icons.pause_rounded,
       'Paused at ${(progress * 100).floor()}%',
-      _Tone.neutral,
+      RowTone.neutral,
     ),
     OfflineProgress.downloading => (
       Icons.downloading_rounded,
       'Downloading ${(progress * 100).floor()}%',
-      _Tone.info,
+      RowTone.info,
     ),
     OfflineProgress.copying => (
       Icons.devices_rounded,
       'Copying from $from ${(progress * 100).floor()}%',
-      _Tone.info,
+      RowTone.info,
     ),
   },
   Downloaded() =>
     d?.status == DownloadStatus.seeding
-        ? (Icons.download_done_rounded, 'Downloaded · sharing', _Tone.success)
-        : (Icons.download_done_rounded, 'Downloaded', _Tone.success),
+        ? (Icons.download_done_rounded, 'Downloaded · sharing', RowTone.success)
+        : (Icons.download_done_rounded, 'Downloaded', RowTone.success),
   DownloadFailed() => (
     Icons.error_outline_rounded,
     'Download failed',
-    _Tone.error,
+    RowTone.error,
   ),
-  _ => (Icons.download_rounded, 'Not downloaded', _Tone.neutral),
+  _ => (Icons.download_rounded, 'Not downloaded', RowTone.neutral),
 };
 
 /// Size, then while bytes move: down and up speed, seeds and peers, and

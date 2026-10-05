@@ -4,15 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../library/models.dart';
 import '../../library/notifier.dart';
 import '../../player/models.dart';
+import '../../sync/elsewhere.dart';
 import '../shared/download_actions.dart';
 import '../shared/theme/theme.dart';
 import 'app_shell.dart';
 import 'buttons.dart';
+import 'elsewhere_button.dart';
 import 'menu.dart';
 
 /// Downloads [item] for offline viewing and shows how far along it is:
 /// a ring fills as it downloads, then a check. Once started, pressing it
-/// opens a menu to pause, cancel, play, show or delete.
+/// opens a menu to pause, cancel, play, show or delete. While it is not on
+/// this device but is on a paired one, it says so ([ElsewhereButton]).
 class DownloadButton extends ConsumerWidget {
   const DownloadButton({
     super.key,
@@ -35,23 +38,24 @@ class DownloadButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(offlineStateProvider(item.id));
+    if (state is NotDownloaded) {
+      if (ref.watch(elsewhereOfProvider(item.id)) case final elsewhere?) {
+        return ElsewhereButton(
+          elsewhere: elsewhere,
+          labelled: labelled,
+          menu: menu,
+        );
+      }
+    }
     final look = _Look.of(context, state);
     final actions = _actions(context, ref, state);
-    Widget trigger(VoidCallback? onTap) => labelled
-        ? Tooltip(
-            message: look.tooltip,
-            child: SButton(
-              label: look.label,
-              leading: look.glyph,
-              onPressed: onTap,
-            ),
-          )
-        : SIconButton(
-            icon: Icons.download_rounded,
-            glyph: look.glyph,
-            tooltip: look.tooltip,
-            onPressed: onTap,
-          );
+    Widget trigger(VoidCallback? onTap) => DownloadFace(
+      glyph: look.glyph,
+      label: look.label,
+      tooltip: look.tooltip,
+      labelled: labelled,
+      onTap: onTap,
+    );
     return switch (state) {
       NotDownloaded() => trigger(() => ref.download(context, item)),
       Planning() => trigger(null),
@@ -214,14 +218,47 @@ class _Look {
   }
 }
 
+/// A download control's face: a secondary button with words where
+/// [labelled], otherwise an icon button.
+class DownloadFace extends StatelessWidget {
+  const DownloadFace({
+    super.key,
+    required this.glyph,
+    required this.label,
+    required this.tooltip,
+    required this.labelled,
+    this.onTap,
+  });
+
+  final Widget glyph;
+  final String label, tooltip;
+  final bool labelled;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => labelled
+      ? Tooltip(
+          message: tooltip,
+          child: SButton(label: label, leading: glyph, onPressed: onTap),
+        )
+      : SIconButton(
+          icon: Icons.download_rounded,
+          glyph: glyph,
+          tooltip: tooltip,
+          onPressed: onTap,
+        );
+}
+
 /// A download's share as a ring on an inset track, around a small glyph
-/// naming its state; spinning while the amount is unknown.
+/// naming its state; spinning while the amount is unknown. [remote] rings
+/// track another device's download, quieter than this one's.
 class DownloadRing extends StatelessWidget {
-  const DownloadRing({super.key, this.value, this.glyph});
+  const DownloadRing({super.key, this.value, this.glyph, this.remote = false});
 
   /// 0–1; null while preparing.
   final double? value;
   final IconData? glyph;
+  final bool remote;
 
   @override
   Widget build(BuildContext context) {
@@ -235,7 +272,7 @@ class DownloadRing extends StatelessWidget {
             child: CircularProgressIndicator(
               value: value,
               strokeWidth: 2,
-              color: c.action,
+              color: remote ? c.foregroundSecondary : c.action,
               backgroundColor: c.surfaceInset,
               strokeCap: StrokeCap.round,
             ),

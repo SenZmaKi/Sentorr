@@ -48,7 +48,9 @@ abstract interface class SyncRoutes {
     PairedDevice device,
     Map<String, dynamic> body,
   );
-  List<Map<String, dynamic>> library(PairedDevice device);
+
+  /// What this device shares: finished files and downloads under way.
+  Map<String, dynamic> library(PairedDevice device);
   File? media(PairedDevice device, String itemId);
 }
 
@@ -117,7 +119,7 @@ class SyncServer {
         case ('POST', ['v1', 'sync']):
           await _json(request, await routes.sync(device, await _body(request)));
         case ('GET', ['v1', 'library']):
-          await _json(request, {'media': routes.library(device)});
+          await _json(request, routes.library(device));
         case ('GET' || 'HEAD', ['v1', 'media', final id]):
           final file = routes.media(device, id);
           if (file == null || !await file.exists()) {

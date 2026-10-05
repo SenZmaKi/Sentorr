@@ -16,7 +16,8 @@ nobody else holds anyone's history.
 | Paired devices, saved in `state/devices.json` | `lib/sync/devices.dart`, `repository.dart`, `models.dart` |
 | Numeric-comparison pairing | `lib/sync/pairing.dart`, `pairing_code.dart` |
 | Server, client, mDNS | `lib/sync/server.dart`, `client.dart`, `discovery.dart` |
-| State sync and peer libraries | `lib/sync/peers.dart`, `payload.dart`, `shared_library.dart` |
+| State sync and peer libraries | `lib/sync/peers.dart`, `payload.dart`, `shared_library.dart`, `elsewhere.dart` |
+| Other devices' downloads in the UI | `elsewhere_button.dart` in `lib/ui/components/`; `elsewhere_section.dart`, `elsewhere_row.dart` in `lib/ui/pages/downloads/` |
 | Streaming a peer's file | `lib/sync/media_proxy.dart`, `PeerFile` in `lib/player/stream/offline_source.dart` |
 | Wiring | `lib/sync/service.dart`; started from `lib/app/bootstrap.dart` |
 | UI | Settings → Devices (`devices_section.dart`, `pairing_sheet.dart`) |
@@ -35,11 +36,15 @@ functions that give the same result in any order and when repeated.
   until the series is watched or followed again.
 - **Stays on each device:** `autoDownload`, settings and the download library.
 
-A sync is one round trip: `POST /v1/sync` carries this device's state, and the
-answer is the other device's merged state. The client then fetches
-`GET /v1/library`. Syncs run 10 s after a local change, when a paired device
-appears or calls in, when the app resumes, and every 3 minutes. A sync
-requested while one is running runs once more afterwards.
+A sync is one round trip: `POST /v1/sync` carries this device's state and its
+library (below), and the answer is the other device's merged state and
+library, so both sides learn what the other holds from one call. A device
+whose answer has no library is asked with `GET /v1/library`. Syncs run 10 s
+after a watch or follow change, 2 s after a download is added, removed,
+started, paused or finished (`sharedLibraryShapeProvider`, which ignores bytes
+arriving), when a paired device appears or calls in, when the app resumes, and
+every 3 minutes. A sync requested while one is running runs once more
+afterwards.
 
 ## Pairing
 
@@ -82,7 +87,32 @@ A device shares its finished downloads whose files are still on disk
 then `peerSourceProvider`, which bootstrap points at a reachable peer. mpv
 can't pin a self-signed certificate, so `MediaProxy` serves a loopback URL
 with a token and forwards each range request over the pinned connection.
-Downloads that aren't finished aren't shared yet.
+Downloads that aren't finished can't be streamed from yet, but they are
+listed (below).
+
+## Seeing other devices' downloads
+
+A device's library (`PeerLibrary` in `payload.dart`, built by
+`sharedLibrary`) holds its finished files (`PeerMedia`) and its downloads and
+copies under way (`PeerDownload`: queued, downloading, paused or copying,
+with progress and size). While a reachable device has downloads under way,
+its library is fetched every 5 s so their progress moves here too.
+
+`elsewhereProvider` (`lib/sync/elsewhere.dart`) lists each reachable device's
+items, and `elsewhereOfProvider` picks one item's best copy: the first device
+that has it finished, which is the one playback would use, else the furthest
+along. The UI only uses it where this device has nothing of that item, so a
+local download always wins.
+
+- **Download buttons** (episode rows, the player's episodes panel, previews,
+  the title hero) become `ElsewhereButton`: "On MacBook" with a devices glyph
+  when it's finished there, or a quieter ring and "On MacBook 42%" while it
+  downloads there. The menu offers Play from MacBook, Copy to this device and
+  Download from a torrent, or Show in Downloads and Download here too.
+- **The Downloads page** ends each tab with a section per device for what
+  this device lacks: downloads under way on Ongoing, finished ones on
+  Complete, each row playing on tap and offering a copy or a download here.
+  Tab counts and the tab the page opens on still follow this device alone.
 
 ## Copying instead of downloading
 
@@ -93,8 +123,9 @@ first device that has it, so one season can draw from several devices.
 `CopyOffer` (`copy_offer.dart`) puts what it found into words, such as
 "Episodes 1–3 and 5 are already on MacBook".
 
-- **One item** (`ref.download`): the prompt offers Copy, Download instead or
-  Cancel.
+- **One item** (`ref.download`, e.g. retrying a failed download): the prompt
+  offers Copy, Download instead or Cancel. An item's download button already
+  names the device, so it offers the copy from its menu instead.
 - **A season** (`ref.downloadSeason`): the prompt offers Copy and download
   the rest, Download all or Cancel. The prompt also serves as the season's
   confirmation. Copies start before the season review lists its episodes, so
@@ -126,4 +157,5 @@ file. A failure keeps the partial file so the next attempt resumes it.
   the state in a folder the viewer picks, and streaming over Tailscale or a
   typed-in address.
 - Streaming a peer's download while it's still in progress.
+- Pausing or cancelling another device's download from this one.
 - A movie watchlist.

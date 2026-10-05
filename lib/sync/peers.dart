@@ -12,6 +12,7 @@ import 'media_proxy.dart';
 import 'models.dart';
 import 'payload.dart';
 import 'service.dart';
+import 'shared_library.dart';
 
 final _log = Logger('sentorr.sync.peers');
 
@@ -22,6 +23,7 @@ class PeerStatus {
     this.syncing = false,
     this.error,
     this.media = const [],
+    this.downloads = const [],
   });
 
   /// Answered its last request.
@@ -31,25 +33,32 @@ class PeerStatus {
   /// Why it was last unreachable.
   final String? error;
 
-  /// Its downloads this device can stream.
+  /// Its finished downloads this device can stream or copy.
   final List<PeerMedia> media;
+
+  /// Its downloads still on their way.
+  final List<PeerDownload> downloads;
 
   PeerStatus copyWith({
     bool? online,
     bool? syncing,
     String? Function()? error,
-    List<PeerMedia>? media,
+    PeerLibrary? library,
   }) => PeerStatus(
     online: online ?? this.online,
     syncing: syncing ?? this.syncing,
     error: error == null ? this.error : error(),
-    media: media ?? this.media,
+    media: library?.media ?? media,
+    downloads: library?.downloads ?? downloads,
   );
 }
 
 /// Paired devices by id: whether they are reachable and what they share.
 /// Watch history and followed series sync with them soon after either
-/// changes, when one is found, and every few minutes.
+/// changes, when one is found, and every few minutes. Each sync carries
+/// both devices' libraries, so a download started, paused or finished on
+/// one shows on the other within seconds; while a device has downloads
+/// under way, their progress is fetched every few seconds.
 final peersProvider = NotifierProvider<PeersNotifier, Map<String, PeerStatus>>(
   PeersNotifier.new,
 );
@@ -59,7 +68,12 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
   static const _settle = Duration(seconds: 10);
   static const _heartbeat = Duration(minutes: 3);
 
-  Timer? _pending, _beat;
+  /// Soon enough for a download started on one device to show on another
+  /// as it is looked at.
+  static const _shared = Duration(seconds: 2);
+  static const _progress = Duration(seconds: 5);
+
+  Timer? _pending, _beat, _poll;
 
   /// Syncs under way by device, and those asked for again meanwhile.
   final _running = <String, Future<void>>{};
@@ -70,22 +84,26 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
     ref.onDispose(() {
       _pending?.cancel();
       _beat?.cancel();
+      _poll?.cancel();
     });
-    ref.listen(watchHistoryProvider, (_, _) => _schedule());
-    ref.listen(followedSeriesProvider, (_, _) => _schedule());
+    ref.listen(watchHistoryProvider, (_, _) => _schedule(_settle));
+    ref.listen(followedSeriesProvider, (_, _) => _schedule(_settle));
+    ref.listen(sharedLibraryShapeProvider, (_, _) => _schedule(_shared));
     return const {};
   }
 
   /// Starts syncing on a timer, and with every paired device now.
   void start() {
     _beat ??= Timer.periodic(_heartbeat, (_) => unawaited(syncAll()));
+    _poll ??= Timer.periodic(_progress, (_) => _refreshDownloading());
     unawaited(syncAll());
   }
 
-  void _schedule() {
+  /// The soonest of what is waiting wins, so a burst of changes is one sync.
+  void _schedule(Duration after) {
     if (ref.read(devicesProvider).paired.isEmpty) return;
     _pending?.cancel();
-    _pending = Timer(_settle, () => unawaited(syncAll()));
+    _pending = Timer(after, () => unawaited(syncAll()));
   }
 
   Future<void> syncAll() async {
@@ -135,22 +153,22 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
         to.address,
         to.fingerprint,
         '/v1/sync',
-        body: _local().toJson(),
+        body: _local(),
       );
       await _merge(SyncPayload.fromJson(answer));
       if (!ref.mounted) return;
-      final library = await client.call(
-        to.address,
-        to.fingerprint,
-        '/v1/library',
+      // Devices from before libraries rode along answer without one.
+      final library = PeerLibrary.fromJson(
+        answer['library'] ??
+            await client.call(to.address, to.fingerprint, '/v1/library'),
       );
       if (!ref.mounted) return;
-      final media = library['media'];
       _set(
         id,
-        (s) => PeerStatus(
+        (_) => PeerStatus(
           online: true,
-          media: [if (media is List) ...media.map(PeerMedia.fromJson).nonNulls],
+          media: library.media,
+          downloads: library.downloads,
         ),
       );
       await ref
@@ -172,7 +190,44 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
     Map<String, dynamic> body,
   ) async {
     await _merge(SyncPayload.fromJson(body));
-    return _local().toJson();
+    if (body['library'] case final library?) {
+      _set(
+        from.id,
+        (s) => s.copyWith(
+          online: true,
+          error: () => null,
+          library: PeerLibrary.fromJson(library),
+        ),
+      );
+    }
+    return _local();
+  }
+
+  /// Fetches the libraries of devices with downloads under way, so their
+  /// progress moves here too.
+  void _refreshDownloading() {
+    for (final MapEntry(key: id, value: peer) in state.entries) {
+      if (peer.online && !peer.syncing && peer.downloads.isNotEmpty) {
+        unawaited(_refresh(id));
+      }
+    }
+  }
+
+  Future<void> _refresh(String id) async {
+    final to = route(id);
+    if (to == null || _running.containsKey(id)) return;
+    try {
+      final library = await ref
+          .read(syncServiceProvider)
+          .client
+          .call(to.address, to.fingerprint, '/v1/library');
+      // A sync that started meanwhile brings a newer one.
+      if (_running.containsKey(id)) return;
+      _set(id, (s) => s.copyWith(library: PeerLibrary.fromJson(library)));
+    } catch (error) {
+      _log.fine('Refreshing $id failed: $error');
+      _set(id, (s) => PeerStatus(error: '$error'));
+    }
   }
 
   /// [device] reached this one from [address].
@@ -210,10 +265,13 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
     return null;
   }
 
-  SyncPayload _local() => SyncPayload(
-    watch: ref.read(watchHistoryProvider.notifier).snapshot,
-    following: ref.read(followedSeriesProvider.notifier).snapshot,
-  );
+  Map<String, dynamic> _local() => {
+    ...SyncPayload(
+      watch: ref.read(watchHistoryProvider.notifier).snapshot,
+      following: ref.read(followedSeriesProvider.notifier).snapshot,
+    ).toJson(),
+    'library': sharedLibrary(ref).toJson(),
+  };
 
   Future<void> _merge(SyncPayload incoming) async {
     await ref.read(watchHistoryProvider.notifier).merge(incoming.watch);

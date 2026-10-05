@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../following/auto_downloads.dart';
 import '../../../imdb/models.dart';
+import '../../../sync/elsewhere.dart';
 import '../../../titles/episodes.dart';
 import '../../shared/theme/theme.dart';
 import 'download_groups.dart';
+import 'elsewhere_section.dart';
 import 'review_section.dart';
 import 'season_header.dart';
 
@@ -17,6 +19,7 @@ class OngoingTab extends ConsumerWidget {
     required this.views,
     required this.planning,
     required this.seasons,
+    this.elsewhere = const [],
     required this.compact,
   });
 
@@ -27,12 +30,20 @@ class OngoingTab extends ConsumerWidget {
 
   /// Seasons being found or queued, with their series.
   final Map<SeasonKey, ImdbTitle> seasons;
+
+  /// Paired devices' downloads under way that this device lacks.
+  final List<DeviceHoldings> elsewhere;
   final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reviews = ref.watch(autoDownloadReviewsProvider).isNotEmpty;
-    if (views.isEmpty && planning == 0 && seasons.isEmpty && !reviews) {
+    final local =
+        views.isNotEmpty || planning > 0 || seasons.isNotEmpty || reviews;
+    if (!local) {
+      if (elsewhere.any((d) => d.items.isNotEmpty)) {
+        return ElsewhereSection(elsewhere, compact: compact, first: true);
+      }
       return const DownloadsEmpty(
         icon: Icons.downloading_rounded,
         title: 'Nothing downloading',
@@ -71,6 +82,7 @@ class OngoingTab extends ConsumerWidget {
             const SizedBox(height: Space.s8),
           DownloadRows(group, compact: compact),
         ],
+        ElsewhereSection(elsewhere, compact: compact),
       ],
     );
   }

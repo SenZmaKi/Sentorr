@@ -29,7 +29,7 @@ class _Routes implements SyncRoutes {
   ) async => {'echo': body['n']};
 
   @override
-  List<Map<String, dynamic>> library(PairedDevice device) => const [];
+  Map<String, dynamic> library(PairedDevice device) => const {};
 
   @override
   File? media(PairedDevice device, String itemId) =>

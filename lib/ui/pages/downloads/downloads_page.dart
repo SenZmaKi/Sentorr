@@ -9,6 +9,7 @@ import '../../../library/download_review.dart';
 import '../../../library/models.dart';
 import '../../../library/notifier.dart';
 import '../../../library/season_download.dart';
+import '../../../sync/elsewhere.dart';
 import '../../../titles/episodes.dart';
 import '../../components/app_shell.dart';
 import '../../components/buttons.dart';
@@ -84,6 +85,23 @@ class DownloadsPage extends ConsumerWidget {
       for (final v in views)
         if (v.state is Downloaded) v,
     ];
+    final here = {
+      for (final v in views) v.entry.id,
+      ...ref.watch(planningProvider),
+    };
+    final elsewhere = ref.watch(elsewhereProvider);
+    // Each device's items not on this one, split as the tabs are.
+    List<DeviceHoldings> held({required bool finished}) => [
+      for (final d in elsewhere)
+        (
+          id: d.id,
+          name: d.name,
+          items: [
+            for (final e in d.items)
+              if (e.finished == finished && !here.contains(e.item.id)) e,
+          ],
+        ),
+    ];
     final busy =
         ongoing.isNotEmpty || planning > 0 || seasons.isNotEmpty || reviews > 0;
     final tab =
@@ -131,10 +149,12 @@ class DownloadsPage extends ConsumerWidget {
                 views: ongoing,
                 planning: planning,
                 seasons: seasons,
+                elsewhere: held(finished: false),
                 compact: compact,
               ),
               DownloadsTab.complete => CompleteTab(
                 views: complete,
+                elsewhere: held(finished: true),
                 compact: compact,
               ),
             },

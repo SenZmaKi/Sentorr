@@ -21,6 +21,7 @@ import 'package:sentorr/sync/payload.dart';
 import 'package:sentorr/ui/components/download_button.dart';
 import 'package:sentorr/ui/pages/download_review/review_host.dart';
 import 'package:sentorr/ui/pages/title/season_download_button.dart';
+import 'package:sentorr/ui/shared/download_actions.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
 import '../support/fake_download_torrents.dart';
@@ -48,6 +49,28 @@ PeerMedia _shared(PlaybackItem item) => PeerMedia(
   release: fakeRelease(7),
   fileIndex: 0,
 );
+
+/// Asks to download the movie, as retrying a failed download does: the
+/// movie's own button offers its copy from a menu instead. Its button
+/// shows how the copy goes.
+class _Asks extends ConsumerWidget {
+  const _Asks();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Tooltip(
+        message: 'Download',
+        child: TextButton(
+          onPressed: () => ref.download(context, _movie),
+          child: const Text('Ask'),
+        ),
+      ),
+      DownloadButton(item: _movie),
+    ],
+  );
+}
 
 /// Marks what it is asked to copy as copying, with no network.
 class _Copies extends PeerCopies {
@@ -157,7 +180,7 @@ void main() {
   testWidgets('a movie on another device is copied instead', (tester) async {
     final (planner, copies) = await _pump(
       tester,
-      DownloadButton(item: _movie),
+      const _Asks(),
       onLaptop: [_movie],
     );
     await tester.tap(find.byTooltip('Download'));
@@ -173,7 +196,7 @@ void main() {
   testWidgets('or downloaded anyway', (tester) async {
     final (planner, copies) = await _pump(
       tester,
-      DownloadButton(item: _movie),
+      const _Asks(),
       onLaptop: [_movie],
     );
     await tester.tap(find.byTooltip('Download'));

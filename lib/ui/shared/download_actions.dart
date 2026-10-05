@@ -15,6 +15,8 @@ import '../../player/models.dart';
 import '../../settings/notifier.dart';
 import '../../shared/errors/error_reports.dart';
 import '../../sync/copies.dart';
+import '../../sync/copy_offer.dart';
+import '../../sync/elsewhere.dart';
 import '../../titles/episodes.dart';
 import '../components/confirm_dialog.dart';
 import 'copy_prompt.dart';
@@ -27,10 +29,14 @@ extension DownloadActions on WidgetRef {
   /// Finds a torrent for [item] and queues it, shown first when the viewer
   /// reviews downloads or the match needs them; failures surface as error
   /// toasts. When a paired device already has it, offers to copy it from
-  /// there instead.
-  Future<void> download(BuildContext context, PlaybackItem item) async {
+  /// there instead, unless the viewer chose a torrent ([offerCopy] false).
+  Future<void> download(
+    BuildContext context,
+    PlaybackItem item, {
+    bool offerCopy = true,
+  }) async {
     final copies = read(peerCopiesProvider);
-    final offer = copies.offer((i) => i.id == item.id);
+    final offer = copies.offer((i) => offerCopy && i.id == item.id);
     if (!offer.isEmpty) {
       final choice = await askToCopy(context, offer);
       if (choice == null) return;
@@ -79,6 +85,17 @@ extension DownloadActions on WidgetRef {
       read(downloadReviewsProvider.notifier).reviewSeason(series, season),
       () => "Couldn't download ${series.title} season $season",
     );
+  }
+
+  /// Copies [held]'s finished file from its device without asking.
+  void copyHere(Elsewhere held) {
+    if (held.media case final media?) {
+      read(peerCopiesProvider).start(
+        CopyOffer([
+          (deviceId: held.deviceId, deviceName: held.device, media: media),
+        ]),
+      );
+    }
   }
 
   void _reviewed(Future<void> review, String Function() title) => unawaited(

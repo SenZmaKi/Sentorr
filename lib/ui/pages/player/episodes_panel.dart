@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../imdb/models.dart';
 import '../../../imdb/providers.dart';
+import '../../../library/models.dart';
+import '../../../library/notifier.dart';
 import '../../../player/models.dart';
+import '../../../sync/elsewhere.dart';
 import '../../../titles/episodes.dart';
 import '../../components/buttons.dart';
 import '../../components/cards/card_parts.dart';
@@ -44,6 +47,15 @@ class EpisodesPanel extends ConsumerStatefulWidget {
 }
 
 class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
+  /// Whether [item] would play from a paired device's copy. Picking it then
+  /// goes through the launch, which offers streaming instead, rather than
+  /// jumping within the queue, which would play the copy without asking.
+  bool _onlyElsewhere(PlaybackItem item) {
+    final here = ref.read(offlineStateProvider(item.id));
+    if (here is Downloaded || here is Downloading) return false;
+    return ref.read(elsewhereOfProvider(item.id))?.finished ?? false;
+  }
+
   final _currentKey = GlobalKey();
   late int? _season = widget.queue.current.season;
   bool _scrolled = false;
@@ -210,7 +222,7 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
     final inQueue = widget.queue.items.indexWhere((i) => i.id == t.id);
     final VoidCallback? play = current || upcoming
         ? null
-        : () => inQueue >= 0
+        : () => inQueue >= 0 && !_onlyElsewhere(widget.queue.items[inQueue])
               ? widget.onJump(inQueue)
               : ref.playEpisode(series, e, season: season);
     final still = t.poster != null
@@ -301,7 +313,11 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
             duration: item.runtime == null ? null : stampLabel(item.runtime!),
             artwork: TitleBackdrop(title: item.title),
             semanticLabel: 'Play ${item.name}',
-            onTap: i == widget.queue.index ? null : () => widget.onJump(i),
+            onTap: i == widget.queue.index
+                ? null
+                : () => _onlyElsewhere(item)
+                      ? ref.playItem(item)
+                      : widget.onJump(i),
           ),
         ],
       ],

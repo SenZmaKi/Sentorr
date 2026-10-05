@@ -45,11 +45,13 @@ class FixedPeers extends PeersNotifier {
   Map<String, PeerStatus> build() => peers;
 }
 
-/// A device named [name], paired, online and sharing [media].
+/// A device named [name], paired, online and sharing [media], with
+/// [downloads] on their way.
 ({PairedDevice device, Override peers}) onlinePeer(
   String name,
-  List<PeerMedia> media,
-) {
+  List<PeerMedia> media, {
+  List<PeerDownload> downloads = const [],
+}) {
   final identity = DeviceIdentity.generate(name);
   return (
     device: PairedDevice(
@@ -59,7 +61,13 @@ class FixedPeers extends PeersNotifier {
       pairedAt: DateTime(2026),
     ),
     peers: peersProvider.overrideWith(
-      () => FixedPeers({identity.id: PeerStatus(online: true, media: media)}),
+      () => FixedPeers({
+        identity.id: PeerStatus(
+          online: true,
+          media: media,
+          downloads: downloads,
+        ),
+      }),
     ),
   );
 }

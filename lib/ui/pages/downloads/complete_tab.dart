@@ -1,20 +1,33 @@
 import 'package:flutter/material.dart';
 
+import '../../../sync/elsewhere.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'download_groups.dart';
+import 'elsewhere_section.dart';
 
 /// Downloads on this device: movies first, then each series under its
 /// name, a season's episodes together in order.
 class CompleteTab extends StatelessWidget {
-  const CompleteTab({super.key, required this.views, required this.compact});
+  const CompleteTab({
+    super.key,
+    required this.views,
+    this.elsewhere = const [],
+    required this.compact,
+  });
 
   final List<DownloadView> views;
+
+  /// Paired devices' finished downloads that this device lacks.
+  final List<DeviceHoldings> elsewhere;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
     if (views.isEmpty) {
+      if (elsewhere.any((d) => d.items.isNotEmpty)) {
+        return ElsewhereSection(elsewhere, compact: compact, first: true);
+      }
       return const DownloadsEmpty(
         icon: Icons.download_done_rounded,
         title: 'Nothing downloaded yet',
@@ -53,6 +66,7 @@ class CompleteTab extends StatelessWidget {
             DownloadRows(season, compact: compact),
           ],
         ],
+        ElsewhereSection(elsewhere, compact: compact),
       ],
     );
   }

@@ -13,15 +13,17 @@ import '../settings_group.dart';
 import '../text_setting_field.dart';
 import 'pairing_sheet.dart';
 
-/// "Online · 12 downloads to stream", "Synced Yesterday" or why it could
-/// not be reached.
+/// "Online · 12 downloads to stream · 2 downloading", "Synced Yesterday"
+/// or why it could not be reached.
 String _statusLine(PairedDevice device, PeerStatus? peer) {
   if (peer?.syncing == true) return 'Syncing…';
   if (peer?.online == true) {
-    final count = peer!.media.length;
-    return count == 0
-        ? 'Online'
-        : 'Online · $count download${count == 1 ? '' : 's'} to stream';
+    final count = peer!.media.length, coming = peer.downloads.length;
+    return [
+      'Online',
+      if (count > 0) '$count download${count == 1 ? '' : 's'} to stream',
+      if (coming > 0) '$coming downloading',
+    ].join(' · ');
   }
   final synced = device.syncedAt;
   return synced == null

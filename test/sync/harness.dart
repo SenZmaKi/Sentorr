@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/downloads/manager.dart';
+import 'package:sentorr/downloads/models.dart';
 import 'package:sentorr/library/models.dart';
 import 'package:sentorr/sync/devices.dart';
 import 'package:sentorr/sync/identity.dart';
@@ -14,10 +15,12 @@ import '../support/fake_history.dart';
 import '../support/fake_library.dart';
 import '../support/fake_sync.dart';
 
-/// One Sentorr on loopback holding [library], with nothing saved to disk.
+/// One Sentorr on loopback holding [library], whose [downloads] are in the
+/// queue, with nothing saved to disk.
 Future<ProviderContainer> syncDevice(
   String name, {
   List<LibraryEntry> library = const [],
+  List<DownloadItem> downloads = const [],
   List<Override> overrides = const [],
 }) async {
   final container = ProviderContainer(
@@ -30,7 +33,7 @@ Future<ProviderContainer> syncDevice(
       ...watchHistoryOverrides(),
       ...followedSeriesOverrides(),
       ...libraryOverrides(library),
-      downloadsProvider.overrideWith((ref) => Stream.value(const [])),
+      downloadsProvider.overrideWith((ref) => Stream.value(downloads)),
       ...overrides,
     ],
   );

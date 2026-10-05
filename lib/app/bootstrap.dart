@@ -13,6 +13,7 @@ import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart' show windowManager;
 
+import '../backup/notifier.dart';
 import '../downloads/android/service.dart';
 import '../downloads/manager.dart';
 import '../downloads/taskbar_progress.dart';
@@ -24,6 +25,8 @@ import '../following/release_alerts.dart';
 import '../following/repository.dart';
 import '../library/download_alerts.dart';
 import '../library/notifier.dart';
+import '../library/planner.dart';
+import '../library/playback.dart';
 import '../library/repository.dart';
 import '../notifications/notification_service.dart';
 import '../settings/notifier.dart';
@@ -38,6 +41,11 @@ import '../shared/persistence/credential_store.dart';
 import '../shared/persistence/json_file_store.dart';
 import '../shared/persistence/window_state_repository.dart';
 import '../shared/provider_log_observer.dart';
+import '../sync/copies.dart';
+import '../sync/devices.dart';
+import '../sync/peers.dart';
+import '../sync/repository.dart';
+import '../sync/service.dart';
 import '../ui/shared/desktop_tray_controller.dart';
 import '../ui/shared/app_icon_controller.dart';
 import '../ui/shared/launch_at_startup_manager.dart';
@@ -89,10 +97,11 @@ class AppRuntime with WidgetsBindingObserver {
       'Starting on ${Platform.operatingSystem} '
       '${Platform.operatingSystemVersion}, data in ${paths.rootDirectory.path}',
     );
+    // Unsigned debug builds would ask for keychain access on every run.
+    final credentials = kDebugMode ? null : CredentialStore();
     final repository = SettingsRepository(
       JsonFileStore(paths.settingsFile),
-      // Unsigned debug builds would ask for keychain access on every run.
-      credentials: kDebugMode ? null : CredentialStore(),
+      credentials: credentials,
     );
     final settings = await repository.load();
     final history = WatchHistoryRepository(
@@ -106,6 +115,8 @@ class AppRuntime with WidgetsBindingObserver {
     final followed =
         await following.load() ?? FollowedSeries.fromHistory(watched);
     final library = LibraryRepository(JsonFileStore(paths.libraryFile));
+    final devices = DevicesRepository(JsonFileStore(paths.devicesFile));
+    final paired = await devices.load();
     final downloaded = await library.load();
     log.info(
       'Loaded settings, ${watched.length} watch history entries, '
@@ -125,6 +136,7 @@ class AppRuntime with WidgetsBindingObserver {
         prepareForUpdateProvider.overrideWithValue(() => runtime.flush()),
         quitApplicationProvider.overrideWithValue(() => runtime.quit()),
         appPathsProvider.overrideWithValue(paths),
+        credentialStoreProvider.overrideWithValue(credentials),
         settingsRepositoryProvider.overrideWithValue(repository),
         initialSettingsProvider.overrideWithValue(settings),
         watchHistoryRepositoryProvider.overrideWithValue(history),
@@ -133,6 +145,17 @@ class AppRuntime with WidgetsBindingObserver {
         initialFollowedSeriesProvider.overrideWithValue(followed),
         libraryRepositoryProvider.overrideWithValue(library),
         initialLibraryProvider.overrideWithValue(downloaded),
+        devicesRepositoryProvider.overrideWithValue(devices),
+        initialDevicesProvider.overrideWithValue(paired),
+        peerSourceProvider.overrideWith(
+          (ref) => ref.read(peersProvider.notifier).sourceFor,
+        ),
+        peerCopyProvider.overrideWith(
+          (ref) =>
+              (item) => ref
+                  .read(peerCopiesProvider)
+                  .copyIfOffered(item, automatic: true),
+        ),
         networkClientProvider.overrideWithValue(network),
         networkFailuresProvider.overrideWithValue(network.networkFailures),
         appIconControllerProvider.overrideWithValue(
@@ -142,6 +165,7 @@ class AppRuntime with WidgetsBindingObserver {
     );
     await container.read(sourceDirectoryProvider.notifier).initialize();
     unawaited(container.read(updatesProvider.notifier).initialize());
+    unawaited(container.read(backupProvider.notifier).initialize());
     runtime = AppRuntime._(
       container,
       network,
@@ -188,6 +212,7 @@ class AppRuntime with WidgetsBindingObserver {
     }
     if (Platform.isWindows) container.read(taskbarProgressProvider).start();
     container.read(autoDownloadsProvider).start();
+    unawaited(container.read(syncServiceProvider).start());
     // Listens for failed requests from the start, whatever page is open.
     container.read(onlineProvider);
     WidgetsBinding.instance.addObserver(runtime);
@@ -202,6 +227,7 @@ class AppRuntime with WidgetsBindingObserver {
     await history.store.flushed;
     await following.store.flushed;
     await container.read(libraryRepositoryProvider).store.flushed;
+    await container.read(devicesRepositoryProvider).store.flushed;
     if (supportsWindowCustomization) await window.flush();
     await flushLogs();
   }
@@ -215,6 +241,11 @@ class AppRuntime with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_quitting) return;
+    if (state == AppLifecycleState.resumed) {
+      // Back from the background: catch up with the other devices.
+      unawaited(container.read(peersProvider.notifier).syncAll());
+      return;
+    }
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
       flush().catchError((Object error, StackTrace stack) {

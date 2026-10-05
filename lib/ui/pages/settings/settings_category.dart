@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../shared/window_manager.dart';
 import 'sections/appearance_section.dart';
+import 'sections/backup_section.dart';
 import 'sections/choosing_section.dart';
+import 'sections/devices_section.dart';
 import 'sections/downloads_section.dart';
 import 'sections/following_section.dart';
 import 'sections/network_section.dart';
@@ -57,7 +59,13 @@ enum SettingsCategory {
     SettingsArea.library,
     'Watching',
     Icons.history_rounded,
-    'Continue watching and the series you follow',
+    'Continue watching, followed series and backup',
+  ),
+  devices(
+    SettingsArea.library,
+    'Devices',
+    Icons.devices_rounded,
+    'Sync and stream between your devices',
   ),
   notifications(
     SettingsArea.library,
@@ -103,7 +111,12 @@ enum SettingsCategory {
     streaming => const StreamingSection(),
     downloads => const DownloadsSection(),
     network => const NetworkSection(),
-    watching => const _Groups([WatchingSection(), FollowingSection()]),
+    watching => const _Groups([
+      WatchingSection(),
+      FollowingSection(),
+      BackupSection(),
+    ]),
+    devices => const DevicesSection(),
     notifications => const NotificationsSection(),
     general => _Groups([
       const AppearanceSection(),

@@ -37,6 +37,23 @@ class AppDestinationNotifier extends Notifier<AppDestination> {
   void go(AppDestination destination) => state = destination;
 }
 
+/// Destinations whose page takes Back itself, e.g. settings returning from
+/// an open category to the list, before the shell does.
+final pageBackProvider =
+    NotifierProvider<PageBackNotifier, Set<AppDestination>>(
+      PageBackNotifier.new,
+    );
+
+class PageBackNotifier extends Notifier<Set<AppDestination>> {
+  @override
+  Set<AppDestination> build() => const {};
+
+  void claim(AppDestination page, bool claimed) {
+    if (state.contains(page) == claimed) return;
+    state = claimed ? {...state, page} : ({...state}..remove(page));
+  }
+}
+
 /// Responsive navigation chrome: bottom bar when compact, a slim rail above.
 /// Pages stay alive so scroll and input persist. Title pages open over the
 /// current destination, inside the same chrome.
@@ -84,13 +101,16 @@ class AppShell extends ConsumerWidget {
     final playing =
         ref.watch(playerSessionProvider.select((s) => s != null)) &&
         ref.watch(playerViewProvider) != PlayerView.mini;
+    final pageBack =
+        title == null && ref.watch(pageBackProvider).contains(current);
     return PopScope(
       canPop:
           !playing &&
+          !pageBack &&
           title == null &&
           (!bottomNav || current == AppDestination.home),
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop || playing) return;
+        if (didPop || playing || pageBack) return;
         if (title != null) {
           titles.back();
         } else {

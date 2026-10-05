@@ -36,6 +36,7 @@ class StreamStatus {
     this.next,
     this.retryAt,
     this.localFile,
+    this.peer,
   });
 
   final StreamStage stage;
@@ -57,6 +58,9 @@ class StreamStatus {
 
   /// The downloaded file playing instead of a torrent.
   final String? localFile;
+
+  /// The paired device [localFile] plays from; null when it is this one's.
+  final String? peer;
 
   bool get starting =>
       stage == StreamStage.finding ||
@@ -83,6 +87,7 @@ class StreamStatus {
       next: resolved == StreamStage.switching ? next : null,
       retryAt: resolved == StreamStage.switching ? retryAt : null,
       localFile: localFile,
+      peer: peer,
     );
   }
 

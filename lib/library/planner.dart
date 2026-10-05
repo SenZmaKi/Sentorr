@@ -38,6 +38,13 @@ class DownloadPlanException implements Exception {
 
 final downloadPlannerProvider = Provider<DownloadPlanner>(DownloadPlanner.new);
 
+/// Starts copying an automatic download from a paired device that has it
+/// instead of downloading it; false when none does. The app provides it.
+final peerCopyProvider = Provider<bool Function(PlaybackItem item)>(
+  (ref) =>
+      (_) => false,
+);
+
 /// Turns "download this" into a queued download: finds a torrent, picks
 /// the item's file from its metadata and names it in the library layout.
 class DownloadPlanner {
@@ -51,7 +58,8 @@ class DownloadPlanner {
   /// Queues [item] from [torrent], or the best torrent found; [automatic]
   /// downloads take only exact matches. When a torrent can't be queued the
   /// next untried one is, as in streaming. Returns the torrent queued from;
-  /// does nothing when [item] is already downloaded or being prepared.
+  /// does nothing when [item] is already downloaded or being prepared, and
+  /// copies an automatic one a paired device has.
   Future<TorrentCandidate?> download(
     PlaybackItem item, {
     TorrentCandidate? torrent,
@@ -60,6 +68,8 @@ class DownloadPlanner {
   }) async {
     final library = _ref.read(libraryProvider.notifier);
     final planning = _ref.read(planningProvider.notifier);
+    // On its way from a paired device.
+    if (_ref.read(copyingProvider).containsKey(item.id)) return null;
     final known = library.entry(item.id);
     // A failed download's torrent is not the first choice of its retry.
     final avoid = <String>{};
@@ -73,6 +83,8 @@ class DownloadPlanner {
       }
     }
     if (_ref.read(planningProvider).contains(item.id)) return null;
+    // Nobody to ask: a copy over the network beats a torrent.
+    if (automatic && _ref.read(peerCopyProvider)(item)) return null;
     planning.start(item.id);
     try {
       return await _queueFirstWorking(
@@ -230,7 +242,7 @@ class DownloadPlanner {
           .read(downloadQueueProvider)
           .enqueue(
             TorrentDownloadJob(
-              title: '$item',
+              title: item.label,
               batchId: item.series == null || item.season == null
                   ? null
                   : '${item.series!.id}:season:${item.season}',

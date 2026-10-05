@@ -37,6 +37,7 @@ import '../support/fake_following.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
+import '../support/fake_sync.dart';
 import '../support/fake_torrents.dart';
 import '../support/viewports.dart';
 
@@ -64,6 +65,7 @@ Future<ProviderContainer> _pumpShell(
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
       ...followedSeriesOverrides(),
+      ...syncOverrides(),
       ...libraryOverrides(),
       ...watchHistoryOverrides(),
       imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
@@ -158,6 +160,7 @@ Future<void> _pumpLaunch(
       overrides: [
         initialSettingsProvider.overrideWithValue(const AppSettings()),
         ...followedSeriesOverrides(),
+        ...syncOverrides(),
         ...libraryOverrides(),
         downloadsProvider.overrideWith((ref) => Stream.value(const [])),
         ...watchHistoryOverrides(),

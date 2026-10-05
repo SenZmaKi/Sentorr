@@ -93,7 +93,9 @@ class _NerdStatsState extends State<NerdStats> {
       ),
       (
         'Source',
-        status?.localFile != null
+        status?.peer != null
+            ? 'Downloaded on ${status!.peer}'
+            : status?.localFile != null
             ? 'Downloaded file'
             : status?.stage.name ?? 'Waiting',
       ),

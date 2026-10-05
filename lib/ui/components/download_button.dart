@@ -53,12 +53,12 @@ class DownloadButton extends ConsumerWidget {
             onPressed: onTap,
           );
     return switch (state) {
-      NotDownloaded() => trigger(() => ref.download(item)),
+      NotDownloaded() => trigger(() => ref.download(context, item)),
       Planning() => trigger(null),
       Downloaded(:final entry) when !menu => trigger(
         () => ref.playDownload(entry),
       ),
-      DownloadFailed() when !menu => trigger(() => ref.download(item)),
+      DownloadFailed() when !menu => trigger(() => ref.download(context, item)),
       _ when !menu => trigger(
         () => ref
             .read(appDestinationProvider.notifier)
@@ -77,6 +77,14 @@ class DownloadButton extends ConsumerWidget {
     WidgetRef ref,
     OfflineState state,
   ) => switch (state) {
+    Downloading(:final entry, status: OfflineProgress.copying) => [
+      MenuAction(
+        'Cancel copy',
+        icon: Icons.close_rounded,
+        destructive: true,
+        onPressed: () => ref.cancelDownload(context, entry),
+      ),
+    ],
     Downloading(:final entry, :final status) => [
       if (status == OfflineProgress.paused)
         MenuAction(
@@ -119,7 +127,7 @@ class DownloadButton extends ConsumerWidget {
       MenuAction(
         'Try again',
         icon: Icons.refresh_rounded,
-        onPressed: () => ref.download(item),
+        onPressed: () => ref.download(context, item),
       ),
       MenuAction(
         'Remove',
@@ -156,28 +164,34 @@ class _Look {
         'Preparing',
         'Finding a torrent to download',
       ),
-      Downloading(:final progress, :final status) => switch (status) {
-        OfflineProgress.preparing => const _Look(
-          DownloadRing(),
-          'Preparing',
-          'Getting the torrent ready',
-        ),
-        OfflineProgress.queued => _Look(
-          DownloadRing(value: progress, glyph: Icons.more_horiz_rounded),
-          'Queued',
-          'Waiting to download · ${percent(progress)}',
-        ),
-        OfflineProgress.downloading => _Look(
-          DownloadRing(value: progress, glyph: Icons.arrow_downward_rounded),
-          'Downloading ${percent(progress)}',
-          'Downloading · ${percent(progress)}',
-        ),
-        OfflineProgress.paused => _Look(
-          DownloadRing(value: progress, glyph: Icons.pause_rounded),
-          'Paused ${percent(progress)}',
-          'Paused · ${percent(progress)}',
-        ),
-      },
+      Downloading(:final progress, :final status, :final from) =>
+        switch (status) {
+          OfflineProgress.preparing => const _Look(
+            DownloadRing(),
+            'Preparing',
+            'Getting the torrent ready',
+          ),
+          OfflineProgress.queued => _Look(
+            DownloadRing(value: progress, glyph: Icons.more_horiz_rounded),
+            'Queued',
+            'Waiting to download · ${percent(progress)}',
+          ),
+          OfflineProgress.downloading => _Look(
+            DownloadRing(value: progress, glyph: Icons.arrow_downward_rounded),
+            'Downloading ${percent(progress)}',
+            'Downloading · ${percent(progress)}',
+          ),
+          OfflineProgress.paused => _Look(
+            DownloadRing(value: progress, glyph: Icons.pause_rounded),
+            'Paused ${percent(progress)}',
+            'Paused · ${percent(progress)}',
+          ),
+          OfflineProgress.copying => _Look(
+            DownloadRing(value: progress, glyph: Icons.devices_rounded),
+            'Copying ${percent(progress)}',
+            'Copying from $from · ${percent(progress)}',
+          ),
+        },
       Downloaded() => _Look(
         Icon(
           Icons.download_done_rounded,

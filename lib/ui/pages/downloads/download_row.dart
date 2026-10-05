@@ -109,6 +109,13 @@ class DownloadRow extends ConsumerWidget {
   }
 
   List<Widget> _actions(BuildContext context, WidgetRef ref) => switch (state) {
+    Downloading(status: OfflineProgress.copying) => [
+      SIconButton(
+        icon: Icons.close_rounded,
+        tooltip: 'Cancel copy',
+        onPressed: () => ref.cancelDownload(context, entry),
+      ),
+    ],
     Downloading(:final status) => [
       if (status == OfflineProgress.paused)
         SIconButton(
@@ -144,7 +151,7 @@ class DownloadRow extends ConsumerWidget {
       SIconButton(
         icon: Icons.refresh_rounded,
         tooltip: 'Try again',
-        onPressed: () => ref.download(entry.item),
+        onPressed: () => ref.download(context, entry.item),
       ),
       SIconButton(
         icon: Icons.close_rounded,
@@ -261,7 +268,7 @@ enum _Tone { neutral, info, success, error }
   OfflineState state,
   DownloadItem? d,
 ) => switch (state) {
-  Downloading(:final status, :final progress) => switch (status) {
+  Downloading(:final status, :final progress, :final from) => switch (status) {
     OfflineProgress.preparing => (
       Icons.hourglass_empty_rounded,
       'Preparing',
@@ -276,6 +283,11 @@ enum _Tone { neutral, info, success, error }
     OfflineProgress.downloading => (
       Icons.downloading_rounded,
       'Downloading ${(progress * 100).floor()}%',
+      _Tone.info,
+    ),
+    OfflineProgress.copying => (
+      Icons.devices_rounded,
+      'Copying from $from ${(progress * 100).floor()}%',
       _Tone.info,
     ),
   },

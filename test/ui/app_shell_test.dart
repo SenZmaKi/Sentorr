@@ -13,6 +13,7 @@ import 'package:sentorr/ui/shared/theme/theme.dart';
 
 import '../support/fake_following.dart';
 import '../support/fake_library.dart';
+import '../support/fake_sync.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 
@@ -20,6 +21,7 @@ Widget _app(Brightness brightness) => ProviderScope(
   overrides: [
     initialSettingsProvider.overrideWithValue(const AppSettings()),
     ...followedSeriesOverrides(),
+    ...syncOverrides(),
     ...libraryOverrides(),
     ...watchHistoryOverrides(),
     imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
@@ -76,6 +78,32 @@ void main() {
     );
     container.read(appDestinationProvider.notifier).go(AppDestination.settings);
     await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(container.read(appDestinationProvider), AppDestination.home);
+  });
+
+  testWidgets('Back leaves an open settings category for the list first', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(_app(Brightness.dark));
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(AppShell)),
+    );
+    container.read(appDestinationProvider.notifier).go(AppDestination.settings);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Finding torrents'));
+    await tester.pumpAndSettle();
+    expect(find.text('All settings'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(container.read(appDestinationProvider), AppDestination.settings);
+    expect(find.text('All settings'), findsNothing);
+
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(container.read(appDestinationProvider), AppDestination.home);

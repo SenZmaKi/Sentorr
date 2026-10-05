@@ -34,7 +34,7 @@ Paths below are relative to `../senpwai/`. Read the relevant branch on demand ra
 
 ## Existing Sentorr references
 
-- Catalog/metadata: `lib/imdb/` and `docs/IMDB/`. Torrent search and resolution: `lib/torrents/`; streaming and downloads: `lib/player/` and `lib/downloads/`. Configuration: `lib/settings/`. UI/player behavior: `lib/ui/`. Behavioral examples: `test/`.
+- Catalog/metadata: `lib/imdb/` and `docs/IMDB/`. Torrent search and resolution: `lib/torrents/`; streaming and downloads: `lib/player/` and `lib/downloads/`. Configuration: `lib/settings/`. Device pairing, sync and peer streaming: `lib/sync/` and `docs/sync/ARCHITECTURE.md`. UI/player behavior: `lib/ui/`. Behavioral examples: `test/`.
 - The retired Electron app is available in Git history at commit `b18f176` when historical behavior needs investigation.
 - Playback work: consult `tool/codec_lab/README.md` and `tool/codec_lab/VALIDATION.md`, then its Flutter code. This MediaKit prototype covers local-file playback; it does not establish torrent streaming support. Check the recorded native-library findings before making codec compatibility claims.
 
@@ -43,6 +43,8 @@ Paths below are relative to `../senpwai/`. Read the relevant branch on demand ra
 - `website/` is the Astro marketing site, deployed to GitHub Pages beside the update feeds. Read `website/AGENTS.md` before changing it; it follows `DESIGN.md`'s tokens and Senpwai's `website/` layout.
 
 ## Misc
+- Google Drive backup needs build-time OAuth credentials. Local runs and builds: `flutter run --dart-define-from-file=dart_defines.local.json` (gitignored; keys `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`). Release workflows read the same names from repo secrets. The Drive option is hidden without them.
 - Keep files thin and focused instead of owning a lot of functionality, break down most things that go over 300 lines into smaller components unless justified.
 - When asked to commit use concise clear messages e.g., "Add home page" and no co-authored-by.
 - When running the app to test sth run it in hidden mode or sth to avoid it getting in focus and distracting the developer.
+

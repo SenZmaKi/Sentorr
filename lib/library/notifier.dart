@@ -122,8 +122,55 @@ class PlanningNotifier extends Notifier<Set<String>> {
   void end(String id) => state = {...state}..remove(id);
 }
 
+/// A file on its way from a paired device instead of a torrent. Its
+/// [entry] joins the library once the file is complete.
+class CopyProgress {
+  const CopyProgress(this.entry, {required this.from, this.progress = 0});
+  final LibraryEntry entry;
+
+  /// The device's name.
+  final String from;
+
+  /// 0–1; 0 also while waiting for earlier copies.
+  final double progress;
+}
+
+/// Items being copied from paired devices, by id.
+final copyingProvider =
+    NotifierProvider<CopyingNotifier, Map<String, CopyProgress>>(
+      CopyingNotifier.new,
+    );
+
+class CopyingNotifier extends Notifier<Map<String, CopyProgress>> {
+  @override
+  Map<String, CopyProgress> build() => const {};
+
+  void set(CopyProgress copy) => state = {...state, copy.entry.id: copy};
+  void end(String id) => state = {...state}..remove(id);
+}
+
+/// Whether item [id] can be asked to download: not downloaded, on its
+/// way, copying or in another review. A failed download can be again.
+bool downloadable(Ref ref, String id) {
+  if (ref.read(planningProvider).contains(id) ||
+      ref.read(copyingProvider).containsKey(id)) {
+    return false;
+  }
+  final entry = ref.read(libraryProvider.notifier).entry(id);
+  if (entry == null) return true;
+  final download = ref
+      .read(downloadsProvider)
+      .value
+      ?.where((d) => d.id == entry.downloadId)
+      .firstOrNull;
+  return offlineStateOf(entry, download) is DownloadFailed;
+}
+
 /// Where item [id] stands offline.
 final offlineStateProvider = Provider.family<OfflineState, String>((ref, id) {
+  if (ref.watch(copyingProvider.select((all) => all[id])) case final copy?) {
+    return copy.state;
+  }
   if (ref.watch(planningProvider).contains(id)) return const Planning();
   final entry = ref.watch(
     libraryProvider.select((all) => all.where((e) => e.id == id).firstOrNull),
@@ -171,4 +218,13 @@ OfflineState offlineStateOf(LibraryEntry entry, DownloadItem? download) {
       status: OfflineProgress.paused,
     ),
   };
+}
+
+extension CopyState on CopyProgress {
+  OfflineState get state => Downloading(
+    entry,
+    progress: progress,
+    status: OfflineProgress.copying,
+    from: from,
+  );
 }

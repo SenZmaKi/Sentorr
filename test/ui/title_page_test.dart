@@ -38,6 +38,7 @@ import 'package:sentorr/ui/shared/title_route.dart';
 
 import '../support/fake_following.dart';
 import '../support/fake_library.dart';
+import '../support/fake_sync.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_planner.dart';
@@ -113,6 +114,7 @@ Future<ProviderContainer> _pump(
       initialSettingsProvider.overrideWithValue(const AppSettings()),
       if (state.isEmpty) ...[
         ...followedSeriesOverrides(),
+        ...syncOverrides(),
         ...libraryOverrides(),
         ...watchHistoryOverrides(),
       ] else
@@ -280,6 +282,7 @@ void main() {
       tester,
       state: [
         ...followedSeriesOverrides(),
+        ...syncOverrides(),
         ...libraryOverrides(),
         ...watchHistoryOverrides(),
         downloadPlannerProvider.overrideWithValue(planner),
@@ -502,6 +505,7 @@ void main() {
               progress: .9,
             ).copyWith(autoDownload: true),
           ]),
+          ...syncOverrides(),
           ...libraryOverrides([
             LibraryEntry(
               item: episode,

@@ -132,13 +132,22 @@ class Planning extends OfflineState {
 
 /// Queued, transferring or paused; [progress] is 0–1.
 class Downloading extends OfflineState {
-  const Downloading(this.entry, {required this.progress, required this.status});
+  const Downloading(
+    this.entry, {
+    required this.progress,
+    required this.status,
+    this.from,
+  });
   final LibraryEntry entry;
   final double progress;
   final OfflineProgress status;
+
+  /// The paired device a [OfflineProgress.copying] file comes from.
+  final String? from;
 }
 
-enum OfflineProgress { preparing, queued, downloading, paused }
+/// [copying] comes from a paired device rather than a torrent.
+enum OfflineProgress { preparing, queued, downloading, paused, copying }
 
 /// The file is on disk.
 class Downloaded extends OfflineState {

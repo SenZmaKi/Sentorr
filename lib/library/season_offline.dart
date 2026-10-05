@@ -18,7 +18,7 @@ class SeasonOffline {
     this.queueing = false,
   });
 
-  /// Each of the season's library entries, in no order.
+  /// Each of the season's library entries and copies, in no order.
   final List<OfflineState> states;
 
   /// Their downloads still in the queue's history.
@@ -39,6 +39,8 @@ class SeasonOffline {
   int get transferring => _moving.length;
   int get paused =>
       _moving.where((s) => s.status == OfflineProgress.paused).length;
+  int get copying =>
+      _moving.where((s) => s.status == OfflineProgress.copying).length;
 
   /// Episodes on their way, paused ones included.
   bool get active => transferring > 0;
@@ -67,10 +69,22 @@ class SeasonOffline {
       .where((d) => !d.status.isTerminal && d.status != DownloadStatus.seeding)
       .fold(0, (sum, d) => sum + d.totalBytes - d.downloadedBytes);
 
-  /// Share of the season's bytes on disk; by episode before sizes are known.
+  /// Share of the season's bytes on disk; by episode before sizes are
+  /// known or while episodes copy from another device.
   double get progress {
-    if (totalBytes > 0) return (downloadedBytes / totalBytes).clamp(0, 1);
-    return states.isEmpty ? 0 : downloaded / states.length;
+    if (totalBytes > 0 && copying == 0) {
+      return (downloadedBytes / totalBytes).clamp(0, 1);
+    }
+    if (states.isEmpty) return 0;
+    final done = states.fold<double>(
+      0,
+      (sum, s) => switch (s) {
+        Downloaded() => sum + 1,
+        Downloading(:final progress) => sum + progress,
+        _ => sum,
+      },
+    );
+    return done / states.length;
   }
 
   Set<String> get downloadIds => {for (final d in downloads) d.id};
@@ -94,8 +108,19 @@ final seasonOfflineProvider = Provider.family<SeasonOffline, SeasonKey>((
     for (final d in ref.watch(downloadsProvider).value ?? <DownloadItem>[])
       if (ids.contains(d.id)) d.id: d,
   };
+  final copying = ref.watch(
+    copyingProvider.select(
+      (all) => [
+        for (final c in all.values)
+          if (c.entry.item.series?.id == seriesId &&
+              c.entry.item.season == season)
+            c,
+      ],
+    ),
+  );
   return SeasonOffline(
     states: [
+      for (final c in copying) c.state,
       for (final e in entries) offlineStateOf(e, downloads[e.downloadId]),
     ],
     downloads: downloads.values.toList(),

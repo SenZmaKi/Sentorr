@@ -64,13 +64,17 @@ class DownloadsPage extends ConsumerWidget {
     final planning = ref.watch(planningProvider).length;
     final seasons = _planningSeasons(ref);
     final reviews = ref.watch(autoDownloadReviewsProvider).length;
+    final copying = ref.watch(copyingProvider);
     final views = <DownloadView>[
+      for (final c in copying.values)
+        (entry: c.entry, download: null, state: c.state),
       for (final e in entries)
-        (
-          entry: e,
-          download: downloads[e.downloadId],
-          state: offlineStateOf(e, downloads[e.downloadId]),
-        ),
+        if (!copying.containsKey(e.id))
+          (
+            entry: e,
+            download: downloads[e.downloadId],
+            state: offlineStateOf(e, downloads[e.downloadId]),
+          ),
     ];
     final ongoing = [
       for (final v in views)

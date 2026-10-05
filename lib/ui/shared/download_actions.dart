@@ -14,8 +14,10 @@ import '../../imdb/models.dart';
 import '../../player/models.dart';
 import '../../settings/notifier.dart';
 import '../../shared/errors/error_reports.dart';
+import '../../sync/copies.dart';
 import '../../titles/episodes.dart';
 import '../components/confirm_dialog.dart';
+import 'copy_prompt.dart';
 import 'open_folder.dart';
 import 'play_route.dart';
 import 'title_format.dart';
@@ -24,21 +26,45 @@ import 'title_format.dart';
 extension DownloadActions on WidgetRef {
   /// Finds a torrent for [item] and queues it, shown first when the viewer
   /// reviews downloads or the match needs them; failures surface as error
-  /// toasts.
-  void download(PlaybackItem item) =>
-      _reviewed(read(downloadReviewsProvider.notifier).review([item]), () {
-        return "Couldn't download ${itemLabel(item)}";
-      });
+  /// toasts. When a paired device already has it, offers to copy it from
+  /// there instead.
+  Future<void> download(BuildContext context, PlaybackItem item) async {
+    final copies = read(peerCopiesProvider);
+    final offer = copies.offer((i) => i.id == item.id);
+    if (!offer.isEmpty) {
+      final choice = await askToCopy(context, offer);
+      if (choice == null) return;
+      if (choice == CopyChoice.copy) return copies.start(offer);
+    }
+    _reviewed(read(downloadReviewsProvider.notifier).review([item]), () {
+      return "Couldn't download ${itemLabel(item)}";
+    });
+  }
 
   /// Finds torrents for every aired episode of [series]' [season] not
-  /// downloaded yet and queues them. Without the review to confirm it, asks
-  /// first, since a season can be many gigabytes.
+  /// downloaded yet and queues them. Episodes paired devices have can be
+  /// copied from them instead, the rest downloaded. Without the review or
+  /// that offer to confirm it, asks first, since a season can be many
+  /// gigabytes.
   Future<void> downloadSeason(
     BuildContext context,
     ImdbTitle series,
     int season,
   ) async {
-    if (!read(settingsProvider).downloads.reviewMatches &&
+    final copies = read(peerCopiesProvider);
+    final offer = copies.offer(
+      (i) => i.series?.id == series.id && i.season == season,
+    );
+    if (!offer.isEmpty) {
+      final choice = await askToCopy(
+        context,
+        offer,
+        rest: 'the rest of season $season',
+      );
+      if (choice == null) return;
+      // Copying first leaves those episodes out of what is searched.
+      if (choice == CopyChoice.copy) copies.start(offer);
+    } else if (!read(settingsProvider).downloads.reviewMatches &&
         !await confirm(
           context,
           title: 'Download season $season?',
@@ -95,6 +121,12 @@ extension DownloadActions on WidgetRef {
     try {
       read(downloadReviewsProvider.notifier).cancelSeason(seriesId, season);
       read(seasonDownloadsProvider.notifier).cancel(seriesId, season);
+      for (final c in read(copyingProvider).values) {
+        final item = c.entry.item;
+        if (item.series?.id == seriesId && item.season == season) {
+          await read(peerCopiesProvider).cancel(c.entry.id);
+        }
+      }
       // Unfinished episodes leave the list at once; their partial files go.
       final unfinished = {
         for (final e in read(libraryProvider))
@@ -114,9 +146,23 @@ extension DownloadActions on WidgetRef {
     }
   }
 
-  /// Stops [entry]'s unfinished download and deletes its partial file,
-  /// after asking.
+  /// Stops [entry]'s unfinished download or copy and deletes its partial
+  /// file, after asking.
   Future<void> cancelDownload(BuildContext context, LibraryEntry entry) async {
+    if (read(copyingProvider).containsKey(entry.id)) {
+      if (await confirm(
+        context,
+        title: 'Cancel copy?',
+        message:
+            '${itemLabel(entry.item)} stops copying and what arrived is '
+            'deleted.',
+        confirmLabel: 'Cancel copy',
+        cancelLabel: 'Keep copying',
+      )) {
+        await read(peerCopiesProvider).cancel(entry.id);
+      }
+      return;
+    }
     if (!await confirm(
       context,
       title: 'Cancel download?',

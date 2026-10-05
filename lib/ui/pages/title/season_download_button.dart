@@ -63,9 +63,15 @@ class SeasonDownloadButton extends ConsumerWidget {
                   ? Icons.pause_rounded
                   : Icons.arrow_downward_rounded,
             ),
-            s.allPaused ? 'Paused $percent' : 'Downloading $percent',
+            s.allPaused
+                ? 'Paused $percent'
+                : s.copying == s.transferring
+                ? 'Copying $percent'
+                : 'Downloading $percent',
             s.allPaused
                 ? 'Season $season paused · $percent'
+                : s.copying == s.transferring
+                ? 'Copying season $season · $percent'
                 : 'Downloading season $season · $percent',
           )
         : complete

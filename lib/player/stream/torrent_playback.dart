@@ -113,7 +113,16 @@ class TorrentPlayback {
     if (_stale(generation)) return;
     final saved = torrent == null && options == null ? offline(item) : null;
     if (saved is LocalFile && File(saved.path).existsSync()) {
-      return _playLocal(generation, item, saved.path, start);
+      return _playLocal(generation, item, Uri.file(saved.path), start);
+    }
+    if (saved is PeerFile) {
+      return _playLocal(
+        generation,
+        item,
+        saved.url,
+        start,
+        peer: saved.deviceName,
+      );
     }
     if (saved is DownloadTorrent) {
       _log.info('Streaming $item from its download');
@@ -362,18 +371,25 @@ class TorrentPlayback {
   }
 
   /// Plays the downloaded file at [path]; no torrent is involved.
+  /// Plays a finished download from [uri]: a file here, or a paired
+  /// device's through the loopback proxy.
   Future<void> _playLocal(
     int generation,
     PlaybackItem item,
-    String path,
-    Duration? start,
-  ) async {
-    _log.info('Playing $item from $path');
-    status.value = StreamStatus(stage: StreamStage.preparing, localFile: path);
+    Uri uri,
+    Duration? start, {
+    String? peer,
+  }) async {
+    _log.info('Playing $item from ${peer ?? uri.toFilePath()}');
+    status.value = StreamStatus(
+      stage: StreamStage.preparing,
+      localFile: peer == null ? uri.toFilePath() : uri.toString(),
+      peer: peer,
+    );
     await outputReady();
     if (_stale(generation)) return;
     _local = true;
-    await _player.open(Media(Uri.file(path).toString(), start: start));
+    await _player.open(Media(uri.toString(), start: start));
     _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
   }
 

@@ -11,11 +11,19 @@ import '../torrents/resolution_models.dart';
 import 'models.dart';
 import 'notifier.dart';
 
+/// Where else a download may be, e.g. on a paired device; none unless the
+/// app provides it.
+final peerSourceProvider = Provider<OfflineLookup>(
+  (ref) =>
+      (_) => null,
+);
+
 /// [item]'s download for the player: its file once finished, its torrent
-/// while downloading; null when there is none to use.
+/// while downloading, else a paired device's copy; null when there is none
+/// to use.
 OfflineSource? offlineSourceFor(Ref ref, PlaybackItem item) {
   final entry = ref.read(libraryProvider.notifier).entry(item.id);
-  if (entry == null) return null;
+  if (entry == null) return ref.read(peerSourceProvider)(item);
   final download = ref
       .read(downloadsProvider)
       .value
@@ -34,7 +42,7 @@ OfflineSource? offlineSourceFor(Ref ref, PlaybackItem item) {
       ),
       entry.fileIndex,
     ),
-    _ => null,
+    _ => ref.read(peerSourceProvider)(item),
   };
 }
 

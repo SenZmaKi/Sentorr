@@ -14,7 +14,6 @@ import '../player/torrent_search.dart';
 import '../settings/notifier.dart';
 import '../torrents/match.dart';
 import '../torrents/resolution_models.dart';
-import 'models.dart';
 import 'notifier.dart';
 import 'planner.dart';
 import 'review_models.dart';
@@ -175,19 +174,7 @@ class DownloadReviews extends Notifier<List<DownloadReview>> {
 
   bool get _reviewing => ref.read(settingsProvider).downloads.reviewMatches;
 
-  /// Not downloaded, on its way, or in another review. A failed download
-  /// can be found again.
-  bool _free(PlaybackItem item) {
-    if (ref.read(planningProvider).contains(item.id)) return false;
-    final entry = ref.read(libraryProvider.notifier).entry(item.id);
-    if (entry == null) return true;
-    final download = ref
-        .read(downloadsProvider)
-        .value
-        ?.where((d) => d.id == entry.downloadId)
-        .firstOrNull;
-    return offlineStateOf(entry, download) is DownloadFailed;
-  }
+  bool _free(PlaybackItem item) => downloadable(ref, item.id);
 
   _Run _open(DownloadReview review) {
     final run = _Run(review.id);

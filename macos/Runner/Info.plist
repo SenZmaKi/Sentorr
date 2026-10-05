@@ -36,5 +36,11 @@
 	<true/>
 	<key>SUAutomaticallyUpdate</key>
 	<false/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Sentorr finds your other devices on this network to sync what you watch and stream your downloads between them.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_sentorr._tcp</string>
+	</array>
 </dict>
 </plist>

@@ -24,6 +24,10 @@ class AppPaths {
       File(path.join(rootDirectory.path, 'state', 'downloads.json'));
   File get libraryFile =>
       File(path.join(rootDirectory.path, 'state', 'library.json'));
+
+  /// This device's sync identity and the devices paired with it.
+  File get devicesFile =>
+      File(path.join(rootDirectory.path, 'state', 'devices.json'));
   Directory get networkCacheDirectory => directory('cache/http');
   Directory get imageCacheDirectory => directory('cache/images');
 

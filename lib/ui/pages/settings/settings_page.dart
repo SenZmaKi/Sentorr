@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../components/app_shell.dart';
 
 import '../../components/buttons.dart';
 import '../../components/inputs.dart';
@@ -13,14 +16,14 @@ import '../../shared/layout/adaptive.dart';
 /// (narrower there), a list that opens each category on compact. Search shows
 /// matching settings from every category at once, each group naming its
 /// category; typos are forgiven only when nothing matches as typed.
-class SettingsPage extends StatefulWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// Settings rows hold a label column and a control; past this the pair
   /// drifts apart, so the open category caps here.
   static const _content = 760.0;
@@ -45,6 +48,21 @@ class _SettingsPageState extends State<SettingsPage> {
   /// settling, so no message shows.
   bool _nothing = false;
   SettingsHits? _hits;
+
+  /// Whether Back last claimed from the shell, which then leaves it here.
+  bool _claimsBack = false;
+
+  /// Back closes an open category before the shell leaves settings.
+  void _claimBack(bool claim) {
+    if (claim == _claimsBack) return;
+    _claimsBack = claim;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(pageBackProvider.notifier)
+          .claim(AppDestination.settings, _claimsBack);
+    });
+  }
 
   @override
   void dispose() {
@@ -102,6 +120,7 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (context, box) {
         final layout = LayoutSize(box.biggest);
         final gutter = gutterFor(layout);
+        _claimBack(layout.compact && _opened != null);
         return Padding(
           padding: EdgeInsets.fromLTRB(gutter, gutter, gutter, 0),
           child: layout.compact ? _narrowLayout() : _wideLayout(layout),

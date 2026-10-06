@@ -53,6 +53,16 @@ class MainFlutterWindow: NSWindow {
       name: "sentorr/app_termination", binaryMessenger: flutterViewController.engine.binaryMessenger
     )
     (NSApp.delegate as? AppDelegate)?.setTerminationChannel(terminationChannel)
+    #if DEBUG
+    terminationChannel.setMethodCallHandler { call, result in
+      guard call.method == "probeQuit" else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      result(nil)
+      NSApp.terminate(nil)
+    }
+    #endif
 
     let windowReopenChannel = FlutterMethodChannel(
       name: "sentorr/window_reopen", binaryMessenger: flutterViewController.engine.binaryMessenger

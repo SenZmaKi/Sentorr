@@ -259,12 +259,14 @@ class AppRuntime with WidgetsBindingObserver {
   Future<void> _dispose() async {
     _quitting = true;
     Logger('sentorr.app').info('Shutting down');
+    await tray.dispose();
+    // Give immediate visual feedback while durable state/native cleanup finishes.
+    if (supportsWindowCustomization) await window.hide();
     await flush();
     await container.read(taskbarProgressProvider).dispose();
     await container.read(downloadQueueProvider).dispose();
     await container.read(torrentEngineProvider).close();
     WidgetsBinding.instance.removeObserver(this);
-    tray.dispose();
     window.dispose();
     await network.close();
     await AppImageCache.dispose();

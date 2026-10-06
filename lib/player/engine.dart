@@ -1,3 +1,5 @@
+import '../watching/next_episode.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -188,6 +190,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
   );
   final history = ref.read(watchHistoryProvider.notifier);
   final following = ref.read(followedSeriesProvider.notifier);
+  final nextEpisodes = ref.read(savedNextEpisodesProvider.notifier);
   final progress = ProgressTracker(
     engine.player,
     canRecord: () =>
@@ -202,6 +205,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
         ),
       );
       unawaited(following.record(item, position: position, duration: duration));
+      unawaited(nextEpisodes.prepare(item));
     },
   );
   engine.beforeDispose = progress.dispose;

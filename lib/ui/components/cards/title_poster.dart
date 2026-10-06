@@ -64,6 +64,6 @@ class PickUpPreview extends ConsumerWidget {
     title: title,
     onOpen: onOpen,
     onPlay: onPlay,
-    playLabel: pickUpLabel(ref.watch(pickUpProvider(title.id)).value),
+    playLabel: pickUpLabel(ref.watch(pickUpPresentationProvider(title.id))),
   );
 }

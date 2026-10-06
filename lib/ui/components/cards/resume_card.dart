@@ -16,6 +16,7 @@ class ResumeCard extends StatelessWidget {
     required this.meta,
     required this.artwork,
     required this.progress,
+    this.upNext = false,
     this.position,
     this.runtime,
     this.chip,
@@ -32,6 +33,7 @@ class ResumeCard extends StatelessWidget {
 
   /// Fraction watched, 0–1.
   final double progress;
+  final bool upNext;
 
   /// Where the viewer stopped and the file's length, as the player shows.
   final Duration? position, runtime;
@@ -66,8 +68,8 @@ class ResumeCard extends StatelessWidget {
         onTap: onTap,
         excludeChildSemantics: titleLink == null && metaLink == null,
         semanticLabel: [
-          'Resume $title',
-          if (left != null) '${clockLabel(left)} left',
+          '${upNext ? 'Continue' : 'Resume'} $title',
+          if (!upNext && left != null) '${clockLabel(left)} left',
         ].join(', '),
         builder: (context, s) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,13 +91,18 @@ class ResumeCard extends StatelessWidget {
                     left: Space.s12,
                     right: Space.s12,
                     bottom: Space.s8,
-                    child: _PlayerBar(
-                      progress: progress,
-                      position: position,
-                      runtime: runtime,
-                      left: left,
-                      active: s.hovered || s.focused,
-                    ),
+                    child: upNext
+                        ? const OverlayBadge(
+                            'Up next',
+                            icon: Icons.play_arrow_rounded,
+                          )
+                        : _PlayerBar(
+                            progress: progress,
+                            position: position,
+                            runtime: runtime,
+                            left: left,
+                            active: s.hovered || s.focused,
+                          ),
                   ),
                 ],
               ),

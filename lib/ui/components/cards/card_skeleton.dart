@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../shared/theme/theme.dart';
+import '../app_image.dart';
 
 /// Loading stand-in matching a tile's frame and two text lines.
 class CardSkeleton extends StatelessWidget {
@@ -28,12 +29,7 @@ class CardSkeleton extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: aspectRatio,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: fill,
-                borderRadius: BorderRadius.circular(Radii.card),
-              ),
-            ),
+            child: const ArtworkPlaceholder(),
           ),
           const SizedBox(height: Space.s12),
           line(0.7, 12),

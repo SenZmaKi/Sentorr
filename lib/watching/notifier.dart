@@ -103,6 +103,7 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
   /// Forgets a movie, or every episode of a series, by [WatchEntry.key].
   Future<void> remove(String key) {
     _log.info('Removing $key from watch history');
+    _repository.nextEpisodes.removeWhere((k, _) => k.startsWith('$key/'));
     _repository.removals[key] = DateTime.now();
     _repository.removalRevisions[key] = _clock.next();
     return _commit(_without((e) => e.key == key));
@@ -134,6 +135,7 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
 
   Future<void> clear() {
     _log.info('Clearing watch history');
+    _repository.nextEpisodes.clear();
     final now = DateTime.now();
     final revision = _clock.next();
     for (final e in _entries) {

@@ -14,6 +14,8 @@ class SeriesUpdate {
     required this.seasonEpisodes,
     this.premiered,
     this.previous,
+    this.premiere,
+    this.previousSeasonFinale,
   });
 
   final ImdbTitle series;
@@ -21,6 +23,8 @@ class SeriesUpdate {
   final ImdbEpisode episode;
   final DateTime aired;
   final DateTime? premiered;
+  final ImdbEpisode? premiere;
+  final EpisodeNumber? previousSeasonFinale;
 
   /// Episodes listed for [season], aired or announced.
   final int seasonEpisodes;
@@ -69,13 +73,18 @@ Future<SeriesUpdate?> latestEpisode(
     ];
     if (aired.isEmpty) continue;
     final (episode, date) = aired.reduce((a, b) => b.$2.isBefore(a.$2) ? a : b);
+    final premiere = page.items.where((e) => e.episodeNumber == 1).firstOrNull;
     return SeriesUpdate(
       series: details.title,
       season: season,
       episode: episode,
       aired: date,
       seasonEpisodes: page.total ?? page.items.length,
-      premiered: airDate(page.items.first.releaseDate),
+      premiered: airDate(premiere?.releaseDate),
+      premiere: premiere,
+      previousSeasonFinale: premiere == null
+          ? null
+          : await _previous(season, premiere, seasons, episodes),
       previous: await _previous(season, episode, seasons, episodes),
     );
   }

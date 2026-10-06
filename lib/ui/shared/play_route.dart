@@ -1,14 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/services.dart';
-import '../../following/notifier.dart';
 import '../../imdb/models.dart';
 import '../../player/launch.dart';
 import '../../player/models.dart';
 import '../../player/queue_builder.dart';
 import '../../titles/pick_up.dart';
 import '../../watching/models.dart';
-import '../../watching/notifier.dart';
 import 'title_format.dart';
 
 /// Play requests find a torrent first; the player opens once one is chosen.
@@ -24,18 +21,18 @@ extension PlayMedia on WidgetRef {
     null => playTitle(title),
   };
 
-  /// [title] where the viewer left off ([pickUpFor]), else from the start.
+  /// [title] where the viewer left off, using the same saved metadata as
+  /// its Continue label. Missing metadata uses the provider lookup.
   /// The card asking may be gone by the time the lookup returns.
   Future<void> playOrPickUp(ImdbTitle title) async {
     final id = title.id;
     final launch = read(playbackLaunchProvider.notifier);
     PickUp? pick;
     try {
-      pick = await pickUpFor(
-        read(imdbRepositoryProvider),
-        entry: read(inProgressProvider).where((e) => e.key == id).firstOrNull,
-        followed: read(followedProvider(id)),
-      );
+      final saved = read(pickUpProvider(id));
+      pick = saved.hasValue && !saved.isLoading
+          ? saved.value
+          : await read(pickUpProvider(id).future);
     } on Object {
       pick = null;
     }
@@ -81,5 +78,6 @@ String pickUpLabel(PickUp? pick) => switch (pick) {
         : 'Resume',
   PickUp(item: final item?) =>
     'Continue ${episodeCode(item.season, item.episode)}',
+  PickUp(pending: true) => 'Continue',
   _ => 'Play',
 };

@@ -7,6 +7,7 @@ class WatchHistoryRepository {
   WatchHistoryRepository(this.store);
   final JsonFileStore store;
   int clock = 0;
+  Map<String, WatchEntry?> nextEpisodes = {};
 
   /// When each movie or series was removed, saved with the entries so a
   /// backup can carry the removals; filled by [load], kept by the notifier.
@@ -19,6 +20,10 @@ class WatchHistoryRepository {
     clock = json?['clock'] is int ? json!['clock'] as int : 0;
     removals = removalsFromJson(json?['removed']);
     removalRevisions = removalRevisionsFromJson(json?['removed']);
+    final next = json?['nextEpisodes'];
+    nextEpisodes = next is Map<String, dynamic>
+        ? {for (final e in next.entries) e.key: WatchEntry.fromJson(e.value)}
+        : {};
     final entries = json?['entries'];
     if (entries is! List) return [];
     return [...entries.map(WatchEntry.fromJson).nonNulls]
@@ -28,6 +33,9 @@ class WatchHistoryRepository {
   Future<void> save(List<WatchEntry> entries) => store.write({
     'version': 2,
     'clock': clock,
+    'nextEpisodes': {
+      for (final e in nextEpisodes.entries) e.key: e.value?.toJson(),
+    },
     'entries': [for (final e in entries) e.toJson()],
     if (removals.isNotEmpty)
       'removed': removalsToJson(removals, removalRevisions),

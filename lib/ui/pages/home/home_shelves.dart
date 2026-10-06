@@ -108,13 +108,14 @@ class ContinueWatchingShelf extends ConsumerWidget {
     return AsyncShelf<WatchEntry>(
       icon: Icons.history_rounded,
       title: 'Continue watching',
-      count: (n) => '$n in progress',
+      count: (n) => '$n to continue',
       items: ref.watch(continueWatchingProvider),
       spec: HomeLayout.of(context).resume,
       onRetry: () => ref.invalidate(continueWatchingProvider),
       cardBuilder: (context, entry, _) {
         final show = entry.series ?? entry.title;
         return ResumeCard(
+          key: ValueKey(entry.key),
           title: show.title,
           titleLink: TitleLink(
             title: show,
@@ -146,10 +147,11 @@ class ContinueWatchingShelf extends ConsumerWidget {
               ? episodeCode(entry.season, entry.episode)
               : kindLabel(show),
           chipIcon: kindIcon(show),
+          upNext: entry.position == Duration.zero,
           progress: entry.progress,
           position: entry.position,
           runtime: entry.duration,
-          artwork: TitleBackdrop(title: show),
+          artwork: TitleBackdrop(title: show, waitForBackdrop: true),
           onTap: () => ref.resume(entry),
           preview: entry.isEpisode ? null : _preview(ref, show),
         );
@@ -184,15 +186,46 @@ class NewEpisodesShelf extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final seasonIds =
+        ref.watch(newSeasonsProvider).value?.map((u) => u.series.id).toSet() ??
+        <String>{};
     return AsyncShelf<SeriesUpdate>(
       icon: Icons.new_releases_outlined,
-      title: 'New episodes',
-      subtitle: 'Just aired in series you are caught up on',
+      title: 'New in your series',
+      subtitle: 'New episodes and returning seasons',
       count: (n) => '$n new',
-      items: ref.watch(newEpisodesProvider),
+      items: ref.watch(newSeriesReleasesProvider),
       spec: HomeLayout.of(context).episode,
       onRetry: () => ref.invalidate(seriesUpdatesProvider),
       cardBuilder: (context, u, _) {
+        if (seasonIds.contains(u.series.id)) {
+          return EpisodeCard(
+            series: u.series.title,
+            seriesLink: TitleLink(
+              title: u.series,
+              season: u.season,
+              child: CardEyebrow(u.series.title),
+            ),
+            code: 'New season',
+            name: 'Season ${u.season}',
+            meta: [
+              MetaItem(
+                'Premiered ${relativeDay(u.premiered!)}',
+                icon: Icons.event_outlined,
+              ),
+            ],
+            artwork: TitleBackdrop(title: u.series),
+            onTap: () =>
+                ref.playEpisode(u.series, u.premiere!, season: u.season),
+            preview: (_) => TitlePreview(
+              title: u.series,
+              onOpen: () => ref.openTitle(u.series, season: u.season),
+              onPlay: () =>
+                  ref.playEpisode(u.series, u.premiere!, season: u.season),
+              playLabel: 'Play season ${u.season}',
+            ),
+          );
+        }
         final e = u.episode.title;
         final still = e.poster != null
             ? TitleArtwork(image: e.poster)
@@ -241,51 +274,6 @@ class NewEpisodesShelf extends ConsumerWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class NewSeasonsShelf extends ConsumerWidget {
-  const NewSeasonsShelf({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return AsyncShelf<SeriesUpdate>(
-      icon: Icons.layers_outlined,
-      title: 'New seasons',
-      subtitle: 'Series you follow are back',
-      items: ref.watch(newSeasonsProvider),
-      spec: HomeLayout.of(context).poster,
-      onRetry: () => ref.invalidate(seriesUpdatesProvider),
-      cardBuilder: (context, u, _) => PosterCard(
-        title: u.series.title,
-        meta: [
-          MetaItem(
-            'Premiered ${relativeDay(u.premiered!)}',
-            icon: Icons.event_outlined,
-          ),
-        ],
-        rating: u.series.rating?.toStringAsFixed(1),
-        ribbon: PosterRibbon(
-          label: 'Season ${u.season}',
-          detail: MetaItem(
-            '${u.seasonEpisodes} episodes',
-            icon: Icons.format_list_numbered_rounded,
-            technical: true,
-          ),
-        ),
-        artwork: TitleArtwork(image: u.series.poster),
-        semanticLabel:
-            '${u.series.title}, season ${u.season} now available, '
-            '${u.seasonEpisodes} episodes',
-        onTap: () => ref.openTitle(u.series, season: u.season),
-        preview: (_) => TitlePreview(
-          title: u.series,
-          onOpen: () => ref.openTitle(u.series, season: u.season),
-          onPlay: () => ref.playTitle(u.series, season: u.season),
-          playLabel: 'Play season ${u.season}',
-        ),
-      ),
     );
   }
 }

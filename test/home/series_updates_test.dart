@@ -73,22 +73,85 @@ void main() {
       FakeImdbRepository(
         trending: [recent, stale, firstSeason],
         seasons: {
-          'tt1': [4],
+          'tt1': [3, 4],
           'tt2': [2],
           'tt3': [1],
         },
         episodes: {
+          'tt1/3': [_episode(3, 1, ago(200)), _episode(3, 2, ago(190))],
           'tt1/4': [_episode(4, 1, ago(10)), _episode(4, 2, ago(3))],
           'tt2/2': [_episode(2, 1, ago(400))],
           'tt3/1': [_episode(1, 1, ago(2))],
         },
       ),
+      [
+        following(recent, season: 3, episode: 2),
+        following(stale, episode: 1),
+        following(firstSeason, episode: 0),
+      ],
     );
     await c.read(seriesUpdatesProvider.future);
     // A first season is a new show, not a new season.
     final seasons = c.read(newSeasonsProvider).requireValue;
     expect(seasons.map((u) => (u.series.id, u.season)), [('tt1', 4)]);
+    expect(c.read(newEpisodesProvider).requireValue, isEmpty);
+    expect(
+      c.read(newSeriesReleasesProvider).requireValue.map((u) => u.series.id),
+      ['tt1'],
+    );
   });
+
+  test(
+    'season returns require the previous finale and stop once started',
+    () async {
+      final series = fakeTitle(1, series: true);
+      Future<List<SeriesUpdate>> releases(
+        int season,
+        int episode,
+        double progress,
+      ) async {
+        final c = container(
+          FakeImdbRepository(
+            trending: [series],
+            seasons: {
+              'tt1': [1, 3, 4],
+            },
+            episodes: {
+              'tt1/1': [_episode(1, 1, ago(900))],
+              'tt1/3': [_episode(3, 7, ago(200)), _episode(3, 8, ago(190))],
+              'tt1/4': [
+                _episode(4, 1, ago(20)),
+                _episode(4, 7, ago(3)),
+                _episode(4, 8, ago(1)),
+              ],
+            },
+          ),
+          [
+            following(
+              series,
+              season: season,
+              episode: episode,
+              progress: progress,
+            ),
+          ],
+        );
+        await c.read(seriesUpdatesProvider.future);
+        return c.read(newSeriesReleasesProvider).requireValue;
+      }
+
+      // Monster scenario: sampling S1E1 must never promote S4E8.
+      expect(await releases(1, 1, .4), isEmpty);
+      expect(await releases(3, 7, 1), isEmpty);
+      expect(await releases(3, 8, .4), isEmpty);
+      final [returned] = await releases(3, 8, 1);
+      expect(returned.season, 4);
+      expect(returned.premiere!.episodeNumber, 1);
+      expect(await releases(4, 1, .4), isEmpty);
+      final [next] = await releases(4, 7, 1);
+      expect(next.episode.episodeNumber, 8);
+      expect(await releases(4, 8, 1), isEmpty);
+    },
+  );
 
   test('new episodes are recent ones the viewer is caught up to', () async {
     final caughtUp = fakeTitle(1, series: true);
@@ -122,5 +185,8 @@ void main() {
     await c.read(seriesUpdatesProvider.future);
     final episodes = c.read(newEpisodesProvider).requireValue;
     expect(episodes.map((u) => u.series.id), ['tt4', 'tt1']);
+    final combined = c.read(newSeriesReleasesProvider).requireValue;
+    expect(combined.map((u) => u.series.id), ['tt4', 'tt1']);
+    expect(combined.where((u) => u.series.id == 'tt4'), hasLength(1));
   });
 }

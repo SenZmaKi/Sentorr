@@ -6,6 +6,7 @@ import '../../imdb/models.dart';
 import '../../imdb/providers.dart';
 import '../shared/theme/theme.dart';
 import 'app_image.dart';
+import 'motion.dart';
 
 /// IMDb artwork fetched at the size it is drawn, not the 2000+ px original.
 class TitleArtwork extends StatelessWidget {
@@ -70,7 +71,7 @@ class TitleBackdrop extends ConsumerWidget {
     final details = ref.watch(titleDetailsProvider(title.id));
     final backdrop = details.whenOrNull(data: (d) => d.backdropCandidate);
     return AnimatedSwitcher(
-      duration: Motion.panel,
+      duration: reduceMotion(context) ? Duration.zero : Motion.panel,
       child: backdrop != null
           ? TitleArtwork(key: ValueKey(backdrop.url), image: backdrop)
           : posterFallback &&

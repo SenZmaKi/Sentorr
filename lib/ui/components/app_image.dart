@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/services.dart';
 import '../shared/theme/theme.dart';
+import 'motion.dart';
 
 /// Catalog artwork shares the app's disk cache on every supported platform.
 class AppImage extends ConsumerWidget {
@@ -42,7 +43,8 @@ class AppImage extends ConsumerWidget {
       height: height,
       fit: fit,
       alignment: alignment,
-      fadeInDuration: Motion.panel,
+      fadeInDuration: reduceMotion(context) ? Duration.zero : Motion.panel,
+      fadeOutDuration: reduceMotion(context) ? Duration.zero : Motion.panel,
       placeholder: (_, _) =>
           placeholder ? const ArtworkPlaceholder() : const SizedBox.shrink(),
       errorWidget: (_, _, _) => placeholder
@@ -61,8 +63,11 @@ class ArtworkPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return ColoredBox(
-      color: c.surfaceInset,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: c.surfaceControl,
+        borderRadius: BorderRadius.circular(Radii.card),
+      ),
       child: icon == null
           ? const SizedBox.expand()
           : Center(

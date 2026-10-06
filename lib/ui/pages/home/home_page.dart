@@ -15,7 +15,7 @@ import 'offline_notice.dart';
 import 'spotlight_ambient.dart';
 
 /// Streaming-style landing: a trending spotlight, personal rows (resume,
-/// new episodes, more like something watched, new seasons), then IMDb
+/// new releases, more like something watched), then IMDb
 /// catalog rows. Offline, a notice and the finished downloads lead instead,
 /// rows that failed step aside, and everything reloads once back online.
 class HomePage extends ConsumerStatefulWidget {
@@ -40,7 +40,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     NewEpisodesShelf(),
     CatalogShelf(CatalogRow.trending),
     MoreLikeShelf(),
-    NewSeasonsShelf(),
     ..._catalog,
   ];
 
@@ -51,7 +50,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     NewEpisodesShelf(),
     CatalogShelf(CatalogRow.trending),
     MoreLikeShelf(),
-    NewSeasonsShelf(),
     ..._catalog,
   ];
 

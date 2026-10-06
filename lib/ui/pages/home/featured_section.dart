@@ -92,7 +92,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
                 .watch(spotlightIndexProvider)
                 .clamp(0, titles.length - 1);
             final t = titles[i];
-            final pick = ref.watch(pickUpProvider(t.id)).value;
+            final pick = ref.watch(pickUpPresentationProvider(t.id));
             return MouseRegion(
               onEnter: (_) => _setPause(hovered: true),
               onExit: (_) => _setPause(hovered: false),
@@ -130,7 +130,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
                                   context.input.isTouch,
                             ),
                           ),
-                    onPlay: () => ref.playFrom(t, pick),
+                    onPlay: () => ref.playOrPickUp(t),
                     playLabel: pickUpLabel(pick),
                     onDetails: () => ref.openTitle(t),
                   ),

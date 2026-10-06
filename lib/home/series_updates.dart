@@ -64,14 +64,39 @@ final newEpisodesProvider = Provider<AsyncValue<List<SeriesUpdate>>>((ref) {
       );
 });
 
-final newSeasonsProvider = Provider<AsyncValue<List<SeriesUpdate>>>(
-  (ref) => ref
+/// A returning season is relevant only before the viewer starts it and
+/// after they have seen the preceding season's finale.
+final newSeasonsProvider = Provider<AsyncValue<List<SeriesUpdate>>>((ref) {
+  final followed = {for (final s in ref.watch(followedSeriesProvider)) s.id: s};
+  return ref
       .watch(seriesUpdatesProvider)
       .whenData(
-        (updates) =>
-            updates
-                .where((u) => u.season > 1 && _within(u.premiered, 120))
-                .toList()
-              ..sort((a, b) => b.premiered!.compareTo(a.premiered!)),
-      ),
-);
+        (updates) => [
+          for (final u in updates)
+            if (followed[u.series.id] case final f?
+                when u.season > 1 &&
+                    _within(u.premiered, 120) &&
+                    u.premiere != null &&
+                    u.previousSeasonFinale != null &&
+                    f.reached.season < u.season &&
+                    f.seen(u.previousSeasonFinale!))
+              u,
+        ]..sort((a, b) => b.premiered!.compareTo(a.premiered!)),
+      );
+});
+
+/// One card per series, combining recent episodes and season returns.
+final newSeriesReleasesProvider = Provider<AsyncValue<List<SeriesUpdate>>>((
+  ref,
+) {
+  final episodes = ref.watch(newEpisodesProvider);
+  final seasons = ref.watch(newSeasonsProvider);
+  if (!episodes.hasValue) return episodes;
+  if (!seasons.hasValue) return seasons;
+  return AsyncData(
+    {
+      for (final u in [...episodes.requireValue, ...seasons.requireValue])
+        u.series.id: u,
+    }.values.toList()..sort((a, b) => b.aired.compareTo(a.aired)),
+  );
+});

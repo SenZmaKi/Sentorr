@@ -41,7 +41,7 @@ void main() {
         ...libraryOverrides(),
         ...syncOverrides(),
         imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
-        pickUpProvider(title.id).overrideWith((ref) async => null),
+        pickUpPresentationProvider(title.id).overrideWith((ref) => null),
       ],
     );
     addTearDown(container.dispose);

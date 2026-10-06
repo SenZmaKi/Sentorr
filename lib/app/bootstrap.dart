@@ -29,6 +29,7 @@ import '../library/planner.dart';
 import '../library/playback.dart';
 import '../library/repository.dart';
 import '../notifications/notification_service.dart';
+import '../player/lifecycle.dart';
 import '../settings/notifier.dart';
 import '../settings/repository.dart';
 import '../shared/errors/error_reports.dart';
@@ -263,6 +264,9 @@ class AppRuntime with WidgetsBindingObserver {
     // Give immediate visual feedback while durable state/native cleanup finishes.
     if (supportsWindowCustomization) await window.hide();
     await flush();
+    // Riverpod's onDispose cannot await the player's native cleanup. Finish
+    // it while Dart callbacks and torrent sessions are still available.
+    await container.read(playerLifecycleProvider).dispose();
     await container.read(taskbarProgressProvider).dispose();
     await container.read(downloadQueueProvider).dispose();
     await container.read(torrentEngineProvider).close();

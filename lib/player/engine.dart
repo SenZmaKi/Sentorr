@@ -17,6 +17,7 @@ import 'models.dart';
 import 'preparation.dart';
 import 'stream/prepared_stream.dart';
 import 'hot_restart.dart';
+import 'lifecycle.dart';
 import 'progress_tracker.dart';
 import 'session.dart';
 import 'stream/offline_source.dart';
@@ -36,6 +37,7 @@ class PlaybackEngine {
     required SessionConfig configFor,
     required TorrentFinder find,
     required MetadataFetcher fetchMetadata,
+    PlayerLifecycle? lifecycle,
     OfflineLookup? offline,
     ParkedStreams? parked,
     PreparedStreams? prepared,
@@ -45,6 +47,8 @@ class PlaybackEngine {
            bufferSize: 64 * 1024 * 1024,
          ),
        ) {
+    _lifecycle = lifecycle;
+    _lifecycle?.register(dispose);
     _restartReady = PlayerHotRestart.register(player);
     streaming = TorrentPlayback(
       player: player,
@@ -68,6 +72,9 @@ class PlaybackEngine {
   }
 
   final Player player;
+  late final PlayerLifecycle? _lifecycle;
+  Future<void>? _disposal;
+  Future<void> Function()? beforeDispose;
   late final Future<void> _restartReady;
   late final TorrentPlayback streaming;
   late final VideoController video = VideoController(player);
@@ -146,7 +153,10 @@ class PlaybackEngine {
   Future<void> setVolume(double volume) =>
       player.setVolume(volume.clamp(0, 100).toDouble());
 
-  Future<void> dispose() async {
+  Future<void> dispose() => _disposal ??= _dispose();
+
+  Future<void> _dispose() async {
+    await beforeDispose?.call();
     await _errors.cancel();
     await _native.cancel();
     await streaming.park();
@@ -154,6 +164,7 @@ class PlaybackEngine {
     await _restartReady;
     await player.dispose();
     await PlayerHotRestart.unregister(player);
+    _lifecycle?.unregister(dispose);
   }
 }
 
@@ -164,6 +175,7 @@ String _clock(Duration d) =>
 /// item, streaming the torrent chosen for it or the best one found.
 final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
   final engine = PlaybackEngine(
+    lifecycle: ref.read(playerLifecycleProvider),
     torrents: ref.read(torrentEngineProvider),
     configFor: (release) => sessionConfigFor(ref, release),
     find: (item, cancel) =>
@@ -192,7 +204,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
       unawaited(following.record(item, position: position, duration: duration));
     },
   );
-  ref.onDispose(progress.dispose);
+  engine.beforeDispose = progress.dispose;
   ref.onDispose(engine.dispose);
   ref.listen(playerSessionProvider.select((s) => s?.current), (_, item) {
     progress.item = item;

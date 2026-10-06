@@ -14,10 +14,14 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:sentorr/app/bootstrap.dart';
 import 'package:sentorr/player/hot_restart.dart';
+import 'package:sentorr/player/lifecycle.dart';
 
 Future<void> main() async {
-  await AppRuntime.initialize();
+  final runtime = await AppRuntime.initialize();
   final player = Player();
+  Future<void>? disposal;
+  Future<void> disposePlayer() => disposal ??= player.dispose();
+  runtime.container.read(playerLifecycleProvider).register(disposePlayer);
   player.stream.error.listen((error) => print('NATIVE_SMOKE_ERROR: $error'));
   await PlayerHotRestart.register(player);
   final video = VideoController(player);
@@ -52,6 +56,12 @@ Future<void> main() async {
   if (const bool.fromEnvironment('SMOKE_HOT_RESTART')) {
     if (width <= 0) exit(1);
     print('HOT_RESTART_READY');
+  } else if (const bool.fromEnvironment('SMOKE_SHUTDOWN')) {
+    if (width <= 0) exit(1);
+    await runtime.dispose();
+    print('SHUTDOWN_READY');
+    // Match application exit immediately after Dart cleanup completes.
+    exit(0);
   } else {
     exit(width > 0 ? 0 : 1);
   }

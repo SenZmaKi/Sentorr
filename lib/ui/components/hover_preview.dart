@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../shared/layout/adaptive.dart';
 import '../shared/theme/theme.dart';
@@ -226,7 +227,22 @@ class _HoverPreviewState extends State<HoverPreview>
     }
   }
 
+  bool _removalPending = false;
+
   void _remove() {
+    // Dependency changes (including shutdown's TickerMode) run during build
+    // and layout. OverlayPortal must be changed after that frame completes.
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      if (!_removalPending) {
+        _removalPending = true;
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          _removalPending = false;
+          if (mounted && _t.isDismissed) _remove();
+        });
+      }
+      return;
+    }
     _overPreview = false;
     if (_portal.isShowing) _portal.hide();
     if (_shown == this) _shown = null;

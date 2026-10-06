@@ -23,15 +23,21 @@ class DownloadRepository {
 
   DownloadItem _decode(Map<String, dynamic> json) {
     final status = DownloadStatus.values.byName(json['status'] as String);
+    final started = DateTime.tryParse(json['seedStarted'] as String? ?? '');
+    // Older versions replaced completed sharing records with engine failures
+    // and recheck byte counts. Sharing only starts after every file completes.
+    final recover = status == DownloadStatus.failed && started != null;
     return DownloadItem(
       id: json['id'] as String,
       job: TorrentDownloadJob.fromJson(json['job'] as Map<String, dynamic>),
-      status: status.isTerminal || status == DownloadStatus.paused
+      status: recover
+          ? DownloadStatus.completed
+          : status.isTerminal || status == DownloadStatus.paused
           ? status
           : DownloadStatus.preparing,
       infoHash: json['hash'] as String?,
-      seedingStartedAt: DateTime.tryParse(json['seedStarted'] as String? ?? ''),
-      error: json['error'] as String?,
+      seedingStartedAt: started,
+      error: recover ? null : json['error'] as String?,
       uploadedBytes: json['uploaded'] as int? ?? 0,
       files: List.unmodifiable([
         for (final f in json['files'] as List)
@@ -39,7 +45,7 @@ class DownloadRepository {
             f['index'] as int,
             f['path'] as String,
             f['size'] as int,
-            f['done'] as int,
+            started != null ? f['size'] as int : f['done'] as int,
           ),
       ]),
     );

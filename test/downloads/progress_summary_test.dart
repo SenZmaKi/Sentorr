@@ -70,6 +70,23 @@ void main() {
     );
   });
 
+  test('waiting and paused shares do not count as downloading', () {
+    for (final status in [
+      DownloadStatus.queued,
+      DownloadStatus.preparing,
+      DownloadStatus.paused,
+    ]) {
+      final finished = item('a', status, done: 10, size: 10);
+      expect(DownloadProgressSummary.of([finished], held: {'a'}), isNull);
+      final s = DownloadProgressSummary.of([
+        finished,
+        item('b', DownloadStatus.downloading, done: 25, size: 100),
+      ])!;
+      expect(s.title, 'Title b');
+      expect(s.progress, .25);
+    }
+  });
+
   test('held paused downloads offer resume once nothing runs', () {
     final items = [
       item('a', DownloadStatus.paused, done: 30, size: 100),

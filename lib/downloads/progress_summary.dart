@@ -26,12 +26,14 @@ class DownloadProgressSummary {
 
   /// Downloads still fetching data. Seeding ones are done and keep no
   /// service or taskbar progress up.
-  static bool isDownloading(DownloadItem item) => switch (item.status) {
-    DownloadStatus.preparing ||
-    DownloadStatus.queued ||
-    DownloadStatus.downloading => true,
-    _ => false,
-  };
+  static bool isDownloading(DownloadItem item) =>
+      !item.hasFinishedDownloading &&
+      switch (item.status) {
+        DownloadStatus.preparing ||
+        DownloadStatus.queued ||
+        DownloadStatus.downloading => true,
+        _ => false,
+      };
 
   /// Summarizes downloading items, or the paused ones in [held] when
   /// nothing downloads.
@@ -43,7 +45,10 @@ class DownloadProgressSummary {
     if (downloading.isEmpty) {
       final paused = [
         for (final i in items)
-          if (held.contains(i.id) && i.status == DownloadStatus.paused) i,
+          if (held.contains(i.id) &&
+              i.status == DownloadStatus.paused &&
+              !i.hasFinishedDownloading)
+            i,
       ];
       if (paused.isEmpty) return null;
       return DownloadProgressSummary(

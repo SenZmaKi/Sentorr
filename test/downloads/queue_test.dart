@@ -242,6 +242,71 @@ void main() {
     },
   );
 
+  for (final global in [true, false]) {
+    test('sharing survives ${global ? 'worker' : 'torrent'} failure', () async {
+      await queue.configure(const DownloadSettings());
+      await enqueue('seed');
+      await enqueue('unfinished');
+      torrents['seed'].done = 100;
+      await queue.tick();
+      // A restarted native worker reports only its partial recheck progress.
+      torrents['seed'].done = 3;
+      await queue.tick();
+      expect(queue.items.first.downloadedBytes, 100);
+      expect(queue.items.first.status, DownloadStatus.seeding);
+      if (global) {
+        torrents.failure = 'worker exited';
+      } else {
+        torrents['seed'].error = 'torrent failed';
+      }
+      await queue.tick();
+      expect(queue.items.first.status, DownloadStatus.completed);
+      expect(queue.items.first.downloadedBytes, 100);
+      expect(queue.items.first.error, isNull);
+      expect(torrents['seed'].deleted, isFalse);
+      if (global) expect(queue.items.last.status, DownloadStatus.failed);
+      expect((await repository.load()).first.status, DownloadStatus.completed);
+    });
+  }
+
+  test('recovers legacy failed shares with overwritten progress', () async {
+    await queue.configure(const DownloadSettings());
+    await enqueue('seed');
+    torrents['seed'].done = 100;
+    await queue.tick();
+    final item = queue.items.single;
+    await repository.save([
+      item
+          .copyWith(
+            files: [const DownloadFileProgress(1, 'Film S01E01.mkv', 100, 3)],
+          )
+          .withStatus(DownloadStatus.failed, error: 'worker exited'),
+    ]);
+    final recovered = (await repository.load()).single;
+    expect(recovered.status, DownloadStatus.completed);
+    expect(recovered.downloadedBytes, 100);
+    expect(recovered.error, isNull);
+  });
+
+  test('sharing preparation failure preserves completed files', () async {
+    await queue.configure(const DownloadSettings());
+    await enqueue('seed');
+    torrents['seed'].done = 100;
+    await queue.tick();
+    await queue.dispose();
+    final again = FakeTorrents()..failMetadata = true;
+    final restored = DownloadQueue(again, repository);
+    try {
+      await restored.initialize(const DownloadSettings());
+      await settle();
+      expect(restored.items.single.status, DownloadStatus.completed);
+      expect(restored.items.single.downloadedBytes, 100);
+      expect(restored.items.single.error, isNull);
+    } finally {
+      await restored.dispose();
+    }
+  });
+
   test('restart applies disabled sharing to saved seeds', () async {
     await queue.configure(const DownloadSettings());
     await enqueue('a');

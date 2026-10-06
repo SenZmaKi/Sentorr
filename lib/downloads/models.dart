@@ -145,6 +145,13 @@ class DownloadItem {
   bool get isDone =>
       files.isNotEmpty && files.every((f) => f.downloadedBytes >= f.totalBytes);
 
+  /// File completion is independent of whether sharing is running or waiting.
+  bool get hasFinishedDownloading =>
+      isDone ||
+      seedingStartedAt != null ||
+      status == DownloadStatus.completed ||
+      status == DownloadStatus.seeding;
+
   bool sameState(DownloadItem other) {
     if ((
               id,

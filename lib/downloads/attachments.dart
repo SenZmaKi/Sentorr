@@ -86,7 +86,7 @@ extension DownloadAttachments on DownloadQueue {
           if (item == null || !current()) return;
           _log.warning('Could not start ${item.job.title}', error, stack);
           await _release(item);
-          _replace(item.withStatus(DownloadStatus.failed, error: '$error'));
+          _replace(_afterFailure(item, '$error'));
           await _commit();
         });
       } finally {

@@ -19,7 +19,7 @@ extension DownloadEngineOperations on DownloadQueue {
           continue;
         }
         await _release(item);
-        _replace(item.withStatus(DownloadStatus.failed, error: failure));
+        _replace(_afterFailure(item, failure));
         changed = true;
       }
       if (changed) {
@@ -38,7 +38,7 @@ extension DownloadEngineOperations on DownloadQueue {
       if (torrent.error case final error?) {
         _log.warning('${_name(previous)} failed: $error');
         await _release(previous);
-        _replace(previous.withStatus(DownloadStatus.failed, error: error));
+        _replace(_afterFailure(previous, error));
         changed = true;
         continue;
       }
@@ -64,6 +64,27 @@ extension DownloadEngineOperations on DownloadQueue {
     } else {
       _publish();
     }
+  }
+
+  // Starting sharing records that all selected files finished downloading.
+  // An engine failure ends sharing, without invalidating that completion.
+  DownloadItem _afterFailure(DownloadItem item, String error) {
+    if (item.seedingStartedAt != null || item.isDone) {
+      return item
+          .copyWith(
+            files: [
+              for (final f in item.files)
+                DownloadFileProgress(
+                  f.index,
+                  f.path,
+                  f.totalBytes,
+                  f.totalBytes,
+                ),
+            ],
+          )
+          .withStatus(DownloadStatus.completed);
+    }
+    return item.withStatus(DownloadStatus.failed, error: error);
   }
 
   void _hold(DownloadItem item, {required bool running}) {

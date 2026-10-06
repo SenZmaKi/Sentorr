@@ -59,7 +59,9 @@ DownloadItem progressOf(
           f.index,
           f.path,
           f.totalBytes,
-          torrent.bytesOf(f.index),
+          item.seedingStartedAt != null
+              ? f.totalBytes
+              : torrent.bytesOf(f.index),
         ),
     ],
     downloadBytesPerSecond: moving

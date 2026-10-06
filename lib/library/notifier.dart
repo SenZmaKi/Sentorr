@@ -192,6 +192,7 @@ OfflineState offlineStateOf(LibraryEntry entry, DownloadItem? download) {
         ? Downloaded(entry)
         : DownloadFailed(entry, 'The file is missing');
   }
+  if (download.hasFinishedDownloading) return Downloaded(entry);
   final progress = download.progress;
   return switch (download.status) {
     DownloadStatus.completed || DownloadStatus.seeding => Downloaded(entry),

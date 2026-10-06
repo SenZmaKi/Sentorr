@@ -104,6 +104,21 @@ void main() {
     expect(offlineStateOf(e, at(DownloadStatus.completed)), isA<Downloaded>());
     expect(offlineStateOf(e, at(DownloadStatus.seeding)), isA<Downloaded>());
     expect(offlineStateOf(e, at(DownloadStatus.failed)), isA<DownloadFailed>());
+    for (final status in [
+      DownloadStatus.queued,
+      DownloadStatus.preparing,
+      DownloadStatus.paused,
+      DownloadStatus.failed,
+    ]) {
+      expect(offlineStateOf(e, at(status, done: 100)), isA<Downloaded>());
+      expect(
+        offlineStateOf(
+          e,
+          at(status).copyWith(seedingStartedAt: DateTime(2026)),
+        ),
+        isA<Downloaded>(),
+      );
+    }
     final moving = offlineStateOf(e, at(DownloadStatus.downloading));
     expect(moving, isA<Downloading>());
     expect((moving as Downloading).progress, .5);

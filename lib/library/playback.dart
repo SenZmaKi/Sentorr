@@ -9,6 +9,7 @@ import '../player/queue_builder.dart';
 import '../player/stream/offline_source.dart';
 import '../torrents/resolution_models.dart';
 import 'models.dart';
+import 'download_transfer.dart';
 import 'notifier.dart';
 
 /// Where else a download may be, e.g. on a paired device; none unless the
@@ -30,7 +31,16 @@ OfflineSource? offlineSourceFor(Ref ref, PlaybackItem item) {
       ?.where((d) => d.id == entry.downloadId)
       .firstOrNull;
   return switch (offlineStateOf(entry, download)) {
-    Downloaded() when File(entry.path).existsSync() => LocalFile(entry.path),
+    Downloaded() when File(entry.path).existsSync() => LocalFile(
+      entry.path,
+      transfers: download == null
+          ? null
+          : downloadTransfers(
+              ref.read(downloadQueueProvider),
+              entry.downloadId,
+              entry.fileIndex,
+            ),
+    ),
     Downloading() => DownloadTorrent(
       TorrentCandidate(
         release: entry.release,

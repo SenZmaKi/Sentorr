@@ -242,7 +242,9 @@ class OverlayIconButton extends StatelessWidget {
               child: Icon(
                 icon,
                 size: IconSizes.control,
-                color: OverlayColors.foreground,
+                color: s.enabled
+                    ? OverlayColors.foreground
+                    : OverlayColors.inactiveTrack,
               ),
             ),
           ),

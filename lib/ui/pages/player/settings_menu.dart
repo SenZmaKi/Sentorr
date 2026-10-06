@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
 import '../../../player/sleep_timer.dart';
-import '../../components/motion.dart';
+import '../../components/buttons.dart';
+import '../../components/section_header.dart';
 import '../../shared/layout/adaptive.dart';
 import '../../shared/theme/theme.dart';
 import 'menu_rows.dart';
 import 'player_actions.dart';
 import 'player_value.dart';
+import 'player_layout.dart';
 
 enum _Page { root, speed, audio, subtitles, sleep }
 
@@ -32,37 +34,52 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
   @override
   Widget build(BuildContext context) {
     final p = widget.player;
-    // Sized by the player's panel slot; scrolls when a page outgrows a
-    // short window.
+    final dense = context.playerLayout.handheld;
+    final popup = !widget.actions.ui.fullscreen;
     return PlayerMenuSurface(
-      child: SingleChildScrollView(
-        child: AnimatedSize(
-          duration: reduceMotion(context) ? Duration.zero : Motion.panel,
-          curve: Motion.change,
-          alignment: Alignment.bottomCenter,
-          child: PlayerValue(
-            stream: p.stream.tracks,
-            initial: p.state.tracks,
-            builder: (context, tracks) => PlayerValue(
-              stream: p.stream.track,
-              initial: p.state.track,
-              builder: (context, track) => PlayerValue(
-                stream: p.stream.rate,
-                initial: p.state.rate,
-                builder: (context, rate) => Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: switch (_page) {
-                    _Page.root => _root(tracks, track, rate),
-                    _Page.speed => _speed(rate),
-                    _Page.audio => _audio(tracks, track),
-                    _Page.subtitles => _subtitles(tracks, track),
-                    _Page.sleep => _sleep(),
-                  },
+      padding: EdgeInsets.all(dense ? Space.s12 : Space.s16),
+      child: Column(
+        mainAxisSize: popup ? MainAxisSize.min : MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SectionHeader(
+            icon: Icons.settings_outlined,
+            title: 'Settings',
+            action: SIconButton(
+              icon: Icons.close_rounded,
+              tooltip: 'Close settings',
+              onPressed: widget.actions.ui.closePanel,
+            ),
+          ),
+          SizedBox(height: dense ? Space.s8 : Space.s16),
+          Flexible(
+            fit: popup ? FlexFit.loose : FlexFit.tight,
+            child: SingleChildScrollView(
+              child: PlayerValue(
+                stream: p.stream.tracks,
+                initial: p.state.tracks,
+                builder: (context, tracks) => PlayerValue(
+                  stream: p.stream.track,
+                  initial: p.state.track,
+                  builder: (context, track) => PlayerValue(
+                    stream: p.stream.rate,
+                    initial: p.state.rate,
+                    builder: (context, rate) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: switch (_page) {
+                        _Page.root => _root(tracks, track, rate),
+                        _Page.speed => _speed(rate),
+                        _Page.audio => _audio(tracks, track),
+                        _Page.subtitles => _subtitles(tracks, track),
+                        _Page.sleep => _sleep(),
+                      },
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

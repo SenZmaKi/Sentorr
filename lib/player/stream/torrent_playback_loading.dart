@@ -1,7 +1,6 @@
 part of 'torrent_playback.dart';
 
 extension _TorrentPlaybackLoading on TorrentPlayback {
-  /// Plays the downloaded file at [path]; no torrent is involved.
   /// Plays a finished download from [uri]: a file here, or a paired
   /// device's through the loopback proxy.
   Future<void> _playLocal(
@@ -10,12 +9,16 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     Uri uri,
     Duration? start, {
     String? peer,
+    Stream<TorrentStreamState>? transfers,
   }) async {
     _log.info('Playing $item from ${peer ?? uri.toFilePath()}');
     status.value = StreamStatus(
       stage: StreamStage.preparing,
       localFile: peer == null ? uri.toFilePath() : uri.toString(),
       peer: peer,
+    );
+    _transfer = transfers?.listen(
+      (transfer) => _update(generation, (s) => s.copyWith(transfer: transfer)),
     );
     await outputReady();
     if (_stale(generation)) return;

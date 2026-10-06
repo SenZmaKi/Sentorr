@@ -39,7 +39,9 @@ class PlayerChrome extends StatelessWidget {
     // Sheets cover the bars' controls; the bars step aside while one shows.
     final visible =
         ui.controlsVisible &&
-        !(layout.barsYieldToPanels && ui.panel != PlayerPanel.none);
+        !(layout.barsYieldToPanels &&
+            ui.panel != PlayerPanel.none &&
+            !ui.settingsPopup);
     final queue = session.queue;
     final duration = reduceMotion(context) ? Duration.zero : Motion.panel;
     Widget fade(Widget child) =>
@@ -86,6 +88,7 @@ class PlayerChrome extends StatelessWidget {
             ui.panel == PlayerPanel.none)
           _UpNextSlot(engine: engine, session: session, actions: actions),
         PanelSlot(
+          popup: ui.settingsPopup,
           floatingBars: context.player.floatingBars,
           panel: openPlayerPanel(
             ui: ui,

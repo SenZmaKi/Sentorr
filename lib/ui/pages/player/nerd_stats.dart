@@ -99,6 +99,14 @@ class _NerdStatsState extends State<NerdStats> {
             ? 'Downloaded file'
             : status?.stage.name ?? 'Waiting',
       ),
+      if (status?.localFile != null && t?.selectedFile != null) ...[
+        ('Upload speed', '${sizeLabel(t!.uploadBytesPerSecond)}/s'),
+        ('Uploaded', sizeLabel(t.uploadedBytes)),
+        (
+          'Peers / seeds (connected)',
+          '${t.connectedPeers} / ${t.connectedSeeds}',
+        ),
+      ],
       if (status?.localFile == null && t != null) ...[
         ('File', t.selectedFile?.path ?? 'Waiting for metadata'),
         (

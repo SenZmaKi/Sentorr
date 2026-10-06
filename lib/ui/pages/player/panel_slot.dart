@@ -14,17 +14,23 @@ typedef SlotPanel = ({Widget child, double width});
 /// players dock it beside the picture through [PlayerDock] instead. Panels get
 /// a bounded height and scroll within it; switching panels crossfades.
 class PanelSlot extends StatelessWidget {
-  const PanelSlot({super.key, required this.panel, required this.floatingBars});
+  const PanelSlot({
+    super.key,
+    required this.panel,
+    required this.floatingBars,
+    this.popup = false,
+  });
 
   /// Null when no panel is open.
   final SlotPanel? panel;
   final bool floatingBars;
+  final bool popup;
 
   @override
   Widget build(BuildContext context) {
     final layout = context.playerLayout;
     final duration = reduceMotion(context) ? Duration.zero : Motion.panel;
-    final placement = layout.panels;
+    final placement = popup ? PanelPlacement.floating : layout.panels;
     final alignment = switch (placement) {
       PanelPlacement.bottomSheet => Alignment.bottomCenter,
       PanelPlacement.sideSheet ||

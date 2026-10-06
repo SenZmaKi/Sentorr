@@ -246,7 +246,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                 child: ListenableBuilder(
                   listenable: _ui,
                   builder: (context, stage) => PlayerDock(
-                    panel: full
+                    panel: full && !_ui.settingsPopup
                         ? openPlayerPanel(
                             ui: _ui,
                             session: session,

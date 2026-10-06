@@ -1,3 +1,5 @@
+import 'package:torrent_stream/torrent_stream.dart';
+
 import '../../torrents/resolution_models.dart';
 import '../models.dart';
 
@@ -8,8 +10,11 @@ sealed class OfflineSource {
 
 /// The finished file on disk.
 class LocalFile extends OfflineSource {
-  const LocalFile(this.path);
+  const LocalFile(this.path, {this.transfers});
   final String path;
+
+  /// The existing download keeps sharing while the player reads from disk.
+  final Stream<TorrentStreamState>? transfers;
 }
 
 /// A download in progress: stream its torrent's file, sharing the transfer.

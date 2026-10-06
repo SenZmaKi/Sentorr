@@ -144,7 +144,13 @@ class TorrentPlayback {
     final saved = torrent == null && options == null ? offline(item) : null;
     if (saved is LocalFile && File(saved.path).existsSync()) {
       try {
-        await _playLocal(generation, item, Uri.file(saved.path), start);
+        await _playLocal(
+          generation,
+          item,
+          Uri.file(saved.path),
+          start,
+          transfers: saved.transfers,
+        );
       } catch (error, stack) {
         _fail(generation, item, null, error, stack);
       }

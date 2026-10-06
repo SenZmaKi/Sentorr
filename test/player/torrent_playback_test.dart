@@ -176,6 +176,31 @@ void main() {
     },
   );
 
+  test('local playback observes seeding without acquiring a torrent', () async {
+    final dir = Directory.systemTemp.createTempSync('player_seed_test');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final file = File('${dir.path}/movie.mkv')..createSync();
+    final transfers = StreamController<TorrentStreamState>.broadcast();
+    addTearDown(transfers.close);
+    saved = LocalFile(file.path, transfers: transfers.stream);
+    await playback.play(item);
+    transfers.add(
+      const TorrentStreamState(uploadBytesPerSecond: 4096, peers: 2),
+    );
+    await settlePlayback();
+    expect(playback.status.value!.localFile, file.path);
+    expect(playback.status.value!.transfer.uploadBytesPerSecond, 4096);
+    expect(engine.owners, isEmpty);
+    await playback.close();
+    expect(transfers.hasListener, isFalse);
+    saved = null;
+    await playback.play(next, torrent: second);
+    transfers.add(const TorrentStreamState(uploadBytesPerSecond: 999));
+    await settlePlayback();
+    expect(playback.status.value!.localFile, isNull);
+    expect(playback.status.value!.transfer.uploadBytesPerSecond, isNot(999));
+  });
+
   for (final local in [false, true]) {
     for (final renderer in [false, true]) {
       test(

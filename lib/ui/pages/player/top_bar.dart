@@ -66,13 +66,15 @@ class TopBar extends StatelessWidget {
     String heading,
   ) {
     final item = this.item;
+    final ui = PlayerUiScope.of(context);
+    final panelOpen = ui.fullscreen && ui.panel != PlayerPanel.none;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _BarButton(
           icon: Icons.keyboard_arrow_down_rounded,
           tooltip: 'Keep watching while browsing (i)',
-          onPressed: onBack,
+          onPressed: panelOpen ? null : onBack,
         ),
         const SizedBox(width: Space.s16),
         Expanded(
@@ -164,7 +166,7 @@ class TopBar extends StatelessWidget {
         _BarButton(
           icon: Icons.close_rounded,
           tooltip: 'Stop and close',
-          onPressed: onClose,
+          onPressed: panelOpen ? null : onClose,
         ),
       ],
     );
@@ -182,7 +184,7 @@ class _BarButton extends StatelessWidget {
 
   final IconData icon;
   final String tooltip;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) => context.player.floatingBars

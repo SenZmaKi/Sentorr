@@ -18,7 +18,7 @@ class TorrentStats extends StatelessWidget {
 
   final ValueListenable<StreamStatus?> status;
 
-  /// Only progress and download speed, for narrow players.
+  /// Progress and the active transfer speed, for narrow players.
   final bool compact;
 
   /// Left-aligned and tight, for sitting under a title.
@@ -38,12 +38,20 @@ class TorrentStats extends StatelessWidget {
       final progress = t.selectedProgress;
       final file = t.selectedFile;
       final peers = t.connectedPeers;
+      final local = status.localFile != null;
+      final downloaded = local || (progress != null && progress >= 1);
+      final sharing = !local || file != null;
       return Semantics(
         container: true,
         label: [
-          if (progress != null) '${_percent(progress)} downloaded',
-          '${_speed(t.downloadBytesPerSecond)} down',
-          '$peers peers',
+          if (downloaded)
+            'Downloaded'
+          else if (progress != null)
+            '${_percent(progress)} downloaded',
+          if (!downloaded) '${_speed(t.downloadBytesPerSecond)} down',
+          if (sharing && (downloaded || !compact))
+            '${_speed(t.uploadBytesPerSecond)} up',
+          if (sharing && !compact) '$peers peers',
         ].join(', '),
         child: ExcludeSemantics(
           // Shrinks to fit narrow headers instead of overflowing.
@@ -53,25 +61,27 @@ class TorrentStats extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (progress != null && file != null)
+                if (downloaded || (progress != null && file != null))
                   _Stat(
                     dense: dense,
-                    leading: progress >= 1
+                    leading: downloaded
                         ? const Icon(Icons.check_circle_outline_rounded)
-                        : _Ring(progress),
-                    label: progress >= 1 ? 'Downloaded' : _percent(progress),
-                    tooltip:
-                        '${_percent(progress)} of the video downloaded · '
-                        '${sizeLabel(t.selectedBytes)} of ${sizeLabel(file.length)}',
+                        : _Ring(progress!),
+                    label: downloaded ? 'Downloaded' : _percent(progress!),
+                    tooltip: downloaded
+                        ? 'The video is downloaded and ready to play'
+                        : '${_percent(progress!)} of the video downloaded · '
+                              '${sizeLabel(t.selectedBytes)} of ${sizeLabel(file!.length)}',
                   ),
-                _Stat(
-                  dense: dense,
-                  leading: const Icon(Icons.arrow_downward_rounded),
-                  label: _speed(t.downloadBytesPerSecond),
-                  tooltip:
-                      'Download speed · ${sizeLabel(t.receivedBytes)} received',
-                ),
-                if (!compact) ...[
+                if (!downloaded)
+                  _Stat(
+                    dense: dense,
+                    leading: const Icon(Icons.arrow_downward_rounded),
+                    label: _speed(t.downloadBytesPerSecond),
+                    tooltip:
+                        'Download speed · ${sizeLabel(t.receivedBytes)} received',
+                  ),
+                if (sharing && (downloaded || !compact))
                   _Stat(
                     dense: dense,
                     leading: const Icon(Icons.arrow_upward_rounded),
@@ -79,6 +89,7 @@ class TorrentStats extends StatelessWidget {
                     tooltip:
                         'Upload speed · ${sizeLabel(t.uploadedBytes)} shared',
                   ),
+                if (sharing && !compact) ...[
                   _Stat(
                     dense: dense,
                     leading: const Icon(Icons.people_outline_rounded),

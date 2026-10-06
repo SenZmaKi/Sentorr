@@ -22,6 +22,7 @@ class PlayerFeedback {
 /// Presentation state of the open player: whether chrome shows, which panel
 /// is open, and transient feedback. Playback state stays in the engine.
 class PlayerUi extends ChangeNotifier {
+  bool get settingsPopup => panel == PlayerPanel.settings && !fullscreen;
   Timer? _idle;
   bool _awake = true;
   bool statsVisible = false;

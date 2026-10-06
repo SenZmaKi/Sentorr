@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
 import '../player/models.dart';
+import '../following/models.dart';
 import '../backup/watch_backup.dart';
 import '../torrents/models.dart';
 import 'models.dart';
@@ -157,11 +158,33 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
   }
 }
 
-/// The latest unfinished entry per movie or series, newest first.
+/// Movies still in progress and the furthest episode reached per series.
+/// Choose before filtering completion so older episodes cannot resurface.
 final inProgressProvider = Provider<List<WatchEntry>>((ref) {
-  final seen = <String>{};
+  final entries = ref.watch(watchHistoryProvider);
+  final selected = <String, WatchEntry>{};
+  for (final entry in entries) {
+    final previous = selected[entry.key];
+    if (previous == null) {
+      selected[entry.key] = entry;
+    } else if (entry.isEpisode &&
+        entry.season != null &&
+        entry.episode != null &&
+        previous.season != null &&
+        previous.episode != null &&
+        compareEpisodes(
+              (season: entry.season!, episode: entry.episode!),
+              (season: previous.season!, episode: previous.episode!),
+            ) >
+            0) {
+      selected[entry.key] = entry;
+    }
+  }
   return [
-    for (final e in ref.watch(watchHistoryProvider))
-      if (!e.finished && seen.add(e.key)) e,
+    for (final e in entries)
+      if (identical(selected[e.key], e) &&
+          !e.finished &&
+          (!e.isEpisode || e.progress < FollowedSeries.caughtUpFraction))
+        e,
   ];
 });

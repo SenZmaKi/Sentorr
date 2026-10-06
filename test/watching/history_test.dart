@@ -163,4 +163,60 @@ void main() {
     expect(loaded.position, const Duration(minutes: 7));
     expect(loaded.series?.canHaveEpisodes, isTrue);
   });
+
+  test(
+    'a later episode blocks earlier ones, including newer rewatches',
+    () async {
+      final (container, _) = _container();
+      final history = container.read(watchHistoryProvider.notifier);
+      for (final n in [3, 1]) {
+        await history.record(
+          _episode(n),
+          position: const Duration(minutes: 10),
+          duration: _hour,
+        );
+      }
+      expect(container.read(inProgressProvider).single.episode, 3);
+      await history.record(
+        _episode(3),
+        position: const Duration(minutes: 48),
+        duration: _hour,
+      );
+      expect(container.read(inProgressProvider), isEmpty);
+      // The resume position remains available when explicitly replaying it.
+      expect(history.resumePoint(_episode(3).id), isNotNull);
+      expect(container.read(watchHistoryProvider), hasLength(2));
+      await history.record(
+        _episode(3),
+        position: const Duration(minutes: 59),
+        duration: _hour,
+      );
+      expect(container.read(inProgressProvider), isEmpty);
+    },
+  );
+
+  test('season order and the episode 80 percent boundary survive reload', () {
+    WatchEntry entry(int season, int episode, int seconds) => WatchEntry.of(
+      PlaybackItem(
+        title: ImdbTitle(id: 'tt-$season-$episode', title: 'Episode'),
+        series: _series,
+        season: season,
+        episode: episode,
+      ),
+      position: Duration(seconds: seconds),
+      duration: _hour,
+    );
+    final (before, _) = _container([entry(1, 10, 300), entry(2, 1, 2879)]);
+    expect(before.read(inProgressProvider).single.season, 2);
+    final (at, _) = _container([
+      entry(1, 10, 300),
+      entry(2, 1, 2880),
+      WatchEntry.of(
+        _movie,
+        position: const Duration(minutes: 48),
+        duration: _hour,
+      ),
+    ]);
+    expect(at.read(inProgressProvider).single.id, _movie.id);
+  });
 }

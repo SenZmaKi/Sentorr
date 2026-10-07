@@ -166,4 +166,40 @@ void main() {
     }
     expect(source.releases, greaterThan(0));
   });
+
+  test(
+    'connection reset during a body write leaves the server usable',
+    () async {
+      await server.close();
+      source = TestBytes(length: 16 * 1024 * 1024);
+      server = MediaServer(source);
+      await server.start();
+      final socket = await Socket.connect(server.uri.host, server.uri.port);
+      final arrived = Completer<void>();
+      socket.listen((_) {
+        if (!arrived.isCompleted) arrived.complete();
+      }, onError: (Object _) {});
+      // Abort with RST, as a player replacing its current HTTP stream can do.
+      final linger = Int32List.fromList([1, 0]);
+      socket.setRawOption(
+        RawSocketOption(
+          RawSocketOption.levelSocket,
+          Platform.isMacOS ? 0x0080 : 13,
+          linger.buffer.asUint8List(),
+        ),
+      );
+      socket.write(
+        'GET ${server.uri.path} HTTP/1.1\r\nHost: ${server.uri.host}\r\n\r\n',
+      );
+      await socket.flush();
+      await arrived.future.timeout(const Duration(seconds: 2));
+      socket.destroy();
+      final deadline = DateTime.now().add(const Duration(seconds: 2));
+      while (source.releases == 0 && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(source.releases, greaterThan(0));
+      expect((await get(range: 'bytes=0-99')).$2, source.data.sublist(0, 100));
+    },
+  );
 }

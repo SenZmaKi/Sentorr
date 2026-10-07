@@ -287,12 +287,15 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                       ValueListenableBuilder(
                         valueListenable: _engine.streaming.status,
                         builder: (context, stream, _) => PlayerValue(
-                          stream: p.stream.duration,
-                          initial: p.state.duration,
-                          builder: (context, duration) => AnimatedSwitcher(
+                          stream: p.stream.width,
+                          initial: p.state.width,
+                          builder: (context, width) => AnimatedSwitcher(
                             duration: const Duration(milliseconds: 450),
                             child:
-                                duration == Duration.zero &&
+                                (width == null ||
+                                        width <= 0 ||
+                                        stream?.stage !=
+                                            StreamStage.streaming) &&
                                     stream?.stage != StreamStage.failed
                                 ? IgnorePointer(
                                     child: OpeningCover(

@@ -26,11 +26,27 @@ class MediaServer {
       (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
     ).join();
     uri = Uri.http('127.0.0.1:${_server!.port}', '/$token/media');
-    _server!.listen((request) => unawaited(_serve(request)));
+    _server!.listen(
+      (request) => unawaited(_handle(request)),
+      onError: (Object error) {
+        onEvent?.call({'event': 'connection-ended', 'reason': '$error'});
+      },
+    );
+  }
+
+  Future<void> _handle(HttpRequest request) async {
+    // Disconnects can also occur while writing rejection/HEAD headers or
+    // closing a response, outside the body-serving catch below.
+    try {
+      await _serve(request);
+    } on IOException catch (error) {
+      onEvent?.call({'event': 'connection-ended', 'reason': '$error'});
+    }
   }
 
   Future<void> _serve(HttpRequest request) async {
     final response = request.response;
+    unawaited(response.done.then((_) {}, onError: (Object _) {}));
     if (_closed || request.uri.path != uri.path) {
       response.statusCode = HttpStatus.notFound;
       await response.close();
@@ -51,7 +67,6 @@ class MediaServer {
     _requests.add(cancellation);
     // detachSocket completes the HttpResponse itself; body cancellation is
     // tracked through the detached socket, not this completion signal.
-    unawaited(response.done.then((_) {}, onError: (Object _) {}));
     Socket? socket;
     final id = ++requestCount;
     try {
@@ -100,6 +115,7 @@ class MediaServer {
         // is delivered exactly, and each response closes its connection.
         response.persistentConnection = false;
         socket = await response.detachSocket();
+        unawaited(socket.done.then((_) {}, onError: (Object _) {}));
         _sockets[cancellation] = socket;
         socket.listen(
           (_) {},

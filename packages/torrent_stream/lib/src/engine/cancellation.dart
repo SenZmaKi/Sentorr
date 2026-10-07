@@ -24,6 +24,9 @@ class Cancellation {
   }
 
   Future<T> wait<T>(Future<T> operation) {
+    // The caller has already started operation (e.g. socket.flush()). Even
+    // an already-cancelled wait must observe its eventual error.
+    unawaited(operation.then<void>((_) {}, onError: (Object _) {}));
     check();
     final result = Completer<T>();
     void cancelled() {

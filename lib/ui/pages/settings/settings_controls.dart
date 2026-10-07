@@ -62,7 +62,9 @@ class _NumberFieldState extends State<NumberField> {
       _controller.text = '${widget.value}';
       return;
     }
-    final value = parsed.clamp(widget.min, widget.max ?? parsed);
+    final value = widget.max == null
+        ? (parsed < widget.min ? widget.min : parsed)
+        : parsed.clamp(widget.min, widget.max!);
     _controller.text = '$value';
     if (value != widget.value) widget.onSubmitted(value);
   }

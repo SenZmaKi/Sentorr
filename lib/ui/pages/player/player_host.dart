@@ -30,7 +30,11 @@ class PlayerHost extends ConsumerWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Inert(inert: open && view != PlayerView.mini, child: child),
+          Inert(
+            inert: open && view != PlayerView.mini,
+            suppressPainting: true,
+            child: child,
+          ),
           AnimatedSwitcher(
             duration: reduceMotion(context) ? Duration.zero : Motion.reveal,
             switchInCurve: Motion.enter,

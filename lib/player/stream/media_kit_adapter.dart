@@ -26,10 +26,14 @@ class MediaKitTorrentAdapter {
     TorrentStream stream, {
     Duration? start,
     required bool Function() isCurrent,
+    bool Function()? canAutoplay,
   }) async {
     await _configure();
     if (!isCurrent()) return;
-    await player.open(Media(stream.uri.toString(), start: start));
+    await player.open(
+      Media(stream.uri.toString(), start: start),
+      play: canAutoplay?.call() ?? true,
+    );
   }
 
   /// Cancels the engine's obsolete reads before mpv asks for [position].

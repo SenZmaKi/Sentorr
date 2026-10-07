@@ -63,9 +63,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   PlayerSession? _session;
   bool _ended = false;
 
+  bool get _pauseOnFocusLoss =>
+      ref.read(settingsProvider).streaming.pauseOnFocusLoss &&
+      ref.read(playerViewProvider) != PlayerView.popOut &&
+      !PictureInPicture.instance.systemControls;
+
+  bool _canAutoplay() =>
+      !_pauseOnFocusLoss ||
+      ref.read(AppLifecycleNotifier.provider) == AppLifecycleState.resumed;
+
   @override
   void initState() {
     super.initState();
+    _engine.streaming.canAutoplay = _canAutoplay;
     _session = ref.read(playerSessionProvider);
     final s = _engine.stream;
     _subscriptions.addAll([
@@ -195,17 +205,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     });
     ref.listen(AppLifecycleNotifier.provider, (_, lifecycle) {
       _settlePipOutcome(lifecycle);
-      unawaited(
-        _focusPlayback.change(
-          lifecycle,
-          enabled:
-              ref.read(settingsProvider).streaming.pauseOnFocusLoss &&
-              ref.read(playerViewProvider) != PlayerView.popOut &&
-              // Leaving the app while playing opens the system window,
-              // which keeps playing; pausing here would race it.
-              !PictureInPicture.instance.systemControls,
-        ),
-      );
+      unawaited(_focusPlayback.change(lifecycle, enabled: _pauseOnFocusLoss));
     });
     final view = ref.watch(playerViewProvider);
     final full = view == PlayerView.full;

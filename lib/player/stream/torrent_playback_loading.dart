@@ -25,7 +25,10 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     _local = true;
     _openingGeneration = generation;
     try {
-      await _player.open(Media(uri.toString(), start: start));
+      await _player.open(
+        Media(uri.toString(), start: start),
+        play: canAutoplay(),
+      );
     } finally {
       if (_openingGeneration == generation) _openingGeneration = null;
     }
@@ -155,6 +158,7 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
         stream,
         start: start,
         isCurrent: () => !_stale(generation),
+        canAutoplay: canAutoplay,
       );
     } finally {
       if (_openingGeneration == generation) _openingGeneration = null;

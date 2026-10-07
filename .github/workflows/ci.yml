@@ -57,6 +57,9 @@ jobs:
         run: python tool/release/build_native.py
       - name: Install dependencies
         run: flutter pub get
+      - name: Install signing tool dependencies
+        working-directory: source-directory/signer
+        run: dart pub get
 
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed lib test packages/torrent_stream/lib packages/torrent_stream/test source-directory/signer/bin
@@ -76,9 +79,7 @@ jobs:
           dart test --concurrency=1
       - name: Check signing tools
         working-directory: source-directory/signer
-        run: |
-          dart pub get
-          dart analyze
+        run: dart analyze
 
       - name: Probe live torrent providers
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

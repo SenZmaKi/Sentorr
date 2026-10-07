@@ -78,6 +78,47 @@ void main() {
     await engine.updates.close();
   });
 
+  test('focus loss during torrent loading opens media paused', () async {
+    final renderer = Completer<void>();
+    var foreground = true;
+    ready = () => renderer.future;
+    playback.canAutoplay = () => foreground;
+    final loading = playback.play(item, torrent: first);
+    await settlePlayback();
+    foreground = false;
+    renderer.complete();
+    await loading;
+    expect(native.opened, hasLength(1));
+    expect(native.state.playing, isFalse);
+    expect(playback.status.value!.stage, StreamStage.streaming);
+  });
+
+  test('returning before loading finishes allows autoplay', () async {
+    final renderer = Completer<void>();
+    var foreground = false;
+    ready = () => renderer.future;
+    playback.canAutoplay = () => foreground;
+    final loading = playback.play(item, torrent: first);
+    await settlePlayback();
+    foreground = true;
+    renderer.complete();
+    await loading;
+    expect(native.state.playing, isTrue);
+  });
+
+  test('peer media also respects focus loss during loading', () async {
+    final renderer = Completer<void>();
+    ready = () => renderer.future;
+    saved = PeerFile(Uri.parse('http://127.0.0.1/video'), 'Other device');
+    playback.canAutoplay = () => false;
+    final loading = playback.play(item);
+    await settlePlayback();
+    renderer.complete();
+    await loading;
+    expect(native.opened, hasLength(1));
+    expect(native.state.playing, isFalse);
+  });
+
   test(
     'HTTP metadata is added before renderer readiness; media waits',
     () async {

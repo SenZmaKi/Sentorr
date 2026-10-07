@@ -103,6 +103,9 @@ class TorrentPlayback {
   /// preparation runs alongside it; opening media waits for it.
   final Future<void> Function() outputReady;
 
+  /// Read when media is ready, since focus can change during preparation.
+  bool Function() canAutoplay = () => true;
+
   final status = ValueNotifier<StreamStatus?>(null);
   PlaybackItem? _item;
 

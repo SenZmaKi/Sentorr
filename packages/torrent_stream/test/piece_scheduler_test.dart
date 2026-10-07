@@ -11,7 +11,7 @@ void main() {
     final owner = Cancellation();
     scheduler.demand(owner, 0, 30, 8);
     expect(handle.deadlines, {0: 0, 1: 500});
-    expect(handle.priorities[2], 1);
+    expect(handle.priorities[2], 5);
     scheduler.demand(owner, 20, 30, 8);
     expect(handle.deadlines, {20: 0, 21: 500});
     expect(handle.priorities[0], 0);
@@ -19,6 +19,19 @@ void main() {
     expect(handle.deadlines, isEmpty);
     expect(handle.priorities[20], 0);
   });
+  test(
+    'video read-ahead outranks sidecars and restores their base on release',
+    () {
+      final handle = TestHandle(pieceLength: 1024 * 1024);
+      final scheduler = PieceScheduler(handle, base: (_) => 4);
+      final owner = Cancellation();
+      scheduler.demand(owner, 0, 30, 8);
+      expect(handle.priorities[0], 7);
+      expect(handle.priorities[2], 5);
+      scheduler.release(owner);
+      expect(handle.priorities[2], 4);
+    },
+  );
   test('repeated demand in a piece avoids recomputing priority windows', () {
     final handle = TestHandle();
     var baseReads = 0;

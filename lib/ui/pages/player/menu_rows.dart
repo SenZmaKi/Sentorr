@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../components/interactive.dart';
+import '../../components/scrolling_text.dart';
 import '../../components/surface.dart';
 import '../../shared/theme/theme.dart';
 
@@ -40,6 +41,8 @@ class PlayerMenuRow extends StatelessWidget {
     this.value,
     this.selected,
     this.chevron = false,
+    this.scrollLabel = false,
+    this.scrollValue = false,
   });
 
   final String label;
@@ -50,6 +53,7 @@ class PlayerMenuRow extends StatelessWidget {
   /// Non-null on choice rows: whether this is the active choice.
   final bool? selected;
   final bool chevron;
+  final bool scrollLabel, scrollValue;
 
   @override
   Widget build(BuildContext context) {
@@ -96,27 +100,41 @@ class PlayerMenuRow extends StatelessWidget {
               const SizedBox(width: Space.s12),
             ],
             Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.type.label.copyWith(
-                  color: context.colors.foreground,
-                ),
-              ),
+              child: scrollLabel
+                  ? ScrollingText(
+                      label,
+                      style: context.type.label.copyWith(
+                        color: context.colors.foreground,
+                      ),
+                    )
+                  : Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.type.label.copyWith(
+                        color: context.colors.foreground,
+                      ),
+                    ),
             ),
             if (value != null) ...[
               const SizedBox(width: Space.s8),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 120),
-                child: Text(
-                  value!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.type.bodySmall.copyWith(
-                    color: context.colors.foregroundSecondary,
-                  ),
-                ),
+                child: scrollValue
+                    ? ScrollingText(
+                        value!,
+                        style: context.type.bodySmall.copyWith(
+                          color: context.colors.foregroundSecondary,
+                        ),
+                      )
+                    : Text(
+                        value!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.type.bodySmall.copyWith(
+                          color: context.colors.foregroundSecondary,
+                        ),
+                      ),
               ),
             ],
             if (chevron)

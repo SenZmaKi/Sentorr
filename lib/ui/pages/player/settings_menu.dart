@@ -32,7 +32,12 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
   void _go(_Page page) => setState(() => _page = page);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: widget.actions.captions,
+    builder: (context, _) => _build(context),
+  );
+
+  Widget _build(BuildContext context) {
     final p = widget.player;
     final dense = context.playerLayout.handheld;
     final popup = !widget.actions.ui.fullscreen;
@@ -86,7 +91,10 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
 
   List<Widget> _root(Tracks tracks, Track track, double rate) {
     final audio = _realAudio(tracks);
-    final subs = _realSubs(tracks);
+    final captions = widget.actions.captions;
+    final subs = captions.embedded;
+    final count = subs.length + captions.files.where((f) => !f.failed).length;
+    final available = subs.isNotEmpty || captions.files.isNotEmpty;
     final timer = ref.watch(sleepTimerProvider);
     return [
       PlayerMenuRow(
@@ -107,13 +115,18 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
       PlayerMenuRow(
         icon: Icons.subtitles_outlined,
         label: 'Subtitles',
-        value: subs.isEmpty
-            ? 'None available'
+        value: !captions.enabled
+            ? '$count available'
+            : captions.selected != null
+            ? captions.selected!.ready
+                  ? captions.selected!.label
+                  : '${captions.selected!.label} · ${captions.selected!.status}'
             : _isReal(track.subtitle.id)
             ? subtitleLabel(track.subtitle)
-            : 'Off',
-        chevron: subs.isNotEmpty,
-        onTap: subs.isEmpty ? null : () => _go(_Page.subtitles),
+            : 'On',
+        scrollValue: captions.enabled,
+        chevron: available,
+        onTap: available ? () => _go(_Page.subtitles) : null,
       ),
       PlayerMenuRow(
         icon: Icons.bedtime_outlined,
@@ -176,14 +189,30 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
     PlayerMenuHeader(title: 'Subtitles', onBack: () => _go(_Page.root)),
     PlayerMenuRow(
       label: 'Off',
-      selected: !_isReal(track.subtitle.id),
-      onTap: () => widget.player.setSubtitleTrack(SubtitleTrack.no()),
+      selected: !widget.actions.captions.enabled,
+      onTap: widget.actions.captions.off,
     ),
-    for (final t in _realSubs(tracks))
+    for (final t in widget.actions.captions.embedded)
       PlayerMenuRow(
         label: subtitleLabel(t),
-        selected: track.subtitle.id == t.id,
-        onTap: () => widget.player.setSubtitleTrack(t),
+        scrollLabel: true,
+        selected:
+            widget.actions.captions.enabled &&
+            widget.actions.captions.selectedFile == null &&
+            track.subtitle.id == t.id,
+        onTap: () => widget.actions.captions.chooseTrack(t),
+      ),
+    for (final f in widget.actions.captions.files)
+      PlayerMenuRow(
+        label: f.label,
+        scrollLabel: true,
+        value: f.ready ? null : f.status,
+        selected:
+            widget.actions.captions.enabled &&
+            widget.actions.captions.selectedFile == f.file.index,
+        onTap: f.failed
+            ? null
+            : () => widget.actions.captions.chooseFile(f.file.index),
       ),
   ];
 
@@ -216,8 +245,6 @@ bool _isReal(String id) => id != 'auto' && id != 'no';
 
 List<AudioTrack> _realAudio(Tracks t) =>
     t.audio.where((a) => _isReal(a.id)).toList();
-List<SubtitleTrack> _realSubs(Tracks t) =>
-    t.subtitle.where((a) => _isReal(a.id)).toList();
 
 String audioLabel(AudioTrack t) => _label(t.id, t.title, t.language);
 String subtitleLabel(SubtitleTrack t) => _label(t.id, t.title, t.language);

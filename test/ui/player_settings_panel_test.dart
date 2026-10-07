@@ -13,6 +13,8 @@ import 'package:sentorr/ui/pages/player/player_layout.dart';
 
 import '../support/fake_playback.dart';
 
+import 'package:sentorr/player/stream/subtitles.dart';
+
 void main() {
   for (final size in [const Size(1000, 700), const Size(1920, 1080)]) {
     testWidgets('settings popup becomes a full-height panel at $size', (
@@ -26,10 +28,13 @@ void main() {
       final ui = PlayerUi()..toggle(PlayerPanel.settings);
       addTearDown(ui.dispose);
       final player = Player(platformPlayer: FakePlayback());
+      final captions = PlaybackSubtitles(player);
+      addTearDown(captions.dispose);
+      final actions = _Actions(ui, captions);
       const picture = Key('picture');
       SlotPanel panel() => (
         width: 320.0,
-        child: SettingsMenu(key: menu, player: player, actions: _Actions(ui)),
+        child: SettingsMenu(key: menu, player: player, actions: actions),
       );
       await tester.pumpWidget(
         ProviderScope(
@@ -94,7 +99,10 @@ void main() {
 }
 
 class _Actions implements PlayerActions {
-  _Actions(this.ui);
+  _Actions(this.ui, this.captions);
+
+  @override
+  final PlaybackSubtitles captions;
 
   @override
   final PlayerUi ui;

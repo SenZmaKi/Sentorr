@@ -1,3 +1,5 @@
+import 'captions_control.dart';
+
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -173,17 +175,7 @@ class BottomBar extends StatelessWidget {
               onTap: () => ui.toggle(PlayerPanel.settings),
             ),
           ),
-        if (has(BarControl.captions))
-          PlayerValue(
-            stream: s.track,
-            initial: player.state.track,
-            builder: (context, track) => PlayerControl(
-              icon: Icons.closed_caption_outlined,
-              tooltip: 'Captions (c)',
-              selected: captionsOn(track),
-              onPressed: actions.toggleSubtitles,
-            ),
-          ),
+        if (has(BarControl.captions)) CaptionsControl(actions: actions),
         if (has(BarControl.torrents))
           PlayerControl(
             icon: Icons.swap_horiz_rounded,

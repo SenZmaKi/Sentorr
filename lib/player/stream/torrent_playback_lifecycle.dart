@@ -35,6 +35,7 @@ extension _TorrentPlaybackLifecycle on TorrentPlayback {
     _candidate = null;
     final transfer = _transfer;
     _transfer = null;
+    await subtitles.reset();
     await _cleanup.run([_player.stop, if (transfer != null) transfer.cancel]);
     try {
       await session.setTransferPaused(true);
@@ -118,6 +119,7 @@ extension _TorrentPlaybackLifecycle on TorrentPlayback {
   /// Detaches the session at once and closes it behind any earlier close,
   /// so two never shut down concurrently. Completes when all are closed.
   Future<void> _release() {
+    final subtitlesReady = subtitles.reset();
     _cancel?.cancel();
     _cancel = null;
     final pending = _pendingPreparation;
@@ -133,12 +135,13 @@ extension _TorrentPlaybackLifecycle on TorrentPlayback {
       return _cleanup.run([
         // Stop reads before invalidating the endpoint; still release all
         // resources if a stop or subscription cancellation fails.
+        () => subtitlesReady,
         _player.stop,
         if (transfer != null) transfer.cancel,
         if (session != null) session.close,
         if (pending != null) pending.close,
       ]);
     }
-    return _cleanup.pending;
+    return subtitlesReady.then((_) => _cleanup.pending);
   }
 }

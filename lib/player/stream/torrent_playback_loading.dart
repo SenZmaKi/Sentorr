@@ -32,6 +32,7 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     } finally {
       if (_openingGeneration == generation) _openingGeneration = null;
     }
+    if (!_stale(generation)) subtitles.opened();
     _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
   }
 
@@ -152,6 +153,10 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     TorrentStream stream,
     Duration? start,
   ) async {
+    final session = _session!;
+    final files = await engine.metadata(session.infoHash!);
+    if (_stale(generation)) return;
+    subtitles.watch(session, subtitleFiles(files, stream.file, _item!));
     _openingGeneration = generation;
     try {
       await _adapter.open(
@@ -160,6 +165,9 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
         isCurrent: () => !_stale(generation),
         canAutoplay: canAutoplay,
       );
+      if (!_stale(generation)) {
+        subtitles.opened();
+      }
     } finally {
       if (_openingGeneration == generation) _openingGeneration = null;
     }

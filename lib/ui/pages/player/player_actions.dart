@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
 import '../../../player/engine.dart';
+import '../../../player/stream/subtitles.dart';
 import '../../../player/session.dart';
 import '../../../torrents/resolution_models.dart';
 import '../../shared/player_view.dart';
@@ -32,6 +33,7 @@ class PlayerActions {
   final PlayerViewNotifier view;
 
   Player get _player => engine.player;
+  PlaybackSubtitles get captions => engine.streaming.subtitles;
 
   void togglePlay({bool acknowledge = true}) {
     final playing = _player.state.playing;
@@ -110,12 +112,10 @@ class PlayerActions {
 
   /// Captions on with the first real track, or off.
   void toggleSubtitles() {
-    final selected = _player.state.track.subtitle;
-    final on = selected.id != 'no' && selected.id != 'auto';
-    final first = _player.state.tracks.subtitle
-        .where((t) => t.id != 'no' && t.id != 'auto')
-        .firstOrNull;
-    if (!on && first == null) {
+    final captions = this.captions;
+    if (!captions.enabled &&
+        !captions.available &&
+        engine.streaming.status.value?.starting != true) {
       ui.flash(
         PlayerFeedback(
           Icons.closed_caption_disabled_outlined,
@@ -124,11 +124,15 @@ class PlayerActions {
       );
       return;
     }
-    unawaited(_player.setSubtitleTrack(on ? SubtitleTrack.no() : first!));
+    captions.toggle();
     ui.flash(
       PlayerFeedback(
-        on ? Icons.closed_caption_off_outlined : Icons.closed_caption_rounded,
-        label: on ? 'Captions off' : 'Captions on',
+        captions.enabled
+            ? Icons.closed_caption_rounded
+            : Icons.closed_caption_off_outlined,
+        label: captions.enabled
+            ? 'Captions ${captions.status.toLowerCase()}'
+            : 'Captions off',
       ),
     );
   }

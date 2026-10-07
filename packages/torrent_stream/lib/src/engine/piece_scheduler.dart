@@ -61,9 +61,11 @@ class PieceScheduler {
       );
       for (var piece = start; piece <= end; piece++) {
         final urgent = piece - start < urgentCount;
+        // Read-ahead stays ahead of files downloaded in full (priority 4),
+        // including subtitle sidecars; only imminent video bytes get deadlines.
         priorities[piece] = max(
           priorities[piece] ?? base(piece),
-          urgent ? 7 : 1,
+          urgent ? 7 : 5,
         );
         if (urgent) {
           final deadline = (piece - start) * 500;

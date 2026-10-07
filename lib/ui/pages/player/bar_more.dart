@@ -24,14 +24,17 @@ class BarMore extends StatelessWidget {
   final PlayQueue? queue;
 
   @override
-  Widget build(BuildContext context) => ActionMenu(
-    title: 'More',
-    actions: [for (final c in controls) _action(context, c)],
-    builder: (context, menu) => PlayerControl(
-      icon: Icons.more_vert_rounded,
-      tooltip: 'More',
-      selected: menu.isOpen,
-      onPressed: () => menu.isOpen ? menu.close() : menu.open(),
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: actions.captions,
+    builder: (context, _) => ActionMenu(
+      title: 'More',
+      actions: [for (final c in controls) _action(context, c)],
+      builder: (context, menu) => PlayerControl(
+        icon: Icons.more_vert_rounded,
+        tooltip: 'More',
+        selected: menu.isOpen,
+        onPressed: () => menu.isOpen ? menu.close() : menu.open(),
+      ),
     ),
   );
 
@@ -64,7 +67,9 @@ class BarMore extends StatelessWidget {
       onPressed: actions.next,
     ),
     BarControl.captions => MenuAction(
-      'Captions',
+      actions.captions.selected != null
+          ? 'Captions · ${actions.captions.status}'
+          : 'Captions',
       icon: Icons.closed_caption_outlined,
       onPressed: actions.toggleSubtitles,
     ),

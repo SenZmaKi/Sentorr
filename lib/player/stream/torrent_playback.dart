@@ -18,6 +18,8 @@ import 'offline_source.dart';
 import 'parked_stream.dart';
 import 'prepared_stream.dart';
 import 'stream_status.dart';
+import 'subtitles.dart';
+import 'subtitle_files.dart';
 
 export 'stream_status.dart';
 
@@ -84,6 +86,7 @@ class TorrentPlayback {
 
   final Player _player;
   final MediaKitTorrentAdapter _adapter;
+  late final subtitles = PlaybackSubtitles(_player);
 
   /// The app's torrent session; a download of the same torrent shares it.
   final TorrentEngine engine;
@@ -266,6 +269,7 @@ class TorrentPlayback {
     _generation++;
     _errors.dispose();
     _switchTimer?.cancel();
+    subtitles.dispose();
     status.dispose();
   }
 

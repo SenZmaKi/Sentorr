@@ -9,7 +9,7 @@ class FakePlayback extends PlatformPlayer {
   final opened = <Media>[];
   final seeks = <Duration>[];
   bool failOpen = false, failStop = false;
-  void Function()? onOpen;
+  void Function()? onOpen, onStop;
 
   void emitError(String message) => errorController.add(message);
 
@@ -23,6 +23,7 @@ class FakePlayback extends PlatformPlayer {
 
   @override
   Future<void> stop() async {
+    onStop?.call();
     if (failStop) throw StateError('stop failed');
     state = state.copyWith(playing: false, position: Duration.zero);
   }

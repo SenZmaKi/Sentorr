@@ -198,18 +198,22 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
   final nextEpisodes = ref.read(savedNextEpisodesProvider.notifier);
   final progress = ProgressTracker(
     engine.player,
-    canRecord: () =>
+    // The stream's own item, not the session's: the session moves on
+    // before the player stops the previous one.
+    canRecord: (item) =>
+        engine.streaming.item?.id == item.id &&
         engine.streaming.status.value?.stage == StreamStage.streaming,
+    // The stores log failed writes and the next save retries them.
     save: (item, position, duration) {
-      unawaited(
-        history.record(
-          item,
-          position: position,
-          duration: duration,
-          release: engine.streaming.status.value?.torrent?.release,
-        ),
-      );
-      unawaited(following.record(item, position: position, duration: duration));
+      history
+          .record(
+            item,
+            position: position,
+            duration: duration,
+            release: engine.streaming.status.value?.torrent?.release,
+          )
+          .ignore();
+      following.record(item, position: position, duration: duration).ignore();
       unawaited(nextEpisodes.prepare(item));
     },
   );

@@ -115,6 +115,9 @@ class TorrentPlayback {
   final status = ValueNotifier<StreamStatus?>(null);
   PlaybackItem? _item;
 
+  /// The item being streamed, set once the one before it has stopped.
+  PlaybackItem? get item => _item;
+
   /// Where the current item was asked to start, kept for torrents that
   /// replace one that failed before playing.
   Duration? _start;

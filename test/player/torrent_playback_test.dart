@@ -78,6 +78,15 @@ void main() {
     await engine.updates.close();
   });
 
+  test('the streamed item changes only once the previous one stopped', () async {
+    await playback.play(item, torrent: first);
+    PlaybackItem? stopping;
+    native.onStop = () => stopping = playback.item;
+    await playback.play(next, torrent: second);
+    expect(stopping, item);
+    expect(playback.item, next);
+  });
+
   test('focus loss during torrent loading opens media paused', () async {
     final renderer = Completer<void>();
     var foreground = true;

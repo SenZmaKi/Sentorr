@@ -3,13 +3,33 @@ import 'package:flutter/material.dart';
 import '../shared/theme/theme.dart';
 import 'motion.dart';
 
-/// Keeps every page alive (scroll, input) and fades between them. Hidden
-/// pages take no pointer, focus or semantics, and their tickers pause.
-class FadePageStack extends StatelessWidget {
+/// Mounts pages on their first visit, then keeps their scroll/input state.
+/// Hidden pages take no pointer, focus or semantics, and their tickers pause.
+class FadePageStack extends StatefulWidget {
   const FadePageStack({super.key, required this.index, required this.children});
 
   final int index;
   final List<Widget> children;
+
+  @override
+  State<FadePageStack> createState() => _FadePageStackState();
+}
+
+class _FadePageStackState extends State<FadePageStack> {
+  final _visited = <int>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _visited.add(widget.index);
+  }
+
+  @override
+  void didUpdateWidget(FadePageStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _visited.removeWhere((index) => index >= widget.children.length);
+    _visited.add(widget.index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +37,12 @@ class FadePageStack extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        for (final (i, page) in children.indexed)
-          _Page(active: i == index, duration: duration, child: page),
+        for (final (i, page) in widget.children.indexed)
+          _Page(
+            active: i == widget.index,
+            duration: duration,
+            child: _visited.contains(i) ? page : const SizedBox.shrink(),
+          ),
       ],
     );
   }

@@ -48,8 +48,12 @@ class SpotlightCrossfade extends StatelessWidget {
       duration: reduceMotion(context) ? Duration.zero : Motion.spotlightFade,
       switchInCurve: Motion.change,
       switchOutCurve: Motion.change,
-      layoutBuilder: (current, previous) =>
-          Stack(fit: StackFit.expand, children: [...previous, ?current]),
+      // Rapid pager changes need only the latest outgoing artwork. Older
+      // transitions otherwise keep additional full-size images mounted.
+      layoutBuilder: (current, previous) => Stack(
+        fit: StackFit.expand,
+        children: [if (previous.isNotEmpty) previous.last, ?current],
+      ),
       child: child,
     ),
   );

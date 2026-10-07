@@ -25,6 +25,7 @@ class SourceIcon extends StatelessWidget {
         _asset,
         width: size,
         height: size,
+        cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).ceil(),
         fit: BoxFit.contain,
         filterQuality: FilterQuality.medium,
         excludeFromSemantics: true,

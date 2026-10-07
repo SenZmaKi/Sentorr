@@ -28,6 +28,10 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<!-- Skia/Metal reduces the measured macOS Impeller native-memory overhead.
+	     Revisit after engine updates; see docs/performance/MEMORY-2026-10-06.md. -->
+	<key>FLTEnableImpeller</key>
+	<false/>
 	<key>SUFeedURL</key>
 	<string>https://github.com/SenZmaKi/Sentorr/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>

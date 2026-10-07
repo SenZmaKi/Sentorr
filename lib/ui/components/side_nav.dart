@@ -30,6 +30,7 @@ class SideNav extends StatelessWidget {
             child: Image.asset(
               context.brand.logo,
               width: 32,
+              cacheWidth: (32 * MediaQuery.devicePixelRatioOf(context)).ceil(),
               height: 32,
               semanticLabel: 'Sentorr',
             ),

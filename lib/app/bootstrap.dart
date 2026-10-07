@@ -33,6 +33,7 @@ import '../player/lifecycle.dart';
 import '../settings/notifier.dart';
 import '../settings/repository.dart';
 import '../shared/errors/error_reports.dart';
+import '../shared/graphics_cache.dart';
 import '../shared/log.dart';
 import '../shared/net/net.dart';
 import '../shared/net/online.dart';
@@ -124,6 +125,7 @@ class AppRuntime with WidgetsBindingObserver {
       '${followed.length} followed series and ${downloaded.length} downloads',
     );
     AppImageCache.initialize(paths, maxSizeBytes: settings.imageCacheMaxBytes);
+    await configureGraphicsCache();
     final network = NetworkClient(
       cacheDirectory: paths.networkCacheDirectory.path,
       ttls: settings.cache.ttl,

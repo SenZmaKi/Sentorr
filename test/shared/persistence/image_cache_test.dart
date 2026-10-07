@@ -59,7 +59,7 @@ void main() {
         AppImageCache.initialize(paths, maxSizeBytes: 4);
         expect(
           PaintingBinding.instance.imageCache.maximumSizeBytes,
-          64 * 1024 * 1024,
+          16 * 1024 * 1024,
         );
         final manager = AppImageCache.manager;
         await manager.putFile(

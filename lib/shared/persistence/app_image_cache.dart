@@ -14,7 +14,7 @@ class AppImageCache {
 
   /// Decoded keep-alive images, separate from the user-controlled disk budget.
   /// Mounted images and GPU resources are additional to this limit.
-  static const decodedMaxSizeBytes = 64 * 1024 * 1024;
+  static const decodedMaxSizeBytes = 16 * 1024 * 1024;
   static int _maxCacheSizeBytes = defaultMaxCacheSizeBytes;
   static CacheManager? _manager;
 

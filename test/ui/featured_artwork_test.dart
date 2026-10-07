@@ -24,6 +24,27 @@ class _Imdb extends FakeImdbRepository {
 }
 
 void main() {
+  testWidgets('rapid spotlight changes retain only the latest outgoing image', (
+    tester,
+  ) async {
+    Widget show(int index) => MaterialApp(
+      home: SpotlightCrossfade(
+        child: Text('artwork $index', key: ValueKey(index)),
+      ),
+    );
+    await tester.pumpWidget(show(0));
+    await tester.pumpWidget(show(1));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpWidget(show(2));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('artwork 0'), findsNothing);
+    expect(find.text('artwork 1'), findsOneWidget);
+    expect(find.text('artwork 2'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('artwork 1'), findsNothing);
+    expect(find.text('artwork 2'), findsOneWidget);
+  });
+
   testWidgets(
     'spotlight loads current and upcoming titles, including wraparound',
     (tester) async {

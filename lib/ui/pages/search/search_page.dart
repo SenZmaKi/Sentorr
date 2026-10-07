@@ -67,7 +67,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final here = ref.watch(appDestinationProvider) == AppDestination.search;
-    // The page is built hidden at launch; search IMDb only once it is seen.
+    // Start the initial search once, when this destination is first shown.
     if (!_visited && !here) return const SizedBox.shrink();
     _visited = true;
     ref.listen(appDestinationProvider, (_, next) {

@@ -1,5 +1,4 @@
-import 'dart:ui';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,7 +6,8 @@ import '../../../home/catalog_rows.dart';
 import '../../../imdb/images.dart';
 import '../../../imdb/models.dart';
 import '../../../imdb/providers.dart';
-import '../../components/app_image.dart';
+import '../../../app/services.dart';
+import '../../components/blurred_image.dart';
 import '../../shared/theme/theme.dart';
 import 'spotlight_state.dart';
 import 'featured_artwork.dart';
@@ -81,13 +81,15 @@ class _Wash extends ConsumerWidget {
             .whenOrNull(data: (d) => d.backdropCandidate) ??
         title.poster;
     if (image == null) return const SizedBox.shrink();
-    // A small rendition is enough once blurred, and cheap to filter.
-    return ImageFiltered(
-      imageFilter: ImageFilter.blur(sigmaX: 64, sigmaY: 64),
-      child: AppImage(
-        url: imdbImageUrl(image.url, width: 360),
-        decodeWidth: 360,
-        placeholder: false,
+    return BlurredImage(
+      sigma: 64,
+      image: ResizeImage.resizeIfNeeded(
+        360,
+        null,
+        CachedNetworkImageProvider(
+          imdbImageUrl(image.url, width: 360),
+          cacheManager: ref.watch(imageCacheProvider),
+        ),
       ),
     );
   }

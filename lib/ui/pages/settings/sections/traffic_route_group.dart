@@ -9,6 +9,7 @@ import '../../../components/buttons.dart';
 import '../../../shared/theme/theme.dart';
 import '../settings_controls.dart';
 import '../settings_group.dart';
+import '../settings_validation.dart';
 import '../text_setting_field.dart';
 
 /// The proxy and VPN interface all torrent traffic goes through.
@@ -76,6 +77,7 @@ class TrafficRouteGroup extends ConsumerWidget {
               value: proxy.host,
               hint: '127.0.0.1',
               semanticLabel: 'Proxy host',
+              validator: validateProxyHost,
               onSubmitted: (v) => editProxy((p) => p.copyWith(host: v)),
             ),
           ),

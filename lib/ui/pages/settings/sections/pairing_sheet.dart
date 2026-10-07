@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../sync/devices.dart';
+import '../../../../shared/errors/error_reports.dart';
 import '../../../../sync/models.dart';
 import '../../../../sync/pairing.dart';
 import '../../../../sync/server.dart';
@@ -237,8 +238,10 @@ class _AddressFormState extends ConsumerState<_AddressForm> {
     final address = parseDeviceAddress(_controller.text);
     if (address == null) {
       setState(() => _error = 'Enter an address like 192.168.1.20:47615');
+      ErrorReports.report('Invalid device address', _error!);
       return;
     }
+    setState(() => _error = null);
     ref.read(pairingProvider.notifier).join(address);
   }
 
@@ -269,8 +272,22 @@ DeviceAddress? parseDeviceAddress(String text) {
   final trimmed = text.trim();
   if (trimmed.isEmpty) return null;
   final uri = Uri.tryParse('https://$trimmed');
-  if (uri == null || uri.host.isEmpty) return null;
-  return (host: uri.host, port: uri.hasPort ? uri.port : preferredSyncPort);
+  if (uri == null ||
+      uri.host.isEmpty ||
+      RegExp(r'\s').hasMatch(trimmed) ||
+      uri.userInfo.isNotEmpty ||
+      uri.path.isNotEmpty ||
+      uri.hasQuery ||
+      uri.hasFragment) {
+    return null;
+  }
+  try {
+    final port = uri.hasPort ? uri.port : preferredSyncPort;
+    if (port < 1 || port > 65535) return null;
+    return (host: uri.host, port: port);
+  } on FormatException {
+    return null;
+  }
 }
 
 /// This device's addresses, for the other to enter by hand.

@@ -85,5 +85,16 @@ void main() {
     ));
     expect(parseDeviceAddress('[fd00::1]:80'), (host: 'fd00::1', port: 80));
     expect(parseDeviceAddress(''), isNull);
+    for (final address in [
+      'host:0',
+      'host:65536',
+      'host:not-a-port',
+      'bad host',
+      'host/path',
+      'user@host',
+      'https://host',
+    ]) {
+      expect(parseDeviceAddress(address), isNull, reason: address);
+    }
   });
 }

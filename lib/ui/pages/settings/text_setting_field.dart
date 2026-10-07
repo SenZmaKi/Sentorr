@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/errors/error_reports.dart';
 import '../../components/inputs.dart';
 
 /// Free text, saved when submitted or left.
@@ -11,6 +12,7 @@ class TextSettingField extends StatefulWidget {
     required this.semanticLabel,
     this.hint,
     this.obscureText = false,
+    this.validator,
   });
 
   final String value;
@@ -18,6 +20,7 @@ class TextSettingField extends StatefulWidget {
   final String semanticLabel;
   final String? hint;
   final bool obscureText;
+  final String? Function(String)? validator;
 
   @override
   State<TextSettingField> createState() => _TextSettingFieldState();
@@ -54,7 +57,14 @@ class _TextSettingFieldState extends State<TextSettingField> {
     final value = widget.obscureText
         ? _controller.text
         : _controller.text.trim();
-    if (value != widget.value) widget.onSubmitted(value);
+    if (value == widget.value) return;
+    final error = widget.validator?.call(value);
+    if (error != null) {
+      _controller.text = widget.value;
+      ErrorReports.report('Invalid ${widget.semanticLabel}', error);
+      return;
+    }
+    widget.onSubmitted(value);
   }
 
   @override

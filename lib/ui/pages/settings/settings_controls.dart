@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import '../../../shared/errors/error_reports.dart';
 import '../../components/inputs.dart';
 import '../../components/select.dart';
 import '../../shared/theme/theme.dart';
 
 /// A whole number with its unit, saved when submitted or left. Values
-/// outside [min]–[max] are clamped; blank restores the saved value.
+/// outside [min]–[max] are rejected with a field-specific error toast.
 class NumberField extends StatefulWidget {
   const NumberField({
     super.key,
@@ -57,14 +57,26 @@ class _NumberFieldState extends State<NumberField> {
   }
 
   void _commit() {
-    final parsed = int.tryParse(_controller.text.trim());
+    final text = _controller.text.trim();
+    if (text == '${widget.value}') return;
+    final parsed = int.tryParse(text);
+    final String? error;
     if (parsed == null) {
+      error = 'Enter a whole number.';
+    } else if (parsed < widget.min ||
+        (widget.max != null && parsed > widget.max!)) {
+      error = widget.max == null
+          ? 'Enter a value of at least ${widget.min} ${widget.unit}.'
+          : 'Enter a value between ${widget.min} and ${widget.max} ${widget.unit}.';
+    } else {
+      error = null;
+    }
+    if (error != null) {
       _controller.text = '${widget.value}';
+      ErrorReports.report('Invalid ${widget.semanticLabel}', error);
       return;
     }
-    final value = widget.max == null
-        ? (parsed < widget.min ? widget.min : parsed)
-        : parsed.clamp(widget.min, widget.max!);
+    final value = parsed!;
     _controller.text = '$value';
     if (value != widget.value) widget.onSubmitted(value);
   }
@@ -79,7 +91,6 @@ class _NumberFieldState extends State<NumberField> {
       textAlign: TextAlign.end,
       semanticLabel: widget.semanticLabel,
       keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       onSubmitted: (_) => _commit(),
       trailing: Padding(
         padding: const EdgeInsets.only(left: Space.s8),

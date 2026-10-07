@@ -10,6 +10,7 @@ import '../../../components/confirm_dialog.dart';
 import '../../../shared/theme/theme.dart';
 import '../../../shared/title_format.dart';
 import '../settings_group.dart';
+import '../settings_validation.dart';
 import '../text_setting_field.dart';
 import 'pairing_sheet.dart';
 
@@ -55,6 +56,7 @@ class DevicesSection extends ConsumerWidget {
               trailing: TextSettingField(
                 value: devices.identity.name,
                 semanticLabel: 'Device name',
+                validator: validateDeviceName,
                 onSubmitted: notifier.rename,
               ),
             ),

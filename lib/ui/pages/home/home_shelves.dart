@@ -147,7 +147,7 @@ class ContinueWatchingShelf extends ConsumerWidget {
               ? episodeCode(entry.season, entry.episode)
               : kindLabel(show),
           chipIcon: kindIcon(show),
-          upNext: entry.position == Duration.zero,
+          nextEpisode: entry.position == Duration.zero,
           progress: entry.progress,
           position: entry.position,
           runtime: entry.duration,

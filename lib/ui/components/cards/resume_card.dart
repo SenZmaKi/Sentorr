@@ -16,7 +16,7 @@ class ResumeCard extends StatelessWidget {
     required this.meta,
     required this.artwork,
     required this.progress,
-    this.upNext = false,
+    this.nextEpisode = false,
     this.position,
     this.runtime,
     this.chip,
@@ -33,7 +33,10 @@ class ResumeCard extends StatelessWidget {
 
   /// Fraction watched, 0–1.
   final double progress;
-  final bool upNext;
+
+  /// An unstarted episode following one the viewer finished: the bar
+  /// offers to start it instead of resuming.
+  final bool nextEpisode;
 
   /// Where the viewer stopped and the file's length, as the player shows.
   final Duration? position, runtime;
@@ -68,8 +71,8 @@ class ResumeCard extends StatelessWidget {
         onTap: onTap,
         excludeChildSemantics: titleLink == null && metaLink == null,
         semanticLabel: [
-          '${upNext ? 'Continue' : 'Resume'} $title',
-          if (!upNext && left != null) '${clockLabel(left)} left',
+          nextEpisode ? 'Play next episode of $title' : 'Resume $title',
+          if (!nextEpisode && left != null) '${clockLabel(left)} left',
         ].join(', '),
         builder: (context, s) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,18 +94,14 @@ class ResumeCard extends StatelessWidget {
                     left: Space.s12,
                     right: Space.s12,
                     bottom: Space.s8,
-                    child: upNext
-                        ? const OverlayBadge(
-                            'Up next',
-                            icon: Icons.play_arrow_rounded,
-                          )
-                        : _PlayerBar(
-                            progress: progress,
-                            position: position,
-                            runtime: runtime,
-                            left: left,
-                            active: s.hovered || s.focused,
-                          ),
+                    child: _PlayerBar(
+                      started: !nextEpisode,
+                      progress: progress,
+                      position: position,
+                      runtime: runtime,
+                      left: left,
+                      active: s.hovered || s.focused,
+                    ),
                   ),
                 ],
               ),
@@ -120,6 +119,7 @@ class ResumeCard extends StatelessWidget {
 
 class _PlayerBar extends StatelessWidget {
   const _PlayerBar({
+    required this.started,
     required this.progress,
     required this.position,
     required this.runtime,
@@ -127,6 +127,8 @@ class _PlayerBar extends StatelessWidget {
     required this.active,
   });
 
+  /// False for a fresh episode: no position, clock or remaining time.
+  final bool started;
   final double progress;
   final Duration? position, runtime, left;
   final bool active;
@@ -159,15 +161,17 @@ class _PlayerBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Resume',
+                    started ? 'Resume' : 'Next episode',
                     style: type.label.copyWith(
                       color: OverlayColors.foreground,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (runtime != null && position != null)
+                  if (runtime != null && (position != null || !started))
                     Text(
-                      '${clockLabel(position)} / ${clockLabel(runtime)}',
+                      started
+                          ? '${clockLabel(position!)} / ${clockLabel(runtime)}'
+                          : clockLabel(runtime),
                       style: type.timecode.copyWith(
                         color: OverlayColors.foregroundSecondary,
                       ),
@@ -175,28 +179,30 @@ class _PlayerBar extends StatelessWidget {
                 ],
               ),
             ),
-            if (left != null) OverlayBadge('${clockLabel(left!)} left'),
+            if (started && left != null)
+              OverlayBadge('${clockLabel(left!)} left'),
           ],
         ),
         const SizedBox(height: Space.s8),
-        _Scrubber(progress: progress),
+        _Scrubber(progress: started ? progress : 0, thumb: started),
       ],
     );
   }
 }
 
 /// Seek bar in the overlay roles: inactive track, white fill and a thumb
-/// at the paused position.
+/// at the paused position. An unstarted episode shows the bare track.
 class _Scrubber extends StatelessWidget {
-  const _Scrubber({required this.progress});
+  const _Scrubber({required this.progress, this.thumb = true});
 
   final double progress;
+  final bool thumb;
 
   @override
   Widget build(BuildContext context) {
-    const thumb = 10.0;
+    const knob = 10.0;
     return SizedBox(
-      height: thumb,
+      height: knob,
       child: LayoutBuilder(
         builder: (context, box) {
           final x = box.maxWidth * progress.clamp(0, 1);
@@ -218,17 +224,18 @@ class _Scrubber extends StatelessWidget {
                   borderRadius: BorderRadius.circular(Radii.full),
                 ),
               ),
-              Positioned(
-                left: (x - thumb / 2).clamp(0, box.maxWidth - thumb),
-                child: Container(
-                  width: thumb,
-                  height: thumb,
-                  decoration: const BoxDecoration(
-                    color: OverlayColors.foreground,
-                    shape: BoxShape.circle,
+              if (thumb)
+                Positioned(
+                  left: (x - knob / 2).clamp(0, box.maxWidth - knob),
+                  child: Container(
+                    width: knob,
+                    height: knob,
+                    decoration: const BoxDecoration(
+                      color: OverlayColors.foreground,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
-              ),
             ],
           );
         },

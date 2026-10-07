@@ -7,8 +7,12 @@ import 'package:sentorr/player/progress_tracker.dart';
 import '../support/fake_playback.dart';
 
 const _hour = Duration(hours: 1);
-final _movie = PlaybackItem(title: ImdbTitle(id: 'tt1', title: 'Movie'));
-final _other = PlaybackItem(title: ImdbTitle(id: 'tt2', title: 'Other'));
+final _movie = PlaybackItem(
+  title: ImdbTitle(id: 'tt1', title: 'Movie'),
+);
+final _other = PlaybackItem(
+  title: ImdbTitle(id: 'tt2', title: 'Other'),
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -25,8 +29,8 @@ void main() {
       duration: _hour,
       playing: playing ?? native.state.playing,
     );
-    if (playing != null) native.playingController.add(playing);
-    native.positionController.add(position);
+    if (playing != null) native.emitPlaying(playing);
+    native.emitPosition(position);
     await settlePlayback();
   }
 

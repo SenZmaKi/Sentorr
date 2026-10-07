@@ -68,6 +68,21 @@ void main() {
     },
   );
 
+  test('a corrupt file is recovered from the previous save', () async {
+    final file = File('${root.path}/state.json');
+    final store = JsonFileStore(file);
+    await store.write({'value': 1});
+    await store.write({'value': 2});
+    await file.writeAsString('{broken');
+    expect(await JsonFileStore(file).read(), {'value': 1});
+  });
+
+  test('a corrupt file with no usable backup reads as empty', () async {
+    final file = File('${root.path}/state.json');
+    await file.writeAsString('{broken');
+    expect(await JsonFileStore(file).read(), isNull);
+  });
+
   test('a burst shares one durable replacement', () async {
     final store = _CountingStore(File('${root.path}/state.json'));
     final saves = List.generate(20, (i) => store.write({'value': i}));

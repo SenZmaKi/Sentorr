@@ -12,6 +12,8 @@ class FakePlayback extends PlatformPlayer {
   void Function()? onOpen, onStop;
 
   void emitError(String message) => errorController.add(message);
+  void emitPlaying(bool playing) => playingController.add(playing);
+  void emitPosition(Duration position) => positionController.add(position);
 
   @override
   Future<void> open(Playable playable, {bool play = true}) async {

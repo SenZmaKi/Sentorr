@@ -92,6 +92,12 @@ Future<Object?> _run(
         message['index'] as int,
         message['options'] as StreamOptions,
       );
+    case 'prefetch':
+      core.prefetch(
+        message['stream'] as int,
+        message['start'] as int,
+        message['end'] as int,
+      );
     case 'seek':
       core.seek(message['stream'] as int);
     case 'closeStream':

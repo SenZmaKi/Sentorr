@@ -172,6 +172,14 @@ void main() {
         final received = session.state.receivedBytes;
         final served = session.state.servedBytes;
         expect(session.state.downloadedBytes, lessThan(fixture.length));
+        // Disk prefetch completes without any further player HTTP reads.
+        await session.bufferAhead(Duration.zero, const Duration(minutes: 1));
+        if (session.state.selectedProgress != 1) {
+          await session.states
+              .firstWhere((s) => s.selectedProgress == 1)
+              .timeout(const Duration(seconds: 30));
+        }
+        expect(session.state.servedBytes, served);
         // Last: after a real pause libtorrent retries explicit-only peers
         // slowly; real torrents reannounce to trackers and the DHT.
         await session.setTransferPaused(true);

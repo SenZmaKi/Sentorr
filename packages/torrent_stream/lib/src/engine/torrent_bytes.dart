@@ -25,6 +25,14 @@ class TorrentBytes implements ByteSource {
   final Future<Uint8List> Function(int, Cancellation) readPiece;
   final PieceScheduler scheduler;
   final int pieceLength, lookahead;
+  final _prefetch = Cancellation();
+
+  void prefetch(int start, int end) {
+    final first = (file.offset + start) ~/ pieceLength;
+    final last = (file.offset + end - 1) ~/ pieceLength;
+    scheduler.demand(_prefetch, first, last, last - first, urgent: false);
+  }
+
   final _cache = <int, Uint8List>{};
   final _loading = <int, (Cancellation, Future<Uint8List>)>{};
   int _cachedBytes = 0;
@@ -118,6 +126,8 @@ class TorrentBytes implements ByteSource {
   }
 
   void close() {
+    _prefetch.cancel();
+    scheduler.release(_prefetch);
     for (final loading in _loading.values) {
       loading.$1.cancel();
     }

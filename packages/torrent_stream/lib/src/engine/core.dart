@@ -215,6 +215,15 @@ class EngineCore {
   }
 
   /// Cancels the stream's pending reads before a seek.
+  void prefetch(int id, int start, int end) {
+    final host = _streams[id]?.streams[id];
+    if (host == null) return;
+    if (start < 0 || end <= start || end > host.file.size) {
+      throw ArgumentError('Invalid prefetch range');
+    }
+    host.bytes.prefetch(start, end);
+  }
+
   void seek(int id) {
     _streams[id]?.streams[id]?.server?.cancelReads();
   }

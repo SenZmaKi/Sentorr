@@ -7,7 +7,10 @@ class StreamingSettings {
   const StreamingSettings({
     this.pauseOnFocusLoss = true,
     this.readAheadBytes = 16 * _mb,
-    this.pieceCacheBytes = 24 * _mb,
+    this.downloadAheadMinutes = 10,
+    this.limitDownloadAhead = true,
+    this.playerForwardBufferMiB = 128,
+    this.playerBackwardBufferMiB = 32,
     this.metadataTimeoutSeconds = 60,
     this.pieceTimeoutSeconds = 45,
     this.torrentDirectory,
@@ -19,11 +22,14 @@ class StreamingSettings {
 
   static const maxKeptTorrents = 20;
 
-  /// How far past the playhead pieces are requested.
+  /// Legacy byte setting retained for older settings files. Playback now
+  /// uses [downloadAheadMinutes].
   final int readAheadBytes;
 
-  /// Memory held for recently read pieces.
-  final int pieceCacheBytes;
+  final int downloadAheadMinutes;
+  final bool limitDownloadAhead;
+
+  final int playerForwardBufferMiB, playerBackwardBufferMiB;
 
   /// How long to wait for a magnet's metadata, then for any single piece.
   final int metadataTimeoutSeconds, pieceTimeoutSeconds;
@@ -38,7 +44,10 @@ class StreamingSettings {
   StreamingSettings copyWith({
     bool? pauseOnFocusLoss,
     int? readAheadBytes,
-    int? pieceCacheBytes,
+    int? downloadAheadMinutes,
+    bool? limitDownloadAhead,
+    int? playerForwardBufferMiB,
+    int? playerBackwardBufferMiB,
     int? metadataTimeoutSeconds,
     int? pieceTimeoutSeconds,
     String? torrentDirectory,
@@ -47,7 +56,12 @@ class StreamingSettings {
   }) => StreamingSettings(
     pauseOnFocusLoss: pauseOnFocusLoss ?? this.pauseOnFocusLoss,
     readAheadBytes: readAheadBytes ?? this.readAheadBytes,
-    pieceCacheBytes: pieceCacheBytes ?? this.pieceCacheBytes,
+    downloadAheadMinutes: downloadAheadMinutes ?? this.downloadAheadMinutes,
+    limitDownloadAhead: limitDownloadAhead ?? this.limitDownloadAhead,
+    playerForwardBufferMiB:
+        playerForwardBufferMiB ?? this.playerForwardBufferMiB,
+    playerBackwardBufferMiB:
+        playerBackwardBufferMiB ?? this.playerBackwardBufferMiB,
     metadataTimeoutSeconds:
         metadataTimeoutSeconds ?? this.metadataTimeoutSeconds,
     pieceTimeoutSeconds: pieceTimeoutSeconds ?? this.pieceTimeoutSeconds,
@@ -64,8 +78,20 @@ class StreamingSettings {
       pauseOnFocusLoss: json['pauseOnFocusLoss'] is bool
           ? json['pauseOnFocusLoss'] as bool
           : d.pauseOnFocusLoss,
+      downloadAheadMinutes: jsonInt(json['downloadAheadMinutes'], 10, min: 1),
+      limitDownloadAhead: json['limitDownloadAhead'] is bool
+          ? json['limitDownloadAhead'] as bool
+          : true,
       readAheadBytes: jsonInt(json['readAheadBytes'], d.readAheadBytes, min: 1),
-      pieceCacheBytes: jsonInt(json['pieceCacheBytes'], d.pieceCacheBytes),
+      playerForwardBufferMiB: jsonInt(
+        json['playerForwardBufferMiB'],
+        d.playerForwardBufferMiB,
+        min: 1,
+      ),
+      playerBackwardBufferMiB: jsonInt(
+        json['playerBackwardBufferMiB'],
+        d.playerBackwardBufferMiB,
+      ),
       metadataTimeoutSeconds: jsonInt(
         json['metadataTimeoutSeconds'],
         d.metadataTimeoutSeconds,
@@ -90,7 +116,10 @@ class StreamingSettings {
   Map<String, dynamic> toJson() => {
     'pauseOnFocusLoss': pauseOnFocusLoss,
     'readAheadBytes': readAheadBytes,
-    'pieceCacheBytes': pieceCacheBytes,
+    'downloadAheadMinutes': downloadAheadMinutes,
+    'limitDownloadAhead': limitDownloadAhead,
+    'playerForwardBufferMiB': playerForwardBufferMiB,
+    'playerBackwardBufferMiB': playerBackwardBufferMiB,
     'metadataTimeoutSeconds': metadataTimeoutSeconds,
     'pieceTimeoutSeconds': pieceTimeoutSeconds,
     'torrentDirectory': torrentDirectory,

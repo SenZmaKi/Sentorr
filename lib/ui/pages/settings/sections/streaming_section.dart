@@ -17,7 +17,6 @@ class StreamingSection extends ConsumerWidget {
     final notifier = ref.read(settingsProvider.notifier);
     void edit(StreamingSettings Function(StreamingSettings) change) =>
         notifier.update((a) => a.copyWith(streaming: change(a.streaming)));
-    int mb(int bytes) => (bytes / megabyte).round();
     return Column(
       children: [
         SettingsGroup(
@@ -45,38 +44,49 @@ class StreamingSection extends ConsumerWidget {
           children: [
             SettingsTile(
               icon: Icons.fast_forward_outlined,
-              title: 'Read ahead',
-              subtitle:
-                  'Fetched ahead of what is playing; more rides out '
-                  'slow peers but takes longer to start',
-              keywords: 'buffer prefetch stutter',
-              trailing: NumberField(
-                value: mb(s.readAheadBytes),
+              title: 'Download ahead',
+              subtitle: 'Approximate minutes ahead saved to disk, or the entire file while open, even when paused',
+              keywords: 'buffer prefetch stutter minutes entire file unlimited',
+              trailing: LimitField(
+                value: s.limitDownloadAhead ? s.downloadAheadMinutes : 0,
+                presets: const {0: 'Entire file'},
+                customDefault: s.downloadAheadMinutes,
                 min: 1,
-                max: 1024,
-                unit: 'MB',
-                semanticLabel: 'Read ahead in megabytes',
-                onSubmitted: (n) =>
-                    edit((s) => s.copyWith(readAheadBytes: n * megabyte)),
+                unit: 'min',
+                semanticLabel: 'Download ahead',
+                onChanged: (n) => edit(
+                  (s) => s.copyWith(
+                    limitDownloadAhead: n != 0,
+                    downloadAheadMinutes: n == 0 ? s.downloadAheadMinutes : n,
+                  ),
+                ),
               ),
             ),
             SettingsTile(
-              icon: Icons.memory_rounded,
-              title: 'Memory cache',
-              subtitle:
-                  'Recently played pieces kept in memory, so seeking '
-                  'back is instant',
-              keywords: 'piece cache ram seek',
-              trailing: LimitField(
-                value: mb(s.pieceCacheBytes),
-                presets: const {0: 'Off'},
-                customDefault: 24,
+              icon: Icons.play_circle_outline,
+              title: 'Player forward buffer',
+              subtitle: 'Video held in RAM ahead of playback. Applies when a file opens',
+              keywords: 'memory ram cache',
+              trailing: NumberField(
+                value: s.playerForwardBufferMiB,
                 min: 1,
-                max: 1024,
-                unit: 'MB',
-                semanticLabel: 'Memory cache',
-                onChanged: (n) =>
-                    edit((s) => s.copyWith(pieceCacheBytes: n * megabyte)),
+                unit: 'MiB',
+                semanticLabel: 'Player forward buffer in MiB',
+                onSubmitted: (n) =>
+                    edit((s) => s.copyWith(playerForwardBufferMiB: n)),
+              ),
+            ),
+            SettingsTile(
+              icon: Icons.replay_rounded,
+              title: 'Player backward buffer',
+              subtitle: 'Played packets retained by the player in RAM for quick backward seeks. Zero disables it',
+              keywords: 'memory ram cache seek',
+              trailing: NumberField(
+                value: s.playerBackwardBufferMiB,
+                unit: 'MiB',
+                semanticLabel: 'Player backward buffer in MiB',
+                onSubmitted: (n) =>
+                    edit((s) => s.copyWith(playerBackwardBufferMiB: n)),
               ),
             ),
             SettingsTile(

@@ -232,6 +232,10 @@ class TorrentEngine {
   }
 
   /// Cancels a stream's pending reads before its player seeks.
+  Future<void> prefetch(int stream, int start, int end) async {
+    await _command('prefetch', {'stream': stream, 'start': start, 'end': end});
+  }
+
   Future<void> prepareSeek(int stream) async {
     await _command('seek', {'stream': stream});
   }

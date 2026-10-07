@@ -123,9 +123,11 @@ class TorrentStreamConfig {
     this.pieceTimeout = const Duration(seconds: 45),
     this.nativeReadTimeout = const Duration(seconds: 15),
     this.prepareContainer = true,
+    this.downloadAheadMinutes = 10,
     this.retainedDirectory,
   }) {
     if (!Directory(cacheDirectory).isAbsolute ||
+        downloadAheadMinutes < 0 ||
         readAheadBytes <= 0 ||
         pieceCacheBytes < 0 ||
         metadataTimeout <= Duration.zero ||
@@ -139,6 +141,9 @@ class TorrentStreamConfig {
     }
   }
   final String cacheDirectory;
+
+  /// Zero requests the entire selected file while the player owns it.
+  final int downloadAheadMinutes;
 
   /// Zero means unlimited.
   final int readAheadBytes, pieceCacheBytes;

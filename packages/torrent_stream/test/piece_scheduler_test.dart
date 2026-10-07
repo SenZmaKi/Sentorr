@@ -5,6 +5,26 @@ import 'package:torrent_stream/src/engine/piece_scheduler.dart';
 import 'read_support.dart';
 
 void main() {
+  test(
+    'disk prefetch survives HTTP release and moves without urgent deadlines',
+    () {
+      final handle = TestHandle(pieceLength: 1024 * 1024);
+      final scheduler = PieceScheduler(handle);
+      final disk = Cancellation(), http = Cancellation();
+      scheduler.demand(disk, 0, 30, 20, urgent: false);
+      expect(handle.deadlines, isEmpty);
+      scheduler.demand(http, 0, 30, 1);
+      expect(handle.priorities[0], 7);
+      scheduler.release(http);
+      expect(handle.priorities[0], 5);
+      expect(handle.priorities[20], 5);
+      scheduler.demand(disk, 10, 30, 20, urgent: false);
+      expect(handle.priorities[0], 0);
+      expect(handle.priorities[30], 5);
+      scheduler.release(disk);
+      expect(handle.priorities[30], 0);
+    },
+  );
   test('deadlines cover a bounded upcoming window and move on seek', () {
     final handle = TestHandle(pieceLength: 1024 * 1024);
     final scheduler = PieceScheduler(handle);

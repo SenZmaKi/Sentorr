@@ -183,6 +183,31 @@ class TorrentStreamSession {
     if (_hash case final hash?) await engine.addPeers(hash, peers);
   }
 
+  /// Keeps disk downloading independent of the player's HTTP memory cache.
+  Future<void> bufferAhead(Duration position, Duration duration) async {
+    _check();
+    final file = _file, stream = _stream;
+    if (file == null || stream == null) return;
+    if (config.downloadAheadMinutes == 0) {
+      await engine.prefetch(stream, 0, file.length);
+    } else if (duration > Duration.zero) {
+      final start =
+          (file.length * position.inMilliseconds / duration.inMilliseconds)
+              .floor()
+              .clamp(0, file.length - 1);
+      final end =
+          (file.length *
+                  (position.inMilliseconds +
+                      Duration(
+                        minutes: config.downloadAheadMinutes,
+                      ).inMilliseconds) /
+                  duration.inMilliseconds)
+              .ceil()
+              .clamp(start + 1, file.length);
+      await engine.prefetch(stream, start, end);
+    }
+  }
+
   Future<void> prepareSeek() async {
     _check();
     if (_stream case final stream?) await engine.prepareSeek(stream);

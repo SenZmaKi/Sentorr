@@ -30,6 +30,8 @@ extension _TorrentPlaybackLifecycle on TorrentPlayback {
     _start = null;
     _cancel?.cancel();
     _cancel = null;
+    _downloadAhead?.close();
+    _downloadAhead = null;
     _session = null;
     _served = null;
     _candidate = null;
@@ -127,6 +129,8 @@ extension _TorrentPlaybackLifecycle on TorrentPlayback {
     final local = _local;
     _local = false;
     final session = _session, transfer = _transfer;
+    _downloadAhead?.close();
+    _downloadAhead = null;
     _session = null;
     _served = null;
     _candidate = null;

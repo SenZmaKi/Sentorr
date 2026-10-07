@@ -8,9 +8,11 @@ import 'package:media_kit/media_kit.dart';
 import 'package:torrent_stream/torrent_stream.dart';
 
 import '../../torrents/models.dart';
+import '../../settings/streaming_settings.dart';
 import '../../torrents/resolution_models.dart';
 import '../models.dart';
 import 'cleanup_queue.dart';
+import 'download_ahead.dart';
 import 'file_choice.dart';
 import 'playback_errors.dart';
 import 'media_kit_adapter.dart';
@@ -63,10 +65,11 @@ class TorrentPlayback {
     OfflineLookup? offline,
     ParkedStreams? parked,
     this.prepared,
+    StreamingSettings Function()? bufferSettings,
   }) : parked = parked ?? ParkedStreams(),
        offline = offline ?? ((_) => null),
        _player = player,
-       _adapter = MediaKitTorrentAdapter(player) {
+       _adapter = MediaKitTorrentAdapter(player, settings: bufferSettings) {
     _errors = PlaybackErrors(
       player: player,
       generation: () => _generation,
@@ -115,6 +118,7 @@ class TorrentPlayback {
   /// Where the current item was asked to start, kept for torrents that
   /// replace one that failed before playing.
   Duration? _start;
+  DownloadAhead? _downloadAhead;
   TorrentStreamSession? _session;
   TorrentStream? _served;
   TorrentCandidate? _candidate;

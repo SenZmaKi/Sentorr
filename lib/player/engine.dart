@@ -1,4 +1,6 @@
 import '../watching/next_episode.dart';
+import '../settings/streaming_settings.dart';
+import '../settings/notifier.dart';
 
 import 'dart:async';
 
@@ -43,10 +45,11 @@ class PlaybackEngine {
     OfflineLookup? offline,
     ParkedStreams? parked,
     PreparedStreams? prepared,
+    StreamingSettings Function()? bufferSettings,
   }) : player = Player(
          configuration: const PlayerConfiguration(
            title: 'Sentorr',
-           bufferSize: 64 * 1024 * 1024,
+           bufferSize: 128 * 1024 * 1024,
          ),
        ) {
     _lifecycle = lifecycle;
@@ -61,6 +64,7 @@ class PlaybackEngine {
       offline: offline,
       parked: parked,
       prepared: prepared,
+      bufferSettings: bufferSettings,
       outputReady: () => video.platform.future,
     );
     _errors = player.stream.error.listen(
@@ -177,6 +181,7 @@ String _clock(Duration d) =>
 /// item, streaming the torrent chosen for it or the best one found.
 final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
   final engine = PlaybackEngine(
+    bufferSettings: () => ref.read(settingsProvider).streaming,
     lifecycle: ref.read(playerLifecycleProvider),
     torrents: ref.read(torrentEngineProvider),
     configFor: (release) => sessionConfigFor(ref, release),

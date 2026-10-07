@@ -13,15 +13,26 @@ class PieceScheduler {
   final TorrentHandle handle;
   int Function(int piece) base;
   final _consumers = <Cancellation, (int, int)>{};
+  final _background = <Cancellation>{};
   final _active = <int>{};
   final _deadlines = <int, int>{};
   final _priorities = <int, int>{};
   int get urgentPieces => _deadlines.length;
   bool needs(int piece) => _active.contains(piece);
-  void demand(Cancellation owner, int piece, int lastPiece, int lookahead) {
+  void demand(
+    Cancellation owner,
+    int piece,
+    int lastPiece,
+    int lookahead, {
+    bool urgent = true,
+  }) {
+    final changedUrgency = urgent
+        ? _background.remove(owner)
+        : _background.add(owner);
     final window = (piece, min(lastPiece, piece + lookahead));
     // HTTP reads within the same piece keep the same demand window.
-    if (_consumers[owner] == window &&
+    if (!changedUrgency &&
+        _consumers[owner] == window &&
         !_consumers.keys.any((consumer) => consumer.isCancelled)) {
       return;
     }
@@ -30,6 +41,7 @@ class PieceScheduler {
   }
 
   void release(Cancellation owner) {
+    _background.remove(owner);
     if (_consumers.remove(owner) != null) _apply();
   }
 
@@ -37,6 +49,7 @@ class PieceScheduler {
   void prune() {
     final before = _consumers.length;
     _consumers.removeWhere((owner, _) => owner.isCancelled);
+    _background.removeWhere((owner) => owner.isCancelled);
     if (_consumers.length != before) _apply();
   }
 
@@ -60,7 +73,8 @@ class PieceScheduler {
         max(1, (2 * 1024 * 1024 / handle.pieceLength).ceil()),
       );
       for (var piece = start; piece <= end; piece++) {
-        final urgent = piece - start < urgentCount;
+        final urgent =
+            !_background.contains(entry.key) && piece - start < urgentCount;
         // Read-ahead stays ahead of files downloaded in full (priority 4),
         // including subtitle sidecars; only imminent video bytes get deadlines.
         priorities[piece] = max(
@@ -105,6 +119,7 @@ class PieceScheduler {
 
   void clear() {
     _consumers.clear();
+    _background.clear();
     _apply();
   }
 }

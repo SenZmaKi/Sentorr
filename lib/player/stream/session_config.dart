@@ -54,8 +54,12 @@ Future<TorrentStreamConfig> sessionConfigFor(
             .use(root, release.infoHash, keep: s.keepRecentTorrents);
   return TorrentStreamConfig(
     cacheDirectory: root,
-    readAheadBytes: s.readAheadBytes,
-    pieceCacheBytes: s.pieceCacheBytes,
+    // Small urgent read window while media duration is still being discovered.
+    // The playback-position window independently drives disk prefetch.
+    readAheadBytes: 2 * 1024 * 1024,
+    downloadAheadMinutes: s.limitDownloadAhead ? s.downloadAheadMinutes : 0,
+    // MediaKit owns packet caching; avoid retaining duplicate raw pieces.
+    pieceCacheBytes: 0,
     metadataTimeout: Duration(seconds: s.metadataTimeoutSeconds),
     pieceTimeout: Duration(seconds: s.pieceTimeoutSeconds),
     retainedDirectory: retained,

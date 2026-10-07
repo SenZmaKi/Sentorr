@@ -2,15 +2,17 @@ import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:torrent_stream/torrent_stream.dart';
 
+import '../../settings/streaming_settings.dart';
+
 final _log = Logger('sentorr.player.stream');
 
 /// Plays a [TorrentStream] endpoint in MediaKit with bounded native caching,
 /// and keeps engine reads in step with seeks.
 class MediaKitTorrentAdapter {
-  MediaKitTorrentAdapter(this.player);
+  MediaKitTorrentAdapter(this.player, {this.settings});
 
   final Player player;
-  bool _configured = false;
+  final StreamingSettings Function()? settings;
 
   /// Seconds of playable cache mpv waits for before starting or resuming.
   static const readySeconds = 2;
@@ -28,7 +30,7 @@ class MediaKitTorrentAdapter {
     required bool Function() isCurrent,
     bool Function()? canAutoplay,
   }) async {
-    await _configure();
+    await configure();
     if (!isCurrent()) return;
     await player.open(
       Media(stream.uri.toString(), start: start),
@@ -52,22 +54,23 @@ class MediaKitTorrentAdapter {
     if (isCurrent()) await player.seek(position);
   }
 
-  Future<void> _configure() async {
-    if (_configured) return;
+  Future<void> configure({bool streaming = true}) async {
+    final s = settings?.call() ?? const StreamingSettings();
     final native = player.platform;
     if (native is! NativePlayer) return;
-    for (final MapEntry(:key, :value) in const {
-      'network-timeout': '$httpTimeoutSeconds',
-      'cache': 'yes',
-      'cache-secs': '$forwardSeconds',
-      'cache-pause': 'yes',
-      'cache-pause-initial': 'yes',
-      'cache-pause-wait': '$readySeconds',
-      'demuxer-max-bytes': '${64 * 1024 * 1024}',
-      'demuxer-max-back-bytes': '${16 * 1024 * 1024}',
+    for (final MapEntry(:key, :value) in {
+      if (streaming) ...{
+        'network-timeout': '$httpTimeoutSeconds',
+        'cache': 'yes',
+        'cache-secs': '$forwardSeconds',
+        'cache-pause': 'yes',
+        'cache-pause-initial': 'yes',
+        'cache-pause-wait': '$readySeconds',
+      },
+      'demuxer-max-bytes': '${s.playerForwardBufferMiB * 1024 * 1024}',
+      'demuxer-max-back-bytes': '${s.playerBackwardBufferMiB * 1024 * 1024}',
     }.entries) {
       await native.setProperty(key, value);
     }
-    _configured = true;
   }
 }

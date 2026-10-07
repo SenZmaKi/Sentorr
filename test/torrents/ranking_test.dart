@@ -8,6 +8,76 @@ import 'package:test/test.dart';
 import 'resolver_test.dart' show release;
 
 void main() {
+  test('series packs use the same unknown-size policy as season packs', () {
+    final season = release(1, pack: true, size: 5 * 1024 * 1024 * 1024);
+    final series = TorrentRelease(
+      source: season.source,
+      name: season.name,
+      infoHash: season.infoHash,
+      magnet: season.magnet,
+      seeders: season.seeders,
+      resolution: season.resolution,
+      sizeBytes: 50 * 1024 * 1024 * 1024,
+      isSeriesPack: true,
+    );
+    final prefs = TorrentPreferences();
+    final candidate = TorrentResolver.rank([series], prefs).single;
+    expect(candidate.score, TorrentResolver.rank([season], prefs).single.score);
+    expect(candidate.requiresFileSelection, isTrue);
+  });
+  test('unknown episode size is independent of total season size', () {
+    final prefs = TorrentPreferences();
+    final small = TorrentResolver.rank([
+      release(1, pack: true, size: 5 * 1024 * 1024 * 1024),
+    ], prefs).single;
+    final large = TorrentResolver.rank([
+      release(1, pack: true, size: 50 * 1024 * 1024 * 1024),
+    ], prefs).single;
+    expect(large.score, small.score);
+    expect(large.requiresFileSelection, isTrue);
+  });
+  test('unknown pack size sits between known small and large episodes', () {
+    final ranked = TorrentResolver.rank([
+      release(1, seeders: 190, size: 489 * 1024 * 1024),
+      release(2, seeders: 190, pack: true, size: 20 * 1024 * 1024 * 1024),
+      release(3, seeders: 190, size: 2200 * 1024 * 1024),
+    ], TorrentPreferences());
+    expect(ranked.map((c) => c.release.infoHash), [
+      release(1).infoHash,
+      release(2).infoHash,
+      release(3).infoHash,
+    ]);
+  });
+  test('unknown pack size does not rescue an unhealthy swarm', () {
+    final ranked = TorrentResolver.rank([
+      release(1, seeders: 2, pack: true, size: 20 * 1024 * 1024 * 1024),
+      release(2, seeders: 190, size: 2200 * 1024 * 1024),
+    ], TorrentPreferences());
+    expect(ranked.first.release.infoHash, release(2).infoHash);
+  });
+  test('smaller episode outweighs a modest healthy-swarm advantage', () {
+    for (final seeds in [240, 250]) {
+      final ranked = TorrentResolver.rank([
+        release(1, seeders: seeds, size: 2200 * 1024 * 1024),
+        release(2, seeders: 190, size: 489 * 1024 * 1024),
+      ], TorrentPreferences());
+      expect(ranked.first.release.infoHash, release(2).infoHash);
+    }
+  });
+  test('tiny poorly seeded release does not beat a healthy larger swarm', () {
+    final ranked = TorrentResolver.rank([
+      release(1, seeders: 2, size: 100 * 1024 * 1024),
+      release(2, seeders: 250, size: 2200 * 1024 * 1024),
+    ], TorrentPreferences());
+    expect(ranked.first.release.infoHash, release(2).infoHash);
+  });
+  test('a substantial swarm advantage can justify a larger release', () {
+    final ranked = TorrentResolver.rank([
+      release(1, seeders: 2000, size: 2200 * 1024 * 1024),
+      release(2, seeders: 190, size: 489 * 1024 * 1024),
+    ], TorrentPreferences());
+    expect(ranked.first.release.infoHash, release(1).infoHash);
+  });
   test('Lanterns slightly larger well-seeded release wins above 100 seeds', () {
     final ranked = TorrentResolver.rank([
       release(1, seeders: 703, size: 482 * 1024 * 1024),

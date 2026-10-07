@@ -32,8 +32,20 @@ optional maximum bytes and optional known resolution. It also rejects malformed
 hashes, magnets that disagree with the hash, and invalid sizes or resolutions.
 Seed counts are provider reports, not verified availability.
 
-Scores use fixed scales: 55% closeness to preferred resolution, 40% seeder
-availability (`seeders / (seeders + 100)`), and 5% preference for smaller releases.
+Scores use fixed scales: 55% closeness to preferred resolution, 40% size-adjusted
+seeder availability (`seeders / (seeders + 100 * (1 + sizeGiB))`), and 5%
+preference for smaller releases. Larger payloads require stronger swarms for the
+same availability credit; the base 100 prevents tiny, poorly seeded releases from
+winning on a raw seeders-per-byte ratio. At equal resolution, 190 seeders for
+489 MiB outranks 250 seeders for 2200 MiB, while a substantial swarm advantage
+can still justify the larger release. This is a ranking heuristic, not a measured
+throughput or bitrate estimate. Season and series packs use a fixed 1 GiB
+comparison baseline for both size-related terms because the requested episode's
+size is unknown. This is an uncertainty policy, not an episode-size estimate:
+at equal quality and seeders, known episodes below 1 GiB rank above the pack,
+and episodes above 1 GiB rank below it. Total pack size remains visible and
+still applies to explicit maximum-torrent-size filters. File selection checks
+the requested episode at playback; it does not currently rerank candidates.
 Availability increases with diminishing returns and has no hard seeder cap. Unknown
 resolution gets zero quality credit. Fixed scales prevent an outlier from
 changing other candidates' scores. Ties prefer seeders then hash. All eligible

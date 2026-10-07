@@ -146,7 +146,7 @@ class TorrentResolver {
   }
 
   /// Fixed scales keep scores stable when unrelated candidates are added.
-  /// Quality and availability dominate; size is a small tiebreaker.
+  /// Availability accounts for download size as well as swarm health.
   static List<TorrentCandidate> rank(
     Iterable<TorrentRelease> releases,
     TorrentPreferences preferences, {
@@ -163,10 +163,19 @@ class TorrentResolver {
           ? 0.0
           : math.min(release.resolution!, preferences.preferredResolution) /
                 math.max(release.resolution!, preferences.preferredResolution);
-      // Smooth saturation preserves seeder differences above 100 without
-      // letting very large swarms overwhelm quality and size preferences.
-      final availability = release.seeders / (release.seeders + 100.0);
-      final size = 1 / (1 + release.sizeBytes / (4 * 1024 * 1024 * 1024));
+      // A larger payload needs a stronger swarm to earn the same score.
+      // The base 100 keeps tiny, poorly seeded files from winning on a raw
+      // seeders-per-byte ratio. Fixed scales preserve candidate independence.
+      // Pack bytes describe many episodes, not the requested video. Use a
+      // fixed 1 GiB comparison baseline while its episode size is unknown:
+      // known smaller files earn a bonus, known larger files a penalty.
+      // This is an uncertainty policy, not an estimate of the pack's files.
+      final sizeGiB = release.isPack
+          ? 1.0
+          : release.sizeBytes / (1024 * 1024 * 1024);
+      final availability =
+          release.seeders / (release.seeders + 100.0 * (1 + sizeGiB));
+      final size = 1 / (1 + sizeGiB / 4);
       candidates.add(
         TorrentCandidate(
           release: release,

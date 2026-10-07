@@ -30,6 +30,7 @@ import '../library/playback.dart';
 import '../library/repository.dart';
 import '../notifications/notification_service.dart';
 import '../player/lifecycle.dart';
+import '../player/stream/parked_stream.dart';
 import '../settings/notifier.dart';
 import '../settings/repository.dart';
 import '../shared/errors/error_reports.dart';
@@ -269,6 +270,8 @@ class AppRuntime with WidgetsBindingObserver {
     // Riverpod's onDispose cannot await the player's native cleanup. Finish
     // it while Dart callbacks and torrent sessions are still available.
     await container.read(playerLifecycleProvider).dispose();
+    // Player cleanup can park its session; release it before closing the engine.
+    await container.read(parkedStreamsProvider).dispose();
     await container.read(taskbarProgressProvider).dispose();
     await container.read(downloadQueueProvider).dispose();
     await container.read(torrentEngineProvider).close();

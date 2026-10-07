@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/player/stream/parked_stream.dart';
 import 'package:sentorr/torrents/resolution_models.dart';
@@ -8,9 +10,11 @@ import '../support/fake_torrents.dart';
 class _Session implements TorrentStreamSession {
   int closes = 0;
   bool fails = false;
+  Completer<void>? closing;
   @override
   Future<void> close() async {
     closes++;
+    await closing?.future;
     if (fails) throw StateError('close failed');
   }
 
@@ -41,6 +45,29 @@ ParkedStream _stream(String item, _Session session) => ParkedStream(
 );
 
 void main() {
+  test('shutdown drains previously queued and held stream cleanup', () async {
+    final held = ParkedStreams();
+    final first = _Session()..closing = Completer<void>();
+    final second = _Session();
+    await held.park(_stream('a', first));
+    expect(held.take('other'), null);
+    await held.park(_stream('b', second));
+
+    var finished = false;
+    final shutdown = held.dispose().then((_) => finished = true);
+    await Future<void>.delayed(Duration.zero);
+    expect(first.closes, 1);
+    expect(second.closes, 0);
+    expect(finished, false);
+
+    first.closing!.complete();
+    await shutdown;
+    expect(second.closes, 1);
+    await held.dispose();
+    expect(first.closes, 1);
+    expect(second.closes, 1);
+  });
+
   testWidgets('a parked stream expires after five minutes', (tester) async {
     final held = ParkedStreams();
     final session = _Session();

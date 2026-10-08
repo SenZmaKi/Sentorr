@@ -605,10 +605,10 @@ packages:
     dependency: "direct main"
     description:
       name: libtorrent_dart
-      sha256: f3e7ad0e5256d4981303d1c60840c27efc9e8c6cde3f9958f7cd2063977fe3f1
+      sha256: "00e92f280995ff522fc0a3b80e90fb7b89121b057c0aafa98964f7dec38ef707"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.0"
+    version: "1.1.2"
   lints:
     dependency: "direct dev"
     description:

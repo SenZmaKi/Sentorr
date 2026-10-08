@@ -35,7 +35,7 @@ dependencies:
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.7
   anitomy_dart: ^1.0.1
-  libtorrent_dart: ^1.1.0
+  libtorrent_dart: ^1.1.2
   torrent_stream:
     path: packages/torrent_stream
   file_picker: ^9.2.1

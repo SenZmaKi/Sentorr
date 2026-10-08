@@ -108,7 +108,7 @@ class LocalDiscovery {
           name:
               service.attributes['channel'] == 'nightly' &&
                   !service.name.contains('Nightly')
-              ? '${service.name} · Nightly'
+              ? '${service.name} (Nightly)'
               : service.name,
           address: (host: host, port: service.port),
           pairing: service.attributes['pair'] == '1',

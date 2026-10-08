@@ -18,6 +18,18 @@ Future<void> settle() async {
   }
 }
 
+/// Waits for background work that also does real I/O, such as restoring
+/// saved downloads, which a fixed number of event-loop turns can outrun.
+Future<void> settleUntil(bool Function() done) async {
+  final watch = Stopwatch()..start();
+  while (!done()) {
+    if (watch.elapsed > const Duration(seconds: 10)) {
+      throw StateError('Background work did not settle');
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+  }
+}
+
 void main() {
   late Directory root;
   late FakeTorrents torrents;
@@ -219,7 +231,10 @@ void main() {
       final restored = DownloadQueue(again, repository);
       try {
         await restored.initialize(sharing);
-        await settle();
+        await settleUntil(
+          () =>
+              restored.items.every((i) => i.status != DownloadStatus.preparing),
+        );
         expect(restored.items.map((i) => i.status), [
           DownloadStatus.seeding,
           DownloadStatus.queued,

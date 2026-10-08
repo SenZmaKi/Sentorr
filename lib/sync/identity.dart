@@ -90,7 +90,7 @@ class DeviceIdentity {
 String defaultDeviceName() {
   if (Platform.isAndroid) {
     return ApplicationIdentity.nightly
-        ? 'Android device · Nightly'
+        ? 'Android device (Nightly)'
         : 'Android device';
   }
   if (Platform.isIOS) return 'iPhone';
@@ -102,7 +102,7 @@ String defaultDeviceName() {
           _ => 'Linux PC',
         }
       : host;
-  return ApplicationIdentity.nightly ? '$name · Nightly' : name;
+  return ApplicationIdentity.nightly ? '$name (Nightly)' : name;
 }
 
 /// SHA-256 of a certificate's DER bytes, lowercase hex.

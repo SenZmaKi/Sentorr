@@ -27,13 +27,12 @@ Android does not yet have Senpwai's foreground-service HTTP download runtime.
 A terminated transfer restarts on the next run; completed verified artifacts
 are reused. Torrent downloads retain their own existing queue and engine.
 
-The native streaming bridge is rebuilt from the exact binding commit pinned in
-`pubspec.yaml`, with its submodules. CI creates a disposable path override.
-macOS slices build on native Intel/ARM runners before universal packaging; the app bundle is sealed after final framework
-embedding and its nested signatures are verified;
-Android and Windows build their own static OpenSSL prerequisites. Avoid the
-binding's published 1.0.1 binaries: those do not establish streaming-symbol
-compatibility. AppImages need system GTK and the normal desktop environment.
+The native streaming bridge uses `libtorrent_dart`'s published release
+binaries, which its build hook downloads for each target architecture (macOS
+universal builds fetch both slices). The app bundle is sealed after final
+framework embedding and its nested signatures are verified. Use
+`libtorrent_dart` 1.1.2 or newer: earlier published binaries lack the streaming
+symbols. AppImages need system GTK and the normal desktop environment.
 
 Pages is configured for Actions at `https://senzmaki.github.io/Sentorr/`.
 Its deployment environment permits `master` branches and `v*.*.*` release tags.

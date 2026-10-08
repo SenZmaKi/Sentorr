@@ -36,25 +36,6 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Check out streaming bindings
-        uses: actions/checkout@v7
-        with:
-          repository: SenZmaKi/libtorrent_dart
-          ref: ff3e029881c549b9624f50cf0297da048b74bd68
-          submodules: recursive
-          path: native/libtorrent_dart
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - name: Configure native dependency
-        shell: bash
-        run: python tool/release/configure_native.py
-
-      - name: Install native prerequisites
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libboost-dev libssl-dev
-      - name: Build streaming bridge
-        run: python tool/release/build_native.py
       - name: Install dependencies
         run: flutter pub get
       - name: Install signing tool dependencies
@@ -73,7 +54,6 @@ jobs:
       - name: Test torrent engine
         working-directory: packages/torrent_stream
         run: |
-          printf 'dependency_overrides:\n  libtorrent_dart:\n    path: ../../native/libtorrent_dart\n' > pubspec_overrides.yaml
           dart pub get
           dart analyze
           dart test --concurrency=1

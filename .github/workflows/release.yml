@@ -18,37 +18,6 @@ concurrency:
 jobs:
   quality:
     uses: ./.github/workflows/ci.yml
-  native-macos:
-    needs: prepare
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: macos-15
-            architecture: arm64
-          - runner: macos-15-intel
-            architecture: x64
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/checkout@v7
-        with:
-          repository: SenZmaKi/libtorrent_dart
-          ref: ff3e029881c549b9624f50cf0297da048b74bd68
-          submodules: recursive
-          path: native/libtorrent_dart
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - run: python3 tool/release/configure_native.py
-      - run: brew install cmake ninja boost openssl@3
-      - run: python3 tool/release/build_native.py
-      - uses: actions/upload-artifact@v7
-        with:
-          name: native-macos-${{ matrix.architecture }}
-          path: native/libtorrent_dart/binaries/macos/${{ env.BINDING_VERSION }}/${{ matrix.architecture }}/libtorrent-rasterbar.dylib
-          if-no-files-found: error
   prepare:
     needs: quality
     name: Validate release version
@@ -111,7 +80,7 @@ jobs:
 
   build-macos:
     name: Build universal macOS app
-    needs: [prepare, native-macos]
+    needs: prepare
     runs-on: macos-15
     timeout-minutes: 90
     env:
@@ -133,14 +102,6 @@ jobs:
           flutter-version: 3.47.2
           cache: true
 
-      - name: Check out streaming bindings
-        uses: actions/checkout@v7
-        with:
-          repository: SenZmaKi/libtorrent_dart
-          ref: ff3e029881c549b9624f50cf0297da048b74bd68
-          submodules: recursive
-          path: native/libtorrent_dart
-
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -150,21 +111,8 @@ jobs:
           python -m pip install Pillow
           python tool/release/nightly_branding.py
 
-      - name: Configure native dependency
-        shell: bash
-        run: python tool/release/configure_native.py
-
       - name: Install Flutter dependencies
         run: flutter pub get
-
-      - uses: actions/download-artifact@v8
-        with:
-          name: native-macos-arm64
-          path: native/libtorrent_dart/binaries/macos/${{ env.BINDING_VERSION }}/arm64
-      - uses: actions/download-artifact@v8
-        with:
-          name: native-macos-x64
-          path: native/libtorrent_dart/binaries/macos/${{ env.BINDING_VERSION }}/x64
 
       - name: Analyze Flutter code
         run: flutter analyze
@@ -351,15 +299,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends \
-            file clang cmake ninja-build libboost-dev libssl-dev libayatana-appindicator3-dev libgtk-3-dev libsecret-1-dev pkg-config libmpv-dev
-
-      - name: Check out streaming bindings
-        uses: actions/checkout@v7
-        with:
-          repository: SenZmaKi/libtorrent_dart
-          ref: ff3e029881c549b9624f50cf0297da048b74bd68
-          submodules: recursive
-          path: native/libtorrent_dart
+            file clang cmake ninja-build libayatana-appindicator3-dev libgtk-3-dev libsecret-1-dev pkg-config libmpv-dev
 
       - uses: actions/setup-python@v6
         with:
@@ -370,16 +310,8 @@ jobs:
           python -m pip install Pillow
           python tool/release/nightly_branding.py
 
-      - name: Configure native dependency
-        shell: bash
-        run: python tool/release/configure_native.py
-
       - name: Install Flutter dependencies
         run: flutter pub get
-
-      - name: Build streaming bridge
-        shell: bash
-        run: python tool/release/build_native.py
 
       - name: Analyze Flutter code
         run: flutter analyze
@@ -465,7 +397,6 @@ jobs:
       VERSION: ${{ needs.prepare.outputs.version }}
       BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
       UPDATE_CHANNEL: ${{ needs.prepare.outputs.channel }}
-      SENTORR_NATIVE_ANDROID: "1"
       SENTORR_ANDROID_KEYSTORE_BASE64: ${{ secrets.SENTORR_ANDROID_KEYSTORE_BASE64 }}
       SENTORR_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.SENTORR_ANDROID_KEYSTORE_PASSWORD }}
       SENTORR_ANDROID_KEY_ALIAS: ${{ secrets.SENTORR_ANDROID_KEY_ALIAS }}
@@ -481,14 +412,6 @@ jobs:
           flutter-version: 3.47.2
           cache: true
 
-      - name: Check out streaming bindings
-        uses: actions/checkout@v7
-        with:
-          repository: SenZmaKi/libtorrent_dart
-          ref: ff3e029881c549b9624f50cf0297da048b74bd68
-          submodules: recursive
-          path: native/libtorrent_dart
-
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -498,23 +421,8 @@ jobs:
           python -m pip install Pillow
           python tool/release/nightly_branding.py
 
-      - name: Configure native dependency
-        shell: bash
-        run: python tool/release/configure_native.py
-
       - name: Install Flutter dependencies
         run: flutter pub get
-
-      - name: Install native Android prerequisites
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build cmake libboost-dev
-          sdkmanager "ndk;28.2.13676358"
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
-
-      - name: Build streaming bridge
-        shell: bash
-        run: python tool/release/build_native.py
 
       - name: Analyze Flutter code
         run: flutter analyze
@@ -630,14 +538,6 @@ jobs:
         with:
           arch: ${{ matrix.architecture == 'arm64' && 'arm64' || 'amd64' }}
 
-      - name: Check out streaming bindings
-        uses: actions/checkout@v7
-        with:
-          repository: SenZmaKi/libtorrent_dart
-          ref: ff3e029881c549b9624f50cf0297da048b74bd68
-          submodules: recursive
-          path: native/libtorrent_dart
-
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -647,16 +547,8 @@ jobs:
           python -m pip install Pillow
           python tool/release/nightly_branding.py
 
-      - name: Configure native dependency
-        shell: bash
-        run: python tool/release/configure_native.py
-
       - name: Install Flutter dependencies
         run: flutter pub get
-
-      - name: Build streaming bridge
-        shell: bash
-        run: python tool/release/build_native.py
 
       - name: Analyze Flutter code
         run: flutter analyze

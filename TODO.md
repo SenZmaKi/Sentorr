@@ -4,3 +4,4 @@
 - Add github sponsors to app and readme like in Senpwai and create sponsors section for Sentorr.
 - Add support section in updates and about has github sponsors section and cta to star the repo on github like senpwai.
 - Turning captions off and on causes buffering why?
+- Prewarm the next torrent when we're close to finishing the currently playing one.

@@ -3,14 +3,19 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  bonsoir_windows
+  flutter_secure_storage_windows
   media_kit_libs_windows_video
   media_kit_video
   screen_retriever_windows
+  tray_manager
+  url_launcher_windows
   window_manager
+  windows_taskbar
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
-  cnativeapi
+  flutter_local_notifications_windows
   jni
 )
 

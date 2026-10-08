@@ -45,7 +45,7 @@ class _LabPageState extends State<LabPage> {
   }
 
   Future<void> _pick(bool local) async {
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
       type: local ? FileType.any : FileType.custom,
       allowedExtensions: local ? null : ['torrent'],
     );
@@ -54,7 +54,7 @@ class _LabPageState extends State<LabPage> {
   }
 
   Future<void> _export() async {
-    final path = await FilePicker.saveFile(
+    final path = await FilePicker.platform.saveFile(
       fileName: 'sentorr-streaming-report.json',
       type: FileType.custom,
       allowedExtensions: ['json'],

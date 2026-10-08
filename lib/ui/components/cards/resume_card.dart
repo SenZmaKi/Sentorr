@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/layout/adaptive.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import '../artwork_frame.dart';
@@ -25,6 +26,7 @@ class ResumeCard extends StatelessWidget {
     this.preview,
     this.titleLink,
     this.metaLink,
+    this.onRemove,
   });
 
   final String title;
@@ -54,6 +56,10 @@ class ResumeCard extends StatelessWidget {
 
   /// Independent episode navigation in the supporting line.
   final Widget? metaLink;
+
+  /// Drops the card, from a control in its top-right corner shown on
+  /// hover or focus, or always for touch.
+  final VoidCallback? onRemove;
 
   static double textHeight(CardLines l) =>
       Space.s12 + l.body + Space.s2 + l.caption;
@@ -89,6 +95,17 @@ class ResumeCard extends StatelessWidget {
                       left: Space.s12,
                       top: Space.s12,
                       child: OverlayBadge(chip!, icon: chipIcon),
+                    ),
+                  if (onRemove != null &&
+                      (!context.input.canHover || s.hovered || s.focused))
+                    Positioned(
+                      right: Space.s4,
+                      top: Space.s4,
+                      child: OverlayIconButton(
+                        icon: Icons.close_rounded,
+                        tooltip: 'Remove from Continue watching',
+                        onPressed: onRemove,
+                      ),
                     ),
                   Positioned(
                     left: Space.s12,

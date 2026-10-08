@@ -20,6 +20,8 @@ class AppPaths {
       File(path.join(rootDirectory.path, 'state', 'watch_history.json'));
   File get followedSeriesFile =>
       File(path.join(rootDirectory.path, 'state', 'followed_series.json'));
+  File get watchListsFile =>
+      File(path.join(rootDirectory.path, 'state', 'watch_lists.json'));
   File get downloadsFile =>
       File(path.join(rootDirectory.path, 'state', 'downloads.json'));
   File get libraryFile =>

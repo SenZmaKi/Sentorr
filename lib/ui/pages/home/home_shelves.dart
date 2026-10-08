@@ -4,19 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../home/catalog_rows.dart';
 import '../../../home/more_like.dart';
 import '../../../home/series_updates.dart';
-import '../../../home/watch_activity.dart';
 import '../../../imdb/models.dart';
-import '../../../watching/models.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_card.dart';
 import '../../components/cards/poster_card.dart';
-import '../../components/cards/resume_card.dart';
 import '../../components/cards/title_poster.dart';
 import '../../components/cards/title_preview.dart';
+import '../../components/list_badge.dart';
 import '../../components/title_artwork.dart';
 import '../../components/title_link.dart';
 import '../../shared/title_format.dart';
-import '../../shared/title_icons.dart';
 import '../../shared/title_route.dart';
 import '../../shared/play_route.dart';
 import 'async_shelf.dart';
@@ -90,71 +87,12 @@ class CatalogShelf extends ConsumerWidget {
               ),
           ],
           artwork: TitleArtwork(image: t.poster),
+          stamp: ListBadge(titleId: t.id, compact: true),
           semanticLabel: describeTitle(t),
           onTap: () => ref.openTitle(t),
           preview: _preview(ref, t),
         ),
         _ => _poster(ref, t),
-      },
-    );
-  }
-}
-
-class ContinueWatchingShelf extends ConsumerWidget {
-  const ContinueWatchingShelf({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return AsyncShelf<WatchEntry>(
-      icon: Icons.history_rounded,
-      title: 'Continue watching',
-      count: (n) => '$n to continue',
-      items: ref.watch(continueWatchingProvider),
-      spec: HomeLayout.of(context).resume,
-      onRetry: () => ref.invalidate(continueWatchingProvider),
-      cardBuilder: (context, entry, _) {
-        final show = entry.series ?? entry.title;
-        return ResumeCard(
-          key: ValueKey(entry.key),
-          title: show.title,
-          titleLink: TitleLink(
-            title: show,
-            season: entry.season,
-            child: CardTitle(show.title, large: true),
-          ),
-          metaLink: entry.isEpisode
-              ? TitleLink(
-                  title: show,
-                  season: entry.season,
-                  episode: ImdbEpisode(
-                    title: entry.title,
-                    seasonNumber: entry.season,
-                    episodeNumber: entry.episode,
-                  ),
-                  child: MetaLine([MetaItem(entry.title.title)]),
-                )
-              : null,
-          meta: [
-            if (entry.isEpisode)
-              MetaItem(entry.title.title)
-            else ...[
-              MetaItem(kindLabel(show), icon: kindIcon(show)),
-              if (show.genres.isNotEmpty)
-                MetaItem(show.genres.take(2).join(', ')),
-            ],
-          ],
-          chip: entry.isEpisode
-              ? episodeCode(entry.season, entry.episode)
-              : kindLabel(show),
-          chipIcon: kindIcon(show),
-          nextEpisode: entry.position == Duration.zero,
-          progress: entry.progress,
-          position: entry.position,
-          runtime: entry.duration,
-          artwork: TitleBackdrop(title: show, waitForBackdrop: true),
-          onTap: () => ref.resume(entry),
-          preview: entry.isEpisode ? null : _preview(ref, show),
-        );
       },
     );
   }

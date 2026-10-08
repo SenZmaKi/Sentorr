@@ -179,7 +179,7 @@ void main() {
       expect(container.read(inProgressProvider).single.episode, 3);
       await history.record(
         _episode(3),
-        position: const Duration(minutes: 48),
+        position: const Duration(minutes: 54),
         duration: _hour,
       );
       expect(container.read(inProgressProvider), isEmpty);
@@ -195,7 +195,7 @@ void main() {
     },
   );
 
-  test('season order and the episode 80 percent boundary survive reload', () {
+  test('season order and the episode 90 percent boundary survive reload', () {
     WatchEntry entry(int season, int episode, int seconds) => WatchEntry.of(
       PlaybackItem(
         title: ImdbTitle(id: 'tt-$season-$episode', title: 'Episode'),
@@ -206,11 +206,11 @@ void main() {
       position: Duration(seconds: seconds),
       duration: _hour,
     );
-    final (before, _) = _container([entry(1, 10, 300), entry(2, 1, 2879)]);
+    final (before, _) = _container([entry(1, 10, 300), entry(2, 1, 3239)]);
     expect(before.read(inProgressProvider).single.season, 2);
     final (at, _) = _container([
       entry(1, 10, 300),
-      entry(2, 1, 2880),
+      entry(2, 1, 3240),
       WatchEntry.of(
         _movie,
         position: const Duration(minutes: 48),

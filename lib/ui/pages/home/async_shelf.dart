@@ -23,6 +23,9 @@ class AsyncShelf<T> extends ConsumerWidget {
     required this.onRetry,
     this.subtitle,
     this.count,
+    this.action,
+    this.gutter,
+    this.top = Space.s40,
   });
 
   final IconData icon;
@@ -36,12 +39,22 @@ class AsyncShelf<T> extends ConsumerWidget {
   final Widget Function(BuildContext context, T item, int index) cardBuilder;
   final VoidCallback onRetry;
 
+  /// Trailing control in the row's header, e.g. "See all".
+  final Widget? action;
+
+  /// Overrides the page's side inset, e.g. inside a narrower column.
+  final double? gutter;
+
+  /// Space above the row.
+  final double top;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (items.hasError && !items.hasValue && !ref.watch(onlineProvider)) {
       return const SizedBox.shrink();
     }
     final layout = HomeLayout.of(context);
+    final gutter = this.gutter ?? layout.insets.side;
     Shelf shelf({
       int length = 0,
       IndexedWidgetBuilder? builder,
@@ -51,13 +64,14 @@ class AsyncShelf<T> extends ConsumerWidget {
       title: title,
       subtitle: subtitle,
       count: length > 0 ? count?.call(length) : null,
-      gutter: layout.insets.side,
+      gutter: gutter,
       tileWidth: spec.width,
       tileHeight: spec.height,
       artworkHeight: spec.artworkHeight,
       itemCount: length,
       itemBuilder: builder ?? (_, _) => const SizedBox.shrink(),
       message: message,
+      action: action,
     );
     final content = items.when(
       data: (list) => list.isEmpty
@@ -80,7 +94,7 @@ class AsyncShelf<T> extends ConsumerWidget {
         icon: icon,
         title: title,
         subtitle: subtitle,
-        gutter: layout.insets.side,
+        gutter: gutter,
         tileWidth: spec.width,
         tileHeight: spec.height,
         artworkHeight: spec.artworkHeight,
@@ -98,7 +112,7 @@ class AsyncShelf<T> extends ConsumerWidget {
     );
     if (content == null) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: Space.s40),
+      padding: EdgeInsets.only(top: top),
       child: content,
     );
   }

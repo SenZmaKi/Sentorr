@@ -24,6 +24,7 @@ import 'package:sentorr/ui/shared/play_route.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
 import '../support/fake_following.dart';
+import '../support/fake_lists.dart';
 import '../support/fake_library.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
@@ -44,6 +45,7 @@ Future<ProviderContainer> _pump(
   final container = ProviderContainer(
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
+      ...watchListsOverrides(),
       ...followedSeriesOverrides(),
       ...libraryOverrides(library),
       downloadsProvider.overrideWith((ref) => Stream.value(downloads)),

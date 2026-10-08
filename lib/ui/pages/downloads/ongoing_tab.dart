@@ -49,8 +49,8 @@ class OngoingTab extends ConsumerWidget {
         title: 'Nothing downloading',
         message:
             'Download movies and episodes from their pages to watch without '
-            'waiting for the torrent. Following a series can download new '
-            'episodes as they air.',
+            'waiting for the torrent. Series you are watching can download '
+            'new episodes as they air.',
       );
     }
     final c = context.colors;

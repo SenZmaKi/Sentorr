@@ -23,6 +23,9 @@ import '../following/models.dart';
 import '../following/notifier.dart';
 import '../following/release_alerts.dart';
 import '../following/repository.dart';
+import '../lists/notifier.dart';
+import '../lists/repository.dart';
+import '../lists/seed.dart';
 import '../library/download_alerts.dart';
 import '../library/notifier.dart';
 import '../library/planner.dart';
@@ -64,6 +67,7 @@ class AppRuntime with WidgetsBindingObserver {
     this.repository,
     this.history,
     this.following,
+    this.lists,
     this.tray,
   );
   final ProviderContainer container;
@@ -71,6 +75,7 @@ class AppRuntime with WidgetsBindingObserver {
   final SettingsRepository repository;
   final WatchHistoryRepository history;
   final FollowedSeriesRepository following;
+  final WatchListsRepository lists;
   final DesktopTrayController tray;
   final window = WindowManager.getInstance();
   bool _quitting = false;
@@ -117,13 +122,21 @@ class AppRuntime with WidgetsBindingObserver {
     // Before following was saved, series came from the watch history.
     final followed =
         await following.load() ?? FollowedSeries.fromHistory(watched);
+    final lists = WatchListsRepository(JsonFileStore(paths.watchListsFile));
+    // Before lists, following and the history said what was being watched.
+    var listed = await lists.load();
+    if (listed == null) {
+      listed = seedLists(followed, watched);
+      await lists.save(listed);
+    }
     final library = LibraryRepository(JsonFileStore(paths.libraryFile));
     final devices = DevicesRepository(JsonFileStore(paths.devicesFile));
     final paired = await devices.load();
     final downloaded = await library.load();
     log.info(
       'Loaded settings, ${watched.length} watch history entries, '
-      '${followed.length} followed series and ${downloaded.length} downloads',
+      '${followed.length} followed series, ${listed.length} list entries '
+      'and ${downloaded.length} downloads',
     );
     AppImageCache.initialize(paths, maxSizeBytes: settings.imageCacheMaxBytes);
     await configureGraphicsCache();
@@ -147,6 +160,8 @@ class AppRuntime with WidgetsBindingObserver {
         initialWatchHistoryProvider.overrideWithValue(watched),
         followedSeriesRepositoryProvider.overrideWithValue(following),
         initialFollowedSeriesProvider.overrideWithValue(followed),
+        watchListsRepositoryProvider.overrideWithValue(lists),
+        initialWatchListsProvider.overrideWithValue(listed),
         libraryRepositoryProvider.overrideWithValue(library),
         initialLibraryProvider.overrideWithValue(downloaded),
         devicesRepositoryProvider.overrideWithValue(devices),
@@ -176,6 +191,7 @@ class AppRuntime with WidgetsBindingObserver {
       repository,
       history,
       following,
+      lists,
       tray,
     );
     await runtime.window.init(
@@ -230,6 +246,7 @@ class AppRuntime with WidgetsBindingObserver {
     await repository.store.flushed;
     await history.store.flushed;
     await following.store.flushed;
+    await lists.store.flushed;
     await container.read(libraryRepositoryProvider).store.flushed;
     await container.read(devicesRepositoryProvider).store.flushed;
     if (supportsWindowCustomization) await window.flush();
@@ -286,6 +303,7 @@ class AppRuntime with WidgetsBindingObserver {
     // An open player saves where it stopped as the container disposes it.
     await history.store.flushed;
     await following.store.flushed;
+    await lists.store.flushed;
     await flushLogs();
   }
 

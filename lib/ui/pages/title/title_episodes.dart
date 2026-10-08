@@ -7,6 +7,7 @@ import '../../components/chips.dart';
 import '../../components/section_header.dart';
 import '../../shared/theme/theme.dart';
 import 'season_download_button.dart';
+import 'season_watched_button.dart';
 import 'episode_list.dart';
 
 /// A series' episodes, one season at a time: season chips, then the
@@ -69,11 +70,23 @@ class _TitleEpisodesState extends ConsumerState<TitleEpisodes> {
       });
     }
     final today = DateTime.now();
-    final anyAired = episodes.items.any(
-      (e) => e.releaseDate?.dateTime?.isAfter(today) == false,
-    );
-    final download = anyAired
-        ? SeasonDownloadButton(series: widget.series, season: _season)
+    final lastAired = episodes.items
+        .where((e) => e.releaseDate?.dateTime?.isAfter(today) == false)
+        .map((e) => e.episodeNumber ?? 0)
+        .fold(0, (a, b) => a > b ? a : b);
+    final download = lastAired > 0
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Space.s4,
+            children: [
+              SeasonWatchedButton(
+                series: widget.series,
+                season: _season,
+                lastAired: lastAired,
+              ),
+              SeasonDownloadButton(series: widget.series, season: _season),
+            ],
+          )
         : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

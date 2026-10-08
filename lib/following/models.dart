@@ -32,7 +32,7 @@ class FollowedSeries {
 
   /// Watched this much of an episode, the viewer has seen it; the rest is
   /// mostly credits.
-  static const caughtUpFraction = .8;
+  static const caughtUpFraction = .9;
 
   final ImdbTitle series;
 

@@ -12,10 +12,11 @@ import 'latest_episode.dart';
 import 'models.dart';
 import 'notifier.dart';
 import 'releases.dart';
+import 'tracked.dart';
 
 final _log = Logger('sentorr.following.alerts');
 
-/// Looks for new episodes of followed series while Sentorr runs, including
+/// Looks for new episodes of watched series while Sentorr runs, including
 /// from the tray, and notifies when one is next for the viewer.
 final releaseAlertsProvider = Provider<ReleaseAlerts>((ref) {
   final alerts = ReleaseAlerts(ref);
@@ -57,7 +58,7 @@ class ReleaseAlerts {
   Future<void> _check() async {
     final year = DateTime.now().year;
     final followed = [
-      for (final s in _ref.read(followedSeriesProvider))
+      for (final s in _ref.read(trackedSeriesProvider))
         if (s.series.endYear == null || s.series.endYear! >= year) s,
     ];
     if (followed.isEmpty) {

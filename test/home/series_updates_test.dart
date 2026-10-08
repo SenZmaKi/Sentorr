@@ -6,6 +6,7 @@ import 'package:sentorr/home/series_updates.dart';
 import 'package:sentorr/imdb/models.dart';
 
 import '../support/fake_following.dart';
+import '../support/fake_lists.dart';
 import '../support/fake_imdb.dart';
 
 ImdbDate _date(DateTime d) =>
@@ -36,6 +37,10 @@ void main() {
                   following(t, season: 99, episode: 1),
               ],
         ),
+        ...watchingOverrides([
+          for (final s in followed ?? const <FollowedSeries>[]) s.series,
+          ...imdb.trending,
+        ]),
       ],
     );
     addTearDown(c.dispose);

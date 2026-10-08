@@ -18,6 +18,7 @@ import 'package:sentorr/shared/persistence/json_file_store.dart';
 
 import '../support/fake_download_torrents.dart';
 import '../support/fake_following.dart';
+import '../support/fake_lists.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
 import '../support/fake_planner.dart';
@@ -90,6 +91,7 @@ void main() {
             ),
           ),
         ),
+        ...watchingOverrides([_series]),
         ...followedSeriesOverrides([
           following(
             _series,

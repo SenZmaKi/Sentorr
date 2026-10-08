@@ -47,7 +47,7 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
     return SettingsGroup(
       title: 'Backup',
       description:
-          'Keeps your watch history and followed series, so another device '
+          'Keeps your watch history and lists, so another device '
           'picks up where you left off. Settings stay on each device, and '
           'downloaded files are not included. Restoring merges: the latest '
           'change to each wins',

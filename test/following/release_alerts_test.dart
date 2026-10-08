@@ -9,6 +9,7 @@ import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/settings/repository.dart';
 
 import '../support/fake_following.dart';
+import '../support/fake_lists.dart';
 import '../support/fake_imdb.dart';
 
 class _Notifications extends NotificationService {
@@ -59,6 +60,7 @@ void main() {
         notificationServiceProvider.overrideWithValue(notifications),
         initialSettingsProvider.overrideWithValue(settings),
         settingsRepositoryProvider.overrideWithValue(_NoSettingsFile()),
+        ...watchingOverrides([series]),
         ...followedSeriesOverrides([
           following(
             series,

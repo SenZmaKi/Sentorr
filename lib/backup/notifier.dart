@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app/services.dart';
 import '../watching/notifier.dart';
 import '../following/notifier.dart';
+import '../lists/notifier.dart';
 import '../shared/persistence/credential_store.dart';
 import '../settings/notifier.dart';
 import '../shared/app_lifecycle.dart';
@@ -119,6 +120,7 @@ class BackupNotifier extends Notifier<BackupState> {
 
     ref.listen(watchHistoryProvider, (_, _) => changed());
     ref.listen(followedSeriesProvider, (_, _) => changed());
+    ref.listen(watchListsProvider, (_, _) => changed());
     // Leaving pushes what was watched here; coming back pulls what was
     // watched elsewhere, so a switch between devices finds them in step.
     ref.listen(AppLifecycleNotifier.provider, (_, now) {

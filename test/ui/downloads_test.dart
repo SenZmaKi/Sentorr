@@ -30,6 +30,7 @@ import 'package:sentorr/ui/pages/torrent_picker/torrent_option.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
 import '../support/fake_download_torrents.dart';
+import '../support/fake_following.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
 import '../support/fake_sync.dart';
@@ -94,6 +95,7 @@ Future<FakePlanner> _pump(
           downloads: DownloadPreferences(reviewMatches: reviewMatches),
         ),
       ),
+      ...followedSeriesOverrides(),
       ...syncOverrides(),
       ...libraryOverrides(library),
       imdbRepositoryProvider.overrideWithValue(

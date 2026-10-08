@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
 import '../following/notifier.dart';
+import '../lists/notifier.dart';
 import '../player/models.dart';
 import '../player/stream/offline_source.dart';
 import '../watching/notifier.dart';
@@ -65,6 +66,7 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
     });
     ref.listen(watchHistoryProvider, (_, _) => _schedule(_settle));
     ref.listen(followedSeriesProvider, (_, _) => _schedule(_settle));
+    ref.listen(watchListsProvider, (_, _) => _schedule(_settle));
     ref.listen(sharedLibraryShapeProvider, (_, _) => _schedule(_shared));
     return const {};
   }

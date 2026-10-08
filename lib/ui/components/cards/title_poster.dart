@@ -6,6 +6,7 @@ import '../../../titles/pick_up.dart';
 import '../../shared/play_route.dart';
 import '../../shared/title_format.dart';
 import '../../shared/title_icons.dart';
+import '../list_badge.dart';
 import '../title_artwork.dart';
 import 'card_parts.dart';
 import 'poster_card.dart';
@@ -35,11 +36,13 @@ PosterCard titlePoster(
   String? lead,
   required VoidCallback onOpen,
   VoidCallback? onPlay,
+  List<MetaItem>? meta,
 }) => PosterCard(
   title: t.title,
-  meta: titleFacts(t),
+  meta: meta ?? titleFacts(t),
   rating: t.rating?.toStringAsFixed(1),
   artwork: TitleArtwork(image: t.poster),
+  stamp: ListBadge(titleId: t.id, compact: true),
   semanticLabel: describeTitle(t, lead),
   onTap: onOpen,
   preview: (_) => PickUpPreview(title: t, onOpen: onOpen, onPlay: onPlay),

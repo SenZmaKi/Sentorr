@@ -4,24 +4,24 @@ import 'package:logging/logging.dart';
 
 import '../app/services.dart';
 import '../following/latest_episode.dart';
-import '../following/notifier.dart';
 import '../following/releases.dart';
+import '../following/tracked.dart';
 
 export '../following/latest_episode.dart' show SeriesUpdate, airDate;
 
-/// The latest aired episode of every followed series still airing.
+/// The latest aired episode of every watched series still airing.
 final seriesUpdatesProvider = FutureProvider<List<SeriesUpdate>>((ref) async {
   final imdb = ref.watch(imdbRepositoryProvider);
   final cancel = CancelToken();
   ref.onDispose(cancel.cancel);
   // Progress changes every few seconds while watching; only a change in
-  // which series are followed needs new lookups.
+  // which series are watched needs new lookups.
   ref.watch(
-    followedSeriesProvider.select((l) => [for (final s in l) s.id].join(',')),
+    trackedSeriesProvider.select((l) => [for (final s in l) s.id].join(',')),
   );
   final year = DateTime.now().year;
   final followed = [
-    for (final s in ref.read(followedSeriesProvider))
+    for (final s in ref.read(trackedSeriesProvider))
       if (s.series.endYear == null || s.series.endYear! >= year) s,
   ];
   Object? failure;
@@ -51,7 +51,7 @@ bool _within(DateTime? date, int days) =>
 
 /// Recent episodes that are next for the viewer: they saw the one before.
 final newEpisodesProvider = Provider<AsyncValue<List<SeriesUpdate>>>((ref) {
-  final followed = {for (final s in ref.watch(followedSeriesProvider)) s.id: s};
+  final followed = {for (final s in ref.watch(trackedSeriesProvider)) s.id: s};
   return ref
       .watch(seriesUpdatesProvider)
       .whenData(
@@ -67,7 +67,7 @@ final newEpisodesProvider = Provider<AsyncValue<List<SeriesUpdate>>>((ref) {
 /// A returning season is relevant only before the viewer starts it and
 /// after they have seen the preceding season's finale.
 final newSeasonsProvider = Provider<AsyncValue<List<SeriesUpdate>>>((ref) {
-  final followed = {for (final s in ref.watch(followedSeriesProvider)) s.id: s};
+  final followed = {for (final s in ref.watch(trackedSeriesProvider)) s.id: s};
   return ref
       .watch(seriesUpdatesProvider)
       .whenData(

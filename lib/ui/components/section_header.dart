@@ -68,22 +68,28 @@ class SectionHeader extends StatelessWidget {
                   ),
                   if (count != null) ...[
                     const SizedBox(width: Space.s8),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: c.surfaceInset,
-                        borderRadius: BorderRadius.circular(Radii.chip),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Space.s8,
-                          vertical: Space.s2,
+                    // Like badges, a count shortens rather than overflows
+                    // a header squeezed by its action.
+                    Flexible(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: c.surfaceInset,
+                          borderRadius: BorderRadius.circular(Radii.chip),
                         ),
-                        child: Text(
-                          count!,
-                          style: context.type.technical.copyWith(
-                            color: c.foregroundSecondary,
-                            fontSize: 12,
-                            height: 16 / 12,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Space.s8,
+                            vertical: Space.s2,
+                          ),
+                          child: Text(
+                            count!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.type.technical.copyWith(
+                              color: c.foregroundSecondary,
+                              fontSize: 12,
+                              height: 16 / 12,
+                            ),
                           ),
                         ),
                       ),

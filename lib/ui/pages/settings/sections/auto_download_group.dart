@@ -21,9 +21,9 @@ class AutoDownloadGroup extends ConsumerWidget {
     return SettingsGroup(
       title: 'Auto-download',
       description:
-          'New episodes of followed series download as they air, ready '
+          'New episodes of series you are watching download as they air, ready '
           'to watch offline',
-      keywords: 'automatic new episodes offline following',
+      keywords: 'automatic new episodes offline watching following',
       children: [
         SettingsTile(
           icon: Icons.download_for_offline_outlined,
@@ -31,10 +31,10 @@ class AutoDownloadGroup extends ConsumerWidget {
           subtitle: switch (f.autoDownload) {
             AutoDownload.off => 'Never on their own',
             AutoDownload.chosen =>
-              'For series you turn it on for, under Watching or on '
-                  'their page',
+              'For series you turn it on for, here or from their list '
+                  'button',
             AutoDownload.all =>
-              'For every series you follow, unless turned off for one',
+              'For every series you are watching, unless turned off for one',
           },
           keywords: 'auto download default',
           trailing: ChoiceField<AutoDownload>(

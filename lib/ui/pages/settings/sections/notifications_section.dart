@@ -43,7 +43,7 @@ class NotificationsSection extends ConsumerWidget {
           icon: Icons.new_releases_outlined,
           title: 'New episodes',
           subtitle: 'When an episode airs for a series you have caught up on',
-          keywords: 'series following airing released',
+          keywords: 'series watching following airing released',
           enabled: n.enabled,
           trailing: SToggle(
             value: n.newEpisodes,

@@ -61,6 +61,7 @@ class DriveBackupClient implements BackupRemote {
               : BackupBundle(
                   watch: merged.watch.merge(bundle.watch, capacity: 100),
                   following: merged.following.merge(bundle.following),
+                  lists: merged.lists.merge(bundle.lists),
                 );
         }
       } on DioException catch (error) {

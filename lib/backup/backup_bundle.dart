@@ -1,16 +1,22 @@
 import 'dart:convert';
 
 import '../following/snapshot.dart';
+import '../lists/snapshot.dart';
 import 'watch_backup.dart';
 
 /// What a backup keeps so that, on another device, the viewer picks up where
-/// they left off: watch history and followed series. Preferences stay per
-/// device, and downloaded files are not in it.
+/// they left off: watch history, followed series and watch lists.
+/// Preferences stay per device, and downloaded files are not in it.
 class BackupBundle {
-  const BackupBundle({required this.watch, required this.following});
+  const BackupBundle({
+    required this.watch,
+    required this.following,
+    this.lists = const ListsSnapshot([]),
+  });
 
   final WatchSnapshot watch;
   final FollowedSnapshot following;
+  final ListsSnapshot lists;
 
   static const _format = 'sentorr-backup';
   static const _version = 2;
@@ -18,6 +24,7 @@ class BackupBundle {
   /// Whether [other] holds the same records, for skipping a pointless upload.
   bool matches(BackupBundle other) =>
       watch.matches(other.watch) &&
+      lists.matches(other.lists) &&
       _shared(following) == _shared(other.following);
 
   /// Followed series as devices share them: each keeps its own choice of
@@ -35,7 +42,7 @@ class BackupBundle {
   }
 
   String encode({DateTime? at}) =>
-      '${const JsonEncoder.withIndent('  ').convert({'format': _format, 'version': _version, 'exportedAt': (at ?? DateTime.now()).toUtc().toIso8601String(), 'watch': WatchBackup.json(watch), 'following': following.toJson()})}\n';
+      '${const JsonEncoder.withIndent('  ').convert({'format': _format, 'version': _version, 'exportedAt': (at ?? DateTime.now()).toUtc().toIso8601String(), 'watch': WatchBackup.json(watch), 'following': following.toJson(), 'lists': lists.toJson()})}\n';
 
   /// Throws [BackupException] when [source] is not a Sentorr backup. A
   /// history-only file from before backups held more still reads.
@@ -64,6 +71,7 @@ class BackupBundle {
     return BackupBundle(
       watch: WatchBackup.fromJson(json['watch']),
       following: FollowedSnapshot.fromJson(json['following']),
+      lists: ListsSnapshot.fromJson(json['lists']),
     );
   }
 }

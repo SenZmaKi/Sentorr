@@ -17,6 +17,7 @@ class PosterCard extends StatelessWidget {
     required this.semanticLabel,
     this.rating,
     this.badge,
+    this.stamp,
     this.ribbon,
     this.onTap,
     this.preview,
@@ -30,6 +31,9 @@ class PosterCard extends StatelessWidget {
   /// Shown as a star chip on the artwork when set.
   final String? rating;
   final String? badge;
+
+  /// Drawn where [badge] would be when there is none, e.g. a list status.
+  final Widget? stamp;
   final Widget? ribbon;
   final VoidCallback? onTap;
 
@@ -75,7 +79,9 @@ class PosterCard extends StatelessWidget {
                       left: Space.s8,
                       top: Space.s8,
                       child: OverlayBadge(badge!),
-                    ),
+                    )
+                  else if (stamp != null)
+                    Positioned(left: Space.s8, top: Space.s8, child: stamp!),
                   if (rating != null)
                     Positioned(
                       right: Space.s8,

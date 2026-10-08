@@ -6,14 +6,12 @@ import 'sections/backup_section.dart';
 import 'sections/choosing_section.dart';
 import 'sections/devices_section.dart';
 import 'sections/downloads_section.dart';
-import 'sections/following_section.dart';
 import 'sections/network_section.dart';
 import 'sections/notifications_section.dart';
 import 'sections/sources_section.dart';
 import 'sections/storage_section.dart';
 import 'sections/streaming_section.dart';
 import 'sections/updates_section.dart';
-import 'sections/watching_section.dart';
 import 'sections/window_section.dart';
 
 /// Where a category sits in the navigation: what Sentorr fetches, what it
@@ -55,17 +53,11 @@ enum SettingsCategory {
     Icons.lan_outlined,
     'Speed limits, finding peers, proxy and VPN',
   ),
-  watching(
+  sync(
     SettingsArea.library,
-    'Watching',
-    Icons.history_rounded,
-    'Continue watching, followed series and backup',
-  ),
-  devices(
-    SettingsArea.library,
-    'Devices',
-    Icons.devices_rounded,
-    'Sync and stream between your devices',
+    'Sync & backup',
+    Icons.sync_rounded,
+    'Pair devices, stream between them and back up your progress',
   ),
   notifications(
     SettingsArea.library,
@@ -111,12 +103,7 @@ enum SettingsCategory {
     streaming => const StreamingSection(),
     downloads => const DownloadsSection(),
     network => const NetworkSection(),
-    watching => const _Groups([
-      WatchingSection(),
-      FollowingSection(),
-      BackupSection(),
-    ]),
-    devices => const DevicesSection(),
+    sync => const _Groups([DevicesSection(), BackupSection()]),
     notifications => const NotificationsSection(),
     general => _Groups([
       const AppearanceSection(),

@@ -34,7 +34,7 @@ void main() {
 
   test('the next episode counts once most of the one before is watched', () {
     final e5 = _update(1, 5, aired: today);
-    expect(isNextFor(following(_series, episode: 4, progress: .85), e5), true);
+    expect(isNextFor(following(_series, episode: 4, progress: .9), e5), true);
     expect(isNextFor(following(_series, episode: 4, progress: .5), e5), false);
     expect(isNextFor(following(_series, episode: 2), e5), false);
     // Already started or past it.

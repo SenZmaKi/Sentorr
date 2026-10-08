@@ -17,6 +17,7 @@ import 'package:sentorr/ui/pages/home/home_page.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
 import '../support/fake_following.dart';
+import '../support/fake_lists.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
@@ -68,6 +69,7 @@ Future<ProviderContainer> _pumpHome(
     retry: (_, _) => null,
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
+      ...watchListsOverrides(),
       ...followedSeriesOverrides(),
       ...watchHistoryOverrides(),
       ...libraryOverrides([

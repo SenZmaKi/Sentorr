@@ -161,8 +161,8 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
                   icon: Icons.restart_alt_rounded,
                   title: 'Reset settings',
                   subtitle:
-                      'Every setting except the theme. Progress, followed '
-                      'series and downloads stay',
+                      'Every setting except the theme. Progress, lists and '
+                      'downloads stay',
                   keywords: 'defaults factory restore',
                   trailing: SButton.destructive(
                     label: 'Reset',

@@ -16,6 +16,7 @@ import '../shared/layout/adaptive.dart';
 enum AppDestination {
   home(Icons.home_outlined, Icons.home_rounded, 'Home'),
   search(Icons.search, Icons.search, 'Search'),
+  lists(Icons.bookmark_border_rounded, Icons.bookmark_rounded, 'Lists'),
   downloads(Icons.download_outlined, Icons.download_rounded, 'Downloads'),
   settings(Icons.settings_outlined, Icons.settings_rounded, 'Settings');
 

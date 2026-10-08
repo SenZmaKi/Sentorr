@@ -7,7 +7,7 @@ import 'package:sentorr/app/services.dart';
 import 'package:sentorr/home/watch_activity.dart';
 import 'package:sentorr/watching/models.dart';
 import 'package:sentorr/player/session.dart';
-import 'package:sentorr/ui/pages/home/home_shelves.dart';
+import 'package:sentorr/ui/pages/home/continue_shelf.dart';
 import 'package:sentorr/ui/pages/home/home_layout.dart';
 import 'package:sentorr/titles/pick_up.dart';
 import 'package:sentorr/imdb/models.dart';
@@ -23,6 +23,7 @@ import 'package:sentorr/ui/shared/title_route.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
 import '../support/fake_sync.dart';
+import '../support/fake_lists.dart';
 
 void main() {
   final title = fakeTitle(2, series: true);
@@ -38,6 +39,7 @@ void main() {
     docks = 0;
     final container = ProviderContainer(
       overrides: [
+        ...watchListsOverrides(),
         ...libraryOverrides(),
         ...syncOverrides(),
         imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
@@ -160,6 +162,7 @@ void main() {
       final episode = fakeTitle(9);
       final container = ProviderContainer(
         overrides: [
+          ...watchListsOverrides(),
           ...libraryOverrides(),
           ...syncOverrides(),
           imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),

@@ -10,13 +10,17 @@ import 'package:sentorr/ui/pages/search/search_page.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
 import '../support/fake_imdb.dart';
+import '../support/fake_lists.dart';
 
 Future<ProviderContainer> _pump(WidgetTester tester, Size size) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final container = ProviderContainer(
-    overrides: [imdbRepositoryProvider.overrideWithValue(FakeImdbRepository())],
+    overrides: [
+      ...watchListsOverrides(),
+      imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
+    ],
   );
   addTearDown(container.dispose);
   container.read(appDestinationProvider.notifier).go(AppDestination.search);
@@ -45,6 +49,7 @@ void main() {
   testWidgets('does not search until the page is first shown', (tester) async {
     final container = ProviderContainer(
       overrides: [
+        ...watchListsOverrides(),
         imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
       ],
     );

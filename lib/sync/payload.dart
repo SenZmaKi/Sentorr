@@ -5,27 +5,35 @@ import 'package:path/path.dart' as p;
 
 import '../backup/watch_backup.dart';
 import '../following/snapshot.dart';
+import '../lists/snapshot.dart';
 import '../library/models.dart';
 import '../player/models.dart';
 import '../torrents/models.dart';
 import '../watching/title_codec.dart';
 
 /// What two devices exchange to match: the watch history in the backup
-/// format, and the followed series.
+/// format, the followed series and the watch lists.
 class SyncPayload {
-  const SyncPayload({required this.watch, required this.following});
+  const SyncPayload({
+    required this.watch,
+    required this.following,
+    this.lists = const ListsSnapshot([]),
+  });
   final WatchSnapshot watch;
   final FollowedSnapshot following;
+  final ListsSnapshot lists;
 
   Map<String, dynamic> toJson() => {
     'watch': WatchBackup.encode(watch),
     'following': following.toJson(),
+    'lists': lists.toJson(),
   };
 
   /// Throws [BackupException] for a history this version cannot read.
   static SyncPayload fromJson(Map<String, dynamic> json) => SyncPayload(
     watch: WatchBackup.decode(json['watch'] as String? ?? ''),
     following: FollowedSnapshot.fromJson(json['following']),
+    lists: ListsSnapshot.fromJson(json['lists']),
   );
 }
 

@@ -83,7 +83,7 @@ class DesktopTrayController with TrayListener {
                 ? 'Hide'
                 : 'Show',
           ),
-          MenuItem(key: 'check', label: 'Check followed series'),
+          MenuItem(key: 'check', label: 'Check for new episodes'),
           MenuItem.separator(),
           MenuItem(key: 'quit', label: 'Quit'),
         ],

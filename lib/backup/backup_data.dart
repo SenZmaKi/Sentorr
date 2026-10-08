@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../following/notifier.dart';
+import '../lists/notifier.dart';
 import '../watching/notifier.dart';
 import 'backup_bundle.dart';
 
@@ -14,6 +15,7 @@ class BackupData {
   BackupBundle current() => BackupBundle(
     watch: _ref.read(watchHistoryProvider.notifier).snapshot,
     following: _ref.read(followedSeriesProvider.notifier).snapshot,
+    lists: _ref.read(watchListsProvider.notifier).snapshot,
   );
 
   /// Merges [bundle] in: each keeps the newer record of every title, and
@@ -21,5 +23,6 @@ class BackupData {
   Future<void> apply(BackupBundle bundle) async {
     await _ref.read(watchHistoryProvider.notifier).merge(bundle.watch);
     await _ref.read(followedSeriesProvider.notifier).merge(bundle.following);
+    await _ref.read(watchListsProvider.notifier).merge(bundle.lists);
   }
 }

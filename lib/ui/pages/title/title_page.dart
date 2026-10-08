@@ -9,7 +9,7 @@ import '../../../player/prefetch.dart';
 import '../../../player/queue_builder.dart';
 import '../../../titles/pick_up.dart';
 import '../../components/download_button.dart';
-import '../../components/follow_button.dart';
+import '../../components/list_button.dart';
 import '../../components/load_error.dart';
 import '../../components/motion.dart';
 import '../../shared/theme/theme.dart';
@@ -146,9 +146,10 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                     playLabel: pickUpLabel(pick),
                     onEpisodes: seasons.isEmpty ? null : _showEpisodes,
                     actions: [
-                      if ((d?.title ?? _title).canHaveEpisodes == true)
-                        FollowButton(series: d?.title ?? _title)
-                      else if (d != null)
+                      ListButton(title: d?.title ?? _title),
+                      // A series downloads by episode, from its episodes.
+                      if ((d?.title ?? _title).canHaveEpisodes != true &&
+                          d != null)
                         DownloadButton(
                           item: PlaybackItem(title: d.title),
                           labelled: true,

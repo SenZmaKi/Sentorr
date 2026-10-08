@@ -16,6 +16,7 @@ import '../torrents/engine.dart';
 import '../torrents/resolution_models.dart';
 import '../torrents/providers.dart';
 import '../following/notifier.dart';
+import '../lists/notifier.dart';
 import '../watching/notifier.dart';
 import 'models.dart';
 import 'preparation.dart';
@@ -195,6 +196,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
   );
   final history = ref.read(watchHistoryProvider.notifier);
   final following = ref.read(followedSeriesProvider.notifier);
+  final lists = ref.read(watchListsProvider.notifier);
   final nextEpisodes = ref.read(savedNextEpisodesProvider.notifier);
   final progress = ProgressTracker(
     engine.player,
@@ -214,6 +216,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
           )
           .ignore();
       following.record(item, position: position, duration: duration).ignore();
+      lists.record(item, position: position, duration: duration).ignore();
       unawaited(nextEpisodes.prepare(item));
     },
   );
@@ -222,6 +225,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
   ref.listen(playerSessionProvider.select((s) => s?.current), (_, item) {
     progress.item = item;
     if (item == null) return;
+    lists.started(item);
     final session = ref.read(playerSessionProvider);
     unawaited(
       engine.open(

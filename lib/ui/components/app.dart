@@ -9,6 +9,7 @@ import '../pages/download_review/review_host.dart';
 import '../pages/launch/launch_host.dart';
 import '../pages/player/player_host.dart';
 import '../pages/search/search_page.dart';
+import '../pages/lists/lists_page.dart';
 import '../pages/settings/settings_page.dart';
 import '../pages/title/title_page.dart';
 import '../shared/layout/adaptive.dart';
@@ -45,6 +46,7 @@ class SentorrApp extends ConsumerWidget {
               pages: const {
                 AppDestination.home: HomePage(),
                 AppDestination.search: SearchPage(),
+                AppDestination.lists: ListsPage(),
                 AppDestination.downloads: DownloadsPage(),
                 AppDestination.settings: SettingsPage(),
               },

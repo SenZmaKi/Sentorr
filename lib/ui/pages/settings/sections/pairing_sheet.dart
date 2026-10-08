@@ -121,7 +121,7 @@ class _PairingSheetState extends ConsumerState<_PairingSheet> {
             _heading(context, 'Paired with $peerName'),
             _text(
               context,
-              'Your watch history and followed series now sync between them, '
+              'Your watch history and lists now sync between them, '
               'and each can stream the other’s downloads on this network.',
             ),
             _actions([SButton.primary(label: 'Done', onPressed: done)]),

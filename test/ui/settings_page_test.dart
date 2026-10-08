@@ -24,6 +24,7 @@ import 'package:sentorr/watching/models.dart';
 import 'package:torrent_stream/torrent_stream.dart' show TorrentProxyKind;
 
 import '../support/fake_following.dart';
+import '../support/fake_lists.dart';
 import '../support/fake_library.dart';
 import '../support/fake_sync.dart';
 import '../support/fake_history.dart';
@@ -57,6 +58,7 @@ Future<ProviderContainer> _pump(WidgetTester tester, Size size) async {
       settingsRepositoryProvider.overrideWithValue(_MemorySettings()),
       torrentDirectoryProvider.overrideWithValue('/torrents'),
       downloadsDirectoryProvider.overrideWithValue('/downloads'),
+      ...watchListsOverrides(),
       ...followedSeriesOverrides(),
       ...syncOverrides(),
       ...libraryOverrides(),

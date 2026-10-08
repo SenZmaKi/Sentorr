@@ -33,6 +33,7 @@ import 'package:sentorr/ui/shared/theme/theme.dart';
 import 'package:sentorr/ui/shared/title_route.dart';
 
 import '../support/fake_following.dart';
+import '../support/fake_lists.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
@@ -68,6 +69,7 @@ Future<ProviderContainer> _pumpShell(
   final container = ProviderContainer(
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
+      ...watchListsOverrides(),
       ...followedSeriesOverrides(),
       ...syncOverrides(),
       ...libraryOverrides(),
@@ -440,6 +442,7 @@ void main() {
           ProviderScope(
             overrides: [
               initialSettingsProvider.overrideWithValue(const AppSettings()),
+              ...watchListsOverrides(),
               ...followedSeriesOverrides(),
               ...syncOverrides(),
               ...libraryOverrides(),

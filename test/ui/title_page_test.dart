@@ -37,6 +37,7 @@ import 'package:sentorr/ui/shared/theme/theme.dart';
 import 'package:sentorr/ui/shared/title_route.dart';
 
 import '../support/fake_following.dart';
+import '../support/fake_lists.dart';
 import '../support/fake_library.dart';
 import '../support/fake_sync.dart';
 import '../support/fake_history.dart';
@@ -113,6 +114,7 @@ Future<ProviderContainer> _pump(
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
       if (state.isEmpty) ...[
+        ...watchListsOverrides(),
         ...followedSeriesOverrides(),
         ...syncOverrides(),
         ...libraryOverrides(),
@@ -281,6 +283,7 @@ void main() {
     final container = await _pump(
       tester,
       state: [
+        ...watchListsOverrides(),
         ...followedSeriesOverrides(),
         ...syncOverrides(),
         ...libraryOverrides(),
@@ -498,6 +501,7 @@ void main() {
         tester,
         size: Size(width, 900),
         state: [
+          ...watchListsOverrides(),
           ...followedSeriesOverrides([
             following(
               series,

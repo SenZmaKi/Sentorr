@@ -6,10 +6,13 @@ import '../../../home/more_like.dart';
 import '../../../home/series_updates.dart';
 import '../../../home/watch_activity.dart';
 import '../../../shared/net/online.dart';
+import '../../../lists/models.dart';
 import 'downloaded_shelf.dart';
+import 'list_shelf.dart';
 import 'featured_section.dart';
 import '../../shared/layout/layout_size.dart';
 import 'home_layout.dart';
+import 'continue_shelf.dart';
 import 'home_shelves.dart';
 import 'offline_notice.dart';
 import 'spotlight_ambient.dart';
@@ -38,6 +41,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     FeaturedSection(),
     ContinueWatchingShelf(),
     NewEpisodesShelf(),
+    ListShelf(WatchStatus.planned),
     CatalogShelf(CatalogRow.trending),
     MoreLikeShelf(),
     ..._catalog,
@@ -48,6 +52,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     ContinueWatchingShelf(),
     DownloadedShelf(),
     NewEpisodesShelf(),
+    ListShelf(WatchStatus.planned),
     CatalogShelf(CatalogRow.trending),
     MoreLikeShelf(),
     ..._catalog,

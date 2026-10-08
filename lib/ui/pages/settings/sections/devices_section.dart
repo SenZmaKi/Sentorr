@@ -66,7 +66,7 @@ class DevicesSection extends ConsumerWidget {
           title: 'Paired devices',
           description:
               'Paired devices on the same network share watch progress and '
-              'followed series, and stream each other’s downloads',
+              'lists, and stream each other’s downloads',
           keywords: 'sync pair stream devices network',
           children: [
             if (devices.paired.isEmpty)

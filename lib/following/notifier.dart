@@ -125,6 +125,39 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
     ]);
   }
 
+  /// Marks [series] seen up to [through], e.g. a season the viewer watched
+  /// elsewhere. Never moves an ordinary record back; one followed from its
+  /// page takes [through] as where the viewer really is.
+  Future<void> markWatched(ImdbTitle series, EpisodeNumber through) {
+    final known = _series.where((s) => s.id == series.id).firstOrNull;
+    if (known != null && !known.manual && known.seen(through)) {
+      return Future.value();
+    }
+    _log.info(
+      'Marked ${series.title} (${series.id}) watched through '
+      'S${through.season}E${through.episode}',
+    );
+    final now = DateTime.now();
+    final next = known == null
+        ? FollowedSeries(
+            series: series,
+            reached: through,
+            progress: 1,
+            watchedAt: now,
+            revision: _clock.next(),
+          )
+        : known.manual
+        ? known.copyWith(
+            reached: through,
+            progress: 1,
+            watchedAt: now,
+            manual: false,
+            revision: _clock.next(),
+          )
+        : known.watched(through, 1, now, revision: _clock.next());
+    return _commit([next, ..._without(series.id)]);
+  }
+
   Future<void> setNotify(String seriesId, bool on) => _change(
     seriesId,
     (s) => s.copyWith(

@@ -19,13 +19,14 @@ class PreviewCard extends StatelessWidget {
     required this.onOpen,
     this.eyebrow,
     this.badge,
+    this.stamp,
     this.rating,
     this.genres = const [],
     this.synopsis,
     this.primaryLabel = 'Play',
     this.primaryIcon = Icons.play_arrow_rounded,
     this.onPrimary,
-    this.extraAction,
+    this.extraActions = const [],
   });
 
   final String title;
@@ -39,6 +40,9 @@ class PreviewCard extends StatelessWidget {
   /// Top-left stamp on the artwork, e.g. an episode code.
   final String? badge;
 
+  /// Drawn where [badge] would be when there is none, e.g. a list status.
+  final Widget? stamp;
+
   /// Shown as a star chip on the artwork.
   final String? rating;
   final List<String> genres;
@@ -47,8 +51,8 @@ class PreviewCard extends StatelessWidget {
   final IconData primaryIcon;
   final VoidCallback? onPrimary;
 
-  /// Another action after the secondary one, e.g. a download button.
-  final Widget? extraAction;
+  /// Actions after the primary one, e.g. a download button.
+  final List<Widget> extraActions;
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +95,12 @@ class PreviewCard extends StatelessWidget {
                         left: Space.s12,
                         top: Space.s12,
                         child: OverlayBadge(badge!, technical: true),
+                      )
+                    else if (stamp != null)
+                      Positioned(
+                        left: Space.s12,
+                        top: Space.s12,
+                        child: stamp!,
                       ),
                     if (rating != null)
                       Positioned(
@@ -138,7 +148,7 @@ class PreviewCard extends StatelessWidget {
                           icon: primaryIcon,
                           onPressed: onPrimary,
                         ),
-                        ?extraAction,
+                        ...extraActions,
                       ],
                     ),
                     if (genres.isNotEmpty) ...[

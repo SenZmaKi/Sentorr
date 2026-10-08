@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../lists/mark_watched.dart';
+
 import '../../../imdb/models.dart';
 import '../../../titles/episodes.dart';
 import '../../../player/models.dart';
@@ -149,6 +151,14 @@ class EpisodeList extends ConsumerWidget {
               technical: true,
             ),
           ?elsewhereFact(ref, e.id),
+          if (episode.episodeNumber case final n?
+              when ref.watch(
+                episodeSeenProvider((
+                  series.id,
+                  (season: episode.seasonNumber ?? season, episode: n),
+                )),
+              ))
+            const MetaItem('Watched', icon: Icons.check_rounded),
         ],
         plot: e.plot,
         duration: e.runtimeSeconds == null

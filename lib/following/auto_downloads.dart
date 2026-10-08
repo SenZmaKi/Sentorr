@@ -14,7 +14,7 @@ import '../player/models.dart';
 import '../settings/notifier.dart';
 import 'due_episodes.dart';
 import 'models.dart';
-import 'notifier.dart';
+import 'tracked.dart';
 
 final _log = Logger('sentorr.following.downloads');
 
@@ -63,7 +63,7 @@ final autoDownloadsProvider = Provider<AutoDownloads>((ref) {
   return downloads;
 });
 
-/// Downloads aired episodes of followed series whose auto-download is on,
+/// Downloads aired episodes of watched series whose auto-download is on,
 /// keeps each one's newest episodes within the settings limit, and says
 /// when one is ready to watch.
 class AutoDownloads {
@@ -94,16 +94,19 @@ class AutoDownloads {
   bool enabledFor(FollowedSeries series) =>
       _ref.read(settingsProvider).following.downloads(series.autoDownload);
 
-  /// Runs [all] followed series' auto-downloads, one series at a time.
+  /// Runs every watched series' auto-downloads, one series at a time.
   Future<void> checkAll({bool refresh = false}) => _serial(() async {
-    for (final s in _ref.read(followedSeriesProvider)) {
+    for (final s in _ref.read(trackedSeriesProvider)) {
       await _run(s, refresh: refresh);
     }
   });
 
   /// Runs [seriesId]'s auto-download now, e.g. as its switch turns on.
   Future<void> check(String seriesId) => _serial(() async {
-    final s = _ref.read(followedProvider(seriesId));
+    final s = _ref
+        .read(trackedSeriesProvider)
+        .where((s) => s.id == seriesId)
+        .firstOrNull;
     if (s != null) await _run(s, refresh: false);
   });
 

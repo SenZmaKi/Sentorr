@@ -1,0 +1,1 @@
+- On android trying to connect to google drive kills the app before we're redirected back to it.

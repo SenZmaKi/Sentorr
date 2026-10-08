@@ -14,8 +14,12 @@ rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
+    // Plugins set their own compileSdk in their build scripts; finalizeDsl
+    // runs after those, so dependencies requiring API 36 still resolve.
     plugins.withId("com.android.library") {
-        the<com.android.build.gradle.LibraryExtension>().compileSdk = 36
+        extensions.configure<com.android.build.api.variant.LibraryAndroidComponentsExtension> {
+            finalizeDsl { it.compileSdk = 36 }
+        }
     }
 }
 subprojects {

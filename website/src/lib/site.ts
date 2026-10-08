@@ -47,10 +47,9 @@ export const platforms: Platform[] = [
     requirement: 'Windows 10 or 11',
     format: 'Installer',
     architectures: [
-      { value: 'x64', label: 'x64 (Intel / AMD)', file: 'Sentorr-windows-x64-setup.exe' },
-      { value: 'arm64', label: 'ARM64', file: 'Sentorr-windows-arm64-setup.exe' },
+      { value: 'x64', label: 'x64', file: 'Sentorr-windows-x64-setup.exe' },
     ],
-    note: 'Unsigned for now: choose More info → Run anyway if SmartScreen asks.',
+    note: 'Unsigned for now: choose More info → Run anyway if SmartScreen asks. ARM PCs run it through Windows emulation.',
   },
   {
     id: 'macos',

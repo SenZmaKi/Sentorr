@@ -6,10 +6,10 @@ test('resolves every platform asset from the actual nightly version', () => {
   const names = ['Sentorr-3.0.0-nightly.12.1-arm64.apk',
     'Sentorr-3.0.0-nightly.12.1-x86_64.AppImage',
     'Sentorr-3.0.0-nightly.12.1-aarch64.AppImage',
-    'Sentorr-windows-arm64-setup.exe', 'Sentorr-macos-universal.dmg'];
+    'Sentorr-windows-x64-setup.exe', 'Sentorr-macos-universal.dmg'];
   const assets = names.map(name => ({ name, browser_download_url: `https://example.com/${name}` }));
   for (const [platform, architecture, index] of [['android', 'arm64', 0], ['linux', 'x64', 1],
-    ['linux', 'arm64', 2], ['windows', 'arm64', 3], ['macos', 'universal', 4]]) {
+    ['linux', 'arm64', 2], ['windows', 'x64', 3], ['macos', 'universal', 4]]) {
     assert.equal(assetFor(assets, platform, architecture)?.name, names[index]);
   }
   assert.equal(assetFor(assets, 'android', 'arm'), undefined);

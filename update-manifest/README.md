@@ -8,7 +8,7 @@ The workflows adapt Senpwai's architecture:
   existing update manifests and both Sparkle channels while deploying Pages.
 - `release.yml`: validate a `v<pubspec version>` tag and positive build number,
   reuse the quality gate, build Android ABI APKs, Linux x64/arm64 AppImages,
-  Windows x64/arm64 Inno installers and a universal macOS ZIP/DMG; stage a draft,
+  Windows x64 Inno installers and a universal macOS ZIP/DMG; stage a draft,
   deploy signed feeds, then publish the complete release. Published tags cannot
   be overwritten. Stable and prerelease channels follow Senpwai's feed layout.
 

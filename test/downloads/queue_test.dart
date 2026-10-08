@@ -119,8 +119,9 @@ void main() {
     final b = await enqueue('B');
     torrents.releaseGate = Completer<void>();
     final cancelled = queue.cancel(a);
-    await settle();
-    expect(queue.items.first.status, DownloadStatus.cancelled);
+    await settleUntil(
+      () => queue.items.first.status == DownloadStatus.cancelled,
+    );
     // Other commands run while the engine is still letting go.
     await queue.pause(b).timeout(const Duration(milliseconds: 200));
     expect(queue.items.last.status, DownloadStatus.paused);

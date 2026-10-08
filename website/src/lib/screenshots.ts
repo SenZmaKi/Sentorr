@@ -1,6 +1,6 @@
 import type { ImageMetadata } from 'astro';
-import desktopHome from '../assets/screenshots/desktop/home.png';
-import mobileHome from '../assets/screenshots/mobile/home.png';
+import desktopHome from '../assets/screenshots/desktop/home.webp';
+import mobileHome from '../assets/screenshots/mobile/home.webp';
 
 export interface Screenshot {
   src: ImageMetadata;
@@ -14,6 +14,6 @@ export const screenshots = {
   },
   mobileHome: {
     src: mobileHome,
-    alt: 'Sentorr home on a phone: the spotlight, Trending now, and bottom navigation',
+    alt: 'Sentorr home on a phone: the spotlight, Trending now and bottom navigation',
   },
 } satisfies Record<string, Screenshot>;

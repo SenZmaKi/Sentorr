@@ -36,7 +36,16 @@ import { releases } from '../lib/site';
   const status = document.querySelector<HTMLElement>('[data-channel-status]')!;
   const rows = document.querySelectorAll<HTMLElement>('[data-platform]');
   let generation = 0;
-  async function selectChannel(channel: 'stable' | 'nightly') {
+  type Channel = 'stable' | 'nightly';
+  // Every view carries its channel, so links share the tab they show.
+  function showInUrl(channel: Channel) {
+    const url = new URL(location.href);
+    if (url.searchParams.get('channel') === channel) return;
+    url.searchParams.set('channel', channel);
+    history.replaceState(history.state, '', url);
+  }
+  async function selectChannel(channel: Channel) {
+    showInUrl(channel);
     const request = ++generation;
     tabs.forEach((tab) => {
       const selected = tab.dataset.channel === channel;
@@ -77,7 +86,7 @@ import { releases } from '../lib/site';
   document.querySelector<HTMLElement>('[role="tablist"]')!.hidden = false;
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => {
-      void selectChannel(tab.dataset.channel as 'stable' | 'nightly');
+      void selectChannel(tab.dataset.channel as Channel);
     });
     tab.addEventListener('keydown', (event) => {
       const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
@@ -89,7 +98,8 @@ import { releases } from '../lib/site';
       tabs[next].click();
     });
   });
-  void selectChannel('stable');
+  // A bare /download, or an unknown channel, opens stable.
+  void selectChannel(new URLSearchParams(location.search).get('channel') === 'nightly' ? 'nightly' : 'stable');
 </script>
 
 <style>

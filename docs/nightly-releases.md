@@ -37,8 +37,9 @@ not the app version or channel. Unsupported snapshots block synchronization
 without overwriting them. Each installation signs in independently.
 Windows/macOS retain the existing unsigned/ad-hoc signing behavior.
 
-The download page defaults to Stable, with in-page Stable/Nightly tabs. Switching
-changes the download links without navigating or changing the URL. Both tabs query
+The download page has in-page Stable/Nightly tabs. The selected tab is kept in
+`?channel=stable` or `?channel=nightly` without reloading; a bare `/download`
+(or an unknown channel) is rewritten to `?channel=stable`. Both tabs query
 GitHub for published release assets, preserving processor selection when
 switching channels. Failed lookups leave downloads disabled and direct visitors
 to the release list. Without JavaScript, stable links and a nightly-release link

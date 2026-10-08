@@ -8,7 +8,8 @@ const base = import.meta.env.BASE_URL.endsWith('/')
 /** Resolves an internal path against the site's base, e.g. `url('download')`. */
 export const url = (path = '') => `${base}${path.replace(/^\//, '')}`;
 
-export const repo = 'https://github.com/SenZmaKi/Sentorr';
+import { repo } from './release-channel';
+export { repo } from './release-channel';
 export const releases = `${repo}/releases`;
 export const latestRelease = `${releases}/latest`;
 export const issues = `${repo}/issues`;

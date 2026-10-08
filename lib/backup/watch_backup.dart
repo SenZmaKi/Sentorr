@@ -118,7 +118,7 @@ abstract final class WatchBackup {
       throw const BackupException('That file is not a Sentorr backup.');
     }
     final version = parsed['version'];
-    if (version is! int || version > _version) {
+    if (version is! int || version < 1 || version > _version) {
       throw const BackupException(
         'That backup is from a newer Sentorr. Update the app to restore it.',
       );

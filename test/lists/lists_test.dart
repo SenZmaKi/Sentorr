@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/backup/backup_bundle.dart';
@@ -185,10 +187,10 @@ void main() {
     final restored = BackupBundle.decode(bundle.encode());
     expect(restored.lists.matches(bundle.lists), true);
     expect(restored.matches(bundle), true);
-    final older = BackupBundle(
-      watch: bundle.watch,
-      following: bundle.following,
-    ).encode().replaceAll(RegExp(r',\s*"lists": \{[^}]*\}'), '');
-    expect(BackupBundle.decode(older).lists.entries, isEmpty);
+    final older = jsonDecode(bundle.encode()) as Map<String, dynamic>;
+    older['version'] = 2;
+    older.remove('formats');
+    older.remove('lists');
+    expect(BackupBundle.decode(jsonEncode(older)).lists.entries, isEmpty);
   });
 }

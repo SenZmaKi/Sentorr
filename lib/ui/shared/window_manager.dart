@@ -8,6 +8,8 @@ import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/shared/persistence/window_state_repository.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../shared/application_identity.dart';
+
 bool get supportsWindowCustomization =>
     !kIsWeb && !Platform.isAndroid && !Platform.isIOS;
 
@@ -57,7 +59,7 @@ class WindowManager with WindowListener {
       size: const Size(1100, 760),
       minimumSize: minimumWindowSize,
       fullScreen: preferences.startFullScreen,
-      title: 'Sentorr',
+      title: ApplicationIdentity.name,
     );
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       if (restoredBounds != null &&

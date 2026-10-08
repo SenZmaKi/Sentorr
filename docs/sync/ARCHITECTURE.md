@@ -91,6 +91,41 @@ shows its address and the joiner can type it in.
   every interface. Callers send `x-sentorr-port`, so the host learns where to
   call back.
 
+## Compatibility before exchange
+
+Discovery and installation identity are independent. Stable and nightly use
+separate local state, downloads, credentials and pairing identities, but announce the same `_sentorr._tcp` service. Discovery includes
+the channel, and nightly names are labelled. Pairing remains explicit.
+
+Before every sync, library poll, or media GET/HEAD, `PeerClient` sends a
+metadata-only `GET /v1/hello` over the existing pinned, mutually authenticated
+TLS connection. Both sides declare `application: sentorr`, validation format 1,
+protocol 1, channel and the versions of watch (2), following (1), lists (1),
+library (1) and media (1). Channel is informational; all required format
+versions must match. App release numbers are not used to infer compatibility.
+
+Every data request repeats the declaration in `x-sentorr-compatibility`.
+The server validates it before reading the request body or calling any state,
+library or media handler. The client rechecks the response declaration before
+using received records or forwarding file bytes. The probe runs each time so
+restarting a peer into an older or incompatible build cannot reuse stale
+compatibility. This adds one small HTTP round trip per operation, including
+media range requests, over reused connections.
+
+Missing, malformed or mismatched declarations receive HTTP 426. Legacy builds
+without `/v1/hello` are refused before sending state or requesting media. They
+remain discoverable/pairable, but participating devices must update. Settings
+shows an incompatible-build explanation rather than treating the failure as a
+normal offline device. Unknown declarations are never assumed compatible.
+
+A complete sync exchange is decoded and its top-level structure validated before
+merging any records. Existing per-record recovery remains in the codecs. Schema
+or merge-semantics changes must bump the affected version in
+`lib/sync/compatibility.dart`; a new required format must be declared too. This
+contract applies to stable-to-stable exchanges as well as cross-channel ones.
+Explicit sync still propagates changes and removals across paired installations;
+local separation does not undo intentional synchronization.
+
 ## Streaming another device's downloads
 
 A device shares its finished downloads whose files are still on disk
@@ -194,8 +229,12 @@ file. A failure keeps the partial file so the next attempt resumes it.
 ## Drive state sync and compatibility
 
 Drive uses immutable `sentorr-backup.json` snapshots in appDataFolder. Downloads
-list every matching file (including all pages and duplicate legacy files), then
-merge their contents. An upload publishes its merged snapshot first and removes
+list every matching file (including all pages, duplicate files and the former
+`sentorr-nightly-backup.json` name), validate all snapshots, then merge their
+contents. Stable and nightly share these snapshots when signed into the same
+Google account and configured with the same Drive OAuth application. Legacy
+nightly names and multiple snapshots trigger consolidation even when the merged
+data is unchanged. An upload publishes its merged snapshot first and removes
 only the snapshot ids that writer read. Concurrent publishers retain each other's
 new files; later publication compacts the observed files. Failed cleanup is safe
 and retried through a later publication. A read that races compaction relists the
@@ -204,10 +243,21 @@ files rather than treating missing snapshots as an empty backup.
 Background/resume sync pushes dirty state even after a recent successful sync,
 and requests/changes during an upload queue a follow-up pass.
 
-Backup and watch exchange formats now emit version 2; version 1 remains readable.
-Older builds refuse version 2 so they cannot overwrite/drop revision and merge
-contribution metadata. Update participating devices together. Local autoDownload
-preferences still remain per-device, including within contribution metadata.
+Backup bundles emit envelope version 3, declaring the shared watch (2), following
+(1) and lists (1) formats from `lib/shared/state_formats.dart`. Supported version
+1/2 bundles and history-only exports remain readable. Watch-history exports still
+emit version 2. Format or merge-rule changes must bump their declared versions;
+adding a new required domain must also bump the backup envelope version.
+
+Drive reads validate all declared formats, containers, records and removal
+records before exposing any merged data. Unlike recovery-oriented file imports,
+Drive refuses snapshots with records that its codecs would silently skip. An
+unsupported or malformed snapshot stops the whole sync: no local merges,
+uploads or remote deletion. A failed read invalidates prior upload eligibility.
+Older builds that cannot read envelope version 3 refuse it instead of discarding
+its metadata; update those participating devices. Different app releases and
+channels with supported formats interoperate. Local autoDownload preferences
+remain per-device, including within contribution metadata.
 
 The new Drive implementation uses documented [file creation/upload](https://developers.google.com/workspace/drive/api/guides/manage-uploads)
 and file deletion rather than relying on an unchecked conditional PATCH.

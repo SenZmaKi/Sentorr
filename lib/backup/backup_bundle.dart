@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import '../following/snapshot.dart';
 import '../lists/snapshot.dart';
+import '../shared/state_formats.dart';
 import 'watch_backup.dart';
+import 'backup_validation.dart';
 
 /// What a backup keeps so that, on another device, the viewer picks up where
 /// they left off: watch history, followed series and watch lists.
@@ -19,7 +21,7 @@ class BackupBundle {
   final ListsSnapshot lists;
 
   static const _format = 'sentorr-backup';
-  static const _version = 2;
+  static const _version = 3;
 
   /// Whether [other] holds the same records, for skipping a pointless upload.
   bool matches(BackupBundle other) =>
@@ -42,11 +44,11 @@ class BackupBundle {
   }
 
   String encode({DateTime? at}) =>
-      '${const JsonEncoder.withIndent('  ').convert({'format': _format, 'version': _version, 'exportedAt': (at ?? DateTime.now()).toUtc().toIso8601String(), 'watch': WatchBackup.json(watch), 'following': following.toJson(), 'lists': lists.toJson()})}\n';
+      '${const JsonEncoder.withIndent('  ').convert({'format': _format, 'version': _version, 'formats': StateFormats.versions, 'exportedAt': (at ?? DateTime.now()).toUtc().toIso8601String(), 'watch': WatchBackup.json(watch), 'following': following.toJson(), 'lists': lists.toJson()})}\n';
 
   /// Throws [BackupException] when [source] is not a Sentorr backup. A
   /// history-only file from before backups held more still reads.
-  static BackupBundle decode(String source) {
+  static BackupBundle decode(String source, {bool strict = false}) {
     final Object? json;
     try {
       json = jsonDecode(source);
@@ -54,8 +56,10 @@ class BackupBundle {
       throw const BackupException('That file is not a Sentorr backup.');
     }
     if (json is Map<String, dynamic> && json['format'] != _format) {
+      final watch = WatchBackup.decode(source);
+      if (strict) validateBackupRecords(watch: json);
       return BackupBundle(
-        watch: WatchBackup.decode(source),
+        watch: watch,
         following: const FollowedSnapshot([], {}),
       );
     }
@@ -63,9 +67,22 @@ class BackupBundle {
       throw const BackupException('That file is not a Sentorr backup.');
     }
     final version = json['version'];
-    if (version is! int || version > _version) {
+    if (version is! int || version < 1 || version > _version) {
       throw const BackupException(
         'That backup is from a newer Sentorr. Update the app to restore it.',
+      );
+    }
+    if (version >= 3 && !StateFormats.accepts(json['formats'])) {
+      throw const BackupException(
+        'That backup uses incompatible data formats. Update Sentorr before syncing it.',
+      );
+    }
+    _validateShape(json, requireLists: version >= 3);
+    if (strict) {
+      validateBackupRecords(
+        watch: json['watch'] as Map<String, dynamic>,
+        following: json['following'] as Map<String, dynamic>,
+        lists: json['lists'] as Map<String, dynamic>?,
       );
     }
     return BackupBundle(
@@ -73,5 +90,27 @@ class BackupBundle {
       following: FollowedSnapshot.fromJson(json['following']),
       lists: ListsSnapshot.fromJson(json['lists']),
     );
+  }
+
+  static void _validateShape(
+    Map<String, dynamic> json, {
+    required bool requireLists,
+  }) {
+    final watch = json['watch'];
+    final following = json['following'];
+    final lists = json['lists'];
+    if (watch is! Map<String, dynamic> ||
+        watch['entries'] is! List ||
+        watch['removed'] is! List ||
+        following is! Map<String, dynamic> ||
+        following['series'] is! List ||
+        following['removed'] is! List ||
+        (requireLists && lists == null) ||
+        (lists != null &&
+            (lists is! Map<String, dynamic> || lists['entries'] is! List))) {
+      throw const BackupException(
+        'That backup has an invalid data structure. Nothing was synced.',
+      );
+    }
   }
 }

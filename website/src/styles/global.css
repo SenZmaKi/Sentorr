@@ -301,3 +301,29 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
     animation-duration: 0.01ms !important;
   }
 }
+
+/* SegmentedTabs mirrors the app: an inset track and a raised selected tab. */
+.segmented-tabs {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: calc(var(--radius-control) + 2px);
+}
+.segmented-tabs[hidden] { display: none; }
+.segmented-tabs [role="tab"] {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--fg-secondary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.segmented-tabs [role="tab"]:hover { color: var(--fg); }
+.segmented-tabs [aria-selected="true"] {
+  background: var(--surface-control);
+  color: var(--fg);
+  box-shadow: inset 0 1px 0 var(--edge-highlight), inset 0 -1px 0 var(--edge-shade), var(--shadow-raised);
+}

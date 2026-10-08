@@ -18,13 +18,14 @@ import 'app_shell.dart';
 import 'app_icon_sync.dart';
 import 'error_toasts.dart';
 import 'notification_taps.dart';
+import '../../shared/application_identity.dart';
 
 class SentorrApp extends ConsumerWidget {
   const SentorrApp({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-      title: 'Sentorr',
+      title: ApplicationIdentity.name,
       debugShowCheckedModeBanner: false,
       theme: buildSentorrTheme(Brightness.light),
       darkTheme: buildSentorrTheme(Brightness.dark),

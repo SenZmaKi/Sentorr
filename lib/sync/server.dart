@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:logging/logging.dart';
 
+import 'compatibility.dart';
 import 'file_response.dart';
 import 'identity.dart';
 import 'models.dart';
@@ -57,7 +58,12 @@ abstract interface class SyncRoutes {
 /// HTTPS on every interface, presenting this device's certificate and
 /// asking callers for theirs.
 class SyncServer {
-  SyncServer(this.identity, this.routes);
+  SyncServer(
+    this.identity,
+    this.routes, {
+    this.compatibility = PeerCompatibility.current,
+  });
+  final PeerCompatibility compatibility;
   final DeviceIdentity identity;
   final SyncRoutes routes;
   late final SecurityContext _context = identity.context();
@@ -114,6 +120,15 @@ class SyncServer {
           status: HttpStatus.forbidden,
         );
       }
+      if (!compatibility.acceptsHeader(
+        request.headers.value(compatibilityHeader),
+      )) {
+        throw const SyncRefusal(compatibilityMessage, status: 426);
+      }
+      request.response.headers.set(compatibilityHeader, compatibility.header);
+      if (request.method == 'GET' && request.uri.path == '/v1/hello') {
+        return await _json(request, compatibility.toJson());
+      }
       routes.seen(device, _from(request));
       switch ((request.method, path)) {
         case ('POST', ['v1', 'sync']):
@@ -148,6 +163,8 @@ class SyncServer {
       }
     } on SyncRefusal catch (refusal) {
       await _error(request, refusal.status, refusal.message);
+    } on FormatException catch (error) {
+      await _error(request, HttpStatus.badRequest, error.message);
     } catch (error, stack) {
       _log.warning(
         '${request.method} ${request.uri.path} failed',

@@ -79,7 +79,7 @@ const { notes = false } = Astro.props;
     select?.addEventListener('change', (event) => {
       if (event.isTrusted) select.dataset.chosen = 'true';
       const file = select.selectedOptions[0]?.dataset.file;
-      if (link && file) link.href = link.href.replace(/[^/]+$/, file);
+      if (link && file && link.hasAttribute('href')) link.href = select.selectedOptions[0]?.dataset.downloadUrl || link.href.replace(/[^/]+$/, file);
     });
     if (row.dataset.platform === os) {
       row.querySelector('.detected')?.classList.remove('hidden');

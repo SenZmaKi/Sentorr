@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:tray_manager/tray_manager.dart';
 
 import 'window_manager.dart';
+import '../../shared/application_identity.dart';
 
 /// Linux may have no tray host: never hide the window there based on icon creation alone.
 class DesktopTrayController with TrayListener {
@@ -40,7 +41,9 @@ class DesktopTrayController with TrayListener {
       await trayManager.destroy();
       trayManager.addListener(this);
       await trayManager.setIcon(_iconAsset('assets/images/tray.png'));
-      if (!Platform.isLinux) await trayManager.setToolTip('Sentorr');
+      if (!Platform.isLinux) {
+        await trayManager.setToolTip(ApplicationIdentity.name);
+      }
       _initialized = true;
       await _refreshMenu();
       WindowManager.getInstance().visible.addListener(_refreshVisibilityLabel);

@@ -1,6 +1,8 @@
+import '../../shared/application_identity.dart';
+
 /// Opens Sentorr on Android, which cannot bring itself in front of the
 /// browser.
-const androidReturnLink = 'sentorr://return';
+const androidReturnLink = ApplicationIdentity.returnLink;
 
 /// What the browser shows once Google sends the viewer back: a Sentorr
 /// panel on the canvas, in the app's light or dark roles (DESIGN.md), saying

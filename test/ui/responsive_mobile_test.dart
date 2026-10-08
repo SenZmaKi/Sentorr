@@ -39,6 +39,7 @@ import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
 import '../support/fake_sync.dart';
 import '../support/fake_torrents.dart';
+import '../support/fake_paths.dart';
 import '../support/viewports.dart';
 
 TestViewport _named(String name) => viewports.firstWhere((v) => v.name == name);
@@ -447,6 +448,9 @@ void main() {
               ...syncOverrides(),
               ...libraryOverrides(),
               downloadsProvider.overrideWith((ref) => Stream.value(const [])),
+              appPathsProvider.overrideWithValue(
+                (await tester.runAsync(temporaryAppPaths))!,
+              ),
               ...watchHistoryOverrides(),
               imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
               torrentRepositoryProvider.overrideWithValue(

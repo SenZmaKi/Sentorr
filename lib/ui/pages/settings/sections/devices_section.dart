@@ -17,6 +17,7 @@ import 'pairing_sheet.dart';
 /// "Online · 12 downloads to stream · 2 downloading", "Synced Yesterday"
 /// or why it could not be reached.
 String _statusLine(PairedDevice device, PeerStatus? peer) {
+  if (peer?.incompatible == true) return 'Incompatible build';
   if (peer?.syncing == true) return 'Syncing…';
   if (peer?.online == true) {
     final count = peer!.media.length, coming = peer.downloads.length;

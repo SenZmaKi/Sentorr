@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'compatibility.dart';
 import 'identity.dart';
 import 'models.dart';
 import 'server.dart';
@@ -19,7 +20,12 @@ class PeerException implements Exception {
 /// their certificate and see this device's; pairing trusts nothing yet and
 /// reports which certificate the host presented.
 class PeerClient {
-  PeerClient(this.identity, {required this.port});
+  PeerClient(
+    this.identity, {
+    required this.port,
+    this.compatibility = PeerCompatibility.current,
+  });
+  final PeerCompatibility compatibility;
   final DeviceIdentity identity;
 
   /// Where this device listens, sent so the other can call back.
@@ -62,10 +68,47 @@ class PeerClient {
           ..connectionTimeout = const Duration(seconds: 5)
           ..badCertificateCallback = (certificate, _, _) =>
               fingerprintOfDer(certificate.der) == fingerprint;
-    return _send(client, to, path, body, body == null ? method : 'POST', {
+    final metadata = {
       ...headers,
       syncPortHeader: '${port()}',
-    });
+      compatibilityHeader: compatibility.header,
+    };
+    // Probe every operation: a peer may have restarted into another build.
+    // In particular, never POST user state to a legacy server before probing.
+    final hello = await _send(
+      client,
+      to,
+      '/v1/hello',
+      null,
+      'GET',
+      metadata,
+    ).timeout(const Duration(seconds: 10));
+    if (hello.statusCode == HttpStatus.notFound) {
+      await hello.drain<void>();
+      throw const PeerException(compatibilityMessage, status: 426);
+    }
+    final declaration = await _decode(hello)
+        .timeout(const Duration(seconds: 10));
+    if (!compatibility.accepts(declaration)) {
+      throw const PeerException(compatibilityMessage, status: 426);
+    }
+    final response = await _send(
+      client,
+      to,
+      path,
+      body,
+      body == null ? method : 'POST',
+      metadata,
+    );
+    // Recheck the response too, before decoding state or forwarding file bytes.
+    if (response.statusCode < 400 &&
+        !compatibility.acceptsHeader(
+          response.headers.value(compatibilityHeader),
+        )) {
+      await response.drain<void>();
+      throw const PeerException(compatibilityMessage, status: 426);
+    }
+    return response;
   }
 
   /// A pairing step at [to], answered with which certificate it presented.

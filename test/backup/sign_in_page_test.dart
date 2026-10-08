@@ -12,8 +12,8 @@ void main() {
     expect(desktop, contains('You can close this tab'));
     expect(desktop, isNot(contains('sentorr://')));
     final android = signInPage(signedIn: true, returnLink: androidReturnLink);
-    expect(android, contains('href="sentorr://return"'));
-    expect(android, contains('location.href = "sentorr://return"'));
+    expect(android, contains('href="$androidReturnLink"'));
+    expect(android, contains('location.href = "$androidReturnLink"'));
     expect(android, isNot(contains('close this tab')));
   });
 }

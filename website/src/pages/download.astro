@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Icon from '../components/Icon.astro';
 import PlatformList from '../components/PlatformList.astro';
 import SectionHeader from '../components/SectionHeader.astro';
+import { nightlyReleases } from '../lib/release-channel';
 import { releases } from '../lib/site';
 ---
 
@@ -13,7 +14,15 @@ import { releases } from '../lib/site';
 >
   <section class="download">
     <SectionHeader level="h1" icon="download" title="Download Sentorr" subtitle="Free, with automatic updates once it’s installed" />
-    <PlatformList notes />
+    <div class="segmented-tabs release-tabs inset" role="tablist" aria-label="Release channel" hidden>
+      <button type="button" id="stable-tab" role="tab" aria-controls="release-downloads" aria-selected="true" data-channel="stable">Stable</button>
+      <button type="button" id="nightly-tab" role="tab" aria-controls="release-downloads" aria-selected="false" tabindex="-1" data-channel="nightly">Nightly</button>
+    </div>
+    <div id="release-downloads" role="tabpanel" aria-labelledby="stable-tab">
+      <p class="channel-note t-small muted" aria-live="polite" data-channel-status>Stable releases are recommended for everyday use.</p>
+      <PlatformList notes />
+    </div>
+    <noscript><p class="t-small muted">For nightly builds, visit <a href={nightlyReleases}>nightly releases</a>.</p></noscript>
     <div class="extras">
       <p class="t-small muted">Every file has a <span class="technical">.sha256</span> checksum beside it on the release page.</p>
       <a class="button ghost" href={releases} target="_blank" rel="noopener noreferrer">All releases <Icon name="open_in_new" size={16} /></a>
@@ -21,7 +30,71 @@ import { releases } from '../lib/site';
   </section>
 </Layout>
 
+<script>
+  import { loadChannel, assetFor } from '../lib/release-channel';
+  const tabs = document.querySelectorAll<HTMLButtonElement>('[data-channel]');
+  const status = document.querySelector<HTMLElement>('[data-channel-status]')!;
+  const rows = document.querySelectorAll<HTMLElement>('[data-platform]');
+  let generation = 0;
+  async function selectChannel(channel: 'stable' | 'nightly') {
+    const request = ++generation;
+    tabs.forEach((tab) => {
+      const selected = tab.dataset.channel === channel;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+      if (selected) document.querySelector('#release-downloads')!.setAttribute('aria-labelledby', tab.id);
+    });
+    const links = Array.from(rows, (row) => row.querySelector<HTMLAnchorElement>('[data-download]')!);
+    links.forEach((link) => { link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true'); });
+    status.textContent = `Loading ${channel} releases…`;
+    try {
+      const release = await loadChannel(channel);
+      if (request !== generation) return;
+      rows.forEach((row, index) => {
+        const picker = row.querySelector<HTMLSelectElement>('[data-architecture]');
+        const architecture = picker?.value ?? 'universal';
+        const asset = assetFor(release.assets, row.dataset.platform!, architecture);
+        if (asset) {
+          links[index].href = asset.browser_download_url;
+          links[index].removeAttribute('aria-disabled');
+        }
+        picker?.querySelectorAll('option').forEach((option) => {
+          const match = assetFor(release.assets, row.dataset.platform!, option.value);
+          option.disabled = !match;
+          option.dataset.file = match?.name ?? '';
+          option.dataset.downloadUrl = match?.browser_download_url ?? '';
+        });
+      });
+      document.querySelector('.version')!.textContent = `${channel === 'nightly' ? 'Nightly' : 'Version'} ${release.tag_name.replace(/^v/, '')}`;
+      status.textContent = channel === 'nightly'
+        ? 'Built nightly from the latest code. May contain bugs. Installs alongside stable with separate settings and downloads. Drive sync can share history and lists with stable.'
+        : 'Stable releases are recommended for everyday use.';
+    } catch {
+      if (request !== generation) return;
+      status.textContent = `Could not load ${channel} downloads. Visit All releases below to download a published build.`;
+    }
+  }
+  document.querySelector<HTMLElement>('[role="tablist"]')!.hidden = false;
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => {
+      void selectChannel(tab.dataset.channel as 'stable' | 'nightly');
+    });
+    tab.addEventListener('keydown', (event) => {
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
+        : event.key === 'ArrowRight' ? (index + 1) % tabs.length
+        : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : undefined;
+      if (next === undefined) return;
+      event.preventDefault();
+      tabs[next].focus();
+      tabs[next].click();
+    });
+  });
+  void selectChannel('stable');
+</script>
+
 <style>
+  .release-tabs { align-self: flex-start; margin-bottom: 12px; }
+  .channel-note { margin-bottom: 16px; }
   .download {
     display: flex;
     flex-direction: column;

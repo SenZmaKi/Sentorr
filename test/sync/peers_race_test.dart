@@ -133,6 +133,46 @@ void main() {
     client.close();
   });
 
+  test(
+    'incompatible peers are labelled and cannot publish library or state',
+    () async {
+      final pending = peers.syncWith(peer.id);
+      await Future<void>.delayed(Duration.zero);
+      client.calls.single.$2.completeError(
+        const PeerException('Update both apps', status: 426),
+      );
+      await pending;
+      final status = container.read(peersProvider)[peer.id]!;
+      expect(status.incompatible, isTrue);
+      expect(status.online, isFalse);
+      expect(status.media, isEmpty);
+      expect(container.read(watchHistoryProvider), isEmpty);
+    },
+  );
+
+  test(
+    'invalid library rejects the incoming exchange before history merges',
+    () async {
+      final payload = _payload(item: 1)..['library'] = {'media': 'broken'};
+      await expectLater(peers.answer(peer, payload), throwsFormatException);
+      expect(container.read(watchHistoryProvider), isEmpty);
+    },
+  );
+
+  test('invalid outgoing reply does not partially merge history', () async {
+    final pending = peers.syncWith(peer.id);
+    await Future<void>.delayed(Duration.zero);
+    client.calls.single.$2.complete(
+      _payload(item: 1)..['library'] = {'media': 'broken'},
+    );
+    await pending;
+    expect(container.read(watchHistoryProvider), isEmpty);
+    expect(
+      container.read(peersProvider)[peer.id]!.error,
+      contains('invalid sync exchange'),
+    );
+  });
+
   test('unchanged polls preserve media and update download progress', () async {
     final body = _payload();
     final library = body['library'] as Map<String, dynamic>;

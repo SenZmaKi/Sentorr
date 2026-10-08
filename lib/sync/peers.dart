@@ -8,7 +8,9 @@ import '../lists/notifier.dart';
 import '../player/models.dart';
 import '../player/stream/offline_source.dart';
 import '../watching/notifier.dart';
+import 'client.dart';
 import 'devices.dart';
+import 'exchange.dart';
 import 'media_proxy.dart';
 import 'models.dart';
 import 'payload.dart';
@@ -149,16 +151,13 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
         body: payload,
       );
       if (!_valid(id, epoch, to.fingerprint)) return;
+      // Decode the entire exchange before applying any of its records.
+      final exchange = SyncExchange.decode(answer);
+      final library = exchange.library;
       await mergePeerState(
         ref,
-        SyncPayload.fromJson(answer),
+        exchange.state,
         () => _valid(id, epoch, to.fingerprint),
-      );
-      if (!_valid(id, epoch, to.fingerprint)) return;
-      // Devices from before libraries rode along answer without one.
-      final library = PeerLibrary.fromJson(
-        answer['library'] ??
-            await client.call(to.address, to.fingerprint, '/v1/library'),
       );
       if (!_valid(id, epoch, to.fingerprint)) return;
       if (version != _requests.libraryVersion(id)) {
@@ -187,7 +186,13 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
         return;
       }
       _log.fine('Sync with $id failed: $error');
-      _set(id, (s) => PeerStatus(error: '$error'));
+      _set(
+        id,
+        (s) => PeerStatus(
+          error: '$error',
+          incompatible: error is PeerException && error.status == 426,
+        ),
+      );
     }
   }
 
@@ -202,17 +207,19 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
     if (!valid()) throw StateError('Device is no longer paired');
     _requests.invalidateLibrary(from.id);
     final version = _requests.libraryVersion(from.id);
-    await mergePeerState(ref, SyncPayload.fromJson(body), valid);
+    final exchange = SyncExchange.decode(body);
+    final incomingLibrary = exchange.library;
+    await mergePeerState(ref, exchange.state, valid);
     if (!valid()) throw StateError('Device is no longer paired');
     if (version == _requests.libraryVersion(from.id) &&
         body['library'] != null) {
-      final library = body['library'];
       _set(
         from.id,
         (s) => s.copyWith(
           online: true,
+          incompatible: false,
           error: () => null,
-          library: PeerLibrary.fromJson(library),
+          library: incomingLibrary,
         ),
       );
     }
@@ -272,12 +279,23 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
       _requests.invalidateLibrary(id);
       _set(
         id,
-        (s) => s.copyWith(online: true, error: () => null, library: updated),
+        (s) => s.copyWith(
+          online: true,
+          incompatible: false,
+          error: () => null,
+          library: updated,
+        ),
       );
     } catch (error) {
       if (!valid()) return;
       _log.fine('Refreshing $id failed: $error');
-      _set(id, (s) => PeerStatus(error: '$error'));
+      _set(
+        id,
+        (s) => PeerStatus(
+          error: '$error',
+          incompatible: error is PeerException && error.status == 426,
+        ),
+      );
     } finally {
       _requests.refreshing.remove(id);
     }
@@ -294,7 +312,10 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
     }
     // Back after being away: fetch what it shares.
     if (state[device.id]?.online != true) {
-      _set(device.id, (s) => s.copyWith(online: true, error: () => null));
+      _set(
+        device.id,
+        (s) => s.copyWith(online: true, incompatible: false, error: () => null),
+      );
       Timer.run(() => unawaited(syncWith(device.id)));
     }
   }

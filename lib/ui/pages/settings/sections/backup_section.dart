@@ -84,10 +84,10 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
             title: 'Google Drive',
             subtitle: backup.connected
                 ? backup.lastBackup == null
-                      ? 'Connected'
-                      : 'Backed up ${relativeDay(backup.lastBackup!)}'
-                : 'Back up automatically to a private Sentorr folder in '
-                      'your Drive',
+                      ? 'Connected — sync merges Drive’s records with this device'
+                      : 'Synced ${relativeDay(backup.lastBackup!)} — pulls and merges changes from Drive'
+                : 'Connect to restore and sync history and lists through '
+                      'a private Sentorr folder in your Drive',
             keywords: 'cloud sync',
             below: backup.error == null
                 ? null
@@ -100,7 +100,7 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SButton(
-                        label: 'Back up now',
+                        label: 'Sync now',
                         loading: backup.busy,
                         onPressed: backup.busy ? null : notifier.syncNow,
                       ),
@@ -120,7 +120,7 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
         if (driveConfigured)
           SettingsTile(
             icon: Icons.schedule_rounded,
-            title: 'Back up every',
+            title: 'Sync every',
             subtitle:
                 'Also when you leave the app and when you come back to it',
             keywords: 'interval frequency automatic hourly',
@@ -130,7 +130,7 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
                   : BackupSettings.defaultIntervalMinutes,
               options: BackupSettings.intervalOptions,
               labelOf: _intervalLabel,
-              semanticLabel: 'Back up every',
+              semanticLabel: 'Sync every',
               onChanged: (value) => ref
                   .read(settingsProvider.notifier)
                   .update(

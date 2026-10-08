@@ -2,7 +2,14 @@ import 'backup_bundle.dart';
 
 /// A backup as found remotely, and which version of the file it was.
 class RemoteBackup {
-  const RemoteBackup(this.bundle, this.revision);
+  const RemoteBackup(
+    this.bundle,
+    this.revision, {
+    this.needsPublication = false,
+  });
+
+  /// Consolidate legacy names or multiple validated snapshots even when unchanged.
+  final bool needsPublication;
   final BackupBundle bundle;
 
   /// Identifies this version of the file, to notice another device

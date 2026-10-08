@@ -81,7 +81,9 @@ class UpdateController extends Notifier<UpdateState> {
         ),
         currentVersion: info.version,
         currentBuild: state.currentBuild,
-        channels: _channel == 'prerelease'
+        channels: _channel == 'nightly'
+            ? const {'nightly'}
+            : _channel == 'prerelease'
             ? const {'stable', 'prerelease'}
             : const {'stable'},
       );
@@ -123,7 +125,9 @@ class UpdateController extends Notifier<UpdateState> {
       final candidate = manifest.latestCompatible(
         currentVersion: state.currentVersion,
         currentBuild: state.currentBuild,
-        channels: _channel == 'prerelease'
+        channels: _channel == 'nightly'
+            ? const {'nightly'}
+            : _channel == 'prerelease'
             ? const {'stable', 'prerelease'}
             : const {'stable'},
       );

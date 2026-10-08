@@ -53,7 +53,9 @@ void main() {
           (w) => w is Image && w.semanticLabel == 'Sentorr',
         ),
       );
-      expect((logo.image as AssetImage).assetName, brand.logo);
+      final image = logo.image;
+      final asset = image is ResizeImage ? image.imageProvider : image;
+      expect((asset as AssetImage).assetName, brand.logo);
       expect(icons.variants.last, brand.variant);
       expect(tester.takeException(), isNull);
     }

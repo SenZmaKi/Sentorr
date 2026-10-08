@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 
 import 'identity.dart';
 import 'models.dart';
+import '../shared/application_identity.dart';
 
 final _log = Logger('sentorr.sync.discovery');
 
@@ -75,7 +76,12 @@ class LocalDiscovery {
           name: identity.name,
           type: _type,
           port: port,
-          attributes: {'id': identity.id, 'v': '1', if (_pairing) 'pair': '1'},
+          attributes: {
+            'id': identity.id,
+            'v': '1',
+            'channel': ApplicationIdentity.channel,
+            if (_pairing) 'pair': '1',
+          },
         ),
       );
       await broadcast.initialize();
@@ -99,7 +105,11 @@ class LocalDiscovery {
         _names[service.name] = id;
         _nearby[id] = NearbyDevice(
           id: id,
-          name: service.name,
+          name:
+              service.attributes['channel'] == 'nightly' &&
+                  !service.name.contains('Nightly')
+              ? '${service.name} · Nightly'
+              : service.name,
           address: (host: host, port: service.port),
           pairing: service.attributes['pair'] == '1',
         );

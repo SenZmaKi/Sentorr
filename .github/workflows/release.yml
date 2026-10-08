@@ -1,6 +1,9 @@
 name: Release
 
 on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
@@ -9,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref_name }}
+  group: release-${{ github.event_name == 'push' && github.ref_name || 'nightly' }}
   cancel-in-progress: false
 
 jobs:
@@ -78,7 +81,7 @@ jobs:
             echo "pubspec build number must be a positive integer" >&2
             exit 64
           fi
-          if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
             echo "Tag $GITHUB_REF_NAME does not match pubspec version $version" >&2
             exit 64
           fi
@@ -88,6 +91,14 @@ jobs:
           if [[ "$version" == *-* ]]; then
             prerelease=true
             channel=prerelease
+          fi
+
+          if [[ "$GITHUB_EVENT_NAME" != "push" ]]; then
+            version="${version%%-*}-nightly.${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
+            build_number="$(date +%s)"
+            expected_tag="v${version}"
+            prerelease=true
+            channel=nightly
           fi
 
           {
@@ -107,9 +118,10 @@ jobs:
       VERSION: ${{ needs.prepare.outputs.version }}
       BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
       RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+      APP_NAME: ${{ needs.prepare.outputs.channel == 'nightly' && 'Sentorr Nightly' || 'Sentorr' }}
       ZIP_NAME: Sentorr-macos-universal.zip
       DMG_NAME: Sentorr-macos-universal.dmg
-      APPCAST_NAME: ${{ needs.prepare.outputs.prerelease == 'true' && 'appcast-prerelease.xml' || 'appcast.xml' }}
+      APPCAST_NAME: ${{ needs.prepare.outputs.channel == 'nightly' && 'appcast-nightly.xml' || needs.prepare.outputs.prerelease == 'true' && 'appcast-prerelease.xml' || 'appcast.xml' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -132,6 +144,12 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - name: Apply nightly branding
+        if: needs.prepare.outputs.channel == 'nightly'
+        run: |
+          python -m pip install Pillow
+          python tool/release/nightly_branding.py
+
       - name: Configure native dependency
         shell: bash
         run: python tool/release/configure_native.py
@@ -197,20 +215,20 @@ jobs:
           sh macos/scripts/sign_app.sh "$built_app"
           sh macos/scripts/verify_app_signature.sh "$built_app"
           mkdir -p "$release_dir" "$package_root" "$dmg_root" "$extracted_root"
-          /usr/bin/ditto "$built_app" "$package_root/Sentorr.app"
-          sh macos/scripts/verify_app_signature.sh "$package_root/Sentorr.app"
+          /usr/bin/ditto "$built_app" "$package_root/$APP_NAME.app"
+          sh macos/scripts/verify_app_signature.sh "$package_root/$APP_NAME.app"
 
           /usr/bin/ditto \
             -c -k --sequesterRsrc --keepParent \
-            "$package_root/Sentorr.app" \
+            "$package_root/$APP_NAME.app" \
             "$release_dir/$ZIP_NAME"
           /usr/bin/ditto -x -k "$release_dir/$ZIP_NAME" "$extracted_root"
-          sh macos/scripts/verify_app_signature.sh "$extracted_root/Sentorr.app"
+          sh macos/scripts/verify_app_signature.sh "$extracted_root/$APP_NAME.app"
 
-          /usr/bin/ditto "$package_root/Sentorr.app" "$dmg_root/Sentorr.app"
+          /usr/bin/ditto "$package_root/$APP_NAME.app" "$dmg_root/$APP_NAME.app"
           ln -s /Applications "$dmg_root/Applications"
           hdiutil create \
-            -volname "Sentorr" \
+            -volname "$APP_NAME" \
             -srcfolder "$dmg_root" \
             -format UDZO \
             -ov \
@@ -346,6 +364,12 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - name: Apply nightly branding
+        if: needs.prepare.outputs.channel == 'nightly'
+        run: |
+          python -m pip install Pillow
+          python tool/release/nightly_branding.py
+
       - name: Configure native dependency
         shell: bash
         run: python tool/release/configure_native.py
@@ -396,8 +420,12 @@ jobs:
             unlink "$dart_jni"
           fi
 
-          cp linux/com.sentorr.sentorr.desktop "$app_dir/com.sentorr.sentorr.desktop"
-          cp assets/images/sentorr-icon.png "$app_dir/com.sentorr.sentorr.png"
+          desktop_id=com.sentorr.sentorr
+          if [[ "${{ needs.prepare.outputs.channel }}" == "nightly" ]]; then
+            desktop_id=com.sentorr.sentorr.nightly
+          fi
+          cp linux/com.sentorr.sentorr.desktop "$app_dir/$desktop_id.desktop"
+          cp assets/images/sentorr-icon.png "$app_dir/$desktop_id.png"
           printf '%s\n' \
             '#!/bin/sh' \
             'export LD_LIBRARY_PATH="$APPDIR/usr/bin/lib:${LD_LIBRARY_PATH:-}"' \
@@ -464,6 +492,12 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - name: Apply nightly branding
+        if: needs.prepare.outputs.channel == 'nightly'
+        run: |
+          python -m pip install Pillow
+          python tool/release/nightly_branding.py
+
       - name: Configure native dependency
         shell: bash
         run: python tool/release/configure_native.py
@@ -607,6 +641,12 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - name: Apply nightly branding
+        if: needs.prepare.outputs.channel == 'nightly'
+        run: |
+          python -m pip install Pillow
+          python tool/release/nightly_branding.py
+
       - name: Configure native dependency
         shell: bash
         run: python tool/release/configure_native.py
@@ -708,7 +748,8 @@ jobs:
             throw 'The installed Sentorr executable is missing'
           }
           $versionInfo = (Get-Item -LiteralPath $installedExe).VersionInfo
-          if ($versionInfo.CompanyName -ne 'com.sentorr.sentorr') {
+          $expectedCompany = if ($env:UPDATE_CHANNEL -eq 'nightly') { 'com.sentorr.sentorr.nightly' } else { 'com.sentorr' }
+          if ($versionInfo.CompanyName -ne $expectedCompany) {
             throw "Unexpected CompanyName: $($versionInfo.CompanyName)"
           }
 
@@ -770,9 +811,13 @@ jobs:
             if [[ "$IS_PRERELEASE" == "true" ]]; then
               release_flags+=(--prerelease)
             fi
+            if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+              release_flags+=(--verify-tag)
+            else
+              release_flags+=(--target "$GITHUB_SHA")
+            fi
             gh release create "$RELEASE_TAG" \
               --repo "$GITHUB_REPOSITORY" \
-              --verify-tag \
               --draft \
               "${release_flags[@]}" \
               --generate-notes \
@@ -803,7 +848,7 @@ jobs:
       BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
       RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
       RELEASE_CHANNEL: ${{ needs.prepare.outputs.channel }}
-      APPCAST_NAME: ${{ needs.prepare.outputs.prerelease == 'true' && 'appcast-prerelease.xml' || 'appcast.xml' }}
+      APPCAST_NAME: ${{ needs.prepare.outputs.channel == 'nightly' && 'appcast-nightly.xml' || needs.prepare.outputs.prerelease == 'true' && 'appcast-prerelease.xml' || 'appcast.xml' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -980,7 +1025,8 @@ jobs:
             gh release edit "$RELEASE_TAG" \
               --repo "$GITHUB_REPOSITORY" \
               --draft=false \
-              --prerelease
+              --prerelease \
+              --latest=false
           else
             gh release edit "$RELEASE_TAG" \
               --repo "$GITHUB_REPOSITORY" \

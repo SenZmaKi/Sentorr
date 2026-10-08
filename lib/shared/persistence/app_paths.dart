@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
+import '../application_identity.dart';
+
 class AppPaths {
   AppPaths._(this.rootDirectory, this.defaultDownloadsDirectory);
   final Directory rootDirectory;
@@ -60,7 +62,7 @@ class AppPaths {
         Directory(
           path.join(
             (await getApplicationSupportDirectory()).path,
-            'SentorrData',
+            ApplicationIdentity.dataDirectory,
           ),
         );
     final system = rootDirectory == null ? await _systemDownloads() : null;
@@ -69,7 +71,7 @@ class AppPaths {
       Directory(
         system == null
             ? path.join(root.path, 'downloads')
-            : path.join(system.path, 'Sentorr'),
+            : path.join(system.path, ApplicationIdentity.name),
       ),
     );
     for (final name in [

@@ -19,7 +19,9 @@ void main() {
       final source = await Directory('${root.path}/seed/Film')
           .create(recursive: true);
       await File('${source.path}/Film.mkv')
-          .writeAsBytes(List.generate(4 * 1024 * 1024, (i) => i % 251));
+      // Exceed the initial prefetch window so loopback delivery cannot
+      // finish the video before the sidecar completion is sampled.
+      .writeAsBytes(List.generate(64 * 1024 * 1024, (i) => i % 251));
       const text = '1\n00:00:00,000 --> 00:00:30,000\nBundled captions\n';
       await File('${source.path}/Film.en.srt').writeAsString(text);
       final metadata = createTorrentData(

@@ -5,10 +5,11 @@ import 'package:file_picker/file_picker.dart';
 
 import 'backup_bundle.dart';
 import 'watch_backup.dart';
+import '../shared/application_identity.dart';
 
 /// Saving and loading a backup as a file the viewer chooses.
 abstract final class FileBackup {
-  static const fileName = 'sentorr-backup.json';
+  static const fileName = ApplicationIdentity.driveBackupName;
 
   /// False when the viewer cancelled.
   static Future<bool> export(BackupBundle bundle) async {

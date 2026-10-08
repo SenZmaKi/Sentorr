@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/sync/client.dart';
+import 'package:sentorr/sync/compatibility.dart';
 import 'package:sentorr/sync/identity.dart';
 import 'package:sentorr/sync/media_proxy.dart';
 import 'package:sentorr/sync/models.dart';
@@ -13,6 +15,7 @@ class _Routes implements SyncRoutes {
   final PairedDevice device;
   final File file;
   final seenFrom = <DeviceAddress>[];
+  int exchanges = 0;
 
   @override
   PairedDevice? paired(String fingerprint) =>
@@ -26,7 +29,10 @@ class _Routes implements SyncRoutes {
   Future<Map<String, dynamic>> sync(
     PairedDevice device,
     Map<String, dynamic> body,
-  ) async => {'echo': body['n']};
+  ) async {
+    exchanges++;
+    return {'echo': body['n']};
+  }
 
   @override
   Map<String, dynamic> library(PairedDevice device) => const {
@@ -123,6 +129,88 @@ void main() {
         headers: {'x-sentorr-library-revision': 'old'},
       );
       expect(changed['media'], full['media']);
+    },
+  );
+
+  test('nightly can exchange with stable when formats match', () async {
+    final client = PeerClient(
+      phone,
+      port: () => 1,
+      compatibility: const PeerCompatibility(channel: 'nightly'),
+    );
+    addTearDown(client.close);
+    expect(
+      await client.call(at, host.fingerprint, '/v1/sync', body: {'n': 8}),
+      {'echo': 8},
+    );
+  });
+
+  test('a mismatched format refuses before any user data is sent', () async {
+    final before = routes.exchanges;
+    final client = PeerClient(
+      phone,
+      port: () => 1,
+      compatibility: const PeerCompatibility(formats: {'watch': 99}),
+    );
+    addTearDown(client.close);
+    await expectLater(
+      client.call(at, host.fingerprint, '/v1/sync', body: {'n': 9}),
+      throwsA(isA<PeerException>().having((e) => e.status, 'status', 426)),
+    );
+    expect(routes.exchanges, before);
+  });
+
+  test('server refuses callers bypassing the handshake metadata', () async {
+    final before = routes.exchanges;
+    final raw = HttpClient(context: phone.context())
+      ..badCertificateCallback = (certificate, _, _) =>
+          fingerprintOfDer(certificate.der) == host.fingerprint;
+    addTearDown(() => raw.close(force: true));
+    final request = await raw.postUrl(
+      Uri.https('${at.host}:${at.port}', '/v1/sync'),
+    );
+    request.write(jsonEncode({'n': 9}));
+    final response = await request.close();
+    expect(response.statusCode, 426);
+    await response.drain<void>();
+    expect(routes.exchanges, before);
+  });
+
+  test(
+    'legacy peer is probed without posting state or requesting media',
+    () async {
+      final context = host.context()
+        ..setTrustedCertificatesBytes(utf8.encode(phone.certificatePem));
+      final legacy = await HttpServer.bindSecure(
+        '127.0.0.1',
+        0,
+        context,
+        requestClientCertificate: true,
+      );
+      addTearDown(() => legacy.close(force: true));
+      final requests = <String>[];
+      legacy.listen((request) async {
+        requests.add('${request.method} ${request.uri.path}');
+        request.response.statusCode = 404;
+        await request.response.close();
+      });
+      final client = PeerClient(phone, port: () => 1);
+      addTearDown(client.close);
+      final address = (host: '127.0.0.1', port: legacy.port);
+      await expectLater(
+        client.call(
+          address,
+          host.fingerprint,
+          '/v1/sync',
+          body: {'private': 'history'},
+        ),
+        throwsA(isA<PeerException>().having((e) => e.status, 'status', 426)),
+      );
+      await expectLater(
+        client.open(address, host.fingerprint, '/v1/media/tt1'),
+        throwsA(isA<PeerException>()),
+      );
+      expect(requests, ['GET /v1/hello', 'GET /v1/hello']);
     },
   );
 

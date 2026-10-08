@@ -12,6 +12,8 @@ import 'package:sentorr/backup/backup_bundle.dart';
 import 'package:sentorr/backup/drive/drive_auth.dart';
 import 'package:sentorr/backup/notifier.dart';
 import 'package:sentorr/backup/remote.dart';
+import 'package:sentorr/backup/watch_backup.dart';
+import 'package:sentorr/following/snapshot.dart';
 import 'package:sentorr/following/models.dart';
 import 'package:sentorr/following/notifier.dart';
 import 'package:sentorr/settings/models.dart';
@@ -27,6 +29,7 @@ class _Remote implements BackupRemote {
   String? _content;
   int revision = 0;
   int uploads = 0;
+  bool needsPublication = false;
   Future<void> Function()? afterUpload;
 
   /// Runs once after the next download, as if another device synced then.
@@ -37,7 +40,11 @@ class _Remote implements BackupRemote {
     final content = _content;
     final result = content == null
         ? null
-        : RemoteBackup(BackupBundle.decode(content), '$revision');
+        : RemoteBackup(
+            BackupBundle.decode(content),
+            '$revision',
+            needsPublication: needsPublication,
+          );
     final hook = afterDownload;
     afterDownload = null;
     await hook?.call();
@@ -52,6 +59,7 @@ class _Remote implements BackupRemote {
     _content = bundle.encode();
     revision++;
     uploads++;
+    needsPublication = false;
     final hook = afterUpload;
     afterUpload = null;
     await hook?.call();
@@ -103,6 +111,23 @@ List<String> _ids(ProviderContainer d) => [
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'unchanged migrated snapshots are published once into the shared backup',
+    () async {
+      final remote = _Remote()
+        .._content = BackupBundle(
+          watch: const WatchSnapshot([], {}),
+          following: const FollowedSnapshot([], {}),
+        ).encode()
+        ..needsPublication = true;
+      final device = _device(remote);
+      await _sync(device);
+      expect(remote.uploads, 1);
+      await _sync(device);
+      expect(remote.uploads, 1);
+    },
+  );
 
   test(
     'changes and a sync request during upload run once more afterwards',

@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logging/logging.dart';
 
+import '../application_identity.dart';
+
 final _log = Logger('sentorr.credentials');
 
 typedef ProxyCredentials = ({String username, String password});
@@ -14,14 +16,16 @@ class CredentialStore {
     this._storage = const FlutterSecureStorage(
       aOptions: AndroidOptions(
         resetOnError: true,
-        preferencesKeyPrefix: 'sentorr_',
+        preferencesKeyPrefix: ApplicationIdentity.nightly
+            ? 'sentorr_nightly_'
+            : 'sentorr_',
       ),
       iOptions: IOSOptions(
         accessibility: KeychainAccessibility.unlocked_this_device,
         synchronizable: false,
       ),
       mOptions: MacOsOptions(
-        accountName: 'com.sentorr.sentorr.credentials',
+        accountName: ApplicationIdentity.credentialsAccount,
         accessibility: KeychainAccessibility.unlocked_this_device,
         synchronizable: false,
         label: 'Sentorr credentials',
@@ -32,8 +36,10 @@ class CredentialStore {
   ]);
 
   final FlutterSecureStorage _storage;
-  static const _proxyKey = 'torrent_proxy_credentials';
-  static const _driveKey = 'google_drive_refresh_token';
+  static const _proxyKey =
+      '${ApplicationIdentity.credentialPrefix}torrent_proxy_credentials';
+  static const _driveKey =
+      '${ApplicationIdentity.credentialPrefix}google_drive_refresh_token';
 
   /// Null when none is saved or the keychain cannot be read.
   Future<String?> readDriveToken() async {

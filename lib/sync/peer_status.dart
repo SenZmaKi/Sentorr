@@ -5,6 +5,7 @@ class PeerStatus {
   const PeerStatus({
     this.online = false,
     this.syncing = false,
+    this.incompatible = false,
     this.error,
     this.libraryRevision,
     this.media = const [],
@@ -15,6 +16,9 @@ class PeerStatus {
   final String? libraryRevision;
   final bool online;
   final bool syncing;
+
+  /// Reachable, but its declared formats cannot be exchanged safely.
+  final bool incompatible;
 
   /// Why it was last unreachable.
   final String? error;
@@ -28,11 +32,13 @@ class PeerStatus {
   PeerStatus copyWith({
     bool? online,
     bool? syncing,
+    bool? incompatible,
     String? Function()? error,
     PeerLibrary? library,
   }) => PeerStatus(
     online: online ?? this.online,
     syncing: syncing ?? this.syncing,
+    incompatible: incompatible ?? this.incompatible,
     error: error == null ? this.error : error(),
     libraryRevision: library == null ? libraryRevision : library.revision,
     media: library?.media ?? media,

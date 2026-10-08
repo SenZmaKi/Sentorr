@@ -199,7 +199,9 @@ class BackupNotifier extends Notifier<BackupState> {
       if (held != null) await data.apply(held.bundle);
       final merged = data.current();
       final changes = _changes;
-      if (held == null || !merged.matches(held.bundle)) {
+      if (held == null ||
+          held.needsPublication ||
+          !merged.matches(held.bundle)) {
         try {
           await remote.upload(merged, basedOn: held?.revision);
         } on BackupConflict {

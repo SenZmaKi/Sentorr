@@ -4,6 +4,7 @@ import '../../shared/parallel.dart';
 import '../backup_bundle.dart';
 import '../remote.dart';
 import 'drive_auth.dart';
+import '../../shared/application_identity.dart';
 
 /// Immutable snapshots in Drive's app-data folder, compacted after publishing.
 class DriveBackupClient implements BackupRemote {
@@ -13,7 +14,7 @@ class DriveBackupClient implements BackupRemote {
     this.api = 'https://www.googleapis.com',
   });
 
-  static const fileName = 'sentorr-backup.json';
+  static const fileName = ApplicationIdentity.driveBackupName;
   static const _boundary = 'sentorr-backup-boundary';
 
   final Dio dio;
@@ -22,13 +23,18 @@ class DriveBackupClient implements BackupRemote {
 
   List<String> _observed = const [];
   String? _revision;
+  bool _validated = false;
   final _cache = <String, ({String checksum, BackupBundle bundle})>{};
 
   @override
   Future<RemoteBackup?> download() async {
+    _validated = false;
+    _observed = const [];
+    _revision = null;
     // A compactor may remove a listed snapshot after publishing its successor.
     for (var attempt = 0; attempt < 3; attempt++) {
-      final files = await _files();
+      final listed = await _files();
+      final files = listed.files;
       BackupBundle? merged;
       try {
         _cache.removeWhere((id, _) => !files.containsKey(id));
@@ -48,7 +54,10 @@ class DriveBackupClient implements BackupRemote {
               query: {'alt': 'media'},
               type: ResponseType.plain,
             );
-            final bundle = BackupBundle.decode(response.data ?? '');
+            final bundle = BackupBundle.decode(
+              response.data ?? '',
+              strict: true,
+            );
             if (checksum != null) {
               _cache[id] = (checksum: checksum, bundle: bundle);
             }
@@ -68,17 +77,25 @@ class DriveBackupClient implements BackupRemote {
         if (error.response?.statusCode == 404) continue;
         rethrow;
       }
+      _validated = true;
       _observed = files.keys.toList();
       _revision = files.isEmpty ? null : files.keys.join(',');
-      return merged == null ? null : RemoteBackup(merged, _revision);
+      return merged == null
+          ? null
+          : RemoteBackup(
+              merged,
+              _revision,
+              needsPublication: listed.needsPublication,
+            );
     }
     throw const BackupConflict();
   }
 
   @override
   Future<void> upload(BackupBundle bundle, {required String? basedOn}) async {
-    if (basedOn != _revision) throw const BackupConflict();
+    if (!_validated || basedOn != _revision) throw const BackupConflict();
     final covered = List<String>.of(_observed);
+    _validated = false;
     // Publish a new immutable snapshot before removing only the snapshots
     // this writer read. Concurrent writers never delete each other's new work.
     await _send<void>(
@@ -111,7 +128,8 @@ class DriveBackupClient implements BackupRemote {
     _revision = null;
   }
 
-  Future<Map<String, String?>> _files() async {
+  Future<({Map<String, String?> files, bool needsPublication})> _files() async {
+    var legacyName = false;
     final ids = <String, String?>{};
     String? page;
     do {
@@ -120,8 +138,9 @@ class DriveBackupClient implements BackupRemote {
         '$api/drive/v3/files',
         query: {
           'spaces': 'appDataFolder',
-          'q': "name = '$fileName' and trashed = false",
-          'fields': 'nextPageToken,files(id,md5Checksum)',
+          'q':
+              "(name = '$fileName' or name = 'sentorr-nightly-backup.json') and trashed = false",
+          'fields': 'nextPageToken,files(id,name,md5Checksum)',
           'pageSize': '1000',
           'pageToken': ?page,
         },
@@ -131,12 +150,16 @@ class DriveBackupClient implements BackupRemote {
         for (final file in files) {
           if (file case {'id': final String id}) {
             ids[id] = file['md5Checksum'] as String?;
+            legacyName |= file['name'] == 'sentorr-nightly-backup.json';
           }
         }
       }
       page = response.data?['nextPageToken'] as String?;
     } while (page != null);
-    return {for (final id in ids.keys.toList()..sort()) id: ids[id]};
+    return (
+      files: {for (final id in ids.keys.toList()..sort()) id: ids[id]},
+      needsPublication: legacyName || ids.length > 1,
+    );
   }
 
   /// Sends with the viewer's token, retrying once on a fresh one if Google

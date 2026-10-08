@@ -11,10 +11,13 @@ import 'package:sentorr/library/models.dart';
 import 'package:sentorr/library/playback.dart';
 import 'package:sentorr/player/models.dart';
 import 'package:sentorr/player/launch.dart';
+import 'package:sentorr/player/preparation.dart';
 import 'package:sentorr/player/session.dart';
+import 'package:sentorr/player/stream/prepared_stream.dart';
 import 'package:sentorr/player/stream/offline_source.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/torrents/models.dart';
+import 'package:sentorr/torrents/resolution_models.dart';
 import 'package:sentorr/torrents/providers.dart';
 import 'package:sentorr/torrents/repository.dart';
 import 'package:sentorr/ui/pages/launch/launch_dialog.dart';
@@ -29,8 +32,18 @@ import '../support/fake_library.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_torrents.dart';
+import '../support/fake_paths.dart';
 
 final _autoActionDelay = const TorrentSettings().autoActionDelay;
+
+// These tests exercise launch selection, without mounting a player to take
+// ownership of the speculative stream. Preparation has its own tests.
+class _NoPreparation extends PreparedStreams {
+  _NoPreparation() : super(create: (_, _) => throw StateError('Unused'));
+
+  @override
+  void start(PlaybackItem item, TorrentCandidate candidate) {}
+}
 
 Future<ProviderContainer> _pump(
   WidgetTester tester,
@@ -45,10 +58,14 @@ Future<ProviderContainer> _pump(
   final container = ProviderContainer(
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
+      preparedStreamsProvider.overrideWithValue(_NoPreparation()),
       ...watchListsOverrides(),
       ...followedSeriesOverrides(),
       ...libraryOverrides(library),
       downloadsProvider.overrideWith((ref) => Stream.value(downloads)),
+      appPathsProvider.overrideWithValue(
+        (await tester.runAsync(temporaryAppPaths))!,
+      ),
       if (peer != null)
         peerSourceProvider.overrideWithValue(
           (_) => PeerFile(Uri.parse('http://127.0.0.1:1/media'), peer),

@@ -11,7 +11,7 @@ site.mkdir(exist_ok=True)
 signer = root / 'source-directory/signer'
 subprocess.run(['dart','run','bin/sign.dart','--input','../source_directory.payload.json',
     '--output',str(site/'source-directory.json')],cwd=signer,check=True)
-for name in ['update-manifest.json','appcast.xml','appcast-prerelease.xml']:
+for name in ['update-manifest.json','appcast.xml','appcast-prerelease.xml','appcast-nightly.xml']:
     try:
         with urlopen('https://senzmaki.github.io/Sentorr/'+name) as response:
             (site/name).write_bytes(response.read())

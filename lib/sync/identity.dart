@@ -5,6 +5,8 @@ import 'dart:math';
 import 'package:basic_utils/basic_utils.dart';
 import 'package:crypto/crypto.dart';
 
+import '../shared/application_identity.dart';
+
 /// This device as its paired devices know it: a stable id, a name for
 /// people, and the TLS certificate its connections are pinned to.
 class DeviceIdentity {
@@ -86,16 +88,21 @@ class DeviceIdentity {
 
 /// What this device calls itself until the viewer renames it.
 String defaultDeviceName() {
-  if (Platform.isAndroid) return 'Android device';
+  if (Platform.isAndroid) {
+    return ApplicationIdentity.nightly
+        ? 'Android device · Nightly'
+        : 'Android device';
+  }
   if (Platform.isIOS) return 'iPhone';
   final host = Platform.localHostname.split('.').first;
-  return host.isEmpty || host == 'localhost'
+  final name = host.isEmpty || host == 'localhost'
       ? switch (Platform.operatingSystem) {
           'macos' => 'Mac',
           'windows' => 'Windows PC',
           _ => 'Linux PC',
         }
       : host;
+  return ApplicationIdentity.nightly ? '$name · Nightly' : name;
 }
 
 /// SHA-256 of a certificate's DER bytes, lowercase hex.

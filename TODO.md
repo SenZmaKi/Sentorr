@@ -1,1 +1,2 @@
-- On android trying to connect to google drive kills the app before we're redirected back to it.
+- On android trying to connect to google drive kills the app before we're redirected back to it causing can't connect to 127.0.0.1:port here error.
+- Continuing on another device should also check if one of the devices on the network already has some of the content buffered and used that device as the server as we do with downloads tho should ask as we do with downloads.

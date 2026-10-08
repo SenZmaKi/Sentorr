@@ -1,3 +1,5 @@
 - On android trying to connect to google drive kills the app before we're redirected back to it causing can't connect to 127.0.0.1:port here error.
 - Continuing on another device should also check if one of the devices on the network already has some of the content buffered and used that device as the server as we do with downloads tho should ask as we do with downloads.
 - Progress bar greyed out section should show downloaded progress instead of buffered progress assuming the implementation doesn't cook performance.
+- Add github sponsors to app and readme like in Senpwai and create sponsors section for Sentorr.
+- Add support section in updates and about has github sponsors section and cta to star the repo on github like senpwai.

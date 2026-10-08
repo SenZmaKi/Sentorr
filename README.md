@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  Press play. Sentorr finds the torrent.<br>
+  A less sketchy way to stream movies and TV.<br>
   Movies and TV · Android · Linux · macOS · Windows
 </p>
 

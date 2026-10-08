@@ -169,6 +169,14 @@ void main() {
           session.state.connections,
           greaterThanOrEqualTo(session.state.connectedPeers),
         );
+        // Snapshots publish asynchronously; wait until every byte this test
+        // read over HTTP is counted before using it as the baseline.
+        const servedByTest = (262160 - 131060 + 1) + 123 + 81 + 101;
+        if (session.state.servedBytes != servedByTest) {
+          await session.states
+              .firstWhere((s) => s.servedBytes == servedByTest)
+              .timeout(const Duration(seconds: 10));
+        }
         final received = session.state.receivedBytes;
         final served = session.state.servedBytes;
         expect(session.state.downloadedBytes, lessThan(fixture.length));

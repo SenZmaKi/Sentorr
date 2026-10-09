@@ -122,7 +122,61 @@ void main() {
     captions.off();
     native.gate!.complete();
     await settlePlayback();
-    expect(native.selected.last.id, 'no');
+    expect(native.selected.last.uri, true);
+    expect(captions.enabled, false);
+    expect(captions.visible, false);
+    expect(native.selected.where((track) => track.id == 'no'), isEmpty);
+  });
+  test('sidecar Off/On retains selection without reimporting', () async {
+    captions.on();
+    await progress(100);
+    expect(captions.visible, true);
+    final calls = native.selected.length;
+    for (var i = 0; i < 3; i++) {
+      captions.off();
+      expect(captions.visible, false);
+      captions.on();
+      await settlePlayback();
+      expect(captions.visible, true);
+    }
+    expect(native.selected, hasLength(calls));
+  });
+  test('embedded Off/On retains the native track', () async {
+    const track = SubtitleTrack('1', 'English', 'en');
+    native.state = native.state.copyWith(
+      tracks: const Tracks(subtitle: [track]),
+    );
+    captions.chooseTrack(track);
+    await settlePlayback();
+    final calls = native.selected.length;
+    captions.off();
+    expect(captions.visible, false);
+    captions.on();
+    await settlePlayback();
+    expect(captions.visible, true);
+    expect(native.selected, hasLength(calls));
+    expect(native.state.track.subtitle, track);
+  });
+  test('a queued attachment skipped by Off can be enabled later', () async {
+    await progress(100);
+    captions.on();
+    captions.off();
+    await settlePlayback();
+    expect(native.selected.where((track) => track.uri), isEmpty);
+    captions.on();
+    await settlePlayback();
+    expect(captions.visible, true);
+    expect(native.selected.where((track) => track.uri), hasLength(1));
+  });
+  test('choosing a pending sidecar hides the previous track text', () async {
+    const track = SubtitleTrack('1', 'Embedded', 'en');
+    captions.chooseTrack(track);
+    await settlePlayback();
+    expect(captions.visible, true);
+    captions.chooseFile(1);
+    expect(captions.visible, false);
+    await progress(100);
+    expect(captions.visible, true);
   });
   test('completion of an unselected sidecar does not activate it', () async {
     await captions.reset();

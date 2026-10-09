@@ -34,3 +34,15 @@ Validation on 2026-10-03 (macOS 27, Flutter 3.47.1): published MediaKit 1.2.6
 crashed on the first restart without the guard. With the guard and the same
 published dependency, all three restarts decoded 1920px video and advanced
 playback. Player analysis and 33 player/domain/widget tests passed.
+
+## Caption toggle regression
+
+Run `flutter test test/player/subtitles_playback_native_test.dart` after building
+the macOS debug runner and generating the codec-lab fixtures. The check loads
+that runner's bundled libmpv with no window or audio output, serves a fixture over
+loopback HTTP, and exercises production `PlaybackSubtitles` through MediaKit.
+It checks that Off/On retains the selected embedded track, issues no refresh seek
+or additional HTTP request, keeps playback advancing, and creates no duplicate
+sidecar tracks when returning from another selection. It skips when the runner
+or fixtures are missing. This checks native HTTP playback, not a remote swarm or
+physical Android rendering.

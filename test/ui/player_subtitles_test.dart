@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:sentorr/player/stream/subtitles.dart';
 import 'package:sentorr/ui/pages/player/captions_control.dart';
+import 'package:sentorr/ui/pages/player/captions_view.dart';
 import 'package:sentorr/ui/pages/player/player_actions.dart';
 import 'package:sentorr/ui/pages/player/player_layout.dart';
 import 'package:sentorr/ui/pages/player/player_ui.dart';
@@ -25,8 +26,58 @@ class _Actions implements PlayerActions {
   dynamic noSuchMethod(Invocation invocation) => null;
 }
 
+class _VisualPlayer extends FakePlayback {
+  void emitSubtitle(List<String> lines) {
+    state = state.copyWith(subtitle: lines);
+    subtitleController.add(lines);
+  }
+
+  @override
+  Future<void> setSubtitleTrack(SubtitleTrack track) async {
+    state = state.copyWith(track: state.track.copyWith(subtitle: track));
+  }
+}
+
 void main() {
   for (final brightness in Brightness.values) {
+    testWidgets(
+      'Off hides retained and newly arriving caption text in $brightness',
+      (tester) async {
+        final native = _VisualPlayer();
+        const track = SubtitleTrack('1', 'English', 'en');
+        native.state = native.state.copyWith(
+          track: native.state.track.copyWith(subtitle: track),
+          subtitle: ['Current caption', ''],
+        );
+        final player = Player(platformPlayer: native);
+        final captions = PlaybackSubtitles(player);
+        captions.opened();
+        addTearDown(captions.dispose);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buildSentorrTheme(brightness),
+            home: Scaffold(
+              body: CaptionsView(
+                player: player,
+                captions: captions,
+                lifted: false,
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(find.text('Current caption'), findsOneWidget);
+        captions.off();
+        await tester.pump();
+        expect(find.text('Current caption'), findsNothing);
+        native.emitSubtitle(['Later caption', '']);
+        await tester.pump();
+        expect(find.text('Later caption'), findsNothing);
+        captions.on();
+        await tester.pump();
+        expect(find.text('Later caption'), findsOneWidget);
+      },
+    );
     testWidgets(
       'pending SRT remains selectable and CC shows progress in $brightness',
       (tester) async {

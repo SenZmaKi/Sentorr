@@ -27,7 +27,8 @@ class SubtitleDownload {
 }
 
 /// Captions intent outlives an item's download. Native commands are serialized
-/// so a late attachment cannot override Off or a newer selection.
+/// so a late attachment cannot override Off or a newer selection. Off hides
+/// the Flutter overlay without deselecting and flushing mpv's packet cache.
 class PlaybackSubtitles extends ChangeNotifier {
   PlaybackSubtitles(this.player);
   final Player player;
@@ -36,12 +37,24 @@ class PlaybackSubtitles extends ChangeNotifier {
   bool _explicit = false, _opened = false;
   int? selectedFile;
   SubtitleTrack? _embedded;
-  String? _applied;
+  String? _applied, _selectedKey;
+  final _imports = <String, SubtitleTrack>{};
   Set<String>? _originalTrackIds;
   final _sidecarTitles = <String>{};
   int _generation = 0;
   Future<void> _commands = Future.value();
   StreamSubscription<List<TorrentSnapshot>>? _updates;
+
+  SubtitleTrack? get _desired =>
+      _embedded ??
+      (selected?.ready == true
+          ? SubtitleTrack.uri(selected!.path!, title: selected!.label)
+          : null);
+  static String _key(SubtitleTrack track) => '${track.uri}:${track.id}';
+
+  /// Hide stale text while another track or a pending download is selected.
+  bool get visible =>
+      enabled && _opened && _desired != null && _selectedKey == _key(_desired!);
 
   bool get available => files.isNotEmpty || embedded.isNotEmpty;
   List<SubtitleTrack> get embedded => player.state.tracks.subtitle
@@ -67,7 +80,8 @@ class PlaybackSubtitles extends ChangeNotifier {
     files = const [];
     selectedFile = null;
     _embedded = null;
-    _applied = null;
+    _applied = _selectedKey = null;
+    _imports.clear();
     _originalTrackIds = null;
     _sidecarTitles.clear();
     _opened = false;
@@ -138,10 +152,12 @@ class PlaybackSubtitles extends ChangeNotifier {
 
   void opened() {
     _opened = true;
-    if (!_explicit) {
-      final track = player.state.track.subtitle;
-      enabled = track.id != 'no' && track.id != 'auto';
+    final track = player.state.track.subtitle;
+    if (track.id != 'no' && track.id != 'auto') {
+      _selectedKey = _key(track);
+      if (!_explicit) _embedded = track;
     }
+    if (!_explicit) enabled = _embedded != null;
     _apply();
     notifyListeners();
   }
@@ -182,19 +198,15 @@ class PlaybackSubtitles extends ChangeNotifier {
   }
 
   void _apply() {
-    if (!_opened) return;
-    if (enabled && selectedFile == null && _embedded == null) {
+    if (!_opened || !enabled) return;
+    if (selectedFile == null && _embedded == null) {
       _embedded = embedded.firstOrNull;
       if (_embedded == null) selectedFile = files.firstOrNull?.file.index;
     }
     final sidecar = selected;
-    final track = !enabled
-        ? SubtitleTrack.no()
-        : _embedded ??
-              (sidecar?.ready == true
-                  ? SubtitleTrack.uri(sidecar!.path!, title: sidecar.label)
-                  : SubtitleTrack.no());
-    final key = '${track.uri}:${track.id}';
+    final track = _desired;
+    if (track == null) return;
+    final key = _key(track);
     if (_applied == key) return;
     _applied = key;
     if (track.uri) {
@@ -206,8 +218,27 @@ class PlaybackSubtitles extends ChangeNotifier {
     final generation = _generation;
     _commands = _commands.then((_) async {
       if (generation != _generation || _applied != key) return;
+      if (!enabled) {
+        _applied = null;
+        return;
+      }
       try {
-        await player.setSubtitleTrack(track);
+        // A previously imported sidecar is selected by its native ID, rather
+        // than sub-add, which would create a duplicate track on every return.
+        await player.setSubtitleTrack(_imports[track.id] ?? track);
+        if (generation != _generation) return;
+        _selectedKey = key;
+        if (track.uri && !_imports.containsKey(track.id)) {
+          final native = player.platform;
+          final id = native is NativePlayer
+              ? await native.getProperty('sid')
+              : null;
+          if (generation != _generation) return;
+          if (id != null && id != 'no' && id != 'auto') {
+            _imports[track.id] = SubtitleTrack(id, track.title, track.language);
+          }
+        }
+        notifyListeners();
       } on Object {
         if (generation != _generation || _applied != key) return;
         _applied = null;

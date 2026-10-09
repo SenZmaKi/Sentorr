@@ -268,6 +268,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                           listenable: _ui,
                           builder: (context, _) => CaptionsView(
                             player: p,
+                            captions: _engine.streaming.subtitles,
                             lifted: _ui.controlsVisible,
                           ),
                         ),

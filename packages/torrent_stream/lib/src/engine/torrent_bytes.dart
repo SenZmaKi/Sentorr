@@ -43,11 +43,23 @@ class TorrentBytes implements ByteSource {
   @override
   int get length => file.size;
   @override
-  Future<Uint8List> read(
+  Future<Uint8List> read(int offset, int count, Cancellation cancellation) =>
+      _read(offset, count, cancellation, ahead: lookahead, urgent: true);
+
+  /// Sparse, non-urgent metadata read without expanding the playback window.
+  Future<Uint8List> readIndex(
     int offset,
     int count,
     Cancellation cancellation,
-  ) async {
+  ) => _read(offset, count, cancellation, ahead: 0, urgent: false);
+
+  Future<Uint8List> _read(
+    int offset,
+    int count,
+    Cancellation cancellation, {
+    required int ahead,
+    required bool urgent,
+  }) async {
     if (offset < 0 || count < 0 || offset + count > length) {
       throw RangeError('Read outside selected file');
     }
@@ -61,7 +73,8 @@ class TorrentBytes implements ByteSource {
         cancellation,
         piece,
         (file.offset + length - 1) ~/ pieceLength,
-        lookahead,
+        ahead,
+        urgent: urgent,
       );
       final data = await cancellation.wait(_piece(piece));
       cancellation.check();

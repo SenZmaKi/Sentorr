@@ -96,9 +96,17 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
       engine: engine,
       config: config,
     );
-    _transfer = session.states.listen(
-      (transfer) => _update(generation, (s) => s.copyWith(transfer: transfer)),
-    );
+    var lastIndexStatus = '';
+    _transfer = session.states.listen((transfer) {
+      if (transfer.indexStatus.isNotEmpty &&
+          transfer.indexStatus != lastIndexStatus) {
+        lastIndexStatus = transfer.indexStatus;
+        _log.info(
+          'Downloaded timeline: $lastIndexStatus (${transfer.selectedFile?.path})',
+        );
+      }
+      _update(generation, (s) => s.copyWith(transfer: transfer));
+    });
     final release = candidate.release;
     _log.info(
       'Streaming $item from ${release.name} '

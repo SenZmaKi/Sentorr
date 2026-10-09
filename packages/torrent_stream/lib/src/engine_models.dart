@@ -19,10 +19,18 @@ class StreamSnapshot {
     required this.id,
     required this.owner,
     required this.file,
+    this.downloadedRanges = const [],
+    this.downloadedTimes = const [],
+    this.mediaDuration = 0,
+    this.indexStatus = '',
     this.cachedBytes = 0,
     this.servedBytes = 0,
     this.requests = 0,
   });
+  final List<DownloadedRange> downloadedRanges;
+  final List<DownloadedTimeRange> downloadedTimes;
+  final double mediaDuration;
+  final String indexStatus;
   final int id;
   final String owner;
   final TorrentStreamFile file;

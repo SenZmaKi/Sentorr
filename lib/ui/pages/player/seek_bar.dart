@@ -8,7 +8,7 @@ import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'seek_track.dart';
 
-/// The scrubber: played, buffered and not-yet-loaded spans on one track.
+/// The scrubber: played, downloaded and not-yet-loaded spans on one track.
 /// It thickens and shows its thumb while pointed at, previews the time under
 /// the pointer, and seeks once on release so a stream fetches one position,
 /// not every point dragged across.
@@ -17,12 +17,13 @@ class SeekBar extends StatefulWidget {
     super.key,
     required this.position,
     required this.duration,
-    required this.buffer,
+    required this.downloaded,
     required this.onSeek,
     this.onScrubbing,
   });
 
-  final Duration position, duration, buffer;
+  final Duration position, duration;
+  final List<({double start, double end})> downloaded;
   final ValueChanged<Duration> onSeek;
 
   /// Dragging started or ended; chrome stays up meanwhile.
@@ -50,11 +51,6 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
       return _pending!.inMilliseconds / total;
     }
     return total <= 0 ? 0 : widget.position.inMilliseconds / total;
-  }
-
-  double get _buffered {
-    final total = widget.duration.inMilliseconds;
-    return total <= 0 ? 0 : widget.buffer.inMilliseconds / total;
   }
 
   Duration _at(double fraction) => widget.duration * fraction.clamp(0, 1);
@@ -184,7 +180,7 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
                             painter: SeekTrackPainter(
                               colors: context.player,
                               played: _played,
-                              buffered: _buffered,
+                              downloaded: widget.downloaded,
                               hover: _drag == null ? _hover : null,
                               active: _active.value,
                               focused: _focused,

@@ -41,7 +41,7 @@ class PlayerColors extends ThemeExtension<PlayerColors> {
   final Color scrim;
   final Color focus;
 
-  /// The buffered span of the seek track; also disabled glyphs.
+  /// The downloaded spans of the seek track; also disabled glyphs.
   final Color inactiveTrack;
   final Color stateHover;
   final Color statePressed;

@@ -62,6 +62,41 @@ class StreamStatus {
   /// The paired device [localFile] plays from; null when it is this one's.
   final String? peer;
 
+  /// A resolved index remains authoritative even when none of its bytes exist.
+  bool get hasDownloadedTimeline =>
+      localFile != null ||
+      (transfer.selectedFile != null &&
+          transfer.selectedFile!.length > 0 &&
+          transfer.selectedBytes == transfer.selectedFile!.length) ||
+      transfer.mediaDuration > 0;
+
+  /// Container-indexed time fractions; unknown regions remain empty.
+  List<({double start, double end})> get downloadedSpans {
+    if (localFile != null) return const [(start: 0.0, end: 1.0)];
+    final fileLength = transfer.selectedFile?.length ?? 0;
+    if (fileLength > 0 && transfer.selectedBytes == fileLength) {
+      return const [(start: 0.0, end: 1.0)];
+    }
+    final length = transfer.mediaDuration;
+    if (length <= 0) return const [];
+    final ranges = transfer.downloadedTimes;
+    if (ranges.length <= 512) {
+      return List.unmodifiable([
+        for (final range in ranges)
+          (start: range.start / length, end: range.end / length),
+      ]);
+    }
+    // Bound painting for pathological fragmentation. Keep only fully covered
+    // bins, so reducing display detail never fills an undownloaded gap.
+    final spans = <({double start, double end})>[];
+    for (final range in ranges) {
+      final start = (range.start * 512 / length).ceil() / 512;
+      final end = (range.end * 512 / length).floor() / 512;
+      if (end > start) spans.add((start: start, end: end));
+    }
+    return List.unmodifiable(spans);
+  }
+
   bool get starting =>
       stage == StreamStage.finding ||
       stage == StreamStage.connecting ||

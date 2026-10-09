@@ -57,6 +57,10 @@ bool sameSnapshot(TorrentSnapshot a, TorrentSnapshot b) {
     final x = a.streams[i], y = b.streams[i];
     if ((x.id, x.owner, x.cachedBytes, x.servedBytes, x.requests) !=
             (y.id, y.owner, y.cachedBytes, y.servedBytes, y.requests) ||
+        !_sameList(x.downloadedRanges, y.downloadedRanges) ||
+        !_sameList(x.downloadedTimes, y.downloadedTimes) ||
+        x.mediaDuration != y.mediaDuration ||
+        x.indexStatus != y.indexStatus ||
         !_sameFile(x.file, y.file)) {
       return false;
     }

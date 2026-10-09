@@ -19,6 +19,7 @@ import 'next_peek.dart';
 import 'player_layout.dart';
 import 'player_value.dart';
 import 'seek_bar.dart';
+import 'downloaded_track.dart';
 import 'volume_control.dart';
 
 /// Scrubber over one row of controls: transport and volume lead, where the
@@ -275,19 +276,19 @@ class _Scrubber extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = player.stream;
-    return PlayerValue(
-      stream: s.duration,
-      initial: player.state.duration,
-      builder: (context, duration) => PlayerValue(
-        stream: s.buffer,
-        initial: player.state.buffer,
-        builder: (context, buffer) => PlayerValue(
+    return DownloadedTrack(
+      status: actions.engine.streaming.status,
+      cached: actions.engine.cacheRanges,
+      builder: (context, downloaded) => PlayerValue(
+        stream: s.duration,
+        initial: player.state.duration,
+        builder: (context, duration) => PlayerValue(
           stream: s.position,
           initial: player.state.position,
           builder: (context, position) => SeekBar(
             position: position,
             duration: duration,
-            buffer: buffer,
+            downloaded: downloaded,
             onSeek: actions.engine.seek,
             onScrubbing: (on) => ui.hovering = on,
           ),

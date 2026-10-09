@@ -13,6 +13,7 @@ import 'bottom_bar.dart';
 import 'player_actions.dart';
 import 'player_value.dart';
 import 'seek_track.dart';
+import 'downloaded_track.dart';
 
 /// Controls for the docked and popped-out player: a progress line always,
 /// and on hover a veil with expand and close, transport in the middle and
@@ -111,7 +112,7 @@ class _MiniChromeState extends State<MiniChrome> {
                 right: 0,
                 bottom: 0,
                 height: 3,
-                child: _ProgressLine(player: widget.player),
+                child: _ProgressLine(player: widget.player, actions: a),
               ),
             ],
           ),
@@ -216,33 +217,39 @@ class _MiniChromeState extends State<MiniChrome> {
 }
 
 class _ProgressLine extends StatelessWidget {
-  const _ProgressLine({required this.player});
+  const _ProgressLine({required this.player, required this.actions});
+
+  final PlayerActions actions;
 
   final Player player;
 
   @override
   Widget build(BuildContext context) {
     final s = player.stream;
-    return PlayerValue(
-      stream: s.duration,
-      initial: player.state.duration,
-      builder: (context, total) => PlayerValue(
-        stream: s.position,
-        initial: player.state.position,
-        builder: (context, position) {
-          final ms = total.inMilliseconds;
-          return CustomPaint(
-            painter: SeekTrackPainter(
-              colors: context.player,
-              played: ms <= 0 ? 0 : position.inMilliseconds / ms,
-              buffered: ms <= 0 ? 0 : player.state.buffer.inMilliseconds / ms,
-              hover: null,
-              active: 0,
-              focused: false,
-              flat: true,
-            ),
-          );
-        },
+    return DownloadedTrack(
+      status: actions.engine.streaming.status,
+      cached: actions.engine.cacheRanges,
+      builder: (context, downloaded) => PlayerValue(
+        stream: s.duration,
+        initial: player.state.duration,
+        builder: (context, total) => PlayerValue(
+          stream: s.position,
+          initial: player.state.position,
+          builder: (context, position) {
+            final ms = total.inMilliseconds;
+            return CustomPaint(
+              painter: SeekTrackPainter(
+                colors: context.player,
+                played: ms <= 0 ? 0 : position.inMilliseconds / ms,
+                downloaded: downloaded,
+                hover: null,
+                active: 0,
+                focused: false,
+                flat: true,
+              ),
+            );
+          },
+        ),
       ),
     );
   }

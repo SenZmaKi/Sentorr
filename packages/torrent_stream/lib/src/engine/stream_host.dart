@@ -3,6 +3,10 @@ import 'dart:async';
 import 'package:libtorrent_dart/libtorrent_dart.dart';
 
 import '../config.dart';
+import '../models.dart';
+import 'media_indexing.dart';
+import '../media/media_index.dart';
+import 'downloaded_ranges.dart';
 import 'cancellation.dart';
 import 'media_bootstrap.dart';
 import 'media_server.dart';
@@ -47,6 +51,26 @@ class StreamHost {
   final String owner;
   final TorrentFileEntry file;
   final TorrentBytes bytes;
+  final availability = DownloadedRanges();
+  late final indexing = MediaIndexing(
+    file.size,
+    bytes.readIndex,
+    bytes.release,
+  );
+  MediaIndex? get mediaIndex => indexing.index;
+  List<DownloadedRange>? _projected;
+  MediaIndex? _projectedIndex;
+  List<MediaTimeRange> _times = const [];
+  List<MediaTimeRange> get downloadedTimes {
+    if (!identical(_projected, availability.ranges) ||
+        !identical(_projectedIndex, mediaIndex)) {
+      _projected = availability.ranges;
+      _projectedIndex = mediaIndex;
+      _times = mediaIndex?.available(availability.ranges) ?? const [];
+    }
+    return _times;
+  }
+
   final lifetime = Cancellation();
   MediaServer? server;
 
@@ -62,11 +86,13 @@ class StreamHost {
         bootstrapMedia(bytes, lifetime, (_) {}).catchError((Object _) {}),
       );
     }
+    indexing.refresh(0);
     return server.uri.toString();
   }
 
   Future<void> close() async {
     lifetime.cancel();
+    indexing.close();
     await server?.close();
     bytes.close();
   }

@@ -34,6 +34,10 @@ void main() {
               id: 4,
               owner: 'stream:1',
               file: film,
+              downloadedRanges: [(start: 0, end: 100), (start: 700, end: 1000)],
+              downloadedTimes: [(start: 0, end: 10), (start: 70, end: 100)],
+              mediaDuration: 100,
+              indexStatus: 'ready',
               cachedBytes: 100,
               servedBytes: 200,
               requests: 3,
@@ -54,6 +58,16 @@ void main() {
       expect(state.knownPeers, 20);
       expect(state.connections, 7);
       expect(state.connectionCandidates, 12);
+      expect(state.downloadedRanges, [
+        (start: 0, end: 100),
+        (start: 700, end: 1000),
+      ]);
+      expect(state.mediaDuration, 100);
+      expect(state.indexStatus, 'ready');
+      expect(state.downloadedTimes, [
+        (start: 0, end: 10),
+        (start: 70, end: 100),
+      ]);
       expect(state.servedBytes, 200);
       expect(state.transferState, TorrentTransferState.downloading);
       final closed = state.atPhase(TorrentStreamPhase.closed);
@@ -62,6 +76,10 @@ void main() {
       expect(closed.selectedProgress, 0.5);
       expect(closed.uploadBytesPerSecond, 0);
       expect(closed.connectedPeers, 0);
+      expect(closed.downloadedRanges, state.downloadedRanges);
+      expect(closed.downloadedTimes, state.downloadedTimes);
+      expect(closed.mediaDuration, 100);
+      expect(closed.indexStatus, 'ready');
       expect(closed.servedBytes, 200);
     },
   );

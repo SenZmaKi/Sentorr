@@ -32,6 +32,10 @@ TorrentStreamState streamStateOf(
         : torrent.bytesOf(selectedFile.index),
     peers: torrent.peers,
     seeds: torrent.seeds,
+    downloadedRanges: reads?.downloadedRanges ?? const [],
+    downloadedTimes: reads?.downloadedTimes ?? const [],
+    mediaDuration: reads?.mediaDuration ?? 0,
+    indexStatus: reads?.indexStatus ?? '',
     cachedBytes: reads?.cachedBytes ?? 0,
     // A closed stream's totals outlive it.
     servedBytes: reads?.servedBytes ?? previous?.servedBytes ?? 0,

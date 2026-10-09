@@ -49,6 +49,12 @@ class TorrentStreamFile {
   final bool isPadFile;
 }
 
+/// Container-indexed downloaded interval, in seconds.
+typedef DownloadedTimeRange = ({double start, double end});
+
+/// Verified file-relative byte interval, with an exclusive end.
+typedef DownloadedRange = ({int start, int end});
+
 class TorrentStream {
   const TorrentStream({required this.uri, required this.file});
   final Uri uri;
@@ -73,6 +79,10 @@ class TorrentStreamState {
     this.selectedFile,
     this.downloadedBytes = 0,
     this.selectedBytes = 0,
+    this.downloadedRanges = const [],
+    this.downloadedTimes = const [],
+    this.mediaDuration = 0,
+    this.indexStatus = '',
     this.peers = 0,
     this.seeds = 0,
     this.cachedBytes = 0,
@@ -80,6 +90,10 @@ class TorrentStreamState {
     this.requests = 0,
     this.failure,
   });
+  final List<DownloadedRange> downloadedRanges;
+  final List<DownloadedTimeRange> downloadedTimes;
+  final double mediaDuration;
+  final String indexStatus;
   final TorrentStreamPhase phase;
   final List<TorrentStreamFile> files;
   final bool transferPaused;
@@ -140,6 +154,10 @@ class TorrentStreamState {
     selectedFile: selectedFile,
     downloadedBytes: downloadedBytes,
     selectedBytes: selectedBytes,
+    downloadedRanges: downloadedRanges,
+    downloadedTimes: downloadedTimes,
+    mediaDuration: mediaDuration,
+    indexStatus: indexStatus,
     peers: next == TorrentStreamPhase.closed ? 0 : peers,
     seeds: next == TorrentStreamPhase.closed ? 0 : seeds,
     cachedBytes: next == TorrentStreamPhase.closed ? 0 : cachedBytes,

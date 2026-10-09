@@ -19,6 +19,7 @@ import '../following/notifier.dart';
 import '../lists/notifier.dart';
 import '../watching/notifier.dart';
 import 'models.dart';
+import 'cache_ranges.dart';
 import 'preparation.dart';
 import 'stream/prepared_stream.dart';
 import 'hot_restart.dart';
@@ -79,6 +80,10 @@ class PlaybackEngine {
   }
 
   final Player player;
+  late final cacheRanges = PlaybackCacheRanges.forPlayer(
+    player,
+    streaming.status,
+  );
   late final PlayerLifecycle? _lifecycle;
   Future<void>? _disposal;
   Future<void> Function()? beforeDispose;
@@ -101,6 +106,7 @@ class PlaybackEngine {
     Duration? start,
   }) async {
     if (item.id == _opened) return;
+    cacheRanges.invalidate();
     _opened = item.id;
     _log.info('Opening $item${start == null ? '' : ' at ${_clock(start)}'}');
     await _restartReady;
@@ -115,6 +121,7 @@ class PlaybackEngine {
   /// Opens [item] again after a failure, from the torrent it last used.
   Future<void> reopen(PlaybackItem item) {
     _log.info('Reopening $item');
+    cacheRanges.invalidate();
     final torrent = streaming.status.value?.torrent;
     if (torrent != null && item.id == _opened) {
       return streaming.switchTo(torrent);
@@ -124,7 +131,10 @@ class PlaybackEngine {
   }
 
   /// Seeks through the torrent so obsolete reads are dropped first.
-  Future<void> seek(Duration position) => streaming.seek(position);
+  Future<void> seek(Duration position) {
+    cacheRanges.invalidate();
+    return streaming.seek(position);
+  }
 
   /// One frame forward or back, pausing first as mpv does. A step stays
   /// within the buffered piece, so it skips the torrent's seek handling.
@@ -167,6 +177,7 @@ class PlaybackEngine {
     await _errors.cancel();
     await _native.cancel();
     await streaming.park();
+    cacheRanges.dispose();
     streaming.dispose();
     await _restartReady;
     await player.dispose();

@@ -188,6 +188,20 @@ void main() {
         StreamSnapshot(id: 1, owner: 's', file: file, cachedBytes: 1),
         StreamSnapshot(id: 1, owner: 's', file: file, servedBytes: 1),
         StreamSnapshot(id: 1, owner: 's', file: file, requests: 1),
+        StreamSnapshot(id: 1, owner: 's', file: file, indexStatus: 'ready'),
+        StreamSnapshot(id: 1, owner: 's', file: file, mediaDuration: 10),
+        StreamSnapshot(
+          id: 1,
+          owner: 's',
+          file: file,
+          downloadedTimes: [(start: 1, end: 2)],
+        ),
+        StreamSnapshot(
+          id: 1,
+          owner: 's',
+          file: file,
+          downloadedRanges: [(start: 5, end: 10)],
+        ),
         StreamSnapshot(id: 2, owner: 's', file: file),
         StreamSnapshot(id: 1, owner: 'other', file: file),
       ]) {

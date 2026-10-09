@@ -49,6 +49,7 @@ class TorrentEntry {
   Set<int>? _appliedWanted;
   TorrentStatus? _status;
   List<int> _fileBytes = const [];
+  bool _bulkAvailable = true;
 
   Set<int> get wanted => {
     for (final o in owners.values)
@@ -159,7 +160,34 @@ class TorrentEntry {
   /// Reads native state; throws when the handle is unusable.
   TorrentSnapshot snapshot() {
     final status = _status = handle.getStatus();
-    if (files.isNotEmpty) _fileBytes = handle.getFileProgress();
+    // piece_granularity: count only hash-verified pieces, not partial blocks.
+    if (files.isNotEmpty) _fileBytes = handle.getFileProgress(flags: 1);
+    List<int>? pieces;
+    if (streams.isNotEmpty && _bulkAvailable) {
+      // Compatibility with the hosted 1.1.2 package until the bulk API ships.
+      try {
+        pieces = (handle as dynamic).getPieces() as List<int>;
+      } on NoSuchMethodError {
+        _bulkAvailable = false;
+      } on ArgumentError catch (error) {
+        // A local checkout can still carry a published binary on an ABI that
+        // hasn't been rebuilt. Fall back only for this missing native symbol.
+        if (!error.toString().contains('torrent_get_pieces')) rethrow;
+        _bulkAvailable = false;
+      }
+    }
+    for (final stream in streams.values) {
+      stream.indexing.refresh(_fileBytes[stream.file.index]);
+      stream.availability.update(
+        offset: stream.file.offset,
+        length: stream.file.size,
+        pieceLength: handle.pieceLength,
+        verifiedBytes: _fileBytes[stream.file.index],
+        checking: status.state == 1 || status.state == 7,
+        havePiece: handle.havePiece,
+        pieces: pieces,
+      );
+    }
     return describe(status);
   }
 
@@ -204,6 +232,10 @@ class TorrentEntry {
             id: stream.id,
             owner: stream.owner,
             file: fileOf(stream.file),
+            downloadedRanges: stream.availability.ranges,
+            downloadedTimes: stream.downloadedTimes,
+            indexStatus: stream.indexing.status,
+            mediaDuration: stream.mediaIndex?.duration ?? 0,
             cachedBytes: stream.bytes.cachedBytes,
             servedBytes: stream.server?.servedBytes ?? 0,
             requests: stream.server?.requestCount ?? 0,

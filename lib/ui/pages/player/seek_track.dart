@@ -6,7 +6,7 @@ import '../../shared/theme/theme.dart';
 class SeekTrackPainter extends CustomPainter {
   SeekTrackPainter({
     required this.played,
-    required this.buffered,
+    required this.downloaded,
     required this.hover,
     required this.active,
     required this.focused,
@@ -19,7 +19,8 @@ class SeekTrackPainter extends CustomPainter {
   /// Fills the whole height without rounding, e.g. along a card's edge.
   final bool flat;
 
-  final double played, buffered, active;
+  final double played, active;
+  final List<({double start, double end})> downloaded;
   final double? hover;
   final bool focused;
 
@@ -46,7 +47,13 @@ class SeekTrackPainter extends CustomPainter {
     }
 
     span(0, 1, colors.trackUnloaded);
-    span(0, buffered.clamp(0, 1), colors.inactiveTrack);
+    for (final range in downloaded) {
+      span(
+        range.start.clamp(0, 1),
+        range.end.clamp(0, 1),
+        colors.inactiveTrack,
+      );
+    }
     final hovered = hover;
     if (hovered != null && hovered > played) {
       span(played, hovered, colors.trackHover);
@@ -79,7 +86,7 @@ class SeekTrackPainter extends CustomPainter {
   @override
   bool shouldRepaint(SeekTrackPainter old) =>
       old.played != played ||
-      old.buffered != buffered ||
+      old.downloaded != downloaded ||
       old.hover != hover ||
       old.active != active ||
       old.focused != focused ||

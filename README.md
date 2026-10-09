@@ -101,11 +101,17 @@ The native torrent engine comes from
 [libtorrent_dart](https://github.com/SenZmaKi/libtorrent_dart), whose build hook
 downloads prebuilt libraries for your platform.
 
-Google Drive backup needs OAuth credentials at build time. Put
+On Android, Google Drive uses native Google Play services authorization; the
+package name and signing certificate must be registered in Google Cloud (see
+[Android OAuth clients](docs/android-drive-oauth.md)). No local defines are needed
+for Android Drive access.
+
+Desktop Google Drive backup needs OAuth credentials at build time. Put
 `GOOGLE_DRIVE_CLIENT_ID` and `GOOGLE_DRIVE_CLIENT_SECRET` in a
 `dart_defines.local.json` (ignored by Git) and run
-`flutter run --dart-define-from-file=dart_defines.local.json`. Without them the
-Drive option is hidden.
+`./tool/run.sh` (pass device or other run options as usual, e.g.
+`./tool/run.sh -d macos`). The local VS Code Sentorr launch configuration also
+loads this file automatically. Without the credentials the Drive option is hidden.
 
 Use `flutter build apk`, `flutter build linux`, `flutter build macos` or
 `flutter build windows` for a local build on a supported host. Release signing

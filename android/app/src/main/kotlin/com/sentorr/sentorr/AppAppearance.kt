@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.util.Log
 import android.os.Build
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
@@ -47,6 +48,7 @@ class AppAppearance(
     fun onStop() {
         val variant = pendingLauncher ?: return
         pendingLauncher = null
+        Log.i("SentorrLifecycle", "Applying pending launcher variant=$variant onStop")
         val packageManager = activity.packageManager
         // Enable before disabling so the app never has zero launcher entries.
         for (name in VARIANTS.sortedBy { it != variant }) {
@@ -59,6 +61,7 @@ class AppAppearance(
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED
             }
             if (packageManager.getComponentEnabledSetting(component) == state) continue
+            Log.i("SentorrLifecycle", "Changing launcher alias=$alias state=$state DONT_KILL_APP")
             packageManager.setComponentEnabledSetting(component, state, PackageManager.DONT_KILL_APP)
         }
     }

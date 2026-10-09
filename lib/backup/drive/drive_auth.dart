@@ -15,8 +15,8 @@ import 'sign_in_page.dart';
 final _log = Logger('sentorr.backup.auth');
 
 /// Signs in to Google with the system browser and keeps the access it
-/// grants: PKCE with a loopback redirect, the flow Google offers every
-/// desktop and mobile app without a platform SDK.
+/// grants on desktop: PKCE with a loopback redirect. Android uses
+/// AndroidDriveAuth and Google Play services instead.
 class DriveAuth {
   DriveAuth({
     required this.dio,
@@ -66,12 +66,18 @@ class DriveAuth {
 
   /// Opens Google's consent page and waits for the viewer to finish it.
   Future<void> connect() async {
+    final clock = Stopwatch()..start();
+    _log.info(
+      'Drive sign-in starting (pid=$pid, platform=${Platform.operatingSystem})',
+    );
     final verifier = _random(64);
     final state = _random(24);
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     try {
+      _log.info('Drive callback listening on port ${server.port}');
       final redirect = 'http://127.0.0.1:${server.port}';
       final code = _waitForCode(server, state);
+      _log.info('Opening Drive consent browser');
       final opened = await openBrowser(
         Uri.parse(authorizeEndpoint).replace(
           queryParameters: {
@@ -89,12 +95,15 @@ class DriveAuth {
           },
         ),
       );
+      _log.info('Drive browser launch returned opened=$opened');
       if (!opened) {
         throw const BackupException('Could not open the browser to sign in.');
       }
       final granted = await code
           .then((code) async {
+            _log.info('Drive callback received; waiting for foreground');
             await inFront?.call();
+            _log.info('Drive foreground ready; exchanging code');
             return code;
           })
           .timeout(
@@ -107,7 +116,21 @@ class DriveAuth {
         'redirect_uri': redirect,
         'code_verifier': verifier,
       });
+      _log.info(
+        'Drive sign-in complete after ${clock.elapsedMilliseconds}ms; connected=$connected',
+      );
+    } catch (error) {
+      // Exception messages can contain OAuth request data. Log only categories.
+      final status = error is DioException ? error.response?.statusCode : null;
+      _log.warning(
+        'Drive sign-in failed after ${clock.elapsedMilliseconds}ms: '
+        '${error.runtimeType}, httpStatus=$status',
+      );
+      rethrow;
     } finally {
+      _log.info(
+        'Closing Drive callback listener after ${clock.elapsedMilliseconds}ms',
+      );
       await server.close(force: true);
     }
   }
@@ -218,6 +241,10 @@ class DriveAuth {
       final mine = query['state'] == state;
       final code = query['code'];
       final failed = query['error'];
+      _log.info(
+        'Drive callback request: stateMatches=$mine, '
+        'hasCode=${code != null}, hasError=${failed != null}',
+      );
       // Browsers also ask for a favicon, and strangers may knock.
       if (!mine || (code == null && failed == null)) {
         request.response.statusCode = HttpStatus.notFound;
@@ -229,6 +256,9 @@ class DriveAuth {
         signInPage(signedIn: code != null, returnLink: returnLink),
       );
       await request.response.close();
+      _log.info(
+        'Drive callback response delivered; hasReturnLink=${returnLink != null}',
+      );
       if (done.isCompleted) return;
       unawaited(
         bringBack?.call().catchError((Object error) {

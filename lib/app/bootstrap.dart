@@ -261,6 +261,8 @@ class AppRuntime with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    Logger('sentorr.app')
+        .info('App lifecycle: ${state.name}, quitting=$_quitting');
     if (_quitting) return;
     if (state == AppLifecycleState.resumed) {
       // Back from the background: catch up with the other devices.

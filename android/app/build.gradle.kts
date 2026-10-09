@@ -56,5 +56,6 @@ flutter {
 }
 
 dependencies {
+    implementation("com.google.android.gms:play-services-auth:22.0.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/widgets.dart'
-    show AppLifecycleListener, AppLifecycleState, WidgetsBinding;
+import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -18,9 +17,9 @@ import '../shared/app_lifecycle.dart';
 import '../ui/shared/window_manager.dart';
 import 'backup_data.dart';
 import 'drive/drive_auth.dart';
+import 'drive/android_drive_auth.dart';
 import 'drive/drive_client.dart';
 import 'drive/drive_config.dart';
-import 'drive/sign_in_page.dart';
 import 'file_backup.dart';
 import 'remote.dart';
 import 'watch_backup.dart';
@@ -30,27 +29,16 @@ final _log = Logger('sentorr.backup');
 /// The keychain, absent in debug builds and tests.
 final credentialStoreProvider = Provider<CredentialStore?>((ref) => null);
 
-final driveAuthProvider = Provider<DriveAuth>(
-  (ref) => DriveAuth(
-    dio: ref.watch(networkClientProvider).dio,
+final driveAuthProvider = Provider<DriveAuth>((ref) {
+  final dio = ref.watch(networkClientProvider).dio;
+  if (Platform.isAndroid) return AndroidDriveAuth(dio: dio);
+  return DriveAuth(
+    dio: dio,
     credentials: ref.watch(credentialStoreProvider),
     openBrowser: (url) => launchUrl(url, mode: LaunchMode.externalApplication),
-    // As Senpwai does after AniList: back to the app once Google answers.
     bringBack: WindowManager.getInstance().focus,
-    returnLink: Platform.isAndroid ? androidReturnLink : null,
-    inFront: Platform.isAndroid ? _inFront : null,
-  ),
-);
-
-/// Completes once the app is resumed, at once if it already is.
-Future<void> _inFront() {
-  if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
-    return Future.value();
-  }
-  final resumed = Completer<void>();
-  final listener = AppLifecycleListener(onResume: resumed.complete);
-  return resumed.future.whenComplete(listener.dispose);
-}
+  );
+});
 
 final backupRemoteProvider = Provider<BackupRemote>(
   (ref) => DriveBackupClient(

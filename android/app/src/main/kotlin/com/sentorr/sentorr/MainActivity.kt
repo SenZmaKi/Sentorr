@@ -1,5 +1,8 @@
 package com.sentorr.sentorr
 
+import android.os.Bundle
+import android.os.Process
+import android.util.Log
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -31,6 +34,7 @@ class MainActivity : FlutterActivity() {
 
     private var pip: PipController? = null
     private var appearance: AppAppearance? = null
+    private var driveAuthorization: DriveAuthorization? = null
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
@@ -45,17 +49,41 @@ class MainActivity : FlutterActivity() {
         pip?.onModeChanged(isInPictureInPictureMode)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        Log.i("SentorrLifecycle", "onCreate pid=${Process.myPid()} restored=${savedInstanceState != null}")
+        super.onCreate(savedInstanceState)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.i("SentorrLifecycle", "onResume pid=${Process.myPid()}")
+    }
+
+    override fun onPause() {
+        Log.i("SentorrLifecycle", "onPause finishing=$isFinishing changingConfig=$isChangingConfigurations")
+        super.onPause()
+    }
+
     override fun onStop() {
+        Log.i("SentorrLifecycle", "onStop finishing=$isFinishing changingConfig=$isChangingConfigurations")
         super.onStop()
         appearance?.onStop()
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        driveAuthorization?.onActivityResult(requestCode, resultCode, data)
+    }
+
     override fun onDestroy() {
+        driveAuthorization?.dispose()
+        driveAuthorization = null
         pip?.dispose()
         pip = null
         appearance?.dispose()
         appearance = null
         val destroyEngine = shouldDestroyEngineWithHost()
+        Log.i("SentorrLifecycle", "onDestroy pid=${Process.myPid()} finishing=$isFinishing changingConfig=$isChangingConfigurations destroyEngine=$destroyEngine foregroundService=${ForegroundService.isRunningServiceState.value}")
         super.onDestroy()
         if (destroyEngine) FlutterEngineCache.getInstance().remove(ENGINE_ID)
     }
@@ -63,6 +91,8 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         FlutterEngineCache.getInstance().put(ENGINE_ID, flutterEngine)
+        driveAuthorization?.dispose()
+        driveAuthorization = DriveAuthorization(this, flutterEngine.dartExecutor.binaryMessenger)
         pip?.dispose()
         pip = PipController(this, flutterEngine.dartExecutor.binaryMessenger)
         appearance?.dispose()

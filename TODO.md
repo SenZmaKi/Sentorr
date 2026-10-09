@@ -1,2 +1,3 @@
 - Add update components like in Senpwai e.g., navbar entry and on android add update download foreground notification like in Senpwai to avoid update download failing when app in background
 - Fix android update installation
+- Expose caption settings such that app automatically sets captions on/off based on user preference. 

@@ -1,0 +1,1 @@
+- Add update components like in Senpwai e.g., navbar entry and on android add update download foreground notification like in Senpwai to avoid update download failing when app in background

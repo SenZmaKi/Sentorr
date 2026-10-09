@@ -17,6 +17,7 @@
   <a href="#features">Features</a> •
   <a href="#building-from-source">Building from source</a> •
   <a href="#support">Support</a> •
+  <a href="#sponsors">Sponsors</a> •
   <a href="#faq">FAQ</a> •
   <a href="#contribution">Contribution</a>
 </p>
@@ -81,9 +82,14 @@ Google Drive backup when their data formats match. See
 ## Support
 
 - Support development through [GitHub Sponsors](https://github.com/sponsors/SenZmaKi).
-- Leave a star so more people can find Sentorr.
+- Leave a [star on GitHub](https://github.com/SenZmaKi/Sentorr) so more people can find Sentorr.
 - Found a bug or have an idea? [Open an issue](https://github.com/SenZmaKi/Sentorr/issues)
   or [contribute](#contribution).
+
+## Sponsors
+
+Thank you to everyone supporting Sentorr’s development. You can support the
+project through [GitHub Sponsors](https://github.com/sponsors/SenZmaKi).
 
 ## Building from Source
 

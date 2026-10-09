@@ -9,12 +9,15 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     Uri uri,
     Duration? start, {
     String? peer,
+    bool buffered = false,
     Stream<TorrentStreamState>? transfers,
   }) async {
     _log.info('Playing $item from ${peer ?? uri.toFilePath()}');
     status.value = StreamStatus(
       stage: StreamStage.preparing,
-      localFile: peer == null ? uri.toFilePath() : uri.toString(),
+      localFile: buffered
+          ? null
+          : (peer == null ? uri.toFilePath() : uri.toString()),
       peer: peer,
     );
     _transfer = transfers?.listen(
@@ -22,7 +25,7 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     );
     await outputReady();
     if (_stale(generation)) return;
-    await _adapter.configure(streaming: false);
+    await _adapter.configure(streaming: buffered);
     if (_stale(generation)) return;
     _local = true;
     _openingGeneration = generation;
@@ -164,6 +167,7 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     Duration? start,
   ) async {
     final session = _session!;
+    share?.call(SharedStream(_item!, _candidate!, session, stream));
     final files = await engine.metadata(session.infoHash!);
     if (_stale(generation)) return;
     subtitles.watch(session, subtitleFiles(files, stream.file, _item!));

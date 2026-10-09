@@ -8,6 +8,7 @@ import '../library/models.dart';
 import '../library/notifier.dart';
 import '../shared/parallel.dart';
 import 'payload.dart';
+import 'shared_streams.dart';
 import 'file_version.dart';
 
 /// What this device offers paired devices: its finished downloads whose
@@ -55,7 +56,14 @@ Future<PeerLibrary> sharedLibrary(Ref ref) async {
           : null;
     },
   );
-  return PeerLibrary(media: media.nonNulls.toList(), downloads: coming);
+  return PeerLibrary(
+    media: media.nonNulls.toList(),
+    downloads: coming,
+    streams: [
+      for (final stream in ref.read(sharedStreamsProvider).values)
+        if (stream.session.state.selectedBytes > 0) stream.offer,
+    ],
+  );
 }
 
 /// [itemId]'s finished file, or null when this device has none to share.
@@ -76,6 +84,9 @@ final sharedLibraryShapeProvider = Provider<String>((ref) {
       d.id: d.status,
   };
   return [
+    for (final stream in ref.watch(sharedStreamsProvider).values)
+      if (stream.session.state.selectedBytes > 0)
+        '${stream.item.id}:${stream.candidate.release.infoHash}:stream',
     for (final id in ref.watch(copyingProvider).keys) '$id:copying',
     for (final e in ref.watch(libraryProvider))
       '${e.id}:${e.path}:${e.release.infoHash}:${e.fileIndex}:${downloads[e.downloadId]?.name}',

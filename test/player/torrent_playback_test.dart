@@ -118,6 +118,23 @@ void main() {
     expect(native.state.playing, isTrue);
   });
 
+  test(
+    'partial peer playback does not claim a complete downloaded timeline',
+    () async {
+      saved = PeerFile(
+        Uri.parse('http://127.0.0.1/video'),
+        'Other device',
+        buffered: true,
+      );
+      await playback.play(item);
+      final status = playback.status.value!;
+      expect(status.stage, StreamStage.streaming);
+      expect(status.peer, 'Other device');
+      expect(status.localFile, isNull);
+      expect(status.hasDownloadedTimeline, isFalse);
+    },
+  );
+
   test('peer media also respects focus loss during loading', () async {
     final renderer = Completer<void>();
     ready = () => renderer.future;

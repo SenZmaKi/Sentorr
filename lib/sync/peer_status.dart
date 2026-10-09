@@ -10,6 +10,7 @@ class PeerStatus {
     this.libraryRevision,
     this.media = const [],
     this.downloads = const [],
+    this.streams = const [],
   });
 
   /// Answered its last request.
@@ -28,6 +29,7 @@ class PeerStatus {
 
   /// Its downloads still on their way.
   final List<PeerDownload> downloads;
+  final List<PeerMedia> streams;
 
   PeerStatus copyWith({
     bool? online,
@@ -43,5 +45,6 @@ class PeerStatus {
     libraryRevision: library == null ? libraryRevision : library.revision,
     media: library?.media ?? media,
     downloads: library?.downloads ?? downloads,
+    streams: library?.streams ?? streams,
   );
 }

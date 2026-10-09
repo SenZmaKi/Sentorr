@@ -42,7 +42,11 @@ class _NoPreparation extends PreparedStreams {
   _NoPreparation() : super(create: (_, _) => throw StateError('Unused'));
 
   @override
-  void start(PlaybackItem item, TorrentCandidate candidate) {}
+  void start(
+    PlaybackItem item,
+    TorrentCandidate candidate, {
+    Duration lifetime = const Duration(minutes: 1),
+  }) {}
 }
 
 Future<ProviderContainer> _pump(
@@ -51,6 +55,7 @@ Future<ProviderContainer> _pump(
   List<LibraryEntry> library = const [],
   List<DownloadItem> downloads = const [],
   String? peer,
+  bool buffered = false,
 }) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
@@ -68,7 +73,11 @@ Future<ProviderContainer> _pump(
       ),
       if (peer != null)
         peerSourceProvider.overrideWithValue(
-          (_) => PeerFile(Uri.parse('http://127.0.0.1:1/media'), peer),
+          (_) => PeerFile(
+            Uri.parse('http://127.0.0.1:1/media'),
+            peer,
+            buffered: buffered,
+          ),
         ),
       ...watchHistoryOverrides(),
       imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),
@@ -272,6 +281,31 @@ void main() {
     final session = container.read(playerSessionProvider)!;
     expect(session.current!.id, 'tt1');
     expect(session.torrents, isEmpty);
+  });
+
+  testWidgets('partial peer data is offered before a torrent search', (
+    tester,
+  ) async {
+    var searched = false;
+    final container = await _pump(
+      tester,
+      (_) async {
+        searched = true;
+        return [fakeRelease(1)];
+      },
+      peer: 'Laptop',
+      buffered: true,
+    );
+    expect(find.text('Play from Laptop?'), findsOneWidget);
+    expect(
+      find.textContaining('part of this video downloaded'),
+      findsOneWidget,
+    );
+    expect(container.read(playerSessionProvider), isNull);
+    await tester.tap(find.text('Stream instead'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(searched, isTrue);
   });
 
   testWidgets('or a torrent is streamed instead', (tester) async {

@@ -198,8 +198,9 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
     }
     if (launch.peer case final peer?) {
       return Text(
-        'It’s already on $peer. Playing it from there over your network '
-        'skips finding a torrent.',
+        launch.peerBuffered
+            ? '$peer has part of this video downloaded. Continue from there over your network; keep Sentorr open on that device while watching.'
+            : 'It’s already on $peer. Playing it from there over your network skips finding a torrent.',
         style: context.type.bodySmall.copyWith(
           color: context.colors.foregroundSecondary,
         ),

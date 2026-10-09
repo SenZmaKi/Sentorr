@@ -12,6 +12,7 @@ import 'sections/sources_section.dart';
 import 'sections/storage_section.dart';
 import 'sections/streaming_section.dart';
 import 'sections/updates_section.dart';
+import 'sections/support_section.dart';
 import 'sections/window_section.dart';
 
 /// Where a category sits in the navigation: what Sentorr fetches, what it
@@ -79,9 +80,9 @@ enum SettingsCategory {
   ),
   updates(
     SettingsArea.app,
-    'Updates',
+    'Updates & about',
     Icons.system_update_alt_rounded,
-    'Version and new releases',
+    'Version, new releases and support',
   );
 
   const SettingsCategory(this.area, this.title, this.icon, this._subtitle);
@@ -110,7 +111,7 @@ enum SettingsCategory {
       if (supportsWindowCustomization) const WindowSection(),
     ]),
     storage => const StorageSection(),
-    updates => const UpdatesSection(),
+    updates => const _Groups([UpdatesSection(), SupportSection()]),
   };
 }
 

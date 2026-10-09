@@ -40,6 +40,28 @@ DownloadItem _halfway(DownloadStatus status) => DownloadItem(
 );
 
 void main() {
+  test('buffered stream offers stay separate from copyable media and revision ignores progress', () {
+    PeerMedia offer(int bytes) => PeerMedia(
+      item: _entry.item,
+      size: 1000,
+      name: 'E1.mkv',
+      release: _entry.release,
+      fileIndex: 0,
+      bufferedBytes: bytes,
+    );
+    final first = PeerLibrary(streams: [offer(100)]).toJson();
+    final next = PeerLibrary(streams: [offer(200)]).toJson();
+    expect(first['revision'], next['revision']);
+    final decoded = PeerLibrary.fromJson(next);
+    expect(decoded.media, isEmpty);
+    expect(decoded.streams.single.bufferedBytes, 200);
+    expect(
+      PeerLibrary.fromJson(PeerLibrary(streams: [offer(1001)]).toJson())
+          .streams,
+      isEmpty,
+    );
+  });
+
   test('a library round-trips its downloads under way', () {
     final library = PeerLibrary(
       downloads: [

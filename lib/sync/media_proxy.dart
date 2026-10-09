@@ -34,9 +34,18 @@ class MediaProxy {
   }
 
   /// The player's URL for [itemId] on [deviceId]; null before [start].
-  Uri? url(String deviceId, String itemId) => _server == null
+  Uri? url(
+    String deviceId,
+    String itemId, {
+    bool buffered = false,
+    String? infoHash,
+  }) => _server == null
       ? null
-      : Uri.http('127.0.0.1:${_server!.port}', '/$_token/$deviceId/$itemId');
+      : Uri.http(
+          '127.0.0.1:${_server!.port}',
+          '/$_token/$deviceId/$itemId',
+          buffered ? {'buffered': '1', 'hash': ?infoHash} : null,
+        );
 
   Future<void> _forward(HttpRequest request) async {
     final response = request.response;
@@ -50,9 +59,11 @@ class MediaProxy {
       final upstream = await client.open(
         to.address,
         to.fingerprint,
-        '/v1/media/${path[2]}',
+        '/v1/${request.uri.queryParameters['buffered'] == '1' ? 'buffered' : 'media'}/${path[2]}',
         method: request.method,
         headers: {
+          if (request.uri.queryParameters['buffered'] == '1')
+            'x-sentorr-torrent': request.uri.queryParameters['hash'] ?? '',
           HttpHeaders.rangeHeader: ?request.headers.value(
             HttpHeaders.rangeHeader,
           ),

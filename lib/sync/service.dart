@@ -14,6 +14,8 @@ import 'pairing.dart';
 import 'peers.dart';
 import 'server.dart';
 import 'shared_library.dart';
+import 'shared_streams.dart';
+import 'buffered_media.dart';
 
 final _log = Logger('sentorr.sync');
 
@@ -39,7 +41,7 @@ class NearbyDevicesNotifier extends Notifier<Map<String, NearbyDevice>> {
 /// The device's place on the local network: the HTTPS server paired
 /// devices sync and stream from, the client that reaches theirs, mDNS, and
 /// the loopback proxy the player streams their files through.
-class SyncService implements SyncRoutes {
+class SyncService implements SyncRoutes, BufferedSyncRoutes {
   SyncService(this._ref);
   final Ref _ref;
 
@@ -48,6 +50,9 @@ class SyncService implements SyncRoutes {
   late final MediaProxy proxy = MediaProxy(
     client,
     (id) => _ref.read(peersProvider.notifier).route(id),
+  );
+  late final _buffered = BufferedMedia(
+    (id) => _ref.read(sharedStreamsProvider)[id],
   );
   LocalDiscovery? _discovery;
   bool _started = false;
@@ -149,12 +154,20 @@ class SyncService implements SyncRoutes {
   @override
   File? media(PairedDevice device, String itemId) => sharedFile(_ref, itemId);
 
+  @override
+  Future<void> buffered(
+    HttpRequest request,
+    PairedDevice device,
+    String itemId,
+  ) => _buffered.serve(request, itemId);
+
   Future<void> close() async {
     // Its parts are made on first use; a service never started has none.
     if (!_started) return;
     await _discovery?.stop();
     await server.close();
     await proxy.close();
+    await _buffered.close();
     client.close();
   }
 }

@@ -13,7 +13,7 @@ const compatibilityMessage =
 class PeerCompatibility {
   const PeerCompatibility({
     this.protocol = 1,
-    this.formats = const {...StateFormats.versions, 'library': 1, 'media': 1},
+    this.formats = const {...StateFormats.versions, 'library': 2, 'media': 2},
     this.channel = ApplicationIdentity.channel,
   });
 

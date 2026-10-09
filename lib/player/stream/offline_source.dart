@@ -26,11 +26,12 @@ class DownloadTorrent extends OfflineSource {
 
 /// A finished download on a paired device, served over the local network.
 class PeerFile extends OfflineSource {
-  const PeerFile(this.url, this.deviceName);
+  const PeerFile(this.url, this.deviceName, {this.buffered = false});
 
   /// Loopback; the proxy behind it reaches the device.
   final Uri url;
   final String deviceName;
+  final bool buffered;
 }
 
 typedef OfflineLookup = OfflineSource? Function(PlaybackItem item);

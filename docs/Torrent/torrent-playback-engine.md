@@ -105,3 +105,16 @@ The title page watches `mediaTorrentPrefetchProvider` for its current Play targe
 Once Play finds an exact match, `preparedStreamsProvider` begins HTTP metadata retrieval, native session opening, file selection, and header-piece warming while the existing review countdown runs. No media player is created or opened by preparation. Playback claims the same session/endpoint, including preparations still in flight, rather than repeating discovery. Cancel, retry, a different selected torrent, or closing the player cancels speculative work. One pending preparation is held, with a one-minute expiry for an unclaimed handoff. Pausing the countdown to inspect its options does not cancel preparation; closing the launch does.
 
 Validation includes source-search reuse, cancelled/late results, in-flight session handoff, replacement cleanup, and a native loopback tracker/seed proving verified video pieces arrive during preparation and the endpoint serves exact bytes. This does not establish public-swarm first-frame latency.
+
+## Next-episode prewarming
+
+While a queued episode plays, its final 90 seconds trigger one background search
+for the next queued episode. Only an exact match is prepared; movies, paused
+playback, unknown duration and items already available locally or on a paired
+device are skipped. `NextTorrentWarmup` cancels stale searches on queue changes
+and disposal. `PreparedStreams` keeps the metadata/verified opening-piece work
+for up to five minutes, then closes an unclaimed session. Failed background
+preparations are removed. Playback takes that candidate and its existing session
+without searching or adding its torrent again. A launch can replace the prepared
+slot, and closing playback releases it. This does not open another media player
+or prefetch the whole next episode.

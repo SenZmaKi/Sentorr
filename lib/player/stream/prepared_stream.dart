@@ -94,16 +94,31 @@ class PreparedStreams {
   PendingStream? _pending;
   Timer? _expiry;
 
-  void start(PlaybackItem item, TorrentCandidate candidate) {
+  TorrentCandidate? candidateFor(String itemId) =>
+      _pending?.item.id == itemId ? _pending?.candidate : null;
+
+  void start(
+    PlaybackItem item,
+    TorrentCandidate candidate, {
+    Duration lifetime = const Duration(minutes: 1),
+  }) {
     final previous = _pending;
     if (previous?.item.id == item.id &&
         previous?.candidate.release.infoHash == candidate.release.infoHash) {
       return;
     }
     clear();
-    _pending = create(item, candidate);
+    final pending = _pending = create(item, candidate);
+    unawaited(
+      pending.ready.then<void>(
+        (_) {},
+        onError: (Object _) {
+          if (identical(_pending, pending)) clear();
+        },
+      ),
+    );
     // Also bound an unclaimed handoff if the player fails to mount.
-    _expiry = Timer(const Duration(minutes: 1), clear);
+    _expiry = Timer(lifetime, clear);
   }
 
   PendingStream? take(String itemId, String hash) {

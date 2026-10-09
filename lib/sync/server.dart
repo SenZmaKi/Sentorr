@@ -55,6 +55,14 @@ abstract interface class SyncRoutes {
   File? media(PairedDevice device, String itemId);
 }
 
+abstract interface class BufferedSyncRoutes {
+  Future<void> buffered(
+    HttpRequest request,
+    PairedDevice device,
+    String itemId,
+  );
+}
+
 /// HTTPS on every interface, presenting this device's certificate and
 /// asking callers for theirs.
 class SyncServer {
@@ -148,10 +156,17 @@ class SyncServer {
               'revision': library['revision'],
               'unchanged': true,
               'downloads': library['downloads'],
+              if (library['streams'] != null) 'streams': library['streams'],
             });
           } else {
             await _json(request, library);
           }
+        case ('GET' || 'HEAD', ['v1', 'buffered', final id]):
+          final buffered = routes;
+          if (buffered is! BufferedSyncRoutes) {
+            throw const SyncRefusal('Gone', status: 404);
+          }
+          await (buffered as BufferedSyncRoutes).buffered(request, device, id);
         case ('GET' || 'HEAD', ['v1', 'media', final id]):
           final file = routes.media(device, id);
           if (file == null || !await file.exists()) {

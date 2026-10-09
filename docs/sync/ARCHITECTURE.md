@@ -101,7 +101,7 @@ Before every sync, library poll, or media GET/HEAD, `PeerClient` sends a
 metadata-only `GET /v1/hello` over the existing pinned, mutually authenticated
 TLS connection. Both sides declare `application: sentorr`, validation format 1,
 protocol 1, channel and the versions of watch (2), following (1), lists (1),
-library (1) and media (1). Channel is informational; all required format
+library (2) and media (2). Channel is informational; all required format
 versions must match. App release numbers are not used to infer compatibility.
 
 Every data request repeats the declaration in `x-sentorr-compatibility`.
@@ -140,8 +140,24 @@ episode in the player's episodes panel goes through the launch instead of
 jumping within the queue, so it asks too. mpv
 can't pin a self-signed certificate, so `MediaProxy` serves a loopback URL
 with a token and forwards each range request over the pinned connection.
-Downloads that aren't finished can't be streamed from yet, but they are
-listed (below).
+Active and parked torrent sessions with verified bytes also publish separate
+`streams` offers in the library. They never enter finished `media` or copy offers.
+A manual launch offers the paired device's partial stream before torrent search,
+with Stream instead as the alternative. Finished peer files take precedence;
+among partial offers the most verified bytes wins. The host must remain running.
+
+Partial playback goes through `/v1/buffered/<imdb id>` over the same pinned,
+mutually authenticated connection. `x-sentorr-torrent` binds requests to the
+offered torrent hash so an older lease cannot serve a newly offered release.
+The host attaches a separate torrent session owner to its existing engine and
+relays that owner's verified byte server. Missing ranges are downloaded normally;
+sparse filesystem bytes are never served. This owner survives closing or parking
+the local player, and is released five minutes after its last request completes.
+Closing sync releases all remote owners. A vanished offer or wrong hash returns
+404; discovery loss or host closure ends peer playback through the normal error
+path. Partial peer playback uses the demuxer-cache timeline fallback and never
+claims the whole file is downloaded. Unfinished library downloads that have not
+been opened as torrent streams still only appear as download progress.
 
 ## Seeing other devices' downloads
 
@@ -149,7 +165,10 @@ A device's library (`PeerLibrary` in `payload.dart`, built by
 `sharedLibrary`) holds its finished files (`PeerMedia`) and its downloads and
 copies under way (`PeerDownload`: queued, downloading, paused or copying,
 with progress and size). While a reachable device has downloads under way,
-its library is fetched every 5 s so their progress moves here too.
+its library is fetched every 5 s so their progress moves here too. Devices with
+active or parked stream offers are polled on the same cadence; unchanged library
+responses still include current stream progress. Stream availability changes
+trigger the same two-second sync deadline as download shape changes.
 
 `elsewhereProvider` (`lib/sync/elsewhere.dart`) lists each reachable device's
 items, and `elsewhereOfProvider` picks one item's best copy: the first device
@@ -222,7 +241,7 @@ file. A failure keeps the partial file so the next attempt resumes it.
 - Remote sync and streaming away from the home network: an encrypted copy of
   the state in a folder the viewer picks, and streaming over Tailscale or a
   typed-in address.
-- Streaming a peer's download while it's still in progress.
+- Streaming an unfinished library download before its torrent has been opened for playback.
 - Pausing or cancelling another device's download from this one.
 - A movie watchlist.
 

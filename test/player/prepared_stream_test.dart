@@ -71,7 +71,7 @@ void main() {
         await settlePlayback();
         expect(engine.sources, hasLength(1));
         expect(native.opened, isEmpty);
-        await playback.play(item, torrent: candidate);
+        await playback.play(item);
         expect(engine.sources, hasLength(1));
         expect(native.opened, hasLength(1));
       } finally {

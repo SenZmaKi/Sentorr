@@ -48,11 +48,13 @@ class PeerMedia {
     required this.release,
     required this.fileIndex,
     this.version,
+    this.bufferedBytes,
   });
 
   /// What [entry]'s finished file of [size] bytes offers.
   PeerMedia.of(LibraryEntry entry, this.size, {this.version})
-    : item = entry.item,
+    : bufferedBytes = null,
+      item = entry.item,
       name = p.basename(entry.path),
       release = entry.release,
       fileIndex = entry.fileIndex;
@@ -66,6 +68,9 @@ class PeerMedia {
   final int fileIndex;
   final String? version;
 
+  /// Only present in PeerLibrary.streams; these are not finished files.
+  final int? bufferedBytes;
+
   String get id => item.id;
 
   Map<String, dynamic> toJson() => {
@@ -74,6 +79,7 @@ class PeerMedia {
     'name': name,
     'release': releaseToJson(release),
     'file': fileIndex,
+    if (bufferedBytes != null) 'bufferedBytes': bufferedBytes,
     if (version != null) 'version': version,
   };
 
@@ -95,6 +101,9 @@ class PeerMedia {
       name: name,
       release: release,
       fileIndex: file,
+      bufferedBytes: json['bufferedBytes'] is int
+          ? json['bufferedBytes'] as int
+          : null,
       version: json['version'] is String ? json['version'] as String : null,
     );
   }
@@ -155,11 +164,13 @@ class PeerLibrary {
   const PeerLibrary({
     this.media = const [],
     this.downloads = const [],
+    this.streams = const [],
     this.revision,
   });
 
   final List<PeerMedia> media;
   final List<PeerDownload> downloads;
+  final List<PeerMedia> streams;
   final String? revision;
 
   Map<String, dynamic> toJson() => {
@@ -167,11 +178,18 @@ class PeerLibrary {
         revision ??
         sha256
             .convert(
-              utf8.encode(jsonEncode([for (final m in media) m.toJson()])),
+              utf8.encode(
+                jsonEncode([
+                  for (final m in media) m.toJson(),
+                  for (final s in streams)
+                    {...s.toJson()}..remove('bufferedBytes'),
+                ]),
+              ),
             )
             .toString(),
     'media': [for (final m in media) m.toJson()],
     'downloads': [for (final d in downloads) d.toJson()],
+    'streams': [for (final s in streams) s.toJson()],
   };
 
   /// Unreadable entries are skipped; a device before downloads were shared
@@ -185,6 +203,14 @@ class PeerLibrary {
       revision: json['revision'] as String?,
       media: all(json['media'], PeerMedia.fromJson),
       downloads: all(json['downloads'], PeerDownload.fromJson),
+      streams: all(json['streams'], PeerMedia.fromJson)
+          .where(
+            (s) =>
+                s.size > 0 &&
+                (s.bufferedBytes ?? 0) > 0 &&
+                s.bufferedBytes! <= s.size,
+          )
+          .toList(),
     );
   }
 }

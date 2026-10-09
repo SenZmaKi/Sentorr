@@ -11,6 +11,7 @@ import '../../torrents/models.dart';
 import '../../settings/streaming_settings.dart';
 import '../../torrents/resolution_models.dart';
 import '../models.dart';
+import '../../sync/shared_streams.dart';
 import 'cleanup_queue.dart';
 import 'download_ahead.dart';
 import 'file_choice.dart';
@@ -65,6 +66,7 @@ class TorrentPlayback {
     OfflineLookup? offline,
     ParkedStreams? parked,
     this.prepared,
+    this.share,
     StreamingSettings Function()? bufferSettings,
   }) : parked = parked ?? ParkedStreams(),
        offline = offline ?? ((_) => null),
@@ -100,6 +102,7 @@ class TorrentPlayback {
   /// Where a session waits, paused, after the player closes.
   final ParkedStreams parked;
   final PreparedStreams? prepared;
+  final void Function(SharedStream)? share;
   PendingStream? _pendingPreparation;
 
   /// The item's download, played or shared before any search.
@@ -177,6 +180,7 @@ class TorrentPlayback {
           saved.url,
           start,
           peer: saved.deviceName,
+          buffered: saved.buffered,
         );
       } catch (error, stack) {
         _fail(generation, item, null, error, stack);
@@ -212,9 +216,12 @@ class TorrentPlayback {
     TorrentCandidate? candidate;
     try {
       final found =
-          options ?? (torrent == null ? await find(item, _cancel!) : null);
+          options ??
+          (torrent == null && prepared?.candidateFor(item.id) == null
+              ? await find(item, _cancel!)
+              : null);
       if (_stale(generation)) return;
-      candidate = torrent ?? found?.best;
+      candidate = torrent ?? prepared?.candidateFor(item.id) ?? found?.best;
       if (candidate == null) {
         throw const _Problem("Couldn't find a torrent for this.");
       }

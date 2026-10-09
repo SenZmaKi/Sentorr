@@ -31,6 +31,7 @@ class PlaybackLaunch {
     this.match,
     this.error,
     this.peer,
+    this.peerBuffered = false,
   });
 
   final PlayRequest request;
@@ -51,6 +52,7 @@ class PlaybackLaunch {
 
   /// The paired device that has [item], offered before any search.
   final String? peer;
+  final bool peerBuffered;
 
   bool get searching => resolution == null && error == null && peer == null;
 }
@@ -199,6 +201,7 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
             preferences: state!.preferences,
             item: item,
             peer: offline.deviceName,
+            peerBuffered: offline.buffered,
           );
           return;
         }

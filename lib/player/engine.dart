@@ -19,6 +19,9 @@ import '../following/notifier.dart';
 import '../lists/notifier.dart';
 import '../watching/notifier.dart';
 import 'models.dart';
+import '../sync/shared_streams.dart';
+import 'next_warmup.dart';
+import '../torrents/match.dart';
 import 'cache_ranges.dart';
 import 'preparation.dart';
 import 'stream/prepared_stream.dart';
@@ -31,6 +34,7 @@ import 'stream/parked_stream.dart';
 import 'stream/session_config.dart';
 import 'stream/torrent_playback.dart';
 import 'torrent_search.dart';
+import 'torrent_lookup.dart';
 
 final _log = Logger('sentorr.player');
 
@@ -47,6 +51,7 @@ class PlaybackEngine {
     OfflineLookup? offline,
     ParkedStreams? parked,
     PreparedStreams? prepared,
+    void Function(SharedStream)? share,
     StreamingSettings Function()? bufferSettings,
   }) : player = Player(
          configuration: const PlayerConfiguration(
@@ -66,6 +71,7 @@ class PlaybackEngine {
       offline: offline,
       parked: parked,
       prepared: prepared,
+      share: share,
       bufferSettings: bufferSettings,
       outputReady: () => video.platform.future,
     );
@@ -204,6 +210,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     offline: (item) => offlineSourceFor(ref, item),
     parked: ref.read(parkedStreamsProvider),
     prepared: ref.read(preparedStreamsProvider),
+    share: ref.read(sharedStreamsProvider.notifier).register,
   );
   final history = ref.read(watchHistoryProvider.notifier);
   final following = ref.read(followedSeriesProvider.notifier);
@@ -231,7 +238,46 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
       unawaited(nextEpisodes.prepare(item));
     },
   );
-  engine.beforeDispose = progress.dispose;
+  final warmup = NextTorrentWarmup(
+    prepared: ref.read(preparedStreamsProvider),
+    available: (item) => offlineSourceFor(ref, item) != null,
+    find: (item, cancel) async {
+      final resolution = await ref.read(torrentSearchProvider)(
+        item,
+        cancel: cancel,
+      );
+      if (!ref.mounted || cancel.isCancelled) return null;
+      final match = TorrentMatch.of(
+        resolution,
+        torrentPreferencesFor(ref.read(settingsProvider).torrents),
+      );
+      return match?.exact == true ? match!.candidate : null;
+    },
+  );
+  ref.listen(playerSessionProvider.select((s) => s?.queue), (_, queue) {
+    warmup.update(
+      queue,
+      engine.state.position,
+      engine.state.duration,
+      playing: false,
+    );
+  });
+  final warming = engine.stream.position.listen((position) {
+    if (engine.streaming.status.value?.stage != StreamStage.streaming) return;
+    final queue = ref.read(playerSessionProvider)?.queue;
+    if (engine.streaming.item?.id != queue?.current.id) return;
+    warmup.update(
+      queue,
+      position,
+      engine.state.duration,
+      playing: engine.state.playing,
+    );
+  });
+  engine.beforeDispose = () async {
+    warmup.dispose();
+    await warming.cancel();
+    await progress.dispose();
+  };
   ref.onDispose(engine.dispose);
   ref.listen(playerSessionProvider.select((s) => s?.current), (_, item) {
     progress.item = item;

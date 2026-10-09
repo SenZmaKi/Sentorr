@@ -232,7 +232,9 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
   /// progress moves here too.
   void _refreshDownloading() {
     for (final MapEntry(key: id, value: peer) in state.entries) {
-      if (peer.online && !peer.syncing && peer.downloads.isNotEmpty) {
+      if (peer.online &&
+          !peer.syncing &&
+          (peer.downloads.isNotEmpty || peer.streams.isNotEmpty)) {
         unawaited(refreshLibrary(id));
       }
     }
@@ -273,6 +275,7 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
           ? PeerLibrary(
               media: state[id]!.media,
               downloads: incoming.downloads,
+              streams: incoming.streams,
               revision: incoming.revision,
             )
           : incoming;

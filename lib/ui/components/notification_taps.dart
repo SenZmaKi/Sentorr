@@ -7,6 +7,8 @@ import '../../following/notifier.dart';
 import '../../notifications/notification_service.dart';
 import '../shared/title_route.dart';
 import 'app_shell.dart';
+import '../pages/settings/settings_page.dart';
+import '../pages/settings/settings_category.dart';
 import '../shared/window_manager.dart';
 
 /// Brings Sentorr forward on what a clicked notification is about.
@@ -36,6 +38,11 @@ class _NotificationTapsState extends ConsumerState<NotificationTaps> {
             .where((s) => s.id == seriesId)
             .firstOrNull;
         if (followed != null) ref.openTitle(followed.series);
+      case UpdatesTarget():
+        ref
+            .read(settingsRequestProvider.notifier)
+            .open(SettingsCategory.updates);
+        ref.read(appDestinationProvider.notifier).go(AppDestination.settings);
       case DownloadsTarget():
         ref.read(appDestinationProvider.notifier).go(AppDestination.downloads);
     }

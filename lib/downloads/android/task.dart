@@ -7,6 +7,7 @@ void startDownloadTask() =>
     FlutterForegroundTask.setTaskHandler(DownloadTask());
 
 class DownloadTask extends TaskHandler {
+  static const cancelUpdate = 'updates.cancel';
   static const pause = 'downloads.pause';
   static const resume = 'downloads.resume';
 

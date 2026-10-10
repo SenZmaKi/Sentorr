@@ -6,6 +6,9 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
+import '../../updates/controller.dart';
+import '../../notifications/notification_service.dart';
+import '../../updates/models.dart';
 import '../manager.dart';
 import '../models.dart';
 import '../queue.dart';
@@ -17,6 +20,21 @@ final _log = Logger('sentorr.downloads.android');
 /// Bootstrap starts it on Android after the queue is restored.
 final downloadServiceProvider = Provider<DownloadForegroundService>((ref) {
   final service = DownloadForegroundService(ref.watch(downloadQueueProvider));
+  ref.listen(updatesProvider, (previous, state) {
+    service.update(state);
+    if (Platform.isAndroid &&
+        state.phase == UpdatePhase.ready &&
+        previous?.phase == UpdatePhase.downloading) {
+      unawaited(
+        ref
+            .read(notificationServiceProvider)
+            .showUpdateReady(state.release?.displayVersion ?? 'update'),
+      );
+    }
+  });
+  service.update(ref.read(updatesProvider));
+  service.cancelUpdate = () =>
+      ref.read(updatesProvider.notifier).cancelDownload();
   ref.onDispose(() => unawaited(service.dispose()));
   return service;
 });
@@ -31,6 +49,29 @@ class DownloadForegroundService {
   DownloadForegroundService(this.queue);
   static const _serviceId = 3601;
   final DownloadQueue queue;
+  UpdateState _update = const UpdateState();
+  VoidCallback? cancelUpdate;
+
+  void update(UpdateState state) {
+    _update = state;
+    if (_changes != null) _render(queue.items);
+  }
+
+  Future<void> protectUpdate() async {
+    if (!Platform.isAndroid) return;
+    start();
+    _render(queue.items);
+    await _tail;
+    if (!_running) {
+      throw StateError('Open Sentorr to start the update download.');
+    }
+  }
+
+  bool get _updating => {
+    UpdatePhase.downloading,
+    UpdatePhase.verifying,
+    UpdatePhase.preparing,
+  }.contains(_update.phase);
 
   /// Downloads paused from the notification, which its resume restarts.
   final _held = <String>{};
@@ -102,11 +143,27 @@ class DownloadForegroundService {
     _held.removeWhere(
       (id) => !items.any((i) => i.id == id && !i.status.isTerminal),
     );
-    final next = DownloadProgressSummary.of(items, held: _held);
-    _serial(() => _show(next));
+    _serial(() => _show(DownloadProgressSummary.of(queue.items, held: _held)));
   }
 
   Future<void> _show(DownloadProgressSummary? summary) async {
+    if (_updating) {
+      final progress = _update.progress;
+      summary = DownloadProgressSummary(
+        title: 'Downloading Sentorr update',
+        text: [
+          _update.phase == UpdatePhase.downloading
+              ? (progress == null
+                    ? 'Downloading'
+                    : '${(progress * 100).floor()}%')
+              : 'Verifying update',
+          if (summary != null) '${summary.title} · ${summary.text}',
+        ].join(' · '),
+        paused: false,
+        progress: progress,
+        preparing: progress == null,
+      );
+    }
     if (summary == null) {
       _shown = null;
       if (!_running) return;
@@ -125,9 +182,15 @@ class DownloadForegroundService {
     if (_blocked || (_running && _same(summary, _shown))) return;
     _shown = summary;
     final buttons = [
-      summary.paused
-          ? const NotificationButton(id: DownloadTask.resume, text: 'Resume')
-          : const NotificationButton(id: DownloadTask.pause, text: 'Pause'),
+      if (_updating)
+        const NotificationButton(
+          id: DownloadTask.cancelUpdate,
+          text: 'Cancel update',
+        )
+      else
+        summary.paused
+            ? const NotificationButton(id: DownloadTask.resume, text: 'Resume')
+            : const NotificationButton(id: DownloadTask.pause, text: 'Pause'),
     ];
     final progress = switch (summary.progress) {
       final p? => NotificationProgress(max: 1000, progress: (p * 1000).round()),
@@ -183,6 +246,8 @@ class DownloadForegroundService {
 
   void _onTaskData(Object data) {
     switch (data) {
+      case DownloadTask.cancelUpdate:
+        cancelUpdate?.call();
       case DownloadTask.pause:
         unawaited(_pauseAll());
       case DownloadTask.resume:

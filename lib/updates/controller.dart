@@ -9,6 +9,7 @@ import 'package:pub_semver/pub_semver.dart';
 import 'restore.dart';
 
 import '../app/services.dart';
+import '../downloads/android/service.dart';
 import '../settings/notifier.dart';
 import 'manifest_repository.dart';
 import 'macos_update_bridge.dart';
@@ -165,6 +166,9 @@ class UpdateController extends Notifier<UpdateState> {
     final cancel = _cancel = CancelToken();
     state = state.copyWith(phase: UpdatePhase.downloading, clearError: true);
     try {
+      if (Platform.isAndroid) {
+        await ref.read(downloadServiceProvider).protectUpdate();
+      }
       final file =
           await UpdateTransfer(
             ref.read(networkClientProvider).dio,

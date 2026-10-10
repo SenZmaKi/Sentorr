@@ -12,6 +12,16 @@ import 'settings_nav.dart';
 import 'settings_search.dart';
 import '../../shared/layout/adaptive.dart';
 
+final settingsRequestProvider =
+    NotifierProvider<SettingsRequest, SettingsCategory?>(SettingsRequest.new);
+
+class SettingsRequest extends Notifier<SettingsCategory?> {
+  @override
+  SettingsCategory? build() => null;
+  void open(SettingsCategory category) => state = category;
+  void clear() => state = null;
+}
+
 /// Settings in categories: a sidebar beside the open category from medium
 /// (narrower there), a list that opens each category on compact. Search shows
 /// matching settings from every category at once, each group naming its
@@ -116,6 +126,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final requested = ref.watch(settingsRequestProvider);
+    if (requested != null) {
+      _category = requested;
+      _opened = requested;
+      _query = '';
+      _search.clear();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(settingsRequestProvider.notifier).clear();
+      });
+    }
     return LayoutBuilder(
       builder: (context, box) {
         final layout = LayoutSize(box.biggest);

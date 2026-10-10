@@ -26,6 +26,7 @@ sealed class NotificationTarget {
     final id = payload!.substring(at + 1);
     return switch (payload.substring(0, at)) {
       'series' when id.isNotEmpty => SeriesTarget(id),
+      'updates' => const UpdatesTarget(),
       'downloads' => const DownloadsTarget(),
       _ => null,
     };
@@ -38,6 +39,12 @@ class SeriesTarget extends NotificationTarget {
 
   @override
   String get payload => 'series:$seriesId';
+}
+
+class UpdatesTarget extends NotificationTarget {
+  const UpdatesTarget();
+  @override
+  String get payload => 'updates:';
 }
 
 class DownloadsTarget extends NotificationTarget {
@@ -188,6 +195,19 @@ class NotificationService {
         windows: WindowsNotificationDetails(),
       ),
       payload: const DownloadsTarget().payload,
+    );
+  }
+
+  Future<void> showUpdateReady(String version) async {
+    if (!await requestPermission()) return;
+    await _plugin.show(
+      id: 3602,
+      title: 'Sentorr $version ready to install',
+      body: 'Open Updates to install when you choose.',
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails('updates_ready', 'Ready updates'),
+      ),
+      payload: const UpdatesTarget().payload,
     );
   }
 

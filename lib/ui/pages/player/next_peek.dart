@@ -10,28 +10,35 @@ import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'menu_rows.dart';
 
-/// The Next control, which previews what it will play while pointed at,
-/// as YouTube's does: a small floating card above the bar.
-class NextControl extends StatefulWidget {
-  const NextControl({super.key, required this.next, required this.onPressed});
+/// A queue navigation control sharing a floating media preview above the bar.
+class QueueControl extends StatefulWidget {
+  const QueueControl({
+    super.key,
+    required this.item,
+    required this.onPressed,
+    this.previous = false,
+  });
 
   /// Null when the next season is still to be fetched.
-  final PlaybackItem? next;
+  final PlaybackItem? item;
+  final bool previous;
   final VoidCallback onPressed;
 
   @override
-  State<NextControl> createState() => _NextControlState();
+  State<QueueControl> createState() => _QueueControlState();
 }
 
-class _NextControlState extends State<NextControl> {
+class _QueueControlState extends State<QueueControl> {
   final _link = LayerLink();
   final _portal = OverlayPortalController();
 
   @override
   Widget build(BuildContext context) {
-    final next = widget.next;
+    final item = widget.item;
+    final label = widget.previous ? 'Previous' : 'Next';
+    final shortcut = widget.previous ? 'Shift+P' : 'Shift+N';
     return MouseRegion(
-      onEnter: (_) => next == null ? null : _portal.show(),
+      onEnter: (_) => item == null ? null : _portal.show(),
       onExit: (_) => _portal.hide(),
       child: CompositedTransformTarget(
         link: _link,
@@ -44,14 +51,20 @@ class _NextControlState extends State<NextControl> {
             offset: const Offset(-Space.s8, -Space.s12),
             child: Align(
               alignment: Alignment.bottomLeft,
-              child: IgnorePointer(child: _Peek(item: next!)),
+              child: IgnorePointer(
+                child: _Peek(item: item!, label: '$label · $shortcut'),
+              ),
             ),
           ),
           child: PlayerControl(
-            icon: Icons.skip_next_rounded,
-            tooltip: next == null ? 'Next season (Shift+N)' : 'Next (Shift+N)',
-            // The peek card already says what Next plays.
-            showTooltip: next == null,
+            icon: widget.previous
+                ? Icons.skip_previous_rounded
+                : Icons.skip_next_rounded,
+            tooltip: item == null && !widget.previous
+                ? 'Next season ($shortcut)'
+                : '$label ($shortcut)',
+            // The preview already identifies the destination.
+            showTooltip: item == null,
             onPressed: widget.onPressed,
           ),
         ),
@@ -61,9 +74,10 @@ class _NextControlState extends State<NextControl> {
 }
 
 class _Peek extends StatelessWidget {
-  const _Peek({required this.item});
+  const _Peek({required this.item, required this.label});
 
   final PlaybackItem item;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +121,7 @@ class _Peek extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Next · Shift+N',
+                    label,
                     style: context.type.caption.copyWith(
                       color: context.colors.foregroundMuted,
                     ),

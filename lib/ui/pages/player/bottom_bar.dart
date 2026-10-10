@@ -137,13 +137,13 @@ class BottomBar extends StatelessWidget {
           ),
         ),
         if (has(BarControl.previous))
-          PlayerControl(
-            icon: Icons.skip_previous_rounded,
-            tooltip: 'Previous (Shift+P)',
+          QueueControl(
+            item: queue!.previous,
+            previous: true,
             onPressed: actions.previous,
           ),
         if (has(BarControl.next))
-          NextControl(next: next, onPressed: actions.next),
+          QueueControl(item: next, onPressed: actions.next),
         if (has(BarControl.volume))
           PlayerValue(
             stream: s.volume,

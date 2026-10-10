@@ -39,7 +39,108 @@ class _VisualPlayer extends FakePlayback {
 }
 
 void main() {
+  testWidgets('paused caption survives full, mini and pop-out round trips', (
+    tester,
+  ) async {
+    final native = _VisualPlayer();
+    const track = SubtitleTrack('1', 'English', 'en');
+    native.state = native.state.copyWith(
+      playing: false,
+      track: native.state.track.copyWith(subtitle: track),
+      subtitle: ['Paused caption'],
+    );
+    final player = Player(platformPlayer: native);
+    final captions = PlaybackSubtitles(player)..opened();
+    addTearDown(captions.dispose);
+    Future<void> show(Size size, {required bool compact}) => tester.pumpWidget(
+      MaterialApp(
+        theme: buildSentorrTheme(Brightness.dark),
+        home: Center(
+          child: SizedBox.fromSize(
+            size: size,
+            child: CaptionsView(
+              player: player,
+              captions: captions,
+              compact: compact,
+              lifted: !compact,
+            ),
+          ),
+        ),
+      ),
+    );
+    for (final compactSize in [const Size(192, 108), const Size(480, 270)]) {
+      await show(const Size(800, 600), compact: false);
+      await tester.pumpAndSettle();
+      expect(find.text('Paused caption'), findsOneWidget);
+      await show(compactSize, compact: true);
+      await tester.pumpAndSettle();
+      final compactFrame = tester.getRect(find.byType(CaptionsView));
+      expect(
+        tester.getRect(find.text('Paused caption')).bottom,
+        greaterThan(compactFrame.bottom - 20),
+      );
+      await show(const Size(800, 600), compact: false);
+      await tester.pumpAndSettle();
+      final fullFrame = tester.getRect(find.byType(CaptionsView));
+      expect(
+        tester.getRect(find.text('Paused caption')).bottom,
+        closeTo(fullFrame.bottom - 128, 1),
+      );
+      expect(player.state.playing, false);
+      expect(player.state.track.subtitle, track);
+      expect(captions.visible, true);
+      expect(tester.takeException(), isNull);
+    }
+  });
   for (final brightness in Brightness.values) {
+    for (final size in [const Size(192, 108), const Size(480, 270)]) {
+      testWidgets(
+        'compact captions stay near the bottom at $size in $brightness',
+        (tester) async {
+          final native = _VisualPlayer();
+          const track = SubtitleTrack('1', 'English', 'en');
+          native.state = native.state.copyWith(
+            track: native.state.track.copyWith(subtitle: track),
+            subtitle: ['Compact caption', 'Second line'],
+          );
+          final player = Player(platformPlayer: native);
+          final captions = PlaybackSubtitles(player)..opened();
+          addTearDown(captions.dispose);
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: buildSentorrTheme(brightness),
+              home: Center(
+                child: SizedBox.fromSize(
+                  size: size,
+                  child: CaptionsView(
+                    player: player,
+                    captions: captions,
+                    compact: true,
+                    // Even retained full-player control state must not lift it.
+                    lifted: true,
+                  ),
+                ),
+              ),
+            ),
+          );
+          final overlay = tester.getRect(find.byType(CaptionsView));
+          final text = tester.getRect(
+            find.text('Compact caption\nSecond line'),
+          );
+          expect(text.bottom, greaterThan(overlay.bottom - 20));
+          expect(text.bottom, lessThan(overlay.bottom));
+          expect(text.top, greaterThan(overlay.center.dy));
+          expect(text.center.dx, closeTo(overlay.center.dx, 1));
+          expect(tester.takeException(), isNull);
+          native.emitSubtitle(['Updated caption']);
+          await tester.pump();
+          expect(find.text('Updated caption'), findsOneWidget);
+          captions.off();
+          await tester.pump();
+          expect(find.text('Updated caption'), findsNothing);
+        },
+      );
+    }
     testWidgets(
       'Off hides retained and newly arriving caption text in $brightness',
       (tester) async {

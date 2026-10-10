@@ -15,6 +15,7 @@ class CaptionsView extends StatelessWidget {
     required this.player,
     required this.captions,
     required this.lifted,
+    this.compact = false,
   });
 
   final Player player;
@@ -22,6 +23,9 @@ class CaptionsView extends StatelessWidget {
 
   /// Controls are showing; captions clear the bottom bar.
   final bool lifted;
+
+  /// Mini and pop-out players have no bottom control bar to clear.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -36,15 +40,23 @@ class CaptionsView extends StatelessWidget {
     child: LayoutBuilder(
       builder: (context, box) {
         // Scale with the picture, within readable bounds.
-        final size = (box.maxHeight * 0.042).clamp(16.0, 44.0);
+        final size = (box.maxHeight * 0.042).clamp(
+          compact ? 12.0 : 16.0,
+          compact ? 24.0 : 44.0,
+        );
+        final bottom = compact
+            ? (box.maxHeight * 0.05).clamp(4.0, 16.0)
+            : lifted
+            ? 128.0
+            : Space.s48;
         return AnimatedPadding(
           duration: reduceMotion(context) ? Duration.zero : Motion.panel,
           curve: Motion.change,
           padding: EdgeInsets.fromLTRB(
-            Space.s24,
+            compact ? Space.s8 : Space.s24,
             0,
-            Space.s24,
-            lifted ? 128 : Space.s48,
+            compact ? Space.s8 : Space.s24,
+            bottom,
           ),
           child: Align(
             alignment: Alignment.bottomCenter,

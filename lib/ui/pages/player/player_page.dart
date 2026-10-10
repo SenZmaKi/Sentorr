@@ -263,15 +263,15 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                         StageGestures(actions: _actions, child: video)
                       else
                         video,
-                      if (view != PlayerView.mini)
-                        ListenableBuilder(
-                          listenable: _ui,
-                          builder: (context, _) => CaptionsView(
-                            player: p,
-                            captions: _engine.streaming.subtitles,
-                            lifted: _ui.controlsVisible,
-                          ),
+                      ListenableBuilder(
+                        listenable: _ui,
+                        builder: (context, _) => CaptionsView(
+                          player: p,
+                          captions: _engine.streaming.subtitles,
+                          lifted: full && _ui.controlsVisible,
+                          compact: !full,
                         ),
+                      ),
                       PlayerValue(
                         stream: p.stream.buffering,
                         initial: p.state.buffering,

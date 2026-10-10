@@ -30,10 +30,19 @@ class SubtitleDownload {
 /// so a late attachment cannot override Off or a newer selection. Off hides
 /// the Flutter overlay without deselecting and flushing mpv's packet cache.
 class PlaybackSubtitles extends ChangeNotifier {
-  PlaybackSubtitles(this.player);
+  PlaybackSubtitles(this.player, {bool? defaultEnabled})
+    : _defaultEnabled = defaultEnabled,
+      enabled = defaultEnabled ?? false {
+    _tracks = player.stream.tracks.listen((_) {
+      _apply();
+      notifyListeners();
+    });
+  }
+  final bool? _defaultEnabled;
+  late final StreamSubscription<Tracks> _tracks;
   final Player player;
   List<SubtitleDownload> files = const [];
-  bool enabled = false;
+  bool enabled;
   bool _explicit = false, _opened = false;
   int? selectedFile;
   SubtitleTrack? _embedded;
@@ -157,7 +166,7 @@ class PlaybackSubtitles extends ChangeNotifier {
       _selectedKey = _key(track);
       if (!_explicit) _embedded = track;
     }
-    if (!_explicit) enabled = _embedded != null;
+    if (!_explicit) enabled = _defaultEnabled ?? (_embedded != null);
     _apply();
     notifyListeners();
   }
@@ -259,6 +268,7 @@ class PlaybackSubtitles extends ChangeNotifier {
   void dispose() {
     _generation++;
     unawaited(_updates?.cancel());
+    unawaited(_tracks.cancel());
     super.dispose();
   }
 }

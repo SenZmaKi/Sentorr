@@ -2,6 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/settings/models.dart';
 
 void main() {
+  test('caption default is off and survives unrelated settings edits', () {
+    expect(AppSettings.fromJson({}).streaming.captionsEnabled, isFalse);
+    final settings = const StreamingSettings()
+        .copyWith(captionsEnabled: true)
+        .copyWith(keepRecentTorrents: 4);
+    final restored = AppSettings.fromJson(
+      AppSettings(streaming: settings).toJson(),
+    );
+    expect(restored.streaming.captionsEnabled, isTrue);
+    expect(
+      StreamingSettings.fromJson({'captionsEnabled': 'true'}).captionsEnabled,
+      isFalse,
+    );
+  });
   test('player buffers default to 128/32 MiB and persist custom values', () {
     final defaults = StreamingSettings.fromJson({});
     expect(defaults.playerForwardBufferMiB, 128);

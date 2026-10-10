@@ -6,6 +6,7 @@ const _mb = 1024 * 1024;
 class StreamingSettings {
   const StreamingSettings({
     this.pauseOnFocusLoss = true,
+    this.captionsEnabled = false,
     this.readAheadBytes = 16 * _mb,
     this.downloadAheadMinutes = 10,
     this.limitDownloadAhead = true,
@@ -19,6 +20,9 @@ class StreamingSettings {
 
   /// Pause when leaving the app and resume when returning.
   final bool pauseOnFocusLoss;
+
+  /// Initial caption intent for a new player session.
+  final bool captionsEnabled;
 
   static const maxKeptTorrents = 20;
 
@@ -43,6 +47,7 @@ class StreamingSettings {
 
   StreamingSettings copyWith({
     bool? pauseOnFocusLoss,
+    bool? captionsEnabled,
     int? readAheadBytes,
     int? downloadAheadMinutes,
     bool? limitDownloadAhead,
@@ -55,6 +60,7 @@ class StreamingSettings {
     int? keepRecentTorrents,
   }) => StreamingSettings(
     pauseOnFocusLoss: pauseOnFocusLoss ?? this.pauseOnFocusLoss,
+    captionsEnabled: captionsEnabled ?? this.captionsEnabled,
     readAheadBytes: readAheadBytes ?? this.readAheadBytes,
     downloadAheadMinutes: downloadAheadMinutes ?? this.downloadAheadMinutes,
     limitDownloadAhead: limitDownloadAhead ?? this.limitDownloadAhead,
@@ -75,6 +81,7 @@ class StreamingSettings {
     const d = StreamingSettings();
     final directory = json['torrentDirectory'];
     return StreamingSettings(
+      captionsEnabled: json['captionsEnabled'] == true,
       pauseOnFocusLoss: json['pauseOnFocusLoss'] is bool
           ? json['pauseOnFocusLoss'] as bool
           : d.pauseOnFocusLoss,
@@ -115,6 +122,7 @@ class StreamingSettings {
 
   Map<String, dynamic> toJson() => {
     'pauseOnFocusLoss': pauseOnFocusLoss,
+    'captionsEnabled': captionsEnabled,
     'readAheadBytes': readAheadBytes,
     'downloadAheadMinutes': downloadAheadMinutes,
     'limitDownloadAhead': limitDownloadAhead,

@@ -72,6 +72,10 @@ class TorrentPlayback {
        offline = offline ?? ((_) => null),
        _player = player,
        _adapter = MediaKitTorrentAdapter(player, settings: bufferSettings) {
+    subtitles = PlaybackSubtitles(
+      player,
+      defaultEnabled: bufferSettings?.call().captionsEnabled ?? false,
+    );
     _errors = PlaybackErrors(
       player: player,
       generation: () => _generation,
@@ -91,7 +95,7 @@ class TorrentPlayback {
 
   final Player _player;
   final MediaKitTorrentAdapter _adapter;
-  late final subtitles = PlaybackSubtitles(_player);
+  late final PlaybackSubtitles subtitles;
 
   /// The app's torrent session; a download of the same torrent shares it.
   final TorrentEngine engine;

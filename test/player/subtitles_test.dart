@@ -10,6 +10,7 @@ import '../support/fake_playback.dart';
 
 class CaptionPlayer extends FakePlayback {
   final selected = <SubtitleTrack>[];
+  void emitTracks() => tracksController.add(state.tracks);
   Completer<void>? gate;
   @override
   Future<void> setSubtitleTrack(SubtitleTrack track) async {
@@ -78,6 +79,56 @@ void main() {
     ]);
     await settlePlayback();
   }
+
+  test(
+    'saved Off suppresses an automatically selected embedded track',
+    () async {
+      const track = SubtitleTrack('1', 'English', 'en');
+      native.state = native.state.copyWith(
+        tracks: const Tracks(subtitle: [track]),
+        track: native.state.track.copyWith(subtitle: track),
+      );
+      final defaults = PlaybackSubtitles(player, defaultEnabled: false);
+      addTearDown(defaults.dispose);
+      defaults.opened();
+      expect(defaults.enabled, isFalse);
+      expect(defaults.visible, isFalse);
+    },
+  );
+
+  test(
+    'saved On selects late tracks while manual Off remains authoritative',
+    () async {
+      final defaults = PlaybackSubtitles(player, defaultEnabled: true);
+      addTearDown(defaults.dispose);
+      defaults.opened();
+      expect(defaults.enabled, isTrue);
+      const track = SubtitleTrack('1', 'English', 'en');
+      native.state = native.state.copyWith(
+        tracks: const Tracks(subtitle: [track]),
+      );
+      native.emitTracks();
+      await settlePlayback();
+      expect(native.selected.last.id, '1');
+      defaults.off();
+      await defaults.reset();
+      defaults.opened();
+      native.emitTracks();
+      await settlePlayback();
+      expect(defaults.enabled, isFalse);
+      expect(defaults.visible, isFalse);
+    },
+  );
+
+  test('saved On attaches a sidecar when its download completes', () async {
+    captions.dispose();
+    captions = PlaybackSubtitles(player, defaultEnabled: true);
+    captions.watch(session, [file]);
+    captions.opened();
+    await progress(100);
+    expect(captions.visible, isTrue);
+    expect(native.selected.last.id, '/tmp/movie/Movie.en.srt');
+  });
 
   test(
     'downloads sidecars and automatically attaches only when verified complete',

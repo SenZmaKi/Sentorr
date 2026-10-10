@@ -23,6 +23,17 @@ class StreamingSection extends ConsumerWidget {
           title: 'Playback',
           children: [
             SettingsTile(
+              icon: Icons.closed_caption_outlined,
+              title: 'Enable captions by default',
+              subtitle: 'Applies when playback starts. You can change captions in the player',
+              keywords: 'subtitles captions on off',
+              trailing: SToggle(
+                value: s.captionsEnabled,
+                semanticLabel: 'Enable captions by default',
+                onChanged: (v) => edit((s) => s.copyWith(captionsEnabled: v)),
+              ),
+            ),
+            SettingsTile(
               icon: Icons.pause_circle_outline_rounded,
               title: 'Pause when leaving the app',
               subtitle:

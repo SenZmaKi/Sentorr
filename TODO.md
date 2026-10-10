@@ -1,3 +1,5 @@
-- Add update components like in Senpwai e.g., navbar entry and on android add update download foreground notification like in Senpwai to avoid update download failing when app in background
-- Fix android update installation
-- Expose caption settings such that app automatically sets captions on/off based on user preference. 
+- [x] Add update navigation components and Android foreground download progress/cancellation, sharing protection with torrent downloads.
+- [x] Fix Android update installation for stable and nightly data directories.
+- [x] Expose a persisted default caption preference and apply it when playback starts, preserving manual choices across queued episodes.
+
+Validation follow-up: verify Android update installation and background/screen-off downloads on a physical device, including simultaneous torrent and update downloads.

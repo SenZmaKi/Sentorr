@@ -272,16 +272,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                           compact: !full,
                         ),
                       ),
-                      PlayerValue(
-                        stream: p.stream.buffering,
-                        initial: p.state.buffering,
-                        builder: (context, buffering) => PlayerValue(
-                          stream: p.stream.playing,
-                          initial: p.state.playing,
-                          builder: (context, playing) => BufferingIndicator(
-                            buffering: buffering && !_ended,
-                            playing: playing,
-                          ),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: _engine.buffering,
+                        builder: (context, buffering, _) => BufferingIndicator(
+                          buffering: buffering && !_ended,
+                          // The engine distinguishes intentional pauses from
+                          // cache and seek waits, including paused seeks.
+                          playing: true,
                         ),
                       ),
                       if (full) const CenterFeedback(),

@@ -9,6 +9,7 @@ import '../config.dart';
 import '../engine_models.dart';
 import 'cancellation.dart';
 import 'files.dart';
+import 'resume_store.dart';
 import 'native_session.dart';
 import 'metadata_hash_cache.dart';
 import 'tracker_policy.dart';
@@ -265,6 +266,15 @@ class EngineCore {
       await closeStream(stream.id);
     }
     final temporary = entry.storage == TorrentStorage.temporary;
+    if (!temporary && !deleteFiles && entry.files.isNotEmpty) {
+      try {
+        entry.handle.pause();
+        await saveResume(entry);
+      } catch (error) {
+        // Persistence failure must not strand native handles at shutdown.
+        stderr.writeln('Could not save torrent resume state: $error');
+      }
+    }
     try {
       entry.handle.pause();
       native.session.removeTorrent(

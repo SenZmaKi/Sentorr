@@ -23,6 +23,7 @@ import '../sync/shared_streams.dart';
 import 'next_warmup.dart';
 import '../torrents/match.dart';
 import 'cache_ranges.dart';
+import 'buffering.dart';
 import 'preparation.dart';
 import 'stream/prepared_stream.dart';
 import 'hot_restart.dart';
@@ -86,6 +87,7 @@ class PlaybackEngine {
   }
 
   final Player player;
+  final buffering = PlaybackBuffering();
   late final cacheRanges = PlaybackCacheRanges.forPlayer(
     player,
     streaming.status,
@@ -116,6 +118,8 @@ class PlaybackEngine {
     _opened = item.id;
     _log.info('Opening $item${start == null ? '' : ' at ${_clock(start)}'}');
     await _restartReady;
+    await buffering.attach(player);
+    buffering.reset();
     await streaming.play(
       item,
       torrent: torrent,
@@ -137,14 +141,23 @@ class PlaybackEngine {
   }
 
   /// Seeks through the torrent so obsolete reads are dropped first.
-  Future<void> seek(Duration position) {
+  Future<void> seek(Duration position) async {
     cacheRanges.invalidate();
-    return streaming.seek(position);
+    await buffering.attach(player);
+    buffering.beginSeek();
+    try {
+      await streaming.seek(position);
+      buffering.seekIssued();
+    } catch (_) {
+      buffering.reset();
+      rethrow;
+    }
   }
 
   /// One frame forward or back, pausing first as mpv does. A step stays
   /// within the buffered piece, so it skips the torrent's seek handling.
   Future<void> stepFrame({required bool forward}) async {
+    buffering.reset();
     final native = player.platform;
     if (native is! NativePlayer) return;
     await native.command([forward ? 'frame-step' : 'frame-back-step']);
@@ -183,6 +196,7 @@ class PlaybackEngine {
     await _errors.cancel();
     await _native.cancel();
     await streaming.park();
+    await buffering.close();
     cacheRanges.dispose();
     streaming.dispose();
     await _restartReady;

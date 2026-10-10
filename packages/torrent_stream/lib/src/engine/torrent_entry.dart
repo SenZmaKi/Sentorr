@@ -60,7 +60,10 @@ class TorrentEntry {
   bool get paused => owners.values.every((o) => o.paused);
 
   /// Waits for metadata, then downloads nothing until an owner wants it.
-  Future<void> prepare(Future<void> Function(bool Function()) until) async {
+  Future<void> prepare(
+    Future<void> Function(bool Function()) until, {
+    Future<void> Function()? restore,
+  }) async {
     await until(() {
       try {
         files = handle.getFiles();
@@ -72,6 +75,8 @@ class TorrentEntry {
     _snapshotFiles = List.unmodifiable(files.map(fileOf));
     scheduler = PieceScheduler(handle, base: (p) => _base[p]);
     await applyWanted(until);
+    applyPause();
+    await restore?.call();
     if (!ready.isCompleted) ready.complete();
   }
 

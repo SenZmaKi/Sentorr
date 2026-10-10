@@ -78,25 +78,57 @@ extension EngineAdditions on EngineCore {
     save = temporary ? await root.createTemp('torrent-stream-') : root;
     lifetime.check();
     final session = native.session;
-    final handle = switch (source['kind']) {
-      'magnet' => session.addMagnet(
-        magnetUri: source['value'] as String,
-        savePath: save.path,
-      ),
-      'file' => session.addTorrentFile(
-        torrentPath: source['value'] as String,
-        savePath: save.path,
-      ),
-      'bytes' => session.addTorrentData(
-        torrentData: source['value'] as Uint8List,
-        savePath: save.path,
-      ),
-      _ => throw ArgumentError('Unsupported torrent source'),
-    };
+    final saved = resumeFile(save.path, hash);
+    final resume = !temporary && await saved.exists()
+        ? await saved.readAsBytes()
+        : null;
+    final restoring =
+        !temporary &&
+        source['kind'] != 'magnet' &&
+        (resume != null ||
+            await root.list().any(
+              (f) =>
+                  f is File &&
+                  RegExp(
+                    r'^\.[0-9a-f]{40}\.parts$',
+                  ).hasMatch(p.basename(f.path)),
+            ));
+    // Configure disk priorities before native checking can inspect retained
+    // pieces. Streaming stores zero-priority files in the partfile.
+    final handle = session.addTorrentFromTags([
+      switch (source['kind']) {
+        'magnet' => LibtorrentTagItem.stringValue(
+          LibtorrentTag.torMagnetLink,
+          source['value'] as String,
+        ),
+        'file' => LibtorrentTagItem.stringValue(
+          LibtorrentTag.torFilename,
+          source['value'] as String,
+        ),
+        'bytes' => LibtorrentTagItem.bytesValue(
+          LibtorrentTag.torTorrent,
+          source['value'] as Uint8List,
+        ),
+        _ => throw ArgumentError('Unsupported torrent source'),
+      },
+      if (source['kind'] == 'bytes')
+        LibtorrentTagItem.intValue(
+          LibtorrentTag.torTorrentSize,
+          (source['value'] as Uint8List).length,
+        ),
+      LibtorrentTagItem.stringValue(LibtorrentTag.torSavePath, save.path),
+      if (resume != null) ...[
+        LibtorrentTagItem.bytesValue(LibtorrentTag.torResumeData, resume),
+        LibtorrentTagItem.intValue(
+          LibtorrentTag.torResumeDataSize,
+          resume.length,
+        ),
+      ],
+      LibtorrentTagItem.intValue(LibtorrentTag.torPaused, restoring ? 1 : 0),
+      LibtorrentTagItem.intValue(LibtorrentTag.torAutoManaged, 0),
+    ]);
     handle.setFlags(LibtorrentTorrentFlags.defaultDontDownload);
-    handle.unsetFlags(
-      LibtorrentTorrentFlags.autoManaged | LibtorrentTorrentFlags.paused,
-    );
+    handle.unsetFlags(LibtorrentTorrentFlags.autoManaged);
     _addTrackers(handle, source);
     final entry = TorrentEntry(
       infoHash: hash,
@@ -108,16 +140,24 @@ extension EngineAdditions on EngineCore {
     if (temporary) entry.temporary.add(save);
     entry.owners[owner] = TorrentOwner();
     _torrents[hash] = entry;
-    entry.applyPause();
+    // Only existing partfiles require this startup barrier. New torrents and
+    // magnets can run immediately (magnets need peers for metadata).
+    if (!restoring) entry.applyPause();
     _addPeers(entry, peers);
     // Owners wait for metadata through [metadata]; failures surface there.
     unawaited(
-      entry.prepare((ready) => waitUntil(entry.lifetime, ready)).catchError((
-        Object error,
-        StackTrace stack,
-      ) {
-        if (!entry.ready.isCompleted) entry.ready.completeError(error, stack);
-      }),
+      entry
+          .prepare(
+            (ready) => waitUntil(entry.lifetime, ready),
+            restore: restoring && resume == null
+                ? () => restoreLegacyParts(entry)
+                : null,
+          )
+          .catchError((Object error, StackTrace stack) {
+            if (!entry.ready.isCompleted) {
+              entry.ready.completeError(error, stack);
+            }
+          }),
     );
     unawaited(entry.ready.future.catchError((Object _) {}));
     publish();

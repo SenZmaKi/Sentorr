@@ -189,8 +189,35 @@ void main() {
         // The planner's hold is gone; the finished download let go too.
         await waitUntil(() => engine.torrents.isEmpty);
 
+        final resume = File(
+          p.join(p.dirname(p.dirname(expected)), '.${entry.infoHash}.resume'),
+        );
+        expect(await resume.exists(), true);
+        final sibling = File(p.join(p.dirname(expected), 'Show S01E04.mkv'));
+        await sibling.writeAsBytes(bytes);
+        await container
+            .read(libraryProvider.notifier)
+            .add(
+              LibraryEntry(
+                item: PlaybackItem(
+                  title: ImdbTitle(id: 'tt91', title: 'Next episode'),
+                  series: item.series,
+                  season: 1,
+                  episode: 4,
+                ),
+                downloadId: 'other-download',
+                release: entry.release,
+                fileIndex: 1,
+                path: sibling.path,
+                addedAt: DateTime.now(),
+              ),
+            );
         await container.read(libraryProvider.notifier).remove('tt90');
         expect(File(expected).existsSync(), false);
+        expect(await resume.exists(), true);
+        expect(await sibling.exists(), true);
+        await container.read(libraryProvider.notifier).remove('tt91');
+        expect(await resume.exists(), false);
         expect(Directory(p.dirname(p.dirname(expected))).existsSync(), false);
         expect(
           container.read(offlineStateProvider('tt90')),

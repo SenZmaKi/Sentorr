@@ -11,6 +11,8 @@ class PriorityHandle implements TorrentHandle {
   var updates = 0;
   List<int> priorities = [];
   @override
+  void resume() {}
+  @override
   int get numPieces => 4;
   @override
   int get pieceLength => 16;

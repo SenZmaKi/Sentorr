@@ -64,17 +64,15 @@ class LibraryNotifier extends Notifier<List<LibraryEntry>> {
     if (gone.isEmpty) return;
     await _commit([...state.where((e) => !ids.contains(e.id))]);
     final queue = ref.read(downloadQueueProvider);
-    await Future.wait([
-      for (final entry in gone)
-        () async {
-          _log.info('Removing ${entry.item} and ${entry.path}');
-          // Cleared from download history, the queue no longer knows it.
-          if (queue.items.any((d) => d.id == entry.downloadId)) {
-            await queue.cancel(entry.downloadId);
-          }
-          await _delete(entry);
-        }(),
-    ]);
+    // Items can share resume state and folders; clean them up in order.
+    for (final entry in gone) {
+      _log.info('Removing ${entry.item} and ${entry.path}');
+      // Cleared from download history, the queue no longer knows it.
+      if (queue.items.any((d) => d.id == entry.downloadId)) {
+        await queue.cancel(entry.downloadId);
+      }
+      await _delete(entry);
+    }
   }
 
   /// Queues [id]'s failed or paused download again.
@@ -89,6 +87,18 @@ class LibraryNotifier extends Notifier<List<LibraryEntry>> {
     final file = File(entry.path);
     try {
       if (await file.exists()) await file.delete();
+      final directory = entry.item.series == null
+          ? file.parent.path
+          : file.parent.parent.path;
+      // Resume state belongs to the torrent, so other episodes still need it.
+      if (!state.any(
+        (other) =>
+            other.infoHash == entry.infoHash &&
+            p.isWithin(directory, other.path),
+      )) {
+        final resume = File(p.join(directory, '.${entry.infoHash}.resume'));
+        if (await resume.exists()) await resume.delete();
+      }
       // Season and title folders go once nothing else is in them.
       var folder = file.parent;
       final root = p.normalize(ref.read(downloadsDirectoryProvider));

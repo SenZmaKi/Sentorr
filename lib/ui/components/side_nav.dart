@@ -5,6 +5,7 @@ import 'app_shell.dart';
 import 'motion.dart';
 import 'navigation.dart';
 import 'surface.dart';
+import 'update_navigation_action.dart';
 
 /// Slim rail on the canvas: the app mark, then one icon-over-label target
 /// per destination. A single raised pill glides to the current page.
@@ -70,6 +71,7 @@ class SideNav extends StatelessWidget {
                               onTap: () => onSelect(d),
                             ),
                           ),
+                        const UpdateNavigationAction(rail: true),
                       ],
                     ),
                   ],

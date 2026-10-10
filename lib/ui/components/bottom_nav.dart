@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../shared/theme/theme.dart';
 import 'app_shell.dart';
 import 'navigation.dart';
+import 'update_navigation_action.dart';
 
 /// Height the bottom navigation takes from the window's bottom edge, its
 /// safe-area inset included; 0 while it is not shown. Overlays above the
@@ -83,17 +84,23 @@ class _BottomNavBarState extends ConsumerState<BottomNavBar> {
             horizontal: Space.s8,
             vertical: Space.s4,
           ),
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              for (final d in AppDestination.values)
-                Expanded(
-                  child: BottomNavItem(
-                    icon: d == widget.current ? d.selectedIcon : d.icon,
-                    label: d.label,
-                    selected: d == widget.current,
-                    onTap: () => widget.onSelect(d),
-                  ),
-                ),
+              const UpdateNavigationAction(),
+              Row(
+                children: [
+                  for (final d in AppDestination.values)
+                    Expanded(
+                      child: BottomNavItem(
+                        icon: d == widget.current ? d.selectedIcon : d.icon,
+                        label: d.label,
+                        selected: d == widget.current,
+                        onTap: () => widget.onSelect(d),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
         ),

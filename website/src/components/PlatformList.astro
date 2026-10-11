@@ -82,6 +82,7 @@ const { notes = false } = Astro.props;
       if (link && file && link.hasAttribute('href')) link.href = select.selectedOptions[0]?.dataset.downloadUrl || link.href.replace(/[^/]+$/, file);
     });
     if (row.dataset.platform === os) {
+      row.parentElement?.prepend(row);
       row.querySelector('.detected')?.classList.remove('hidden');
       link?.classList.replace('secondary', 'primary');
     }

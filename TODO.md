@@ -1,0 +1,2 @@
+- If user exits app while player is playing, opening the app should revive the player to the exact media being played and 5 seconds before the progress.
+- Saving watched and progress seems hit or miss investigate.

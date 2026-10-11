@@ -2,8 +2,8 @@ name: Release
 
 on:
   schedule:
-    # 04:00 Africa/Nairobi (01:00 UTC).
-    - cron: "0 1 * * *"
+    # 05:57 Africa/Nairobi (02:57 UTC), away from the busy start of the hour.
+    - cron: "57 2 * * *"
   workflow_dispatch:
   push:
     tags:

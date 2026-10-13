@@ -53,8 +53,9 @@ class AppAppearance(
         // Enable before disabling so the app never has zero launcher entries.
         for (name in VARIANTS.sortedBy { it != variant }) {
             val alias = "Launcher" + name.replaceFirstChar(Char::uppercase)
-            // Aliases live in the code namespace, which may differ from the applicationId.
-            val component = ComponentName(activity, "${javaClass.`package`!!.name}.$alias")
+            // Manifest aliases use the code namespace, not the applicationId or
+            // this class's runtime package, which R8 can rename in release builds.
+            val component = ComponentName(activity, "com.sentorr.sentorr.$alias")
             val state = if (name == variant) {
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             } else {

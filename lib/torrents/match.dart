@@ -58,5 +58,9 @@ class TorrentMatch {
   final TorrentCandidate candidate;
   final List<MatchConcern> concerns;
 
-  bool get exact => concerns.isEmpty;
+  /// Packs still match the preferences: their notice explains file selection
+  /// without requiring confirmation. Quality compromises still ask first.
+  bool get exact => concerns.every(
+    (c) => c == MatchConcern.seasonPack || c == MatchConcern.seriesPack,
+  );
 }

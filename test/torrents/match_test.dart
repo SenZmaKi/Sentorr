@@ -22,7 +22,7 @@ void main() {
     expect(match.concerns, isEmpty);
   });
 
-  test('other, unknown quality and season packs are close matches', () {
+  test('quality compromises ask first but season packs remain exact', () {
     expect(
       TorrentMatch.of(
         _resolution([fakeRelease(1, resolution: 720)]),
@@ -41,8 +41,19 @@ void main() {
       _resolution([fakeRelease(1, pack: true)]),
       prefs,
     )!;
-    expect(pack.exact, isFalse);
+    expect(pack.exact, isTrue);
     expect(pack.concerns, [MatchConcern.seasonPack]);
+  });
+
+  test('a season pack with other or unknown quality still asks first', () {
+    for (final quality in <int?>[720, null]) {
+      final match = TorrentMatch.of(
+        _resolution([fakeRelease(1, pack: true, resolution: quality)]),
+        prefs,
+      )!;
+      expect(match.exact, isFalse);
+      expect(match.concerns, contains(MatchConcern.seasonPack));
+    }
   });
 
   test('a miss has no match', () {

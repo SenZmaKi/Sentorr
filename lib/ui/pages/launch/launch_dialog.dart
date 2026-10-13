@@ -231,12 +231,13 @@ class _LaunchDialogState extends ConsumerState<LaunchDialog>
             color: context.colors.foregroundSecondary,
           ),
         ),
-        if (!match.exact) ...[
+        if (match.concerns.isNotEmpty) ...[
           const SizedBox(height: Space.s12),
           LaunchNote([
             for (final concern in match.concerns)
               concern.describe(launch.preferences),
-            'Play the closest match, or choose another torrent.',
+            if (!match.exact)
+              'Play the closest match, or choose another torrent.',
           ]),
         ],
         const SizedBox(height: Space.s12),

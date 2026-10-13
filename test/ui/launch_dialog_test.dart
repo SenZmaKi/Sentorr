@@ -112,6 +112,28 @@ Future<ProviderContainer> _pump(
 }
 
 void main() {
+  testWidgets('a season pack keeps its notice and plays after the countdown', (
+    tester,
+  ) async {
+    final container = await _pump(
+      tester,
+      (_) async => [fakeRelease(1, pack: true)],
+    );
+    expect(
+      find.text(
+        'This is a whole season; the episode is picked from its files.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Play in 4s'), findsOneWidget);
+    expect(container.read(playerSessionProvider), isNull);
+
+    await tester.pump(_autoActionDelay);
+    await tester.pumpAndSettle();
+    expect(find.byType(LaunchDialog), findsNothing);
+    expect(container.read(playerSessionProvider)!.torrents, contains('tt1'));
+  });
+
   testWidgets('an exact match plays when the countdown ends', (tester) async {
     final container = await _pump(tester, (_) async => [fakeRelease(1)]);
     expect(find.text('Ready to play'), findsOneWidget);

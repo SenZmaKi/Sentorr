@@ -3,6 +3,33 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/ui/components/motion.dart';
 
 void main() {
+  testWidgets('Ken Burns moves without repainting static artwork', (
+    tester,
+  ) async {
+    var paints = 0;
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: KenBurns(
+          active: true,
+          duration: const Duration(seconds: 10),
+          child: CustomPaint(painter: _PaintCounter(() => paints++)),
+        ),
+      ),
+    );
+    final initial = paints;
+    expect(initial, greaterThan(0));
+    for (var frame = 0; frame < 10; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(
+      tester.widget<Transform>(find.byType(Transform)).transform.storage[0],
+      greaterThan(1),
+    );
+    expect(paints, initial);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('Ken Burns stops when inactive and resets for reduced motion', (
     tester,
   ) async {
@@ -32,4 +59,18 @@ void main() {
     expect(scale(), 1);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+}
+
+class _PaintCounter extends CustomPainter {
+  _PaintCounter(this.onPaint);
+  final VoidCallback onPaint;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    onPaint();
+    canvas.drawRect(Offset.zero & size, Paint()..color = Colors.blue);
+  }
+
+  @override
+  bool shouldRepaint(_PaintCounter oldDelegate) => false;
 }

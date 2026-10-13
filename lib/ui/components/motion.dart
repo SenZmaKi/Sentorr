@@ -156,7 +156,8 @@ class _KenBurnsState extends State<KenBurns>
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _controller,
-    child: widget.child,
+    // Keep the artwork's display list stable while only its transform moves.
+    child: RepaintBoundary(child: widget.child),
     builder: (context, child) => Transform.scale(
       scale:
           1 + (widget.scale - 1) * Curves.easeOut.transform(_controller.value),

@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 
 import 'files.dart';
+import 'resume_buffer.dart';
 import 'torrent_entry.dart';
 
 File resumeFile(String directory, String hash) =>
@@ -20,7 +21,7 @@ Future<void> saveResume(TorrentEntry entry) async {
   final file = resumeFile(entry.savePath, entry.infoHash);
   final temporary = File('${file.path}.tmp');
   await temporary.writeAsBytes(
-    entry.handle.getResumeData(flags: 2),
+    readResumeData(entry.handle, flags: 2),
     flush: true,
   );
   await temporary.rename(file.path);
@@ -88,7 +89,7 @@ Future<void> restoreLegacyParts(TorrentEntry entry) async {
 
 /// Storage uses the v2 hash for hybrid torrents, while app identity may be v1.
 String storageHash(TorrentEntry entry) {
-  final reader = _Reader(entry.handle.getResumeData());
+  final reader = _Reader(readResumeData(entry.handle));
   reader.offset++; // Root dictionary.
   Uint8List? v1, v2;
   while (reader.byte != 101) {

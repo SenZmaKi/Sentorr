@@ -40,7 +40,15 @@ class NightlyReleaseTests(unittest.TestCase):
             (root / 'android/app/src/main/res').mkdir(parents=True)
             (root / 'windows/runner/resources').mkdir(parents=True)
             (root / 'macos/Runner/Assets.xcassets/AppIcon.appiconset').mkdir(parents=True)
-            runpy.run_path(str(root / 'tool/release/nightly_branding.py'))
+            branding = runpy.run_path(str(root / 'tool/release/nightly_branding.py'))
+            # The full badge, including its separation gap, must survive the
+            # launcher's circular crop; square PNG bounds are insufficient.
+            badge_mask = branding['disc'](
+                1024, branding['BADGE_CENTER'],
+                branding['BADGE_RADIUS'] + branding['BADGE_GAP'])
+            launcher_mask = branding['disc'](1024, (512, 512), 511)
+            from PIL import ImageChops
+            self.assertIsNone(ImageChops.subtract(badge_mask, launcher_mask).getbbox())
             for asset in ('assets/images/tray-dark.png', 'assets/images/dock-light.png',
                           'assets/images/window-dark.ico', 'windows/runner/resources/app_icon.ico',
                           'android/app/src/main/res/mipmap-mdpi/ic_launcher.png',

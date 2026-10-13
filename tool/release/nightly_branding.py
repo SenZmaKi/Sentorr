@@ -6,6 +6,10 @@ from PIL import Image, ImageChops, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
 SCALE = 4  # Drawn oversized, then downsampled, for smooth edges.
+# Keep the badge and its gap inside circular Android launcher masks.
+BADGE_CENTER = (750, 750)
+BADGE_RADIUS = 130
+BADGE_GAP = 34
 
 
 def disc(size, center, radius):
@@ -29,8 +33,9 @@ def badge(image):
     background, foreground = mark_colours(image)
     size = 1024 * SCALE
     canvas = image.resize((size, size), Image.Resampling.LANCZOS)
-    center, radius = (812 * SCALE, 812 * SCALE), 150 * SCALE
-    canvas.paste(background, (0, 0), disc(size, center, radius + 34 * SCALE))
+    center = tuple(coordinate * SCALE for coordinate in BADGE_CENTER)
+    radius = BADGE_RADIUS * SCALE
+    canvas.paste(background, (0, 0), disc(size, center, radius + BADGE_GAP * SCALE))
     canvas.paste(foreground, (0, 0), disc(size, center, radius))
     moon = int(radius * 0.62)
     shadow = disc(size, (center[0] + int(moon * 0.42), center[1] - int(moon * 0.34)), int(moon * 0.84))

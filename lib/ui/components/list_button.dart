@@ -18,9 +18,12 @@ import 'menu.dart';
 /// Labelled with the list it is on. A series being watched also turns its
 /// new-episode notifications and downloads on or off here.
 class ListButton extends ConsumerWidget {
-  const ListButton({super.key, required this.title});
+  const ListButton({super.key, required this.title, this.compact = false});
 
   final ImdbTitle title;
+
+  /// Icon-only action for preview cards.
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,11 +49,22 @@ class ListButton extends ConsumerWidget {
             onPressed: () => lists.set(title, null),
           ),
       ],
-      builder: (context, menu) => SButton(
-        label: status?.label ?? 'Add to list',
-        icon: status == null ? Icons.bookmark_add_outlined : statusIcon(status),
-        onPressed: () => menu.isOpen ? menu.close() : menu.open(),
-      ),
+      builder: (context, menu) => compact
+          ? SIconButton(
+              icon: status == null
+                  ? Icons.bookmark_add_outlined
+                  : statusIcon(status),
+              tooltip: status?.label ?? 'Add to list',
+              selected: status != null,
+              onPressed: () => menu.isOpen ? menu.close() : menu.open(),
+            )
+          : SButton(
+              label: status?.label ?? 'Add to list',
+              icon: status == null
+                  ? Icons.bookmark_add_outlined
+                  : statusIcon(status),
+              onPressed: () => menu.isOpen ? menu.close() : menu.open(),
+            ),
     );
   }
 

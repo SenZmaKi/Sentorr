@@ -2,10 +2,62 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/ui/components/hover_preview.dart';
+import 'package:sentorr/ui/components/menu.dart';
+import 'package:sentorr/ui/components/buttons.dart';
 import 'package:sentorr/ui/shared/layout/adaptive.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
 void main() {
+  testWidgets('preview stays mounted while its list menu is used', (
+    tester,
+  ) async {
+    var selected = false;
+    await tester.pumpWidget(
+      AdaptiveScope(
+        input: InputMode.pointer,
+        child: MaterialApp(
+          theme: buildSentorrTheme(Brightness.light),
+          home: Scaffold(
+            body: Center(
+              child: HoverPreview(
+                preview: (_) => SizedBox(
+                  width: 300,
+                  height: 100,
+                  child: ActionMenu(
+                    actions: [
+                      MenuAction('Watching', onPressed: () => selected = true),
+                    ],
+                    builder: (_, menu) =>
+                        SButton(label: 'Add to list', onPressed: menu.open),
+                  ),
+                ),
+                child: const HoverPreviewTrigger(
+                  child: SizedBox(width: 150, height: 100),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(tester.getCenter(find.byType(HoverPreviewTrigger)));
+    await tester.pump(HoverPreview.delay * 2);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add to list'));
+    await tester.pumpAndSettle();
+    await mouse.moveTo(tester.getCenter(find.text('Watching')));
+    await tester.pumpAndSettle();
+    expect(find.text('Add to list'), findsOneWidget);
+    await tester.tap(find.text('Watching'));
+    await tester.pumpAndSettle();
+    expect(selected, isTrue);
+    expect(tester.takeException(), isNull);
+    await mouse.removePointer();
+    await tester.pumpWidget(const SizedBox());
+  });
+
   for (final disableTicker in [true, false]) {
     testWidgets(
       'dismiss during rebuild when ${disableTicker ? 'tickers stop' : 'preview is disabled'}',

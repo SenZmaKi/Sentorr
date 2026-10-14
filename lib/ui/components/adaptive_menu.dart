@@ -6,6 +6,7 @@ import '../shared/theme/theme.dart';
 import 'adaptive_sheet.dart';
 import 'buttons.dart';
 import 'menu.dart';
+import 'hover_preview.dart';
 
 /// Opens and closes an [AdaptiveMenu], whichever form it takes.
 abstract interface class AdaptiveMenuController {
@@ -102,6 +103,8 @@ class _AdaptiveMenuState extends State<AdaptiveMenu>
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, box) => MenuAnchor(
       controller: _anchor,
+      onOpen: () => HoverPreview.keepOpen(context, true),
+      onClose: () => HoverPreview.keepOpen(context, false),
       alignmentOffset: const Offset(-menuBleed, Space.s4 - menuBleed),
       style: menuAnchorStyle,
       menuChildren: [

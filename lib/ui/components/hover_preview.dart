@@ -55,6 +55,13 @@ class HoverPreview extends StatefulWidget {
   /// Movement beyond this restarts the wait: the pointer is still travelling.
   static const settleRadius = 6.0;
 
+  /// Keeps a preview mounted while a child menu is being used.
+  static void keepOpen(BuildContext context, bool open) {
+    context.getInheritedWidgetOfExactType<_TriggerScope>()?.state._keepOpen(
+      open,
+    );
+  }
+
   @override
   State<HoverPreview> createState() => _HoverPreviewState();
 }
@@ -84,6 +91,17 @@ class _HoverPreviewState extends State<HoverPreview>
   Timer? _hideTimer;
   bool _overTile = false;
   bool _overPreview = false;
+  int _openMenus = 0;
+
+  void _keepOpen(bool open) {
+    _openMenus += open ? 1 : -1;
+    if (_openMenus > 0) {
+      _hideTimer?.cancel();
+    } else {
+      _openMenus = 0;
+      _scheduleHide();
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -196,7 +214,9 @@ class _HoverPreviewState extends State<HoverPreview>
   void _scheduleHide() {
     _hideTimer?.cancel();
     _hideTimer = Timer(_grace, () {
-      if (!_overTile && !_overPreview) _dismiss(animate: true);
+      if (!_overTile && !_overPreview && _openMenus == 0) {
+        _dismiss(animate: true);
+      }
     });
   }
 
@@ -268,9 +288,10 @@ class _HoverPreviewState extends State<HoverPreview>
               onPointerSignal: (e) {
                 if (e is PointerScrollEvent) _dismiss(animate: false);
               },
-              // Every tap in the card navigates. Let the tap finish first.
-              onPointerUp: (_) =>
-                  scheduleMicrotask(() => _dismiss(animate: false)),
+              // Let actions finish before dismissing; open menus retain the card.
+              onPointerUp: (_) => scheduleMicrotask(() {
+                if (_openMenus == 0) _dismiss(animate: false);
+              }),
               child: MouseRegion(
                 onEnter: _enterPreview,
                 onExit: _exitPreview,
@@ -283,8 +304,11 @@ class _HoverPreviewState extends State<HoverPreview>
                     constrainedAxis: Axis.horizontal,
                     alignment: Alignment.topCenter,
                     clipBehavior: Clip.hardEdge,
-                    child: Builder(
-                      builder: widget.preview ?? (_) => const SizedBox(),
+                    child: _TriggerScope(
+                      state: this,
+                      child: Builder(
+                        builder: widget.preview ?? (_) => const SizedBox(),
+                      ),
                     ),
                   ),
                   builder: (context, child) {

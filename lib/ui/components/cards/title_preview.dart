@@ -8,6 +8,7 @@ import '../../shared/title_icons.dart';
 import '../../../player/models.dart';
 import '../download_button.dart';
 import '../list_badge.dart';
+import '../list_button.dart';
 import '../title_artwork.dart';
 import 'card_parts.dart';
 import 'preview_card.dart';
@@ -49,7 +50,7 @@ class TitlePreview extends ConsumerWidget {
       onOpen: onOpen,
       stamp: ListBadge(titleId: t.id),
       extraActions: [
-        PlanToggle(title: t, onOpen: onOpen),
+        ListButton(title: t, compact: true),
         // A series downloads by episode, from its episodes.
         if (t.canHaveEpisodes != true && onPlay != null)
           DownloadButton(item: PlaybackItem(title: t), menu: false),

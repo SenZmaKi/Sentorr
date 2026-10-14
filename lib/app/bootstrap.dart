@@ -13,6 +13,7 @@ import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart' show windowManager;
 
+import '../sync/peer_playback.dart';
 import '../backup/notifier.dart';
 import '../downloads/android/service.dart';
 import '../downloads/manager.dart';
@@ -172,6 +173,10 @@ class AppRuntime with WidgetsBindingObserver {
         initialLibraryProvider.overrideWithValue(downloaded),
         devicesRepositoryProvider.overrideWithValue(devices),
         initialDevicesProvider.overrideWithValue(paired),
+        peerPlaybackProvider.overrideWith(
+          (ref) =>
+              (item, excluded) => verifiedPeerSource(ref, item, excluded),
+        ),
         peerSourceProvider.overrideWith(
           (ref) => ref.read(peersProvider.notifier).sourceFor,
         ),

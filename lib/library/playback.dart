@@ -19,6 +19,23 @@ final peerSourceProvider = Provider<OfflineLookup>(
       (_) => null,
 );
 
+/// Supplied by the app so launch and queued playback verify remote offers.
+final peerPlaybackProvider = Provider<PeerLookup>(
+  (ref) => (item, excluded) async {
+    final source = ref.read(peerSourceProvider)(item);
+    return source is PeerFile && !excluded.contains(source.url) ? source : null;
+  },
+);
+
+Future<OfflineSource?> refreshedOfflineSourceFor(
+  Ref ref,
+  PlaybackItem item,
+) async {
+  final local = offlineSourceFor(ref, item);
+  if (local != null && local is! PeerFile) return local;
+  return ref.read(peerPlaybackProvider)(item, {});
+}
+
 /// [item]'s download for the player: its file once finished, its torrent
 /// while downloading, else a paired device's copy; null when there is none
 /// to use.

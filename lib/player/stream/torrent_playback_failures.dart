@@ -1,6 +1,23 @@
 part of 'torrent_playback.dart';
 
 extension _TorrentPlaybackFailures on TorrentPlayback {
+  void _recoverPeer() {
+    final peer = _peerFile, current = _item;
+    if (peer == null || current == null) return;
+    if (peerLookup == null) {
+      _fail(_generation, current, null, const _Unplayable(), null);
+      return;
+    }
+    _peerFile = null;
+    final resume = status.value?.stage == StreamStage.streaming
+        ? _player.state.position
+        : _start;
+    _log.info('Peer ${peer.deviceName} failed; trying another source');
+    unawaited(
+      play(current, start: resume, failedPeers: {..._failedPeers, peer.url}),
+    );
+  }
+
   /// Starts a pending automatic switch without waiting.
   void _switchNow() {
     final s = status.value;
@@ -25,6 +42,10 @@ extension _TorrentPlaybackFailures on TorrentPlayback {
         (s.stage != StreamStage.streaming &&
             s.stage != StreamStage.preparing)) {
       return false;
+    }
+    if (_peerFile != null && peerLookup != null) {
+      _recoverPeer();
+      return true;
     }
     if (s.localFile != null) {
       _generation++;

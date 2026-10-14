@@ -9,14 +9,17 @@ import 'service.dart';
 OfflineSource? sharedPeerSource(
   Ref ref,
   Map<String, PeerStatus> peers,
-  PlaybackItem item,
-) {
+  PlaybackItem item, {
+  Set<Uri> excluded = const {},
+}) {
   final devices = ref.read(devicesProvider);
   for (final MapEntry(key: id, value: peer) in peers.entries) {
     if (!peer.online || !peer.media.any((m) => m.id == item.id)) continue;
     final url = ref.read(syncServiceProvider).proxy.url(id, item.id);
     final name = devices.byId(id)?.name;
-    if (url != null && name != null) return PeerFile(url, name);
+    if (url != null && name != null && !excluded.contains(url)) {
+      return PeerFile(url, name);
+    }
   }
   final candidates = [
     for (final entry in peers.entries)
@@ -36,7 +39,9 @@ OfflineSource? sharedPeerSource(
           infoHash: candidate.stream.release.infoHash,
         );
     final name = devices.byId(candidate.id)?.name;
-    if (url != null && name != null) return PeerFile(url, name, buffered: true);
+    if (url != null && name != null && !excluded.contains(url)) {
+      return PeerFile(url, name, buffered: true);
+    }
   }
   return null;
 }

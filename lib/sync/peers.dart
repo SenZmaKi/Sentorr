@@ -152,6 +152,7 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
           libraryRevision: library.revision,
           media: library.media,
           downloads: library.downloads,
+          streams: library.streams,
         ),
       );
       await ref

@@ -52,6 +52,7 @@ class PlaybackEngine {
     required MetadataFetcher fetchMetadata,
     PlayerLifecycle? lifecycle,
     OfflineLookup? offline,
+    PeerLookup? peerLookup,
     ParkedStreams? parked,
     PreparedStreams? prepared,
     void Function(SharedStream)? share,
@@ -72,6 +73,7 @@ class PlaybackEngine {
       find: find,
       fetchMetadata: fetchMetadata,
       offline: offline,
+      peerLookup: peerLookup,
       parked: parked,
       prepared: prepared,
       share: share,
@@ -224,6 +226,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     fetchMetadata: (release, cancel) =>
         ref.read(torrentMetadataProvider).fetch(release, cancel),
     offline: (item) => offlineSourceFor(ref, item),
+    peerLookup: ref.read(peerPlaybackProvider),
     parked: ref.read(parkedStreamsProvider),
     prepared: ref.read(preparedStreamsProvider),
     share: ref.read(sharedStreamsProvider.notifier).register,

@@ -133,6 +133,27 @@ void main() {
     client.close();
   });
 
+  test('outgoing sync retains partial stream offers', () async {
+    final offer = PeerMedia(
+      item: PlaybackItem(title: fakeTitle(1)),
+      size: 1000,
+      name: 'movie.mkv',
+      release: fakeRelease(1),
+      fileIndex: 0,
+      bufferedBytes: 200,
+    );
+    final pending = peers.syncWith(peer.id);
+    await Future<void>.delayed(Duration.zero);
+    final payload = _payload();
+    payload['library'] = PeerLibrary(streams: [offer]).toJson();
+    client.calls.single.$2.complete(payload);
+    await pending;
+    expect(
+      container.read(peersProvider)[peer.id]!.streams.single.bufferedBytes,
+      200,
+    );
+  });
+
   test(
     'incompatible peers are labelled and cannot publish library or state',
     () async {

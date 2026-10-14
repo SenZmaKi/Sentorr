@@ -191,7 +191,10 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
           prefetched?.item ??
           await _item(state!.request, cancel);
       if (cancel != _cancel) return;
-      final offline = offlineSourceFor(ref, item);
+      final offline = skipPeer
+          ? offlineSourceFor(ref, item)
+          : await refreshedOfflineSourceFor(ref, item);
+      if (cancel != _cancel || !ref.mounted) return;
       if (offline is PeerFile) {
         if (!skipPeer) {
           // Another device's copy: the viewer gets a moment to stream instead.

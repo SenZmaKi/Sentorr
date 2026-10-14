@@ -64,6 +64,7 @@ class TorrentPlayback {
     required this.outputReady,
     required this.fetchMetadata,
     OfflineLookup? offline,
+    this.peerLookup,
     ParkedStreams? parked,
     this.prepared,
     this.share,
@@ -111,6 +112,9 @@ class TorrentPlayback {
 
   /// The item's download, played or shared before any search.
   final OfflineLookup offline;
+  final PeerLookup? peerLookup;
+  PeerFile? _peerFile;
+  Set<Uri> _failedPeers = {};
 
   /// Completes once the video output's render context exists. Torrent
   /// preparation runs alongside it; opening media waits for it.
@@ -150,10 +154,13 @@ class TorrentPlayback {
     TorrentCandidate? torrent,
     TorrentResolution? options,
     Duration? start,
+    Set<Uri> failedPeers = const {},
   }) async {
     final generation = await _begin();
     if (generation == null) return;
     _item = item;
+    _peerFile = null;
+    _failedPeers = {...failedPeers};
     _start = start;
     _autoSwitches = 0;
     if (await _resume(generation, item, torrent, options, start)) {
@@ -161,7 +168,14 @@ class TorrentPlayback {
       return;
     }
     if (_stale(generation)) return;
-    final saved = torrent == null && options == null ? offline(item) : null;
+    var saved = torrent == null && options == null ? offline(item) : null;
+    if (torrent == null &&
+        options == null &&
+        (saved == null || saved is PeerFile) &&
+        peerLookup != null) {
+      saved = await peerLookup!(item, _failedPeers);
+      if (_stale(generation)) return;
+    }
     if (saved is LocalFile && File(saved.path).existsSync()) {
       try {
         await _playLocal(
@@ -177,6 +191,7 @@ class TorrentPlayback {
       return;
     }
     if (saved is PeerFile) {
+      _peerFile = saved;
       try {
         await _playLocal(
           generation,
@@ -186,8 +201,9 @@ class TorrentPlayback {
           peer: saved.deviceName,
           buffered: saved.buffered,
         );
-      } catch (error, stack) {
-        _fail(generation, item, null, error, stack);
+      } catch (error) {
+        _log.info('Peer open failed: $error');
+        if (!_stale(generation)) _recoverPeer();
       }
       return;
     }

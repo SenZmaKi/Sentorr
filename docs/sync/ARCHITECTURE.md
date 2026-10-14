@@ -137,7 +137,12 @@ local separation does not undo intentional synchronization.
 A device shares its finished downloads whose files are still on disk
 (`/v1/library`, and `/v1/media/<imdb id>` with byte ranges).
 `offlineSourceFor` looks up a local file first, then a download in progress,
-then `peerSourceProvider`, which bootstrap points at a reachable peer. When
+then `peerSourceProvider` for cached UI availability. Launch and queued playback
+use `peerPlaybackProvider` to sync all paired devices concurrently, including
+those marked offline, with a five-second wait bound. Candidate offers are probed
+with authenticated HEAD requests concurrently, with a three-second wait bound.
+Finished files retain priority over partial streams; probes that fail or time
+out are skipped. Cancelled launches and replaced player items discard late results. When
 Play finds only a peer's copy, the launch dialog asks before using it: it
 plays once the auto action countdown (`TorrentSettings.autoActionDelay`) runs
 out, and Stream instead searches for a torrent. The player's own lookup, e.g.
@@ -160,8 +165,10 @@ relays that owner's verified byte server. Missing ranges are downloaded normally
 sparse filesystem bytes are never served. This owner survives closing or parking
 the local player, and is released five minutes after its last request completes.
 Closing sync releases all remote owners. A vanished offer or wrong hash returns
-404; discovery loss or host closure ends peer playback through the normal error
-path. Partial peer playback uses the demuxer-cache timeline fallback and never
+404. If opening or playing a peer source fails, the player excludes its URL,
+checks other peer offers, then falls back to torrent search when none remain.
+Replacement playback preserves the last playback position; explicit torrent
+choices continue to bypass peer lookup. Partial peer playback uses the demuxer-cache timeline fallback and never
 claims the whole file is downloaded. Unfinished library downloads that have not
 been opened as torrent streams still only appear as download progress.
 

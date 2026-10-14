@@ -40,8 +40,30 @@ void main() {
   late ParkedStreams parked;
   late TorrentPlayback playback;
   OfflineSource? saved;
+  PeerLookup? peerLookup;
   Future<void> Function() ready = () async {};
   bool failSecond = false;
+
+  TorrentPlayback makePlayback([PeerLookup? lookup]) => TorrentPlayback(
+    player: player,
+    engine: engine,
+    fetchMetadata: (release, cancel) async => Uint8List.fromList([100, 101]),
+    parked: parked,
+    configFor: (release) async {
+      if (failSecond && release.infoHash == second.release.infoHash) {
+        throw StateError('replacement failed');
+      }
+      return TorrentStreamConfig(cacheDirectory: Directory.systemTemp.path);
+    },
+    find: (_, _) async => TorrentResolution(
+      query: TorrentQuery(title: 'Movie'),
+      candidates: [first, second],
+      failures: [],
+    ),
+    outputReady: () => ready(),
+    offline: (_) => saved,
+    peerLookup: lookup,
+  );
 
   setUp(() {
     native = FakePlayback();
@@ -49,33 +71,78 @@ void main() {
     engine = FakeStreamingEngine();
     parked = ParkedStreams();
     saved = null;
+    peerLookup = null;
     ready = () async {};
     failSecond = false;
-    playback = TorrentPlayback(
-      player: player,
-      engine: engine,
-      fetchMetadata: (release, cancel) async => Uint8List.fromList([100, 101]),
-      parked: parked,
-      configFor: (release) async {
-        if (failSecond && release.infoHash == second.release.infoHash) {
-          throw StateError('replacement failed');
-        }
-        return TorrentStreamConfig(cacheDirectory: Directory.systemTemp.path);
-      },
-      find: (_, _) async => TorrentResolution(
-        query: TorrentQuery(title: 'Movie'),
-        candidates: [first, second],
-        failures: [],
-      ),
-      outputReady: () => ready(),
-      offline: (_) => saved,
-    );
+    playback = makePlayback();
   });
   tearDown(() async {
     await playback.close();
     playback.dispose();
     await player.dispose();
     await engine.updates.close();
+  });
+
+  test(
+    'failed peer advances to another peer then falls back to torrent',
+    () async {
+      final a = PeerFile(Uri.parse('http://127.0.0.1/a'), 'A');
+      final b = PeerFile(Uri.parse('http://127.0.0.1/b'), 'B');
+      final exclusions = <Set<Uri>>[];
+      peerLookup = (_, excluded) async {
+        exclusions.add({...excluded});
+        return [a, b].where((p) => !excluded.contains(p.url)).firstOrNull;
+      };
+      playback.dispose();
+      playback = makePlayback((item, excluded) => peerLookup!(item, excluded));
+      native.onOpen = () {
+        native.failOpen = exclusions.last.length < 2;
+      };
+      await playback.play(item);
+      await settlePlayback();
+      expect(exclusions, [
+        <Uri>{},
+        {a.url},
+        {a.url, b.url},
+      ]);
+      expect(engine.sources, hasLength(1));
+      expect(playback.status.value!.stage, StreamStage.streaming);
+    },
+  );
+
+  test(
+    'peer failure during playback resumes through torrent fallback',
+    () async {
+      final peer = PeerFile(Uri.parse('http://127.0.0.1/peer'), 'Peer');
+      playback.dispose();
+      playback = makePlayback(
+        (_, excluded) async => excluded.contains(peer.url) ? null : peer,
+      );
+      await playback.play(item);
+      native.state = native.state.copyWith(
+        position: const Duration(seconds: 42),
+      );
+      expect(playback.unplayable(), isTrue);
+      await settlePlayback();
+      expect(engine.sources, hasLength(1));
+      expect(native.opened.last.start, const Duration(seconds: 42));
+      expect(playback.status.value!.stage, StreamStage.streaming);
+    },
+  );
+
+  test('a newer play discards a late peer lookup', () async {
+    final answer = Completer<PeerFile?>();
+    peerLookup = (playing, _) async =>
+        playing.id == item.id ? answer.future : null;
+    playback.dispose();
+    playback = makePlayback((item, excluded) => peerLookup!(item, excluded));
+    final pending = playback.play(item);
+    await settlePlayback();
+    await playback.play(next, torrent: first);
+    answer.complete(PeerFile(Uri.parse('http://127.0.0.1/stale'), 'Stale'));
+    await pending;
+    expect(playback.item, next);
+    expect(native.opened, hasLength(1));
   });
 
   test(

@@ -35,3 +35,9 @@ class PeerFile extends OfflineSource {
 }
 
 typedef OfflineLookup = OfflineSource? Function(PlaybackItem item);
+
+/// Refreshes and verifies a peer offer, excluding sources already tried.
+typedef PeerLookup = Future<PeerFile?> Function(
+  PlaybackItem item,
+  Set<Uri> excluded,
+);

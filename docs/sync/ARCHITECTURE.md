@@ -1,7 +1,8 @@
 # Device sync and streaming
 
 Status: agreed with the owner on 4 October 2026 and implemented for the local
-network (phases 1–3 below). Cloud backup is separate work in `lib/backup/`.
+network (phases 1–3 below). Google Drive sync lives in `lib/backup/` and shares user-state capture and
+merge with LAN peers through `lib/sync/user_state.dart`.
 Update this file when a decision changes.
 
 ## Shape
@@ -43,6 +44,11 @@ their timestamp ordering until updated.
   retain flattened, deduplicated original contributions so a removal received
   later can discard obsolete progress regardless of three-device merge order.
   A local playback update acknowledges the merged progress as a new event.
+- **Media lists.** List status, rewatch counts and removals travel through the
+  same merge path for LAN and Drive. Watch history includes both resume position
+  and media duration. Drive pulls at launch, on every resume and at the configured
+  interval; backgrounding pushes dirty state. Immutable Drive snapshots preserve
+  concurrent writers before compacting the snapshots each writer observed.
 - **Stays on each device:** `autoDownload`, settings and the download library.
 
 A sync is one round trip: `POST /v1/sync` carries this device's state and its
@@ -282,3 +288,15 @@ The new Drive implementation uses documented [file creation/upload](https://deve
 and file deletion rather than relying on an unchecked conditional PATCH.
 Concurrency and transport are tested with adapters and loopback devices; live
 Google Drive and separate physical-device validation remain outstanding.
+
+## Shared coordination
+
+`lib/sync/coordinator.dart` owns earliest-deadline scheduling, periodic timers,
+serialized runs and coalesced follow-ups. `UserStateSync.listen` registers the
+watch, follow and list change subscriptions for both transports. LAN keeps one
+coordinator for broadcast scheduling and one per peer, so different peers can
+exchange concurrently. Unpairing disposes that peer's coordinator; existing
+request generations still guard late network results. Drive uses one coordinator
+and keeps its sign-in, errors, dirty-state policy and configured interval in
+`BackupNotifier`. The coordinator does not choose when idle changes should sync.
+Library polling and transport retries remain in their respective adapters.

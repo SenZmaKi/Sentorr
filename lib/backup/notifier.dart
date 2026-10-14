@@ -8,9 +8,8 @@ import 'package:logging/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app/services.dart';
-import '../watching/notifier.dart';
-import '../following/notifier.dart';
-import '../lists/notifier.dart';
+import '../sync/coordinator.dart';
+import '../sync/user_state.dart';
 import '../shared/persistence/credential_store.dart';
 import '../settings/notifier.dart';
 import '../shared/app_lifecycle.dart';
@@ -86,35 +85,43 @@ final backupProvider = NotifierProvider<BackupNotifier, BackupState>(
 class BackupNotifier extends Notifier<BackupState> {
   static const _attempts = 3;
 
-  /// Leaving and returning to the app sync only when the last sync is older.
+  /// Backgrounding clean state only syncs when the last sync is older.
   static const _staleAfter = Duration(minutes: 10);
 
-  Timer? _timer;
-  bool _dirty = false, _again = false;
+  late SyncCoordinator _coordinator;
+  bool _dirty = false;
   int _changes = 0;
-  Future<void>? _running;
 
   @override
   BackupState build() {
-    ref.onDispose(() => _timer?.cancel());
+    _coordinator = SyncCoordinator(
+      action: () async {
+        if (ref.read(driveAuthProvider).connected) await _perform(_sync);
+      },
+      active: () => ref.mounted,
+    );
+    ref.onDispose(_coordinator.dispose);
     ref.listen(settingsProvider.select((s) => s.backup.interval), (_, _) {
       if (state.connected) _arm();
     });
     void changed() {
       _dirty = true;
       _changes++;
-      if (state.busy) _again = true;
+      _coordinator.changed();
     }
 
-    ref.listen(watchHistoryProvider, (_, _) => changed());
-    ref.listen(followedSeriesProvider, (_, _) => changed());
-    ref.listen(watchListsProvider, (_, _) => changed());
+    ref.read(userStateSyncProvider).listen(ref, changed);
     // Leaving pushes what was watched here; coming back pulls what was
     // watched elsewhere, so a switch between devices finds them in step.
     ref.listen(AppLifecycleNotifier.provider, (_, now) {
       final left =
           now == AppLifecycleState.paused || now == AppLifecycleState.hidden;
-      if (left || now == AppLifecycleState.resumed) _syncIfStale();
+      if (now == AppLifecycleState.resumed && state.connected) {
+        // Local freshness says nothing about changes made on another device.
+        unawaited(syncNow());
+      } else if (left) {
+        _syncIfStale();
+      }
     });
     return const BackupState();
   }
@@ -137,7 +144,7 @@ class BackupNotifier extends Notifier<BackupState> {
   });
 
   Future<void> disconnect() async {
-    _timer?.cancel();
+    _coordinator.stopRepeating();
     await ref.read(driveAuthProvider).disconnect();
     state = const BackupState();
   }
@@ -205,26 +212,17 @@ class BackupNotifier extends Notifier<BackupState> {
     );
   }
 
-  Future<void> _run(Future<void> Function() action) {
-    if (_running case final running?) {
-      _again = true;
-      return running;
-    }
-    return _running = _runRepeatedly(action).whenComplete(() {
-      _running = null;
-    });
-  }
+  Future<void> _run(Future<void> Function() action) =>
+      _coordinator.run(first: () => _perform(action));
 
-  Future<void> _runRepeatedly(Future<void> Function() action) async {
+  Future<void> _perform(Future<void> Function() action) async {
     state = state.copyWith(busy: true, error: () => null);
     try {
-      do {
-        _again = false;
-        await action();
-        action = _sync;
-      } while (_again && ref.mounted && ref.read(driveAuthProvider).connected);
+      await action();
     } catch (error, stack) {
       if (ref.mounted) _fail(error, stack);
+      // Failed passes stop the drain; the next trigger retries normally.
+      _coordinator.clearFollowUp();
     } finally {
       if (ref.mounted) {
         state = state.copyWith(
@@ -247,10 +245,7 @@ class BackupNotifier extends Notifier<BackupState> {
 
   /// Syncs every [BackupSettings.interval] from now, replacing any timer.
   void _arm() {
-    _timer?.cancel();
-    _timer = Timer.periodic(ref.read(settingsProvider).backup.interval, (_) {
-      if (state.connected) unawaited(syncNow());
-    });
+    _coordinator.repeat(ref.read(settingsProvider).backup.interval);
   }
 
   void _fail(Object error, StackTrace stack) {

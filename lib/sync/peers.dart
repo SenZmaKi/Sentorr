@@ -3,12 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
-import '../following/notifier.dart';
-import '../lists/notifier.dart';
 import '../player/models.dart';
 import '../player/stream/offline_source.dart';
-import '../watching/notifier.dart';
 import 'client.dart';
+import 'coordinator.dart';
+import 'user_state.dart';
 import 'devices.dart';
 import 'exchange.dart';
 import 'media_proxy.dart';
@@ -46,8 +45,9 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
   static const _shared = Duration(seconds: 2);
   static const _progress = Duration(seconds: 5);
 
-  Timer? _pending, _beat, _poll;
-  DateTime? _deadline;
+  Timer? _poll;
+  late SyncCoordinator _broadcast;
+  final _coordinators = <String, SyncCoordinator>{};
   final _requests = PeerRequests();
 
   bool _valid(String id, int epoch, String fingerprint) =>
@@ -55,42 +55,32 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
       _requests.epoch(id) == epoch &&
       ref.read(devicesProvider).byId(id)?.fingerprint == fingerprint;
 
-  /// Syncs under way by device, and those asked for again meanwhile.
-  final _running = <String, Future<void>>{};
-  final _again = <String>{};
-
   @override
   Map<String, PeerStatus> build() {
+    _broadcast = SyncCoordinator(action: syncAll, active: () => ref.mounted);
     ref.onDispose(() {
-      _pending?.cancel();
-      _beat?.cancel();
+      _broadcast.dispose();
+      for (final coordinator in _coordinators.values) {
+        coordinator.dispose();
+      }
       _poll?.cancel();
     });
-    ref.listen(watchHistoryProvider, (_, _) => _schedule(_settle));
-    ref.listen(followedSeriesProvider, (_, _) => _schedule(_settle));
-    ref.listen(watchListsProvider, (_, _) => _schedule(_settle));
+    ref.read(userStateSyncProvider).listen(ref, () => _schedule(_settle));
     ref.listen(sharedLibraryShapeProvider, (_, _) => _schedule(_shared));
     return const {};
   }
 
   /// Starts syncing on a timer, and with every paired device now.
   void start() {
-    _beat ??= Timer.periodic(_heartbeat, (_) => unawaited(syncAll()));
+    _broadcast.repeat(_heartbeat);
     _poll ??= Timer.periodic(_progress, (_) => _refreshDownloading());
-    unawaited(syncAll());
+    unawaited(_broadcast.run());
   }
 
   /// The soonest of what is waiting wins, so a burst of changes is one sync.
   void _schedule(Duration after) {
     if (ref.read(devicesProvider).paired.isEmpty) return;
-    final deadline = DateTime.now().add(after);
-    if (_deadline != null && !_deadline!.isAfter(deadline)) return;
-    _deadline = deadline;
-    _pending?.cancel();
-    _pending = Timer(after, () {
-      _deadline = null;
-      unawaited(syncAll());
-    });
+    _broadcast.schedule(after);
   }
 
   Future<void> syncAll() async {
@@ -112,24 +102,15 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
   /// Exchanges state with [id], then fetches what it shares. Asked while
   /// one runs, it runs once more after, so nothing changed meanwhile waits.
   Future<void> syncWith(String id) {
-    if (_running[id] case final running?) {
-      _again.add(id);
-      return running;
-    }
-    final epoch = _requests.epoch(id);
-    return _running[id] = _syncRepeatedly(id, epoch).whenComplete(() {
-      // A block: returning the removed future would wait on itself.
-      if (_requests.epoch(id) == epoch) _running.remove(id);
+    if (!ref.mounted) return Future.value();
+    final coordinator = _coordinators.putIfAbsent(id, () {
+      final epoch = _requests.epoch(id);
+      return SyncCoordinator(
+        action: () => _syncOnce(id),
+        active: () => ref.mounted && _requests.epoch(id) == epoch,
+      );
     });
-  }
-
-  Future<void> _syncRepeatedly(String id, int epoch) async {
-    do {
-      _again.remove(id);
-      await _syncOnce(id);
-    } while (_again.contains(id) &&
-        ref.mounted &&
-        _requests.epoch(id) == epoch);
+    return coordinator.run();
   }
 
   Future<void> _syncOnce(String id) async {
@@ -243,7 +224,7 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
   Future<void> refreshLibrary(String id) async {
     final to = route(id);
     if (to == null ||
-        _running.containsKey(id) ||
+        (_coordinators[id]?.running ?? false) ||
         !_requests.refreshing.add(id)) {
       return;
     }
@@ -330,8 +311,7 @@ class PeersNotifier extends Notifier<Map<String, PeerStatus>> {
 
   void forget(String id) {
     _requests.forget(id);
-    _running.remove(id);
-    _again.remove(id);
+    _coordinators.remove(id)?.dispose();
     state = {...state}..remove(id);
   }
 

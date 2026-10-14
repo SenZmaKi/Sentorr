@@ -1,28 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../following/notifier.dart';
-import '../lists/notifier.dart';
-import '../watching/notifier.dart';
+import '../sync/payload.dart';
+import '../sync/user_state.dart';
 import 'backup_bundle.dart';
 
-/// Reads what a backup keeps from the app and folds a backup back in.
+/// Adapts the shared user state to the versioned file/Drive backup format.
 final backupDataProvider = Provider<BackupData>((ref) => BackupData(ref));
 
 class BackupData {
   BackupData(this._ref);
   final Ref _ref;
 
-  BackupBundle current() => BackupBundle(
-    watch: _ref.read(watchHistoryProvider.notifier).snapshot,
-    following: _ref.read(followedSeriesProvider.notifier).snapshot,
-    lists: _ref.read(watchListsProvider.notifier).snapshot,
-  );
-
-  /// Merges [bundle] in: each keeps the newer record of every title, and
-  /// what either side removed stays removed. Preferences are not part of it.
-  Future<void> apply(BackupBundle bundle) async {
-    await _ref.read(watchHistoryProvider.notifier).merge(bundle.watch);
-    await _ref.read(followedSeriesProvider.notifier).merge(bundle.following);
-    await _ref.read(watchListsProvider.notifier).merge(bundle.lists);
+  BackupBundle current() {
+    final state = _ref.read(userStateSyncProvider).current();
+    return BackupBundle(
+      watch: state.watch,
+      following: state.following,
+      lists: state.lists,
+    );
   }
+
+  Future<void> apply(BackupBundle bundle) => _ref
+      .read(userStateSyncProvider)
+      .merge(
+        SyncPayload(
+          watch: bundle.watch,
+          following: bundle.following,
+          lists: bundle.lists,
+        ),
+      );
 }

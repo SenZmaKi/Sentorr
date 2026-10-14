@@ -23,6 +23,10 @@ import 'package:sentorr/watching/notifier.dart';
 import '../support/fake_following.dart';
 import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
+import '../support/fake_lists.dart';
+
+import 'package:sentorr/lists/models.dart';
+import 'package:sentorr/lists/notifier.dart';
 
 /// One shared file, versioned like Drive's checksum.
 class _Remote implements BackupRemote {
@@ -91,6 +95,7 @@ ProviderContainer _device(
   final container = ProviderContainer(
     overrides: [
       ...watchHistoryOverrides(history),
+      ...watchListsOverrides(),
       ...followedSeriesOverrides(followed),
       initialSettingsProvider.overrideWithValue(const AppSettings()),
       backupRemoteProvider.overrideWithValue(remote),
@@ -178,6 +183,44 @@ void main() {
     expect((await remote.download())!.bundle.watch.entries.single.id, 'tt1');
     device.dispose();
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+  });
+
+  testWidgets('resume pulls remote lists and progress after a recent sync', (
+    tester,
+  ) async {
+    final remote = _Remote();
+    final phone = _device(remote);
+    final pc = _device(remote);
+    await _sync(pc);
+    await _sync(phone);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    await tester.pump();
+    await tester.pump();
+    await phone
+        .read(watchListsProvider.notifier)
+        .set(fakeTitle(1), WatchStatus.watching);
+    await phone
+        .read(watchHistoryProvider.notifier)
+        .record(
+          _watched(1, Duration.zero).item,
+          position: const Duration(minutes: 37),
+          duration: const Duration(minutes: 95),
+        );
+    await _sync(phone);
+    expect(pc.read(watchHistoryProvider), isEmpty);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pump();
+    expect(pc.read(watchListsProvider).single.status, WatchStatus.watching);
+    final watched = pc.read(watchHistoryProvider).single;
+    expect(watched.position, const Duration(minutes: 37));
+    expect(watched.duration, const Duration(minutes: 95));
+    await phone.read(watchListsProvider.notifier).set(fakeTitle(1), null);
+    await _sync(phone);
+    await _sync(pc);
+    expect(pc.read(watchListsProvider), isEmpty);
+    await _sync(phone);
+    expect(phone.read(watchListsProvider), isEmpty);
   });
 
   test('devices that sync in turn end up with the same history', () async {

@@ -108,4 +108,19 @@ void main() {
     scheduler.prune();
     expect(handle.calls, calls);
   });
+
+  test('a paced window sets how many pieces get deadlines and spacing', () {
+    final handle = TestHandle(pieceLength: 1024 * 1024);
+    final scheduler = PieceScheduler(handle);
+    scheduler.demand(
+      Cancellation(),
+      4,
+      30,
+      8,
+      urgentPieces: 3,
+      deadlineStep: 250,
+    );
+    expect(handle.deadlines, {4: 0, 5: 250, 6: 500});
+    expect(handle.priorities[7], 5);
+  });
 }

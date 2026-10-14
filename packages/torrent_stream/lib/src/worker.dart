@@ -98,6 +98,8 @@ Future<Object?> _run(
         message['start'] as int,
         message['end'] as int,
       );
+    case 'pace':
+      core.pace(message['stream'] as int, message['rate'] as int);
     case 'seek':
       core.seek(message['stream'] as int);
     case 'closeStream':

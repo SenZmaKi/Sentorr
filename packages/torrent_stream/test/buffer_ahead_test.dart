@@ -43,6 +43,13 @@ class BufferEngine implements TorrentEngine {
   }
 
   @override
+  Future<void> pace(int stream, int bytesPerSecond) async {
+    rates.add(bytesPerSecond);
+  }
+
+  final rates = <int>[];
+
+  @override
   Future<void> release(
     String hash,
     String owner, {
@@ -78,6 +85,8 @@ void main() {
       const Duration(minutes: 60),
     );
     expect(engine.ranges.last, (5500000, 6000000));
+    // 6,000,000 bytes over an hour paces the urgent window once.
+    expect(engine.rates, [1666]);
     await session.close();
   });
   test('entire file does not need duration or advancing playback', () async {

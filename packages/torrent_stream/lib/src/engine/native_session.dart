@@ -27,6 +27,12 @@ class NativeSession {
       // A paused or briefly unreachable peer is retried after this many
       // seconds per failure, instead of libtorrent's minute: playback waits.
       LibtorrentTagItem.settingsInt(LibtorrentSettingsTag.minReconnectTime, 5),
+      // A peer's pipeline holds about this many seconds of requests; blocks
+      // already sent cannot be recalled, so urgent pieces wait behind them.
+      LibtorrentTagItem.settingsInt(_requestQueueTime, 1),
+      // Reach more of the swarm in a stream's first seconds.
+      LibtorrentTagItem.settingsInt(_connectionSpeed, 100),
+      LibtorrentTagItem.settingsInt(_torrentConnectBoost, 60),
     ]);
     configure(settings);
     _timer = Timer.periodic(const Duration(milliseconds: 20), (_) => _pump());
@@ -99,9 +105,17 @@ class NativeSession {
   /// settings_pack::outgoing_interfaces, which the binding does not name.
   static const _outgoingInterfaces = 0x0000 + 4;
 
+  /// settings_pack int settings the binding does not name.
+  static const _requestQueueTime = 0x4000 + 6;
+  static const _connectionSpeed = 0x4000 + 18;
+  static const _torrentConnectBoost = 0x4000 + 98;
+
   Timer? _timer;
   final _reads = <(int, int), Completer<Uint8List>>{};
   final _readFutures = <(int, int), Future<Uint8List>>{};
+
+  /// Pieces readers are waiting on, checked at every alert pump.
+  final _arrivals = <(int, int), (TorrentHandle, Completer<void>)>{};
   final _events = StreamController<AlertInfo>.broadcast(sync: true);
   final _lifetime = Cancellation();
   bool _closed = false;
@@ -125,6 +139,7 @@ class NativeSession {
         }
         _events.add(alert);
       }
+      _checkArrivals();
     } catch (error, stack) {
       for (final pending in _reads.values) {
         pending.completeError(error, stack);
@@ -134,6 +149,30 @@ class NativeSession {
     }
   }
 
+  void _checkArrivals() {
+    _arrivals.removeWhere((key, waiter) {
+      final (handle, arrived) = waiter;
+      try {
+        if (!handle.havePiece(key.$2)) return false;
+        arrived.complete();
+      } catch (error, stack) {
+        arrived.completeError(error, stack);
+      }
+      return true;
+    });
+  }
+
+  /// Completes when [piece] is verified, without each reader polling.
+  Future<void> _arrival(TorrentHandle torrent, int piece) => _arrivals
+      .putIfAbsent((torrent.id, piece), () {
+        final arrived = Completer<void>();
+        // Readers may all have gone by the time it settles.
+        arrived.future.ignore();
+        return (torrent, arrived);
+      })
+      .$2
+      .future;
+
   Future<Uint8List> read(
     TorrentHandle torrent,
     int piece,
@@ -141,17 +180,16 @@ class NativeSession {
     required Duration pieceTimeout,
     required Duration readTimeout,
   }) async {
-    final watch = Stopwatch()..start();
-    while (true) {
-      _lifetime.check();
-      cancellation.check();
-      if (torrent.havePiece(piece)) break;
-      if (watch.elapsed > pieceTimeout) {
-        throw TimeoutException('Waiting for torrent piece $piece');
-      }
+    _lifetime.check();
+    cancellation.check();
+    if (!torrent.havePiece(piece)) {
       await _lifetime.wait(
         cancellation.wait(
-          Future<void>.delayed(const Duration(milliseconds: 40)),
+          _arrival(torrent, piece).timeout(
+            pieceTimeout,
+            onTimeout: () =>
+                throw TimeoutException('Waiting for torrent piece $piece'),
+          ),
         ),
       );
     }
@@ -187,6 +225,10 @@ class NativeSession {
     }
     _reads.clear();
     _readFutures.clear();
+    for (final (_, arrived) in _arrivals.values) {
+      arrived.completeError(const ReadCancelled());
+    }
+    _arrivals.clear();
     session.close();
     await _events.close();
   }

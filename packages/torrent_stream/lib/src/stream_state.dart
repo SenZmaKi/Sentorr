@@ -36,6 +36,7 @@ TorrentStreamState streamStateOf(
     downloadedTimes: reads?.downloadedTimes ?? const [],
     mediaDuration: reads?.mediaDuration ?? 0,
     indexStatus: reads?.indexStatus ?? '',
+    startupStatus: reads?.startupStatus ?? '',
     cachedBytes: reads?.cachedBytes ?? 0,
     // A closed stream's totals outlive it.
     servedBytes: reads?.servedBytes ?? previous?.servedBytes ?? 0,

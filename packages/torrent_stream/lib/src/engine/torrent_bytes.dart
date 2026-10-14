@@ -7,6 +7,7 @@ import 'package:libtorrent_dart/libtorrent_dart.dart';
 import 'byte_source.dart';
 import 'cancellation.dart';
 import 'piece_scheduler.dart';
+import 'stream_startup.dart';
 
 /// One file's bytes for one stream, read through [scheduler], which other
 /// streams of the same torrent share.
@@ -26,11 +27,70 @@ class TorrentBytes implements ByteSource {
   final PieceScheduler scheduler;
   final int pieceLength, lookahead;
   final _prefetch = Cancellation();
+  late final startup = StreamStartup(length);
+
+  /// The disk window playback wants, held back while playback starts.
+  (int, int)? _wanted;
+
+  /// Average media bytes per second, once the caller knows the duration.
+  int? _bytesPerSecond;
 
   void prefetch(int start, int end) {
     final first = (file.offset + start) ~/ pieceLength;
     final last = (file.offset + end - 1) ~/ pieceLength;
-    scheduler.demand(_prefetch, first, last, last - first, urgent: false);
+    _wanted = (first, last);
+    if (!startup.starting) _applyPrefetch();
+  }
+
+  void _applyPrefetch() {
+    if (_wanted case (final first, final last)) {
+      scheduler.demand(_prefetch, first, last, last - first, urgent: false);
+    }
+  }
+
+  /// Sizes the time-critical window and deadlines to the media's bitrate.
+  void pace(int bytesPerSecond) {
+    if (bytesPerSecond > 0) _bytesPerSecond = bytesPerSecond;
+  }
+
+  /// About 8 seconds of video, so the player's first frames and probe
+  /// arrive before anything else competes for peers.
+  int get urgentBytes => switch (_bytesPerSecond) {
+    final rate? => (rate * 8).clamp(_minUrgentBytes, _maxUrgentBytes),
+    null => _minUrgentBytes,
+  };
+  static const _minUrgentBytes = 2 * 1024 * 1024;
+  static const _maxUrgentBytes = 64 * 1024 * 1024;
+
+  int get _urgentPieces => min(16, max(1, (urgentBytes / pieceLength).ceil()));
+
+  /// Milliseconds of playback each piece holds.
+  int get _deadlineStep => switch (_bytesPerSecond) {
+    final rate? => (pieceLength * 1000 ~/ rate).clamp(100, 4000),
+    null => 500,
+  };
+
+  /// A new playback position: urgent reads own the bandwidth until the
+  /// player has a contiguous start window, then the disk window resumes.
+  void restart() {
+    startup.begin(urgentBytes);
+    scheduler.release(_prefetch);
+    _awaitReads();
+  }
+
+  int _playbackReads = 0;
+  Timer? _idle;
+
+  /// A player that stops reading, e.g. paused right after a seek, has no
+  /// start to protect; let the disk window go on without it.
+  void _awaitReads() {
+    _idle?.cancel();
+    _idle = Timer(const Duration(seconds: 3), () {
+      if (_playbackReads == 0 && startup.starting) {
+        startup.abandon();
+        _applyPrefetch();
+      }
+    });
   }
 
   final _cache = <int, Uint8List>{};
@@ -42,9 +102,36 @@ class TorrentBytes implements ByteSource {
   String get name => file.path;
   @override
   int get length => file.size;
+
+  /// A player read: the first one begins the startup window.
   @override
-  Future<Uint8List> read(int offset, int count, Cancellation cancellation) =>
-      _read(offset, count, cancellation, ahead: lookahead, urgent: true);
+  Future<Uint8List> read(
+    int offset,
+    int count,
+    Cancellation cancellation,
+  ) async {
+    if (!startup.begun) restart();
+    _playbackReads++;
+    try {
+      return await _read(
+        offset,
+        count,
+        cancellation,
+        ahead: max(lookahead, _urgentPieces - 1),
+        urgent: true,
+        playback: true,
+      );
+    } finally {
+      if (--_playbackReads == 0 && startup.starting) _awaitReads();
+    }
+  }
+
+  /// Urgent, but not playback: warming a header must not start the hold.
+  Future<Uint8List> readHead(
+    int offset,
+    int count,
+    Cancellation cancellation,
+  ) => _read(offset, count, cancellation, ahead: lookahead, urgent: true);
 
   /// Sparse, non-urgent metadata read without expanding the playback window.
   Future<Uint8List> readIndex(
@@ -59,6 +146,7 @@ class TorrentBytes implements ByteSource {
     Cancellation cancellation, {
     required int ahead,
     required bool urgent,
+    bool playback = false,
   }) async {
     if (offset < 0 || count < 0 || offset + count > length) {
       throw RangeError('Read outside selected file');
@@ -75,12 +163,18 @@ class TorrentBytes implements ByteSource {
         (file.offset + length - 1) ~/ pieceLength,
         ahead,
         urgent: urgent,
+        urgentPieces: urgent && _bytesPerSecond != null ? _urgentPieces : null,
+        deadlineStep: _deadlineStep,
       );
+      final waited = Stopwatch()..start();
       final data = await cancellation.wait(_piece(piece));
       cancellation.check();
       final within = absolute % pieceLength;
       final take = min(count - copied, data.length - within);
       if (take <= 0) throw StateError('Invalid native piece layout');
+      if (playback && startup.served(piece, offset + copied, take, waited)) {
+        _applyPrefetch();
+      }
       if (copied == 0 && take == count) {
         // Socket writes can borrow a piece; eviction only drops our reference.
         // Keep callers from modifying the cached bytes through this view.
@@ -139,6 +233,7 @@ class TorrentBytes implements ByteSource {
   }
 
   void close() {
+    _idle?.cancel();
     _prefetch.cancel();
     scheduler.release(_prefetch);
     for (final loading in _loading.values) {

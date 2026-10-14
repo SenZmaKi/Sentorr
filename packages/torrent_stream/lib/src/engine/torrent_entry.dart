@@ -240,6 +240,7 @@ class TorrentEntry {
             downloadedRanges: stream.availability.ranges,
             downloadedTimes: stream.downloadedTimes,
             indexStatus: stream.indexing.status,
+            startupStatus: stream.bytes.startup.status,
             mediaDuration: stream.mediaIndex?.duration ?? 0,
             cachedBytes: stream.bytes.cachedBytes,
             servedBytes: stream.server?.servedBytes ?? 0,

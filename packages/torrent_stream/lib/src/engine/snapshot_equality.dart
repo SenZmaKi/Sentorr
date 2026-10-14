@@ -61,6 +61,7 @@ bool sameSnapshot(TorrentSnapshot a, TorrentSnapshot b) {
         !_sameList(x.downloadedTimes, y.downloadedTimes) ||
         x.mediaDuration != y.mediaDuration ||
         x.indexStatus != y.indexStatus ||
+        x.startupStatus != y.startupStatus ||
         !_sameFile(x.file, y.file)) {
       return false;
     }

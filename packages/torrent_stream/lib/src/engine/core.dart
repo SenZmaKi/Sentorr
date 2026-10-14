@@ -225,8 +225,15 @@ class EngineCore {
     host.bytes.prefetch(start, end);
   }
 
+  /// Sizes the stream's urgent window to its media bitrate.
+  void pace(int id, int bytesPerSecond) {
+    _streams[id]?.streams[id]?.bytes.pace(bytesPerSecond);
+  }
+
   void seek(int id) {
-    _streams[id]?.streams[id]?.server?.cancelReads();
+    final host = _streams[id]?.streams[id];
+    host?.server?.cancelReads();
+    host?.bytes.restart();
   }
 
   Future<void> closeStream(int id) async {

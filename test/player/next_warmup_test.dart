@@ -39,7 +39,7 @@ void main() {
     requiresFileSelection: false,
   );
   test(
-    'only warms a playing next episode near the end, once per queue target',
+    'only warms a playing next item near the end, once per queue target',
     () async {
       final prepared = _Preparation();
       var searches = 0;
@@ -54,7 +54,7 @@ void main() {
       warmup.update(
         queue,
         const Duration(seconds: 100),
-        const Duration(seconds: 300),
+        const Duration(seconds: 600),
         playing: true,
       );
       warmup.update(
@@ -111,33 +111,57 @@ void main() {
       }
     },
   );
-  test(
-    'existing offline/peer sources and movie recommendations are not warmed',
-    () {
-      final prepared = _Preparation();
-      var searches = 0;
-      final warmup = NextTorrentWarmup(
-        prepared: prepared,
-        available: (_) => true,
-        find: (_, _) async {
-          searches++;
-          return candidate;
-        },
-      );
-      warmup.update(
-        queue,
-        const Duration(seconds: 220),
-        const Duration(seconds: 300),
-        playing: true,
-      );
-      warmup.update(
-        PlayQueue(items: items, index: 0, kind: QueueKind.recommendations),
-        const Duration(seconds: 220),
-        const Duration(seconds: 300),
-        playing: true,
-      );
-      expect(searches, 0);
-      warmup.dispose();
-    },
-  );
+  test('searches early but downloads only near the end', () async {
+    final prepared = _Preparation();
+    var searches = 0;
+    final warmup = NextTorrentWarmup(
+      prepared: prepared,
+      available: (_) => false,
+      find: (_, _) async {
+        searches++;
+        return candidate;
+      },
+    );
+    final recommendations = PlayQueue(
+      items: items,
+      index: 0,
+      kind: QueueKind.recommendations,
+    );
+    warmup.update(
+      recommendations,
+      const Duration(minutes: 7),
+      const Duration(minutes: 10),
+      playing: true,
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect((searches, prepared.calls), (1, 0));
+    warmup.update(
+      recommendations,
+      const Duration(minutes: 9),
+      const Duration(minutes: 10),
+      playing: true,
+    );
+    expect((searches, prepared.calls), (1, 1));
+    warmup.dispose();
+  });
+  test('existing offline/peer sources are not warmed', () {
+    final prepared = _Preparation();
+    var searches = 0;
+    final warmup = NextTorrentWarmup(
+      prepared: prepared,
+      available: (_) => true,
+      find: (_, _) async {
+        searches++;
+        return candidate;
+      },
+    );
+    warmup.update(
+      queue,
+      const Duration(seconds: 220),
+      const Duration(seconds: 300),
+      playing: true,
+    );
+    expect(searches, 0);
+    warmup.dispose();
+  });
 }

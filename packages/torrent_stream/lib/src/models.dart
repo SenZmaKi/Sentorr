@@ -83,6 +83,7 @@ class TorrentStreamState {
     this.downloadedTimes = const [],
     this.mediaDuration = 0,
     this.indexStatus = '',
+    this.startupStatus = '',
     this.peers = 0,
     this.seeds = 0,
     this.cachedBytes = 0,
@@ -94,6 +95,9 @@ class TorrentStreamState {
   final List<DownloadedTimeRange> downloadedTimes;
   final double mediaDuration;
   final String indexStatus;
+
+  /// How the latest start of playback, at opening or a seek, went.
+  final String startupStatus;
   final TorrentStreamPhase phase;
   final List<TorrentStreamFile> files;
   final bool transferPaused;
@@ -158,6 +162,7 @@ class TorrentStreamState {
     downloadedTimes: downloadedTimes,
     mediaDuration: mediaDuration,
     indexStatus: indexStatus,
+    startupStatus: startupStatus,
     peers: next == TorrentStreamPhase.closed ? 0 : peers,
     seeds: next == TorrentStreamPhase.closed ? 0 : seeds,
     cachedBytes: next == TorrentStreamPhase.closed ? 0 : cachedBytes,

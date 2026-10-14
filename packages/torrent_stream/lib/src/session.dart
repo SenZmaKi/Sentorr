@@ -183,11 +183,45 @@ class TorrentStreamSession {
     if (_hash case final hash?) await engine.addPeers(hash, peers);
   }
 
+  /// Sizes the urgent window from the media's [duration], e.g. a catalog
+  /// runtime before the player knows the file's own.
+  Future<void> setMediaDuration(Duration duration) async {
+    _check();
+    final file = _file, stream = _stream;
+    if (file == null || stream == null || duration.inSeconds <= 0) return;
+    final rate = file.length ~/ duration.inSeconds;
+    if (rate == _rate) return;
+    _rate = rate;
+    await engine.pace(stream, rate);
+  }
+
+  int? _rate;
+
+  /// Downloads the file's opening ahead of any player, e.g. for the next
+  /// episode, about [span] of it once the bitrate is known.
+  Future<void> prefetchOpening({
+    Duration span = const Duration(seconds: 30),
+  }) async {
+    _check();
+    final file = _file, stream = _stream;
+    if (file == null || stream == null) return;
+    final bytes = switch (_rate) {
+      final rate? => (rate * span.inSeconds).clamp(_minOpening, _maxOpening),
+      null => _minOpening,
+    };
+    await engine.prefetch(stream, 0, bytes.clamp(1, file.length));
+  }
+
+  static const _minOpening = 32 * 1024 * 1024;
+  static const _maxOpening = 128 * 1024 * 1024;
+
   /// Keeps disk downloading independent of the player's HTTP memory cache.
+  /// The engine holds this window back while playback is starting.
   Future<void> bufferAhead(Duration position, Duration duration) async {
     _check();
     final file = _file, stream = _stream;
     if (file == null || stream == null) return;
+    await setMediaDuration(duration);
     if (config.downloadAheadMinutes == 0) {
       await engine.prefetch(stream, 0, file.length);
     } else if (duration > Duration.zero) {

@@ -236,6 +236,11 @@ class TorrentEngine {
     await _command('prefetch', {'stream': stream, 'start': start, 'end': end});
   }
 
+  /// Sizes a stream's time-critical window to [bytesPerSecond] of media.
+  Future<void> pace(int stream, int bytesPerSecond) async {
+    await _command('pace', {'stream': stream, 'rate': bytesPerSecond});
+  }
+
   Future<void> prepareSeek(int stream) async {
     await _command('seek', {'stream': stream});
   }

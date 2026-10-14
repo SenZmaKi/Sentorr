@@ -103,4 +103,39 @@ void main() {
     await rejected;
     bytes.release(owner);
   });
+
+  test('the disk window waits until playback has a start window', () async {
+    bytes.close();
+    final handle = TestHandle();
+    final scheduler = PieceScheduler(handle);
+    bytes = TorrentBytes(
+      handle,
+      const TorrentFileEntry(
+        index: 0,
+        offset: 0,
+        size: 640,
+        flags: 0,
+        path: 'video.mkv',
+      ),
+      (_, _) async => Uint8List(16),
+      scheduler,
+      readAheadBytes: 16,
+    );
+    // Before playback, e.g. warming the next episode, it applies at once.
+    bytes.prefetch(320, 640);
+    expect(handle.priorities[30], 5);
+    final owner = Cancellation();
+    final first = bytes.read(0, 4, owner);
+    expect(handle.priorities[30], 0);
+    await first;
+    expect(bytes.startup.status, startsWith('starting'));
+    // Reading on to the end completes the start window.
+    await bytes.read(4, 636, owner);
+    expect(bytes.startup.status, startsWith('ready'));
+    expect(handle.priorities[30], 5);
+    // A seek holds it again.
+    bytes.restart();
+    expect(handle.priorities[30], 0);
+    bytes.release(owner);
+  });
 }

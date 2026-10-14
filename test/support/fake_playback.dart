@@ -105,6 +105,13 @@ class FakeStreamingEngine implements TorrentEngine {
 
   @override
   Future<void> prepareSeek(int stream) async => seekGate?.future;
+  @override
+  Future<void> pace(int stream, int bytesPerSecond) async {}
+  final prefetched = <(int, int)>[];
+  @override
+  Future<void> prefetch(int stream, int start, int end) async {
+    prefetched.add((start, end));
+  }
 
   @override
   Future<void> release(

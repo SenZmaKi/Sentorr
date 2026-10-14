@@ -12,7 +12,7 @@ class PieceScheduler {
     : base = base ?? ((_) => 0);
   final TorrentHandle handle;
   int Function(int piece) base;
-  final _consumers = <Cancellation, (int, int)>{};
+  final _consumers = <Cancellation, _Window>{};
   final _background = <Cancellation>{};
   final _active = <int>{};
   final _deadlines = <int, int>{};
@@ -25,11 +25,20 @@ class PieceScheduler {
     int lastPiece,
     int lookahead, {
     bool urgent = true,
+    int? urgentPieces,
+    int deadlineStep = 500,
   }) {
     final changedUrgency = urgent
         ? _background.remove(owner)
         : _background.add(owner);
-    final window = (piece, min(lastPiece, piece + lookahead));
+    final window = (
+      piece,
+      min(lastPiece, piece + lookahead),
+      // Without a known bitrate, about 2 MiB of video is time-critical.
+      urgentPieces ??
+          min(4, max(1, (2 * 1024 * 1024 / handle.pieceLength).ceil())),
+      deadlineStep,
+    );
     // HTTP reads within the same piece keep the same demand window.
     if (!changedUrgency &&
         _consumers[owner] == window &&
@@ -65,13 +74,10 @@ class PieceScheduler {
     final priorities = <int, int>{};
     for (final entry in _consumers.entries) {
       if (entry.key.isCancelled) continue;
-      final (start, end) = entry.value;
       // Keep a bounded upcoming window time-critical, rather than waiting
-      // for the player to block on each next piece. Large pieces shrink it.
-      final urgentCount = min(
-        4,
-        max(1, (2 * 1024 * 1024 / handle.pieceLength).ceil()),
-      );
+      // for the player to block on each next piece. Deadlines are spaced by
+      // when playback reaches each piece.
+      final (start, end, urgentCount, step) = entry.value;
       for (var piece = start; piece <= end; piece++) {
         final urgent =
             !_background.contains(entry.key) && piece - start < urgentCount;
@@ -82,7 +88,7 @@ class PieceScheduler {
           urgent ? 7 : 5,
         );
         if (urgent) {
-          final deadline = (piece - start) * 500;
+          final deadline = (piece - start) * step;
           deadlines[piece] = min(deadlines[piece] ?? deadline, deadline);
         }
       }
@@ -123,3 +129,7 @@ class PieceScheduler {
     _apply();
   }
 }
+
+/// First and last piece, how many lead pieces get deadlines, and their
+/// spacing in milliseconds.
+typedef _Window = (int, int, int, int);

@@ -71,10 +71,7 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
         _pendingPreparation = null;
         _served = held.stream;
         _candidate = candidate;
-        _transfer = held.session.states.listen(
-          (transfer) =>
-              _update(generation, (s) => s.copyWith(transfer: transfer)),
-        );
+        _watchTransfer(generation, held.session);
         await Future.any([
           rendererReady,
           cancel.whenCancel.then<void>((error) => throw error),
@@ -99,17 +96,7 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
       engine: engine,
       config: config,
     );
-    var lastIndexStatus = '';
-    _transfer = session.states.listen((transfer) {
-      if (transfer.indexStatus.isNotEmpty &&
-          transfer.indexStatus != lastIndexStatus) {
-        lastIndexStatus = transfer.indexStatus;
-        _log.info(
-          'Downloaded timeline: $lastIndexStatus (${transfer.selectedFile?.path})',
-        );
-      }
-      _update(generation, (s) => s.copyWith(transfer: transfer));
-    });
+    _watchTransfer(generation, session);
     final release = candidate.release;
     _log.info(
       'Streaming $item from ${release.name} '
@@ -161,6 +148,33 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     _log.info('Playing $item after ${clock.elapsedMilliseconds}ms');
   }
 
+  /// Mirrors [session]'s transfer, logging its timeline and each start.
+  void _watchTransfer(int generation, TorrentStreamSession session) {
+    var lastIndexStatus = '', lastStartup = '';
+    _transfer = session.states.listen((transfer) {
+      if (transfer.indexStatus.isNotEmpty &&
+          transfer.indexStatus != lastIndexStatus) {
+        lastIndexStatus = transfer.indexStatus;
+        _log.info(
+          'Downloaded timeline: $lastIndexStatus (${transfer.selectedFile?.path})',
+        );
+      }
+      // Only settled starts: progress lines would flood the log.
+      final startup = transfer.startupStatus;
+      if (startup != lastStartup && !startup.startsWith('starting')) {
+        lastStartup = startup;
+        if (startup.isNotEmpty) {
+          _log.info(
+            'Playback start $startup '
+            '(${transfer.connectedPeers} peers, '
+            '${_mib(transfer.downloadBytesPerSecond)}/s)',
+          );
+        }
+      }
+      _update(generation, (s) => s.copyWith(transfer: transfer));
+    });
+  }
+
   Future<void> _openStream(
     int generation,
     TorrentStream stream,
@@ -172,8 +186,12 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     if (_stale(generation)) return;
     subtitles.watch(session, subtitleFiles(files, stream.file, _item!));
     _downloadAhead?.close();
-    await session.bufferAhead(start ?? Duration.zero, Duration.zero);
-    if (_stale(generation)) return;
+    // Size the urgent window before the player's first read. Download-ahead
+    // begins once the player is reading; the engine holds it during startup.
+    if (_item!.runtime case final runtime?) {
+      await session.setMediaDuration(runtime);
+      if (_stale(generation)) return;
+    }
     _openingGeneration = generation;
     try {
       await _adapter.open(

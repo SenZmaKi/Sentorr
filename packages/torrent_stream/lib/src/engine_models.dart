@@ -23,6 +23,7 @@ class StreamSnapshot {
     this.downloadedTimes = const [],
     this.mediaDuration = 0,
     this.indexStatus = '',
+    this.startupStatus = '',
     this.cachedBytes = 0,
     this.servedBytes = 0,
     this.requests = 0,
@@ -31,6 +32,9 @@ class StreamSnapshot {
   final List<DownloadedTimeRange> downloadedTimes;
   final double mediaDuration;
   final String indexStatus;
+
+  /// How the latest start of playback, at opening or a seek, went.
+  final String startupStatus;
   final int id;
   final String owner;
   final TorrentStreamFile file;

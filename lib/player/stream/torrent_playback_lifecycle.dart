@@ -90,10 +90,7 @@ extension _TorrentPlaybackLifecycle on TorrentPlayback {
       if (_stale(generation)) return true;
       _served = held.stream;
       _candidate = held.candidate;
-      _transfer = held.session.states.listen(
-        (transfer) =>
-            _update(generation, (s) => s.copyWith(transfer: transfer)),
-      );
+      _watchTransfer(generation, held.session);
       await _openStream(generation, held.stream, start);
       _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
       return true;

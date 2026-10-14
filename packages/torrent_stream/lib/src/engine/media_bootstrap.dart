@@ -15,7 +15,7 @@ Future<void> bootstrapMedia(
   onEvent({'event': 'bootstrap-start'});
   try {
     final size = min(64 * 1024, source.length);
-    await lifetime.wait(source.read(0, size, head));
+    await lifetime.wait(source.readHead(0, size, head));
     onEvent({
       'event': 'bootstrap-ready',
       'elapsedBootstrapMs': watch.elapsedMilliseconds,

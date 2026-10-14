@@ -67,6 +67,13 @@ class PendingStream {
       }
       final stream = await session.prepareFile(file.index);
       if (cancel.isCancelled) throw cancel.cancelError!;
+      // Start downloading the opening now; playback's first reads take
+      // over from it.
+      if (item.runtime case final runtime?) {
+        await session.setMediaDuration(runtime);
+      }
+      await session.prefetchOpening();
+      if (cancel.isCancelled) throw cancel.cancelError!;
       return ParkedStream(
         itemId: item.id,
         candidate: candidate,

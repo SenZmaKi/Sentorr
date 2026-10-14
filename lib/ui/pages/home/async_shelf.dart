@@ -60,6 +60,8 @@ class AsyncShelf<T> extends ConsumerWidget {
       IndexedWidgetBuilder? builder,
       Widget? message,
     }) => Shelf(
+      // Tiles climb in as they arrive, and as the row scrolls to them.
+      reveal: builder != null,
       icon: icon,
       title: title,
       subtitle: subtitle,

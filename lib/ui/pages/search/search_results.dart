@@ -7,7 +7,9 @@ import '../../components/cards/card_parts.dart';
 import '../../components/cards/card_skeleton.dart';
 import '../../components/cards/poster_card.dart';
 import '../../components/cards/title_poster.dart';
+import '../../components/grid_cascade.dart';
 import '../../components/load_error.dart';
+import '../../components/motion.dart';
 import '../../shared/layout/adaptive.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_route.dart';
@@ -16,8 +18,17 @@ import '../../shared/play_route.dart';
 /// Poster grid of results: skeletons while the first page loads, more
 /// skeletons while the next page loads, and plain-language empty and
 /// failure states in the same rhythm.
-class SearchResults extends ConsumerWidget {
+/// Posters ripple in diagonally as results arrive, as the grid scrolls to
+/// them and as each further page loads; a new search plays it afresh.
+class SearchResults extends ConsumerStatefulWidget {
   const SearchResults({super.key});
+
+  @override
+  ConsumerState<SearchResults> createState() => _SearchResultsState();
+}
+
+class _SearchResultsState extends ConsumerState<SearchResults> {
+  final _cascade = GridCascade({});
 
   // Nominal tile width by the grid's own width class (DESIGN: 160–220);
   // columns grow from it to fill the row.
@@ -27,7 +38,10 @@ class SearchResults extends ConsumerWidget {
   static const _gap = Space.s16;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    ref.listen(searchProvider.select((s) => s.results.loading), (_, loading) {
+      if (loading) _cascade.played.clear();
+    });
     final r = ref.watch(searchProvider.select((s) => s.results));
     final search = ref.read(searchProvider.notifier);
     if (!r.loading && r.items.isEmpty) {
@@ -40,7 +54,7 @@ class SearchResults extends ConsumerWidget {
                   onRetry: search.retry,
                 ),
               )
-            : const _NoResults(),
+            : const Reveal(child: _NoResults()),
       );
     }
     final lines = CardLines(MediaQuery.textScalerOf(context));
@@ -67,10 +81,15 @@ class SearchResults extends ConsumerWidget {
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, i) => i < r.items.length
-                    ? titlePoster(
-                        r.items[i],
-                        onOpen: () => ref.openTitle(r.items[i]),
-                        onPlay: () => ref.playOrPickUp(r.items[i]),
+                    ? _cascade.tile(
+                        key: r.items[i].id,
+                        index: i,
+                        columns: columns,
+                        child: titlePoster(
+                          r.items[i],
+                          onOpen: () => ref.openTitle(r.items[i]),
+                          onPlay: () => ref.playOrPickUp(r.items[i]),
+                        ),
                       )
                     : const CardSkeleton(aspectRatio: 2 / 3),
                 childCount: r.items.length + skeletons,

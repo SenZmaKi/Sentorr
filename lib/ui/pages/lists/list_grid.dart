@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../lists/models.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/cards/poster_card.dart';
+import '../../components/grid_cascade.dart';
+import '../../components/motion.dart';
 import 'list_poster.dart';
 import '../../shared/layout/adaptive.dart';
 import '../../shared/theme/theme.dart';
@@ -26,6 +28,8 @@ class ListGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (entries.isEmpty) return _Empty(status);
     final lines = CardLines(MediaQuery.textScalerOf(context));
+    // Posters already in place stay put as the list changes around them.
+    final cascade = GridCascade(RevealMemory.maybeOf(context) ?? {});
     return LayoutBuilder(
       builder: (context, box) {
         final width = box.maxWidth;
@@ -44,7 +48,12 @@ class ListGrid extends ConsumerWidget {
             mainAxisExtent: tile * 3 / 2 + PosterCard.textHeight(lines),
           ),
           itemCount: entries.length,
-          itemBuilder: (context, i) => ListPoster(entry: entries[i]),
+          itemBuilder: (context, i) => cascade.tile(
+            key: (status, entries[i].title.id),
+            index: i,
+            columns: columns,
+            child: ListPoster(entry: entries[i]),
+          ),
         );
       },
     );
@@ -61,36 +70,38 @@ class _Empty extends StatelessWidget {
     final c = context.colors;
     return Padding(
       padding: const EdgeInsets.only(top: Space.s64),
-      child: Column(
-        children: [
-          Icon(statusIcon(status), size: 40, color: c.foregroundMuted),
-          const SizedBox(height: Space.s12),
-          Text(
-            switch (status) {
-              WatchStatus.watching => 'Nothing in progress',
-              WatchStatus.rewatching => 'Nothing being rewatched',
-              WatchStatus.completed => 'Nothing completed yet',
-              _ => 'Nothing ${status.name}',
-            },
-            textAlign: TextAlign.center,
-            style: context.type.subtitle.copyWith(color: c.foreground),
-          ),
-          const SizedBox(height: Space.s4),
-          Text(
-            switch (status) {
-              WatchStatus.watching => 'Titles you play show up here.',
-              WatchStatus.rewatching =>
-                'Completed titles you play again show up here.',
-              WatchStatus.completed =>
-                'Finished movies and titles you mark completed show up here.',
-              _ => 'Use Add to list on a title to put it here.',
-            },
-            textAlign: TextAlign.center,
-            style: context.type.bodySmall.copyWith(
-              color: c.foregroundSecondary,
+      child: Reveal(
+        child: Column(
+          children: [
+            Icon(statusIcon(status), size: 40, color: c.foregroundMuted),
+            const SizedBox(height: Space.s12),
+            Text(
+              switch (status) {
+                WatchStatus.watching => 'Nothing in progress',
+                WatchStatus.rewatching => 'Nothing being rewatched',
+                WatchStatus.completed => 'Nothing completed yet',
+                _ => 'Nothing ${status.name}',
+              },
+              textAlign: TextAlign.center,
+              style: context.type.subtitle.copyWith(color: c.foreground),
             ),
-          ),
-        ],
+            const SizedBox(height: Space.s4),
+            Text(
+              switch (status) {
+                WatchStatus.watching => 'Titles you play show up here.',
+                WatchStatus.rewatching =>
+                  'Completed titles you play again show up here.',
+                WatchStatus.completed =>
+                  'Finished movies and titles you mark completed show up here.',
+                _ => 'Use Add to list on a title to put it here.',
+              },
+              textAlign: TextAlign.center,
+              style: context.type.bodySmall.copyWith(
+                color: c.foregroundSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

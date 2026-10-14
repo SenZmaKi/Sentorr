@@ -7,6 +7,7 @@ import '../../../home/series_updates.dart';
 import '../../../home/watch_activity.dart';
 import '../../../shared/net/online.dart';
 import '../../../lists/models.dart';
+import '../../components/motion.dart';
 import 'downloaded_shelf.dart';
 import 'list_shelf.dart';
 import 'featured_section.dart';
@@ -112,7 +113,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             RefreshIndicator(
               onRefresh: _refresh,
-              child: Builder(builder: _list),
+              child: RevealMemory(child: Builder(builder: _list)),
             ),
           ],
         ),

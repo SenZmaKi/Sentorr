@@ -69,7 +69,9 @@ class _ShelfState extends State<Shelf> {
   // Each tile's stair, kept so rebuilds leave its wrapper (and state) alone
   // and scrolling back does not replay the entrance.
   final _steps = <int, int>{};
-  final _played = <int>{};
+  // Shared with the page when it keeps a [RevealMemory], so a row rebuilt
+  // after scrolling the page away and back stays settled.
+  late final Set<Object> _played = RevealMemory.maybeOf(context) ?? {};
   // Tiles entering in the current frame; each climbs one step above the last.
   int _stairs = 0;
 
@@ -132,8 +134,8 @@ class _ShelfState extends State<Shelf> {
       offset: Space.s24 + Space.s8 * step.clamp(0, 4),
       shift: Space.s32,
       duration: Motion.reveal * 1.8,
-      animate: !_played.contains(i),
-      onDone: () => _played.add(i),
+      animate: !_played.contains((widget.title, i)),
+      onDone: () => _played.add((widget.title, i)),
       child: tile,
     );
   }

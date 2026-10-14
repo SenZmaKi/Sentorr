@@ -2,17 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../components/interactive.dart';
+import '../../components/motion.dart';
 import '../../components/surface.dart';
 import '../../shared/theme/theme.dart';
 import 'list_sections.dart';
 
 /// The lists down a narrow column, like a library, then New episodes
-/// apart from them since it configures rather than lists.
+/// apart from them since it configures rather than lists. One raised pill
+/// glides between items to mark the selection.
 class ListRail extends ConsumerWidget {
   const ListRail({super.key});
 
   /// Matches the Settings sidebar on wide windows.
   static const width = 240.0;
+
+  static const _item = 40.0;
+  static const _divider = Space.s8 * 2 + 1;
+
+  /// Where [s] sits in the column below, for the pill to glide to.
+  static double _top(ListsSection s) {
+    const step = _item + Space.s4;
+    final lists = ListsSection.values.where((s) => s.status != null).length;
+    return s.status != null
+        ? s.index * step
+        : lists * step + _divider + Space.s4;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,7 +38,7 @@ class ListRail extends ConsumerWidget {
       selected: s == current,
       onTap: () => ref.read(listsSectionProvider.notifier).pick(s),
     );
-    return Column(
+    final column = Column(
       spacing: Space.s4,
       children: [
         for (final s in ListsSection.values)
@@ -38,6 +52,23 @@ class ListRail extends ConsumerWidget {
           ),
         ),
         item(ListsSection.newEpisodes),
+      ],
+    );
+    return Stack(
+      children: [
+        AnimatedPositioned(
+          duration: reduceMotion(context) ? Duration.zero : Motion.reveal,
+          curve: Motion.change,
+          top: _top(current),
+          left: 0,
+          right: 0,
+          height: _item,
+          child: DepthBox(
+            style: context.depth.of(SurfaceDepth.raised),
+            radius: Radii.control,
+          ),
+        ),
+        column,
       ],
     );
   }
@@ -67,12 +98,13 @@ class _RailItem extends StatelessWidget {
       borderRadius: Radii.control,
       builder: (context, s) {
         final fg = selected || s.hovered ? c.foreground : c.foregroundSecondary;
+        // The rail's pill raises the selected item.
         return DepthBox(
-          style: selected
-              ? raised
-              : DepthStyle(fill: s.hovered ? c.stateHover : raised.fill.clear),
+          style: DepthStyle(
+            fill: !selected && s.hovered ? c.stateHover : raised.fill.clear,
+          ),
           radius: Radii.control,
-          height: 40,
+          height: ListRail._item,
           padding: const EdgeInsets.symmetric(horizontal: Space.s12),
           child: Row(
             children: [

@@ -91,6 +91,39 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
   );
 }
 
+/// Remembers which entrances already played below it, so content that a
+/// lazy list rebuilds after scrolling back does not replay them. Keys are
+/// the caller's, e.g. a row's title and a tile's index.
+class RevealMemory extends StatefulWidget {
+  const RevealMemory({super.key, required this.child});
+
+  final Widget child;
+
+  /// The nearest memory's played keys, or null without one.
+  static Set<Object>? maybeOf(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<_RevealScope>()?.played;
+
+  @override
+  State<RevealMemory> createState() => _RevealMemoryState();
+}
+
+class _RevealMemoryState extends State<RevealMemory> {
+  final _played = <Object>{};
+
+  @override
+  Widget build(BuildContext context) =>
+      _RevealScope(played: _played, child: widget.child);
+}
+
+class _RevealScope extends InheritedWidget {
+  const _RevealScope({required this.played, required super.child});
+
+  final Set<Object> played;
+
+  @override
+  bool updateShouldNotify(_RevealScope old) => false;
+}
+
 /// Slow push-in on artwork while [active]; restarts each time it becomes
 /// active. Finite per activation, and still under reduced motion.
 class KenBurns extends StatefulWidget {

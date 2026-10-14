@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../lists/models.dart';
 import '../../../lists/notifier.dart';
 import '../../components/content_column.dart';
+import '../../components/motion.dart';
 import '../../shared/layout/layout_size.dart';
 import '../../shared/theme/theme.dart';
 import '../home/home_layout.dart';
@@ -81,12 +82,40 @@ class ListsPage extends ConsumerWidget {
   }
 }
 
+/// Fades out the section left behind; the one picked brings its own
+/// entrance, its posters cascading in from the top-left.
 class _Section extends ConsumerWidget {
   const _Section();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(listsSectionProvider).status;
+    final section = ref.watch(listsSectionProvider);
+    return AnimatedSwitcher(
+      duration: reduceMotion(context) ? Duration.zero : Motion.panel,
+      switchInCurve: Motion.enter,
+      switchOutCurve: Motion.change,
+      layoutBuilder: (current, previous) => Stack(
+        alignment: Alignment.topCenter,
+        children: [...previous, ?current],
+      ),
+      // Each visit to a section is fresh, so its entrance plays again.
+      child: RevealMemory(
+        key: ValueKey(section),
+        child: _SectionBody(section.status),
+      ),
+    );
+  }
+}
+
+class _SectionBody extends ConsumerWidget {
+  const _SectionBody(this.status);
+
+  /// Null for New episodes.
+  final WatchStatus? status;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = this.status;
     if (status == null) return const NewEpisodesPanel();
     final entries = [
       for (final e in ref.watch(watchListsProvider))

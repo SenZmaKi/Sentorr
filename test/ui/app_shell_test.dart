@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/app/services.dart';
@@ -68,9 +70,7 @@ void main() {
     });
   }
 
-  testWidgets('Back returns to Home before leaving, with bottom navigation', (
-    tester,
-  ) async {
+  testWidgets('system Back returns to Home before leaving', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -107,6 +107,44 @@ void main() {
     expect(find.text('All settings'), findsNothing);
 
     await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(container.read(appDestinationProvider), AppDestination.home);
+  });
+
+  testWidgets('desktop Back returns Search to Home, after its field', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(_app(Brightness.dark));
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(AppShell)),
+    );
+    Future<void> search() async {
+      container.read(appDestinationProvider.notifier).go(AppDestination.search);
+      await tester.pumpAndSettle();
+    }
+
+    await search();
+    final mouse = TestPointer(
+      1,
+      PointerDeviceKind.mouse,
+      null,
+      kBackMouseButton,
+    );
+    await tester.sendEventToBinding(mouse.down(const Offset(700, 500)));
+    await tester.sendEventToBinding(mouse.up());
+    await tester.pumpAndSettle();
+    expect(container.read(appDestinationProvider), AppDestination.home);
+
+    await search();
+    await tester.tap(find.byType(EditableText).first);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(container.read(appDestinationProvider), AppDestination.search);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     expect(container.read(appDestinationProvider), AppDestination.home);
   });

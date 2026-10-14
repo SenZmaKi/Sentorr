@@ -5,6 +5,7 @@ import '../shared/theme/theme.dart';
 import '../../player/session.dart';
 import '../shared/player_view.dart';
 import '../shared/title_route.dart';
+import 'back_gesture.dart';
 import 'motion.dart';
 import 'bottom_nav.dart';
 import 'page_stack.dart';
@@ -76,7 +77,7 @@ class AppShell extends ConsumerWidget {
     void go(AppDestination d) =>
         ref.read(appDestinationProvider.notifier).go(d);
 
-    final body = Stack(
+    final content = Stack(
       fit: StackFit.expand,
       children: [
         Inert(
@@ -92,10 +93,8 @@ class AppShell extends ConsumerWidget {
         _TitleLayer(route: title, builder: titlePage),
       ],
     );
-    // As in Senpwai: with bottom navigation, Back returns to Home before it
-    // leaves the app. Rail layouts have no system Back to intercept. An open
-    // title page always takes Back first.
-    final bottomNav = context.screen.compact;
+    // As in Senpwai, on every platform: Back returns to Home before it
+    // leaves the app. An open title page always takes Back first.
     // Read outside the Scaffold, which hides the inset from its body.
     final keyboard = MediaQuery.viewInsetsOf(context).bottom > 0;
     // A full player sits above the shell and handles Back itself; a docked
@@ -105,12 +104,16 @@ class AppShell extends ConsumerWidget {
         ref.watch(playerViewProvider) != PlayerView.mini;
     final pageBack =
         title == null && ref.watch(pageBackProvider).contains(current);
+    final canPop =
+        !playing &&
+        !pageBack &&
+        title == null &&
+        current == AppDestination.home;
+    // Desktop inputs (Escape, mouse back, a trackpad swipe) arrive as the
+    // same pop as Android's Back, so the PopScope below decides for all.
+    final body = BackGesture(enabled: !canPop && !playing, child: content);
     return PopScope(
-      canPop:
-          !playing &&
-          !pageBack &&
-          title == null &&
-          (!bottomNav || current == AppDestination.home),
+      canPop: canPop,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop || playing || pageBack) return;
         if (title != null) {

@@ -52,6 +52,15 @@ Future<SeriesStanding?> standingOf(
 }) async {
   if (followed.manual) return null;
   final reached = followed.reached;
+  for (final season in followed.seasonWatches.keys.toList()..sort()) {
+    final through = followed.seasonWatches[season]!.through;
+    if (through == null || season > reached.season) continue;
+    final length = await _seasonLength(imdb, followed.id, season, cancel);
+    final last = season == reached.season ? reached.episode : length;
+    if (last != null && through < last) {
+      return UpNext((season: season, episode: through + 1));
+    }
+  }
   if (!followed.seen(reached)) return OnEpisode(reached);
   final latest = await latestEpisode(imdb, followed.id, cancel: cancel);
   final last = latest?.number;

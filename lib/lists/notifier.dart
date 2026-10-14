@@ -13,6 +13,7 @@ import 'models.dart';
 import 'repository.dart';
 import 'series_standing.dart';
 import 'snapshot.dart';
+import 'completed_episodes.dart';
 
 final _log = Logger('sentorr.lists');
 
@@ -52,8 +53,18 @@ class WatchListsNotifier extends Notifier<List<ListEntry>> {
 
   /// Puts [title] on [status]'s list; null takes it off every list. A
   /// series put on Watching before any of it was watched is looked for new
-  /// episodes from the latest one aired.
+  /// episodes from the latest one aired. Completed marks all aired seasons
+  /// watched and clears any explicit season resets.
   Future<void> set(ImdbTitle title, WatchStatus? status) async {
+    if (status == WatchStatus.completed && title.canHaveEpisodes == true) {
+      final through = await completedThrough(
+        ref.read(imdbRepositoryProvider),
+        title.id,
+      );
+      await ref
+          .read(followedSeriesProvider.notifier)
+          .markAllWatched(title, through);
+    }
     await _set(title, status);
     if (status == WatchStatus.watching && title.canHaveEpisodes == true) {
       await ref.read(followedSeriesProvider.notifier).follow(title);
@@ -141,8 +152,14 @@ class WatchListsNotifier extends Notifier<List<ListEntry>> {
   Future<bool> _finishes(PlaybackItem item) async {
     final at = FollowedSeries.numberOf(item);
     if (!item.isEpisode) return true;
-    if (at == null || !_checked.add(item.id)) return false;
     try {
+      final followed = ref.read(followedProvider(item.series!.id));
+      if (followed != null &&
+          followed.seasonWatches.values.any((watch) => watch.through != null)) {
+        return await standingOf(ref.read(imdbRepositoryProvider), followed)
+            is AllWatched;
+      }
+      if (at == null || !_checked.add(item.id)) return false;
       final latest = await latestEpisode(
         ref.read(imdbRepositoryProvider),
         item.series!.id,

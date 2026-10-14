@@ -6,8 +6,7 @@ import '../../../lists/mark_watched.dart';
 import '../../../shared/errors/error_reports.dart';
 import '../../components/buttons.dart';
 
-/// Marks every aired episode of [season] watched, for what the viewer saw
-/// elsewhere; shows a check once all of [lastAired] and before is seen.
+/// Marks a season watched or clears its watched status.
 class SeasonWatchedButton extends ConsumerStatefulWidget {
   const SeasonWatchedButton({
     super.key,
@@ -30,13 +29,18 @@ class SeasonWatchedButton extends ConsumerStatefulWidget {
 class _SeasonWatchedButtonState extends ConsumerState<SeasonWatchedButton> {
   bool _busy = false;
 
-  Future<void> _mark() async {
+  Future<void> _mark(bool seen) async {
     setState(() => _busy = true);
     try {
-      await ref.read(seasonMarkerProvider).mark(widget.series, widget.season);
+      final marker = ref.read(seasonMarkerProvider);
+      if (seen) {
+        await marker.unmark(widget.series, widget.season);
+      } else {
+        await marker.mark(widget.series, widget.season);
+      }
     } catch (error, stack) {
       ErrorReports.report(
-        "Couldn't mark season ${widget.season} watched",
+        "Couldn't mark season ${widget.season} ${seen ? 'unwatched' : 'watched'}",
         error,
         stack,
       );
@@ -54,12 +58,12 @@ class _SeasonWatchedButtonState extends ConsumerState<SeasonWatchedButton> {
       )),
     );
     return SIconButton(
-      icon: seen ? Icons.check_circle_rounded : Icons.done_all_rounded,
+      icon: seen ? Icons.remove_done_rounded : Icons.done_all_rounded,
       tooltip: seen
-          ? 'Season ${widget.season} watched'
+          ? 'Mark season ${widget.season} unwatched'
           : 'Mark season ${widget.season} watched',
       selected: seen,
-      onPressed: seen || _busy ? null : _mark,
+      onPressed: _busy ? null : () => _mark(seen),
     );
   }
 }

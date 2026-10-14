@@ -26,6 +26,17 @@ class SeasonMarker {
   SeasonMarker(this._ref);
   final Ref _ref;
 
+  /// Clears only this season's watched status.
+  Future<void> unmark(ImdbTitle series, int season) async {
+    await _ref
+        .read(followedSeriesProvider.notifier)
+        .unmarkSeason(series.id, season);
+    final lists = _ref.read(watchListsProvider.notifier);
+    if (lists.statusOf(series.id) == WatchStatus.completed) {
+      await lists.set(series, WatchStatus.watching);
+    }
+  }
+
   /// Marks every aired episode of [season] seen. A series on no list, or
   /// only planned, is now being watched, or completed when that was the
   /// end of a series that has ended.

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'models.dart';
+import 'season_watch.dart';
 import '../shared/state_clock.dart';
 
 /// The followed series and which were unfollowed when, as one device holds
@@ -204,6 +205,7 @@ FollowedSeries _mergeFields(FollowedSeries mine, FollowedSeries theirs) {
     notifyAt: notify.notifyAt,
     autoDownload: mine.autoDownload,
     manual: ahead.manual,
+    seasonWatches: mergeSeasonWatches(mine.seasonWatches, theirs.seasonWatches),
 
     revision: fresher.revision,
     notifyRevision: notify.notifyRevision,

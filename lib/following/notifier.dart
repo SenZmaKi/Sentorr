@@ -11,6 +11,7 @@ import 'latest_episode.dart';
 import 'models.dart';
 import 'repository.dart';
 import 'snapshot.dart';
+import 'season_watch.dart';
 
 final _log = Logger('sentorr.following');
 
@@ -67,8 +68,14 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
     final FollowedSeries next;
     if (known != null) {
       final order = compareEpisodes(at, known.reached);
-      if (order < 0 ||
-          (order == 0 && fraction <= known.progress && !known.manual)) {
+      final reset = known.seasonWatches[at.season]?.through;
+      final advancesReset =
+          reset != null &&
+          at.episode > reset &&
+          fraction >= FollowedSeries.caughtUpFraction;
+      if (!advancesReset &&
+          (order < 0 ||
+              (order == 0 && fraction <= known.progress && !known.manual))) {
         return Future.value();
       }
       next = known.watched(at, fraction, now, revision: _clock.next());
@@ -138,6 +145,20 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
       'S${through.season}E${through.episode}',
     );
     final now = DateTime.now();
+    if (known != null && known.seasonWatches[through.season]?.through != null) {
+      final revision = _clock.next();
+      final restored = known
+          .copyWith(
+            watchedAt: now,
+            revision: revision,
+            seasonWatches: {
+              ...known.seasonWatches,
+              through.season: SeasonWatch(null, revision, now),
+            },
+          )
+          .watched(through, 1, now, revision: revision);
+      return _commit([restored, ..._without(series.id)]);
+    }
     final next = known == null
         ? FollowedSeries(
             series: series,
@@ -156,6 +177,60 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
           )
         : known.watched(through, 1, now, revision: _clock.next());
     return _commit([next, ..._without(series.id)]);
+  }
+
+  /// Marks the whole series seen, cancelling explicit season resets for sync.
+  Future<void> markAllWatched(ImdbTitle series, EpisodeNumber? through) {
+    final known = _series.where((s) => s.id == series.id).firstOrNull;
+    if (through == null && known == null) return Future.value();
+    final now = DateTime.now();
+    final revision = _clock.next();
+    final next =
+        (known ??
+                FollowedSeries(
+                  series: series,
+                  reached: through!,
+                  progress: 1,
+                  watchedAt: now,
+                ))
+            .copyWith(
+              reached:
+                  through == null ||
+                      (known != null &&
+                          !known.manual &&
+                          compareEpisodes(known.reached, through) > 0)
+                  ? null
+                  : through,
+              progress: 1,
+              manual: false,
+              watchedAt: now,
+              revision: revision,
+              seasonWatches: {
+                if (known != null)
+                  for (final season in known.seasonWatches.keys)
+                    season: SeasonWatch(null, revision, now),
+              },
+            );
+    return _commit([next, ..._without(series.id)]);
+  }
+
+  /// Clears only [season], retaining the furthest episode and other seasons.
+  Future<void> unmarkSeason(String seriesId, int season) {
+    final known = _series.where((s) => s.id == seriesId).firstOrNull;
+    if (known == null || known.manual || known.reached.season < season) {
+      return Future.value();
+    }
+    final now = DateTime.now();
+    final revision = _clock.next();
+    final next = known.copyWith(
+      watchedAt: now,
+      revision: revision,
+      seasonWatches: {
+        ...known.seasonWatches,
+        season: SeasonWatch(0, revision, now),
+      },
+    );
+    return _commit([next, ..._without(seriesId)]);
   }
 
   Future<void> setNotify(String seriesId, bool on) => _change(
@@ -212,6 +287,7 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
       s.revision,
       s.notifyRevision,
       s.notifiedRevision,
+      ...s.seasonWatches.values.map((watch) => watch.revision),
     ],
   ]);
 

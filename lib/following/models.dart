@@ -2,6 +2,7 @@ import '../imdb/models.dart';
 import '../player/models.dart';
 import '../watching/models.dart';
 import '../watching/title_codec.dart';
+import 'season_watch.dart';
 
 /// An episode's place in its series.
 typedef EpisodeNumber = ({int season, int episode});
@@ -28,6 +29,7 @@ class FollowedSeries {
     this.revision = 0,
     this.notifyRevision = 0,
     this.notifiedRevision = 0,
+    this.seasonWatches = const {},
   });
 
   /// Watched this much of an episode, the viewer has seen it; the rest is
@@ -70,11 +72,14 @@ class FollowedSeries {
   /// the merged state and starts a new contribution.
   final List<FollowedSeries> versions;
   final int revision, notifyRevision, notifiedRevision;
+  final Map<int, SeasonWatch> seasonWatches;
 
   String get id => series.id;
 
   /// Whether the viewer has seen [episode] or something after it.
   bool seen(EpisodeNumber episode) {
+    final through = seasonWatches[episode.season]?.through;
+    if (through != null) return episode.episode <= through;
     final order = compareEpisodes(reached, episode);
     return order > 0 || (order == 0 && progress >= caughtUpFraction);
   }
@@ -88,6 +93,21 @@ class FollowedSeries {
     int? revision,
   }) {
     final order = compareEpisodes(at, reached);
+    final through = seasonWatches[at.season]?.through;
+    final completed = fraction >= caughtUpFraction;
+    final advancesReset = through != null && completed && at.episode > through;
+    if (advancesReset) {
+      return copyWith(
+        reached: order < 0 ? null : at,
+        progress: order < 0 ? null : fraction,
+        watchedAt: now,
+        revision: revision,
+        seasonWatches: {
+          ...seasonWatches,
+          at.season: SeasonWatch(at.episode, revision ?? this.revision, now),
+        },
+      );
+    }
     if (order < 0) return this;
     return copyWith(
       reached: at,
@@ -117,6 +137,7 @@ class FollowedSeries {
     bool resetAutoDownload = false,
     bool? manual,
     List<FollowedSeries>? versions,
+    Map<int, SeasonWatch>? seasonWatches,
     int? revision,
     notifyRevision,
     notifiedRevision,
@@ -134,9 +155,13 @@ class FollowedSeries {
     revision: revision ?? this.revision,
     notifyRevision: notifyRevision ?? this.notifyRevision,
     notifiedRevision: notifiedRevision ?? this.notifiedRevision,
+    seasonWatches: seasonWatches ?? this.seasonWatches,
     versions:
         versions ??
-        (reached != null || progress != null || watchedAt != null
+        (reached != null ||
+                progress != null ||
+                watchedAt != null ||
+                seasonWatches != null
             ? const []
             : [
                 for (final v in this.versions)
@@ -195,6 +220,11 @@ class FollowedSeries {
     if (notifyAt != null) 'notifyAt': notifyAt!.toUtc().toIso8601String(),
     'autoDownload': autoDownload,
     'manual': manual,
+    if (seasonWatches.isNotEmpty)
+      'seasonWatches': {
+        for (final season in seasonWatches.keys.toList()..sort())
+          '$season': seasonWatches[season]!.toJson(),
+      },
     if (revision != 0) 'revision': revision,
     if (notifyRevision != 0) 'notifyRevision': notifyRevision,
     if (notifiedRevision != 0) 'notifiedRevision': notifiedRevision,
@@ -229,6 +259,13 @@ class FollowedSeries {
       notifyAt: _time(json['notifyAt']),
       autoDownload: json['autoDownload'] as bool?,
       manual: json['manual'] == true,
+      seasonWatches: {
+        if (json['seasonWatches'] case final Map values)
+          for (final entry in values.entries)
+            ?int.tryParse(entry.key.toString()): ?SeasonWatch.fromJson(
+              entry.value,
+            ),
+      },
       revision: json['revision'] is int ? json['revision'] as int : 0,
       notifyRevision: json['notifyRevision'] is int
           ? json['notifyRevision'] as int

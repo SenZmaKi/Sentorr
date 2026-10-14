@@ -5,6 +5,7 @@ import '../following/due_episodes.dart';
 import '../following/models.dart';
 import '../following/notifier.dart';
 import '../imdb/repository.dart';
+import '../lists/series_standing.dart';
 import '../player/models.dart';
 import '../watching/models.dart';
 import '../watching/next_episode.dart';
@@ -44,6 +45,17 @@ Future<PickUp?> pickUpFor(
   if (local?.pending != true) return local;
   final f = followed!;
   final reached = f.reached;
+  if (f.seasonWatches.values.any((watch) => watch.through != null)) {
+    final standing = await standingOf(imdb, f);
+    if (standing case UpNext(:final next)) {
+      final from = f.copyWith(
+        reached: (season: next.season, episode: next.episode - 1),
+        progress: 1,
+      );
+      final item = (await dueEpisodes(imdb, from, limit: 1)).firstOrNull;
+      return PickUp(item: item, season: item?.season ?? next.season);
+    }
+  }
   // Without a saved position, an unseen furthest episode plays again from
   // its start; a seen one gives way to the episode after it.
   final from = f.seen(reached)
@@ -72,7 +84,9 @@ final pickUpProvider = FutureProvider.autoDispose.family<PickUp?, String>((
     followed!.reached.season,
     followed.reached.episode,
   );
-  if (followed.seen(followed.reached) && saved.containsKey(key)) {
+  if (!followed.seasonWatches.values.any((watch) => watch.through != null) &&
+      followed.seen(followed.reached) &&
+      saved.containsKey(key)) {
     final next = saved[key];
     return PickUp(
       item: next?.item,

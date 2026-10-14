@@ -30,6 +30,8 @@ import 'hot_restart.dart';
 import 'lifecycle.dart';
 import 'progress_tracker.dart';
 import 'session.dart';
+import 'recovery.dart';
+import '../watching/models.dart';
 import 'stream/offline_source.dart';
 import 'stream/parked_stream.dart';
 import 'stream/session_config.dart';
@@ -226,6 +228,39 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     prepared: ref.read(preparedStreamsProvider),
     share: ref.read(sharedStreamsProvider.notifier).register,
   );
+  final recovery = ref.read(playbackRecoveryProvider);
+  var activeSession = ref.read(playerSessionProvider);
+  engine.streaming.canAutoplay = () => activeSession?.autoplay ?? true;
+  ref.listen(playerSessionProvider, (_, session) => activeSession = session);
+  Future<void> checkpoint() async {
+    final item = engine.streaming.item;
+    if (item == null ||
+        activeSession?.current?.id != item.id ||
+        engine.streaming.status.value?.stage != StreamStage.streaming) {
+      return;
+    }
+    await recovery.save(
+      engine.state.completed
+          ? null
+          : WatchEntry.of(
+              item,
+              position: engine.state.position,
+              duration: engine.state.duration,
+              release: engine.streaming.status.value?.torrent?.release,
+            ),
+    );
+  }
+
+  recovery.checkpoint = checkpoint;
+  var savedSecond = -1;
+  final recovering = engine.stream.position.listen((position) {
+    if (position.inSeconds == savedSecond) return;
+    savedSecond = position.inSeconds;
+    checkpoint().ignore();
+  });
+  final completed = engine.stream.completed.listen((done) {
+    if (done) checkpoint().ignore();
+  });
   final history = ref.read(watchHistoryProvider.notifier);
   final following = ref.read(followedSeriesProvider.notifier);
   final lists = ref.read(watchListsProvider.notifier);
@@ -288,22 +323,33 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     );
   });
   engine.beforeDispose = () async {
+    await checkpoint();
+    if (recovery.checkpoint == checkpoint) recovery.checkpoint = null;
+    await recovering.cancel();
+    await completed.cancel();
     warmup.dispose();
     await warming.cancel();
     await progress.dispose();
   };
   ref.onDispose(engine.dispose);
+  final started = <String>{};
   ref.listen(playerSessionProvider.select((s) => s?.current), (_, item) {
     progress.item = item;
     if (item == null) return;
     lists.started(item);
     final session = ref.read(playerSessionProvider);
+    final resume = history.resumePoint(
+      item.id,
+      settings: ref.read(settingsProvider).streaming,
+    );
     unawaited(
       engine.open(
         item,
         torrent: session?.torrents[item.id],
         options: session?.options[item.id],
-        start: history.resumePoint(item.id),
+        start: started.add(item.id)
+            ? session?.starts[item.id] ?? resume
+            : resume,
       ),
     );
   }, fireImmediately: true);

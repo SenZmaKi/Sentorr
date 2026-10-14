@@ -2,6 +2,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/settings/models.dart';
 
 void main() {
+  test('resume rewind defaults, custom values and Disabled persist', () {
+    expect(StreamingSettings.fromJson({}).resumeRewindSeconds, 5);
+    for (final seconds in [0, 17]) {
+      final saved = const StreamingSettings()
+          .copyWith(resumeRewindSeconds: seconds)
+          .copyWith(keepRecentTorrents: 4);
+      final restored = StreamingSettings.fromJson(saved.toJson());
+      expect(restored.resumeRewindSeconds, seconds);
+      expect(
+        restored.resumePosition(const Duration(seconds: 30)),
+        Duration(seconds: 30 - seconds),
+      );
+      expect(restored.resumePosition(Duration.zero), Duration.zero);
+    }
+    for (final invalid in [-1, '10', null]) {
+      expect(
+        StreamingSettings.fromJson({'resumeRewindSeconds': invalid})
+            .resumeRewindSeconds,
+        5,
+      );
+    }
+  });
+
   test('caption default is off and survives unrelated settings edits', () {
     expect(AppSettings.fromJson({}).streaming.captionsEnabled, isFalse);
     final settings = const StreamingSettings()

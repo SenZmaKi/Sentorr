@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
 import '../player/models.dart';
+import '../settings/streaming_settings.dart';
 import '../following/models.dart';
 import '../backup/watch_backup.dart';
 import '../torrents/models.dart';
@@ -35,10 +36,6 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
 
   /// An item opened for less than this was sampled, not started.
   static const minimumWatched = Duration(seconds: 30);
-
-  /// Resuming starts this far before where the viewer stopped, to pick
-  /// the scene back up.
-  static const rewind = Duration(seconds: 5);
 
   late WatchHistoryRepository _repository;
 
@@ -86,10 +83,13 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
   }
 
   /// Where [itemId] should resume; null to start from the beginning.
-  Duration? resumePoint(String itemId) {
+  Duration? resumePoint(
+    String itemId, {
+    StreamingSettings settings = const StreamingSettings(),
+  }) {
     final entry = _entries.where((e) => e.id == itemId).firstOrNull;
     if (entry == null || entry.finished) return null;
-    final at = entry.position - rewind;
+    final at = settings.resumePosition(entry.position);
     return at > Duration.zero ? at : null;
   }
 

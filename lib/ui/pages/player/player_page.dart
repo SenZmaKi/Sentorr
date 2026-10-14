@@ -62,6 +62,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   /// Kept so the page can finish fading out after the session closes.
   PlayerSession? _session;
   bool _ended = false;
+  bool _recoveryPaused = false;
 
   bool get _pauseOnFocusLoss =>
       ref.read(settingsProvider).streaming.pauseOnFocusLoss &&
@@ -69,17 +70,21 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       !PictureInPicture.instance.systemControls;
 
   bool _canAutoplay() =>
-      !_pauseOnFocusLoss ||
-      ref.read(AppLifecycleNotifier.provider) == AppLifecycleState.resumed;
+      (!_recoveryPaused ||
+          ref.read(playerSessionProvider)?.autoplay != false) &&
+      (!_pauseOnFocusLoss ||
+          ref.read(AppLifecycleNotifier.provider) == AppLifecycleState.resumed);
 
   @override
   void initState() {
     super.initState();
-    _engine.streaming.canAutoplay = _canAutoplay;
     _session = ref.read(playerSessionProvider);
+    _recoveryPaused = _session?.autoplay == false;
+    _engine.streaming.canAutoplay = _canAutoplay;
     final s = _engine.stream;
     _subscriptions.addAll([
       s.playing.listen((playing) {
+        if (playing) _recoveryPaused = false;
         _ui.playing = playing;
         _syncPip();
       }),

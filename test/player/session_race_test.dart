@@ -54,6 +54,18 @@ void main() {
   });
   tearDown(() => container.dispose());
 
+  test(
+    'recovery stays paused while the queue changes; normal launches autoplay',
+    () {
+      session.play(PlayTitle(series), queue: initial, autoplay: false);
+      expect(container.read(playerSessionProvider)!.autoplay, isFalse);
+      session.previous();
+      expect(container.read(playerSessionProvider)!.autoplay, isFalse);
+      session.play(PlayTitle(series), queue: initial);
+      expect(container.read(playerSessionProvider)!.autoplay, isTrue);
+    },
+  );
+
   test('repeated Next shares one extension and advances once', () async {
     session.next();
     session.next();

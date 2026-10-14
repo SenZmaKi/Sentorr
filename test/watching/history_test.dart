@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/imdb/models.dart';
 import 'package:sentorr/player/models.dart';
+import 'package:sentorr/settings/streaming_settings.dart';
 import 'package:sentorr/shared/persistence/json_file_store.dart';
 import 'package:sentorr/torrents/models.dart';
 import 'package:sentorr/watching/models.dart';
@@ -102,7 +103,21 @@ void main() {
     );
     expect(
       history.resumePoint('tt1'),
-      const Duration(minutes: 20) - WatchHistoryNotifier.rewind,
+      const Duration(minutes: 20) - const Duration(seconds: 5),
+    );
+    expect(
+      history.resumePoint(
+        'tt1',
+        settings: const StreamingSettings(resumeRewindSeconds: 20),
+      ),
+      const Duration(minutes: 20) - const Duration(seconds: 20),
+    );
+    expect(
+      history.resumePoint(
+        'tt1',
+        settings: const StreamingSettings(resumeRewindSeconds: 0),
+      ),
+      const Duration(minutes: 20),
     );
     await history.record(
       _movie,

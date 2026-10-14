@@ -7,6 +7,7 @@ import '../imdb/providers.dart';
 import '../library/playback.dart';
 import '../torrents/resolution_models.dart';
 import 'models.dart';
+import 'recovery.dart';
 import 'preparation.dart';
 import 'queue_builder.dart';
 
@@ -19,11 +20,17 @@ class PlayerSession {
     this.queue,
     this.error,
     this.resolving = false,
+    this.autoplay = true,
+    this.starts = const {},
     this.torrents = const {},
     this.options = const {},
   });
 
   final PlayRequest request;
+
+  /// Recovery prepares media paused until the viewer presses Play.
+  final bool autoplay;
+  final Map<String, Duration> starts;
 
   /// Null until the first item is known, e.g. a series' first episode.
   final PlayQueue? queue;
@@ -52,6 +59,8 @@ class PlayerSession {
     Map<String, TorrentResolution>? options,
   }) => PlayerSession(
     request: request,
+    autoplay: autoplay,
+    starts: starts,
     queue: queue ?? this.queue,
     error: error,
     resolving: resolving ?? this.resolving,
@@ -97,6 +106,8 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
     PlayQueue? queue,
     TorrentCandidate? torrent,
     TorrentResolution? options,
+    Duration? start,
+    bool autoplay = true,
   }) {
     final cancel = _restart();
     final first = queue ?? _builder.immediate(request);
@@ -106,6 +117,8 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
     );
     state = PlayerSession(
       request: request,
+      autoplay: autoplay,
+      starts: {if (first != null && start != null) first.current.id: start},
       queue: first,
       resolving: queue == null,
       torrents: {
@@ -171,6 +184,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
   }
 
   void close() {
+    ref.read(playbackRecoveryProvider).save(null).ignore();
     ref.read(preparedStreamsProvider).clear();
     if (state != null) _log.info('Closing player');
     _restart();

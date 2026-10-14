@@ -23,6 +23,23 @@ class StreamingSection extends ConsumerWidget {
           title: 'Playback',
           children: [
             SettingsTile(
+              icon: Icons.replay_rounded,
+              title: 'Resume rewind',
+              subtitle: 'Seconds replayed when continuing media or reopening the app. Disabled resumes at the saved position',
+              keywords:
+                  'auto resume delay continue watching seconds rewind recovery',
+              trailing: LimitField(
+                value: s.resumeRewindSeconds,
+                presets: const {0: 'Disabled'},
+                customDefault: 5,
+                min: 1,
+                unit: 's',
+                semanticLabel: 'Resume rewind',
+                onChanged: (n) =>
+                    edit((s) => s.copyWith(resumeRewindSeconds: n)),
+              ),
+            ),
+            SettingsTile(
               icon: Icons.closed_caption_outlined,
               title: 'Enable captions by default',
               subtitle: 'Applies when playback starts. You can change captions in the player',

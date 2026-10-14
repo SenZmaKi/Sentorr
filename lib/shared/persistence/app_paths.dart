@@ -18,6 +18,8 @@ class AppPaths {
       File(path.join(rootDirectory.path, 'settings', 'settings.json'));
   File get windowStateFile =>
       File(path.join(rootDirectory.path, 'state', 'window.json'));
+  File get playbackRecoveryFile =>
+      File(path.join(rootDirectory.path, 'state', 'playback.json'));
   File get watchHistoryFile =>
       File(path.join(rootDirectory.path, 'state', 'watch_history.json'));
   File get followedSeriesFile =>

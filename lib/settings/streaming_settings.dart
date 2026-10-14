@@ -6,6 +6,7 @@ const _mb = 1024 * 1024;
 class StreamingSettings {
   const StreamingSettings({
     this.pauseOnFocusLoss = true,
+    this.resumeRewindSeconds = 5,
     this.captionsEnabled = false,
     this.readAheadBytes = 16 * _mb,
     this.downloadAheadMinutes = 10,
@@ -20,6 +21,15 @@ class StreamingSettings {
 
   /// Pause when leaving the app and resume when returning.
   final bool pauseOnFocusLoss;
+
+  /// Seconds replayed when continuing media or restoring an open player.
+  /// Zero disables the rewind, retaining the saved position.
+  final int resumeRewindSeconds;
+
+  Duration resumePosition(Duration position) {
+    final start = position - Duration(seconds: resumeRewindSeconds);
+    return start < Duration.zero ? Duration.zero : start;
+  }
 
   /// Initial caption intent for a new player session.
   final bool captionsEnabled;
@@ -47,6 +57,7 @@ class StreamingSettings {
 
   StreamingSettings copyWith({
     bool? pauseOnFocusLoss,
+    int? resumeRewindSeconds,
     bool? captionsEnabled,
     int? readAheadBytes,
     int? downloadAheadMinutes,
@@ -60,6 +71,7 @@ class StreamingSettings {
     int? keepRecentTorrents,
   }) => StreamingSettings(
     pauseOnFocusLoss: pauseOnFocusLoss ?? this.pauseOnFocusLoss,
+    resumeRewindSeconds: resumeRewindSeconds ?? this.resumeRewindSeconds,
     captionsEnabled: captionsEnabled ?? this.captionsEnabled,
     readAheadBytes: readAheadBytes ?? this.readAheadBytes,
     downloadAheadMinutes: downloadAheadMinutes ?? this.downloadAheadMinutes,
@@ -81,6 +93,10 @@ class StreamingSettings {
     const d = StreamingSettings();
     final directory = json['torrentDirectory'];
     return StreamingSettings(
+      resumeRewindSeconds: jsonInt(
+        json['resumeRewindSeconds'],
+        d.resumeRewindSeconds,
+      ),
       captionsEnabled: json['captionsEnabled'] == true,
       pauseOnFocusLoss: json['pauseOnFocusLoss'] is bool
           ? json['pauseOnFocusLoss'] as bool
@@ -122,6 +138,7 @@ class StreamingSettings {
 
   Map<String, dynamic> toJson() => {
     'pauseOnFocusLoss': pauseOnFocusLoss,
+    'resumeRewindSeconds': resumeRewindSeconds,
     'captionsEnabled': captionsEnabled,
     'readAheadBytes': readAheadBytes,
     'downloadAheadMinutes': downloadAheadMinutes,

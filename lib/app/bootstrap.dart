@@ -33,6 +33,11 @@ import '../library/playback.dart';
 import '../library/repository.dart';
 import '../notifications/notification_service.dart';
 import '../player/lifecycle.dart';
+import '../player/recovery.dart';
+import '../player/session.dart';
+import '../player/queue_builder.dart';
+import '../imdb/models.dart';
+import '../torrents/resolution_models.dart';
 import '../player/stream/parked_stream.dart';
 import '../settings/notifier.dart';
 import '../settings/repository.dart';
@@ -56,6 +61,7 @@ import '../ui/shared/desktop_tray_controller.dart';
 import '../ui/shared/app_icon_controller.dart';
 import '../ui/shared/launch_at_startup_manager.dart';
 import '../ui/shared/window_manager.dart';
+import '../ui/shared/player_view.dart';
 import '../watching/notifier.dart';
 import '../watching/repository.dart';
 import 'services.dart';
@@ -235,12 +241,50 @@ class AppRuntime with WidgetsBindingObserver {
     unawaited(container.read(syncServiceProvider).start());
     // Listens for failed requests from the start, whatever page is open.
     container.read(onlineProvider);
+    final recovery = await container.read(playbackRecoveryProvider).load();
+    if (recovery != null) {
+      final item = recovery.item;
+      final request = item.series == null
+          ? PlayTitle(item.title)
+          : PlayEpisode(
+              item.series!,
+              ImdbEpisode(
+                title: item.title,
+                seasonNumber: item.season,
+                episodeNumber: item.episode,
+              ),
+              season: item.season,
+            );
+      final release = recovery.release;
+      container
+          .read(playerSessionProvider.notifier)
+          .play(
+            request,
+            autoplay: false,
+            start: PlaybackRecovery.start(
+              recovery,
+              settings: settings.streaming,
+            ),
+            torrent: release == null
+                ? null
+                : TorrentCandidate(
+                    release: release,
+                    score: 0,
+                    qualityScore: 0,
+                    availabilityScore: 0,
+                    sizeScore: 0,
+                    requiresFileSelection: release.isPack,
+                  ),
+          );
+      container.read(playerViewProvider.notifier).minimize();
+    }
     WidgetsBinding.instance.addObserver(runtime);
     log.info('Application services ready in ${clock.elapsedMilliseconds}ms');
     return runtime;
   }
 
   Future<void> flush() async {
+    await container.read(playbackRecoveryProvider).flush();
     await container.read(downloadQueueProvider).flush();
     await container.read(settingsProvider.notifier).flushed;
     await repository.store.flushed;
@@ -289,6 +333,7 @@ class AppRuntime with WidgetsBindingObserver {
     // Riverpod's onDispose cannot await the player's native cleanup. Finish
     // it while Dart callbacks and torrent sessions are still available.
     await container.read(playerLifecycleProvider).dispose();
+    await container.read(playbackRecoveryProvider).flush();
     // Player cleanup can park its session; release it before closing the engine.
     await container.read(parkedStreamsProvider).dispose();
     await container.read(taskbarProgressProvider).dispose();

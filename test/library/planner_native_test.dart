@@ -224,6 +224,8 @@ void main() {
           isA<NotDownloaded>(),
         );
       } finally {
+        // Provider disposal cannot await the queue's final persistence write.
+        await container.read(downloadQueueProvider).dispose();
         container.dispose();
         await engine.close();
         seedSession.close();

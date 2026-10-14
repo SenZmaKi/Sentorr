@@ -4,14 +4,21 @@ import 'package:torrent_stream/src/engine/downloaded_ranges.dart';
 void main() {
   test('shared boundaries, gaps, stable maps and invalidation', () {
     final map = DownloadedRanges();
-    void update(int bytes, {bool checking = false}) => map.update(
-      offset: 5,
-      length: 40,
-      pieceLength: 10,
-      verifiedBytes: bytes,
-      checking: checking,
-      havePiece: (p) => {0, 1, 4}.contains(p),
-    );
+    void update(int bytes, {bool checking = false}) {
+      // Sampling may yield after any piece when the host is busy. Allow one
+      // update per piece so these assertions cover the completed projection.
+      for (var tick = 0; tick < 5; tick++) {
+        map.update(
+          offset: 5,
+          length: 40,
+          pieceLength: 10,
+          verifiedBytes: bytes,
+          checking: checking,
+          havePiece: (p) => {0, 1, 4}.contains(p),
+        );
+      }
+    }
+
     update(20);
     expect(map.ranges, [(start: 0, end: 15), (start: 35, end: 40)]);
     final previous = map.ranges;

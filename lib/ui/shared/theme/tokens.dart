@@ -43,6 +43,7 @@ abstract final class ControlHeights {
 }
 
 abstract final class Motion {
+  static const Duration artworkPulse = Duration(milliseconds: 1400);
   static const Duration press = Duration(milliseconds: 100);
   static const Duration hover = Duration(milliseconds: 150);
   static const Duration panel = Duration(milliseconds: 200);

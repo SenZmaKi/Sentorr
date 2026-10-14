@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/services.dart';
 import '../shared/theme/theme.dart';
 import 'motion.dart';
+import 'artwork_skeleton.dart';
 
 /// Catalog artwork shares the app's disk cache on every supported platform.
 class AppImage extends ConsumerWidget {
@@ -18,6 +19,7 @@ class AppImage extends ConsumerWidget {
     this.semanticLabel,
     this.placeholder = true,
     this.decodeWidth,
+    this.loadingSkeleton = false,
   });
   final String url;
   final double? width, height;
@@ -31,6 +33,7 @@ class AppImage extends ConsumerWidget {
 
   /// Decorative uses (e.g. blurred washes) stay empty instead.
   final bool placeholder;
+  final bool loadingSkeleton;
   @override
   Widget build(BuildContext context, WidgetRef ref) => Semantics(
     label: semanticLabel,
@@ -45,8 +48,11 @@ class AppImage extends ConsumerWidget {
       alignment: alignment,
       fadeInDuration: reduceMotion(context) ? Duration.zero : Motion.panel,
       fadeOutDuration: reduceMotion(context) ? Duration.zero : Motion.panel,
-      placeholder: (_, _) =>
-          placeholder ? const ArtworkPlaceholder() : const SizedBox.shrink(),
+      placeholder: (_, _) => !placeholder
+          ? const SizedBox.shrink()
+          : loadingSkeleton
+          ? const ArtworkSkeleton()
+          : const ArtworkPlaceholder(),
       errorWidget: (_, _, _) => placeholder
           ? const ArtworkPlaceholder(icon: Icons.broken_image_outlined)
           : const SizedBox.shrink(),

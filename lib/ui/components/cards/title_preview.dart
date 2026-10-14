@@ -22,12 +22,14 @@ class TitlePreview extends ConsumerWidget {
     required this.onOpen,
     this.onPlay,
     this.playLabel = 'Play',
+    this.playAction,
   });
 
   final ImdbTitle title;
   final VoidCallback onOpen;
   final VoidCallback? onPlay;
   final String playLabel;
+  final Widget? playAction;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,6 +48,7 @@ class TitlePreview extends ConsumerWidget {
       genres: t.genres.take(3).toList(),
       synopsis: t.plot,
       primaryLabel: playLabel,
+      primaryAction: playAction,
       onPrimary: onPlay,
       onOpen: onOpen,
       stamp: ListBadge(titleId: t.id),

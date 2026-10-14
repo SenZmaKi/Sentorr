@@ -5,7 +5,8 @@ import '../../imdb/images.dart';
 import '../../imdb/models.dart';
 import '../../imdb/providers.dart';
 import 'app_image.dart';
-import 'artwork_skeleton.dart';
+import '../shared/theme/theme.dart';
+import 'skeleton.dart';
 
 /// IMDb artwork fetched at the size it is drawn, not the 2000+ px original.
 class TitleArtwork extends StatelessWidget {
@@ -13,12 +14,10 @@ class TitleArtwork extends StatelessWidget {
     super.key,
     required this.image,
     this.alignment = Alignment.center,
-    this.loadingSkeleton = false,
   });
 
   final ImdbImage? image;
   final Alignment alignment;
-  final bool loadingSkeleton;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +39,6 @@ class TitleArtwork extends StatelessWidget {
           url: imdbImageUrl(image.url, width: width * dpr),
           decodeWidth: (width * dpr).clamp(1, 2560).ceil(),
           alignment: alignment,
-          loadingSkeleton: loadingSkeleton,
           width: box.maxWidth,
           height: box.hasBoundedHeight ? box.maxHeight : null,
         );
@@ -75,17 +73,16 @@ class TitleBackdrop extends ConsumerWidget {
     // AppImage fades only once decoded artwork is ready. Switching here would
     // fade out the skeleton as soon as metadata arrives, before the download.
     return backdrop != null
-        ? TitleArtwork(image: backdrop, loadingSkeleton: true)
+        ? TitleArtwork(image: backdrop)
         : posterFallback &&
               (!waitForBackdrop || details.hasValue || details.hasError)
         ? TitleArtwork(
             key: const ValueKey('poster'),
             image: title.poster,
             alignment: const Alignment(0, -0.6),
-            loadingSkeleton: true,
           )
         : details.isLoading
-        ? const ArtworkSkeleton()
+        ? const Skeleton(radius: Radii.card)
         : const ArtworkPlaceholder();
   }
 }

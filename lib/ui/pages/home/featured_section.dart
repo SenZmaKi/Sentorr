@@ -1,11 +1,13 @@
+import '../../components/pick_up_button.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../home/catalog_rows.dart';
 import '../../../imdb/models.dart';
-import '../../../titles/pick_up.dart';
 import '../../components/interactive.dart';
 import '../../components/hero_frame.dart';
+import '../../components/hero_skeleton.dart';
 import '../../components/load_error.dart';
 import '../../components/motion.dart';
 import '../../shared/layout/adaptive.dart';
@@ -92,7 +94,6 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
                 .watch(spotlightIndexProvider)
                 .clamp(0, titles.length - 1);
             final t = titles[i];
-            final pick = ref.watch(pickUpPresentationProvider(t.id));
             return MouseRegion(
               onEnter: (_) => _setPause(hovered: true),
               onExit: (_) => _setPause(hovered: false),
@@ -131,7 +132,10 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
                             ),
                           ),
                     onPlay: () => ref.playOrPickUp(t),
-                    playLabel: pickUpLabel(pick),
+                    playAction: PickUpButton(
+                      titleId: t.id,
+                      onPressed: () => ref.playOrPickUp(t),
+                    ),
                     onDetails: () => ref.openTitle(t),
                   ),
                 ),
@@ -149,10 +153,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection>
               ),
             ),
           ),
-          loading: () => HeroFrame(
-            background: ColoredBox(color: context.colors.surfaceControl),
-            child: const SizedBox.shrink(),
-          ),
+          loading: () => const HeroSkeleton(),
         );
   }
 }

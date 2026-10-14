@@ -15,6 +15,7 @@ class SButton extends StatelessWidget {
     this.icon,
     this.leading,
     this.loading = false,
+    this.labelContent,
   });
 
   const SButton.primary({
@@ -23,6 +24,7 @@ class SButton extends StatelessWidget {
     this.onPressed,
     this.icon,
     this.loading = false,
+    this.labelContent,
   }) : variant = ButtonVariant.primary,
        leading = null;
 
@@ -32,6 +34,7 @@ class SButton extends StatelessWidget {
     this.onPressed,
     this.icon,
     this.loading = false,
+    this.labelContent,
   }) : variant = ButtonVariant.ghost,
        leading = null;
 
@@ -41,6 +44,7 @@ class SButton extends StatelessWidget {
     this.onPressed,
     this.icon,
     this.loading = false,
+    this.labelContent,
   }) : variant = ButtonVariant.destructive,
        leading = null;
 
@@ -52,6 +56,10 @@ class SButton extends StatelessWidget {
   /// Drawn in place of [icon], e.g. a progress ring; sized as an icon.
   final Widget? leading;
   final bool loading;
+
+  /// Drawn in place of the [label] text, e.g. a label with a skeleton
+  /// slot; [label] stays the accessible name.
+  final Widget? labelContent;
 
   @override
   Widget build(BuildContext context) {
@@ -135,11 +143,16 @@ class SButton extends StatelessWidget {
                 const SizedBox(width: Space.s8),
               // Wraps rather than overflows in a narrow sheet at large text.
               Flexible(
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: context.type.label.copyWith(color: fg),
-                ),
+                child: labelContent != null
+                    ? DefaultTextStyle(
+                        style: context.type.label.copyWith(color: fg),
+                        child: ExcludeSemantics(child: labelContent!),
+                      )
+                    : Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: context.type.label.copyWith(color: fg),
+                      ),
               ),
             ],
           ),

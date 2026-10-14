@@ -5,6 +5,7 @@ import '../../../imdb/models.dart';
 import '../../../imdb/providers.dart';
 import '../../../titles/reviews.dart';
 import '../../components/cards/card_parts.dart';
+import '../../components/cards/card_skeleton.dart';
 import '../../components/cards/person_card.dart';
 import '../../components/cards/poster_card.dart';
 import '../../components/cards/review_card.dart';
@@ -49,23 +50,26 @@ class TitleShelfLayout {
 class CastShelf extends StatelessWidget {
   const CastShelf({super.key, required this.cast, required this.layout});
 
-  final List<ImdbCredit> cast;
+  /// Null while details load: headshot skeletons hold the row.
+  final List<ImdbCredit>? cast;
   final TitleShelfLayout layout;
 
   @override
   Widget build(BuildContext context) {
     final a = layout.avatar;
+    final cast = this.cast;
     return Shelf(
       icon: Icons.people_alt_outlined,
       title: 'Cast',
-      count: '${cast.length}',
+      count: cast == null ? null : '${cast.length}',
       gutter: layout.insets.side,
       tileWidth: layout.personWidth,
       artworkHeight: a,
       tileHeight: a + PersonCard.textHeight(layout.lines),
-      itemCount: cast.length,
-      reveal: true,
+      itemCount: cast?.length ?? 8,
+      reveal: cast != null,
       itemBuilder: (context, i) {
+        if (cast == null) return PersonSkeleton(avatar: a);
         final c = cast[i];
         return PersonCard(
           avatar: a,
@@ -85,12 +89,14 @@ class RecommendationsShelf extends ConsumerWidget {
     required this.layout,
   });
 
-  final List<ImdbTitle> titles;
+  /// Null while details load: poster skeletons hold the row.
+  final List<ImdbTitle>? titles;
   final TitleShelfLayout layout;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final w = layout.posterWidth;
+    final titles = this.titles;
     return Shelf(
       icon: Icons.movie_filter_outlined,
       title: 'More like this',
@@ -99,13 +105,15 @@ class RecommendationsShelf extends ConsumerWidget {
       tileWidth: w,
       artworkHeight: w * 3 / 2,
       tileHeight: w * 3 / 2 + PosterCard.textHeight(layout.lines),
-      itemCount: titles.length,
-      reveal: true,
-      itemBuilder: (context, i) => titlePoster(
-        titles[i],
-        onOpen: () => ref.openTitle(titles[i]),
-        onPlay: () => ref.playOrPickUp(titles[i]),
-      ),
+      itemCount: titles?.length ?? 8,
+      reveal: titles != null,
+      itemBuilder: (context, i) => titles == null
+          ? const CardSkeleton(aspectRatio: 2 / 3)
+          : titlePoster(
+              titles[i],
+              onOpen: () => ref.openTitle(titles[i]),
+              onPlay: () => ref.playOrPickUp(titles[i]),
+            ),
     );
   }
 }

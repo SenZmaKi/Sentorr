@@ -160,6 +160,53 @@ void main() {
     expect(c.read(continueWatchingProvider).requireValue.single.id, 'tt921');
   });
 
+  test('empty async pickup cannot hide saved resume state', () {
+    final c = ProviderContainer(
+      overrides: [
+        ...watchListsOverrides(),
+        ...watchHistoryOverrides([_watching(1)]),
+        ...followedSeriesOverrides([_followed(1, .5)]),
+        pickUpProvider(_series.id).overrideWith((ref) => null),
+      ],
+    );
+    addTearDown(c.dispose);
+    expect(c.read(pickUpProvider(_series.id)).requireValue, isNull);
+    expect(
+      pickUpLabel(c.read(pickUpPresentationProvider(_series.id))),
+      'Resume S2 E1',
+    );
+  });
+
+  test('empty async pickup keeps Continue until metadata resolves', () async {
+    var resolve = false;
+    final c = ProviderContainer(
+      overrides: [
+        ...watchListsOverrides(),
+        imdbRepositoryProvider.overrideWithValue(_imdb),
+        ...watchHistoryOverrides([_watching(1, progress: 1)]),
+        ...followedSeriesOverrides([_followed(1, 1)]),
+        pickUpProvider(_series.id).overrideWith(
+          (ref) => resolve ? pickUpFor(_imdb, followed: _followed(1, 1)) : null,
+        ),
+      ],
+    );
+    addTearDown(c.dispose);
+    final labels = <String>[];
+    final sub = c.listen(
+      pickUpPresentationProvider(_series.id),
+      (_, pick) => labels.add(pickUpLabel(pick)),
+      fireImmediately: true,
+    );
+    addTearDown(sub.close);
+    expect(labels, ['Continue']);
+    resolve = true;
+    c.invalidate(pickUpProvider(_series.id));
+    await c.read(pickUpProvider(_series.id).future);
+    await c.pump();
+    expect(labels.last, 'Continue S2 E2');
+    expect(labels, isNot(contains('Play')));
+  });
+
   test(
     'finished episode continues an old series with an unwatched episode',
     () async {

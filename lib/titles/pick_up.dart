@@ -119,14 +119,21 @@ PickUp? localPickUp(WatchEntry? entry, FollowedSeries? followed) {
 }
 
 /// Show known viewing intent immediately while metadata resolves.
-final pickUpPresentationProvider = Provider.autoDispose.family<PickUp?, String>(
-  (ref, id) {
-    if (ref.watch(removedListTitlesProvider).contains(id)) return null;
-    final resolved = ref.watch(pickUpProvider(id));
-    if (!resolved.isLoading && resolved.hasValue) return resolved.value;
-    return localPickUp(
-      ref.watch(inProgressProvider).where((e) => e.key == id).firstOrNull,
-      ref.watch(followedProvider(id)),
-    );
-  },
-);
+final pickUpPresentationProvider = Provider.autoDispose.family<PickUp?, String>((
+  ref,
+  id,
+) {
+  // Subscribe through pickup only. Watching its inputs here as well creates
+  // a diamond that Riverpod 3.4.3 can flush while TickerMode resumes in build.
+  final resolved = ref.watch(pickUpProvider(id));
+  if (ref.read(removedListTitlesProvider).contains(id)) return null;
+  final local = localPickUp(
+    ref.read(inProgressProvider).where((e) => e.key == id).firstOrNull,
+    ref.read(followedProvider(id)),
+  );
+  // Saved viewing state is authoritative even while the async provider
+  // still carries an empty result from before this title was started.
+  if (local?.pending != true) return local;
+  if (!resolved.isLoading && resolved.value != null) return resolved.value;
+  return local;
+});

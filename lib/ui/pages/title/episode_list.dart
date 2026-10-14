@@ -11,6 +11,7 @@ import '../../components/download_button.dart';
 import '../../components/elsewhere_button.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_row.dart';
+import '../../components/cards/episode_row_skeleton.dart';
 import '../../components/cards/title_preview.dart';
 import '../../components/load_error.dart';
 import '../../components/title_artwork.dart';
@@ -42,7 +43,7 @@ class EpisodeList extends ConsumerWidget {
     final notifier = ref.read(
       seasonEpisodesProvider((series.id, season)).notifier,
     );
-    if (state.loading) return const _Skeletons();
+    if (state.loading) return const EpisodeListSkeleton();
     if (state.items.isEmpty) {
       return state.error != null
           ? LoadError(
@@ -180,57 +181,6 @@ class EpisodeList extends ConsumerWidget {
           // Upcoming episodes have nothing to open; the card stays inert.
           onOpen: play ?? () {},
         ),
-      ),
-    );
-  }
-}
-
-class _Skeletons extends StatelessWidget {
-  const _Skeletons();
-
-  @override
-  Widget build(BuildContext context) {
-    final fill = context.colors.surfaceControl;
-    Widget bar(double widthFactor, double height) => FractionallySizedBox(
-      widthFactor: widthFactor,
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(Radii.chip),
-        ),
-      ),
-    );
-    return Semantics(
-      label: 'Loading episodes',
-      child: Column(
-        children: [
-          for (var i = 0; i < 4; i++)
-            Padding(
-              padding: const EdgeInsets.all(Space.s12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 176,
-                    height: 99,
-                    decoration: BoxDecoration(
-                      color: fill,
-                      borderRadius: BorderRadius.circular(Radii.card),
-                    ),
-                  ),
-                  const SizedBox(width: Space.s16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: Space.s8,
-                      children: [bar(0.5, 14), bar(0.3, 10), bar(0.8, 10)],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
       ),
     );
   }

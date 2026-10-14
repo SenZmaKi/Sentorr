@@ -11,6 +11,7 @@ import '../../../titles/episodes.dart';
 import '../../components/buttons.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_row.dart';
+import '../../components/cards/episode_row_skeleton.dart';
 import '../../components/chips.dart';
 import '../../components/download_button.dart';
 import '../../components/elsewhere_button.dart';
@@ -176,7 +177,15 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
       seasonEpisodesProvider((series.id, season)).notifier,
     );
     if (state.loading) {
-      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+      // Clipped rather than scrolled: rows only hold the panel's shape.
+      return SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: EpisodeListSkeleton(
+          compact: true,
+          dense: context.playerLayout.handheld,
+          divided: true,
+        ),
+      );
     }
     if (state.items.isEmpty) {
       return state.error != null

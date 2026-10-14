@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../imdb/models.dart';
-import '../../../titles/pick_up.dart';
-import '../../shared/play_route.dart';
+import '../pick_up_button.dart';
 import '../../shared/title_format.dart';
 import '../../shared/title_icons.dart';
 import '../list_badge.dart';
@@ -67,6 +66,6 @@ class PickUpPreview extends ConsumerWidget {
     title: title,
     onOpen: onOpen,
     onPlay: onPlay,
-    playLabel: pickUpLabel(ref.watch(pickUpPresentationProvider(title.id))),
+    playAction: PickUpButton(titleId: title.id, onPressed: onPlay),
   );
 }

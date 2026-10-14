@@ -24,6 +24,7 @@ class TitleHero extends StatelessWidget {
     this.details,
     this.onPlay,
     this.playLabel = 'Play',
+    this.playAction,
     this.onEpisodes,
     this.actions = const [],
   });
@@ -35,8 +36,9 @@ class TitleHero extends StatelessWidget {
 
   /// e.g. "Resume" or "Continue S1 E4" for a title already started.
   final String playLabel;
+  final Widget? playAction;
 
-  /// Series only: jumps to the episode list.
+  /// Series only: jumps to the episode list; null keeps the button disabled.
   final VoidCallback? onEpisodes;
 
   /// Further actions after Play and Episodes, e.g. Download or Follow.
@@ -285,12 +287,13 @@ class _Copy extends StatelessWidget {
         child: HeroActions(
           compact: compact,
           children: [
-            SButton.primary(
-              label: hero.playLabel,
-              icon: Icons.play_arrow_rounded,
-              onPressed: hero.onPlay,
-            ),
-            if (hero.onEpisodes != null)
+            hero.playAction ??
+                SButton.primary(
+                  label: hero.playLabel,
+                  icon: Icons.play_arrow_rounded,
+                  onPressed: hero.onPlay,
+                ),
+            if (hero.title.canHaveEpisodes == true)
               SButton(
                 label: 'Episodes',
                 icon: Icons.video_library_outlined,

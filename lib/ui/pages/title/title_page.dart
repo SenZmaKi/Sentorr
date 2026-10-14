@@ -1,3 +1,5 @@
+import '../../components/pick_up_button.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -95,6 +97,7 @@ class _TitlePageState extends ConsumerState<TitlePage> {
   Widget build(BuildContext context) {
     final details = ref.watch(titleDetailsProvider(_title.id));
     final d = details.value;
+    final loading = d == null && details.isLoading;
     final seasons = [...?d?.seasons.where((n) => n >= 0)]..sort();
     final pickUp = ref.watch(pickUpProvider(_title.id));
     final pick = ref.watch(pickUpPresentationProvider(_title.id));
@@ -143,7 +146,10 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                     details: d,
                     onBack: _back,
                     onPlay: () => ref.playOrPickUp(d?.title ?? _title),
-                    playLabel: pickUpLabel(pick),
+                    playAction: PickUpButton(
+                      titleId: _title.id,
+                      onPressed: () => ref.playOrPickUp(d?.title ?? _title),
+                    ),
                     onEpisodes: seasons.isEmpty ? null : _showEpisodes,
                     actions: [
                       ListButton(title: d?.title ?? _title),
@@ -169,7 +175,12 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                   ),
                 // Who is in it reads as part of the title's information, so
                 // it follows the hero, ahead of the episode list.
-                if (cast.isNotEmpty && !castBeside)
+                // Skeleton rows while details load, except where a large
+                // series will put its cast beside the episodes instead.
+                if (loading &&
+                    !(shelves.layout.large && _title.canHaveEpisodes == true))
+                  CastShelf(cast: null, layout: shelves)
+                else if (cast.isNotEmpty && !castBeside)
                   CastShelf(cast: cast, layout: shelves),
                 if (episodes != null)
                   padded(
@@ -187,7 +198,9 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                           )
                         : episodes,
                   ),
-                if (d != null && d.recommendations.items.isNotEmpty)
+                if (loading)
+                  RecommendationsShelf(titles: null, layout: shelves)
+                else if (d != null && d.recommendations.items.isNotEmpty)
                   RecommendationsShelf(
                     titles: d.recommendations.items,
                     layout: shelves,

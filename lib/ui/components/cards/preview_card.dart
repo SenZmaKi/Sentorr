@@ -24,6 +24,7 @@ class PreviewCard extends StatelessWidget {
     this.genres = const [],
     this.synopsis,
     this.primaryLabel = 'Play',
+    this.primaryAction,
     this.primaryIcon = Icons.play_arrow_rounded,
     this.onPrimary,
     this.extraActions = const [],
@@ -48,6 +49,7 @@ class PreviewCard extends StatelessWidget {
   final List<String> genres;
   final String? synopsis;
   final String primaryLabel;
+  final Widget? primaryAction;
   final IconData primaryIcon;
   final VoidCallback? onPrimary;
 
@@ -143,11 +145,12 @@ class PreviewCard extends StatelessWidget {
                       spacing: Space.s8,
                       runSpacing: Space.s8,
                       children: [
-                        SButton.primary(
-                          label: primaryLabel,
-                          icon: primaryIcon,
-                          onPressed: onPrimary,
-                        ),
+                        primaryAction ??
+                            SButton.primary(
+                              label: primaryLabel,
+                              icon: primaryIcon,
+                              onPressed: onPrimary,
+                            ),
                         ...extraActions,
                       ],
                     ),

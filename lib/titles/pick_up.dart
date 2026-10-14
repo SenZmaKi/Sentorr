@@ -6,6 +6,7 @@ import '../following/models.dart';
 import '../following/notifier.dart';
 import '../imdb/repository.dart';
 import '../lists/series_standing.dart';
+import '../lists/notifier.dart';
 import '../player/models.dart';
 import '../watching/models.dart';
 import '../watching/next_episode.dart';
@@ -72,6 +73,7 @@ final pickUpProvider = FutureProvider.autoDispose.family<PickUp?, String>((
   ref,
   id,
 ) {
+  if (ref.watch(removedListTitlesProvider).contains(id)) return null;
   final entry = ref.watch(
     inProgressProvider.select((l) => l.where((e) => e.key == id).firstOrNull),
   );
@@ -119,6 +121,7 @@ PickUp? localPickUp(WatchEntry? entry, FollowedSeries? followed) {
 /// Show known viewing intent immediately while metadata resolves.
 final pickUpPresentationProvider = Provider.autoDispose.family<PickUp?, String>(
   (ref, id) {
+    if (ref.watch(removedListTitlesProvider).contains(id)) return null;
     final resolved = ref.watch(pickUpProvider(id));
     if (!resolved.isLoading && resolved.hasValue) return resolved.value;
     return localPickUp(

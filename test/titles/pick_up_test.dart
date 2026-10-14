@@ -11,6 +11,7 @@ import 'package:sentorr/watching/next_episode.dart';
 import 'package:sentorr/ui/shared/play_route.dart';
 
 import '../support/fake_following.dart';
+import '../support/fake_lists.dart';
 import '../support/fake_history.dart';
 
 import 'package:sentorr/following/models.dart';
@@ -68,6 +69,7 @@ void main() {
   ) {
     final c = ProviderContainer(
       overrides: [
+        ...watchListsOverrides(),
         imdbRepositoryProvider.overrideWithValue(_imdb),
         ...watchHistoryOverrides(history),
         ...followedSeriesOverrides(followed),
@@ -86,6 +88,7 @@ void main() {
     repository.nextEpisodes = Map.of(first.read(savedNextEpisodesProvider));
     final reopened = ProviderContainer(
       overrides: [
+        ...watchListsOverrides(),
         ...watchHistoryOverrides([_watching(1, progress: 1)], repository),
         ...followedSeriesOverrides([_followed(1, 1)]),
         // No IMDb override: any startup lookup would fail.

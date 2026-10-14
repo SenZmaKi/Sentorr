@@ -214,3 +214,12 @@ final watchStatusProvider = Provider.family<WatchStatus?, String>(
     ),
   ),
 );
+
+/// Explicit removals suppress viewing prompts while retaining watched history.
+final removedListTitlesProvider = Provider<Set<String>>((ref) {
+  ref.watch(watchListsProvider);
+  return {
+    for (final entry in ref.read(watchListsProvider.notifier).snapshot.entries)
+      if (entry.removed) entry.id,
+  };
+});

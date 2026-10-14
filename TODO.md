@@ -1,6 +1,3 @@
-- If user exits app while player is playing, opening the app should revive the player to the exact media being played and 5 seconds before the progress.
+
 - Saving watched and progress seems hit or miss investigate.
-- Fix fouc i.e., content that's in our list showing play then flashing to continue
-- Improve loading of images and banner images
-- Generally improve content shifts as state is loaded in
-- Exhaustive TV responsiveness
+- Improve loading of images and banner image

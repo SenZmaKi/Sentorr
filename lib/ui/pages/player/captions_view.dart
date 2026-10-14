@@ -48,7 +48,9 @@ class CaptionsView extends StatelessWidget {
             ? (box.maxHeight * 0.05).clamp(4.0, 16.0)
             : lifted
             ? 128.0
-            : Space.s48;
+            // Near the frame's bottom edge, as YouTube and broadcast
+            // captions sit, without crowding it on short phone screens.
+            : (box.maxHeight * 0.08).clamp(Space.s16, Space.s48);
         return AnimatedPadding(
           duration: reduceMotion(context) ? Duration.zero : Motion.panel,
           curve: Motion.change,

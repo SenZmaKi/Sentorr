@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  A less sketchy way to stream movies and TV.<br>
+  A less annoying way to stream movies and shows.<br>
   Movies and TV · Android · Linux · macOS · Windows
 </p>
 

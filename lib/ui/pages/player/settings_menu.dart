@@ -12,6 +12,7 @@ import 'track_labels.dart';
 import 'player_actions.dart';
 import 'player_value.dart';
 import 'player_layout.dart';
+import 'screenshot_action.dart';
 
 export 'track_labels.dart' show audioLabel, subtitleLabel;
 
@@ -151,6 +152,7 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
         chevron: true,
         onTap: widget.actions.chooseTorrent,
       ),
+      ScreenshotAction(player: widget.player, actions: widget.actions),
       PlayerMenuRow(
         icon: Icons.analytics_outlined,
         label: 'Stats for nerds (D)',

@@ -2,6 +2,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/settings/models.dart';
 
 void main() {
+  test('subtitle language persists and older settings accept any language', () {
+    expect(StreamingSettings.fromJson({}).subtitleLanguage, '');
+    expect(
+      StreamingSettings.fromJson({'subtitleLanguage': 3}).subtitleLanguage,
+      '',
+    );
+    final saved = const StreamingSettings()
+        .copyWith(subtitleLanguage: 'Croatian')
+        .copyWith(captionsEnabled: true);
+    expect(
+      StreamingSettings.fromJson(saved.toJson()).subtitleLanguage,
+      'Croatian',
+    );
+    expect(saved.copyWith(subtitleLanguage: '').subtitleLanguage, '');
+  });
+
   test('clock format survives serialization and unrelated edits', () {
     expect(StreamingSettings.fromJson({}).showRemainingTime, isFalse);
     final restored = StreamingSettings.fromJson(

@@ -76,6 +76,7 @@ class TorrentPlayback {
     subtitles = PlaybackSubtitles(
       player,
       defaultEnabled: bufferSettings?.call().captionsEnabled ?? false,
+      preferredLanguage: () => bufferSettings?.call().subtitleLanguage ?? '',
     );
     _errors = PlaybackErrors(
       player: player,

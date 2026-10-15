@@ -5,6 +5,8 @@ import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as p;
 import 'package:torrent_stream/torrent_stream.dart';
 
+import '../track_labels.dart';
+
 class SubtitleDownload {
   const SubtitleDownload(
     this.file, {
@@ -30,7 +32,7 @@ class SubtitleDownload {
 /// so a late attachment cannot override Off or a newer selection. Off hides
 /// the Flutter overlay without deselecting and flushing mpv's packet cache.
 class PlaybackSubtitles extends ChangeNotifier {
-  PlaybackSubtitles(this.player, {bool? defaultEnabled})
+  PlaybackSubtitles(this.player, {bool? defaultEnabled, this.preferredLanguage})
     : _defaultEnabled = defaultEnabled,
       enabled = defaultEnabled ?? false {
     _tracks = player.stream.tracks.listen((_) {
@@ -39,6 +41,7 @@ class PlaybackSubtitles extends ChangeNotifier {
     });
   }
   final bool? _defaultEnabled;
+  final String Function()? preferredLanguage;
   late final StreamSubscription<Tracks> _tracks;
   final Player player;
   List<SubtitleDownload> files = const [];
@@ -178,10 +181,7 @@ class PlaybackSubtitles extends ChangeNotifier {
   void on() {
     _explicit = true;
     enabled = true;
-    if (selectedFile == null && _embedded == null) {
-      _embedded = embedded.firstOrNull;
-      if (_embedded == null) selectedFile = files.firstOrNull?.file.index;
-    }
+    if (selectedFile == null && _embedded == null) _chooseDefault();
     _apply();
     notifyListeners();
   }
@@ -209,11 +209,37 @@ class PlaybackSubtitles extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _apply() {
-    if (!_opened || !enabled) return;
+  void _chooseDefault() {
+    final preference = preferredLanguage?.call() ?? '';
+    final language = trackLanguage(preference, null);
+    if (language != null) {
+      final match = embedded
+          .where((t) => trackLanguage(t.title, t.language) == language)
+          .firstOrNull;
+      if (match != null) {
+        _embedded = match;
+        selectedFile = null;
+        return;
+      }
+      final sidecar = files
+          .where((f) => !f.failed && trackLanguage(f.label, null) == language)
+          .firstOrNull;
+      if (sidecar != null) {
+        _embedded = null;
+        selectedFile = sidecar.file.index;
+        return;
+      }
+    }
     if (selectedFile == null && _embedded == null) {
       _embedded = embedded.firstOrNull;
       if (_embedded == null) selectedFile = files.firstOrNull?.file.index;
+    }
+  }
+
+  void _apply() {
+    if (!_opened || !enabled) return;
+    if (!_explicit || (selectedFile == null && _embedded == null)) {
+      _chooseDefault();
     }
     final sidecar = selected;
     final track = _desired;

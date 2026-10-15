@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../player/track_labels.dart';
 import '../../../../settings/models.dart';
 import '../../../../settings/notifier.dart';
 import '../../../components/toggle.dart';
@@ -48,6 +49,25 @@ class StreamingSection extends ConsumerWidget {
                 value: s.captionsEnabled,
                 semanticLabel: 'Enable captions by default',
                 onChanged: (v) => edit((s) => s.copyWith(captionsEnabled: v)),
+              ),
+            ),
+            SettingsTile(
+              icon: Icons.translate_rounded,
+              title: 'Preferred subtitle language',
+              subtitle: 'Used when captions are enabled. Falls back to the first available track',
+              keywords: 'captions subtitles automatic language',
+              trailing: ChoiceField<String>(
+                value: s.subtitleLanguage,
+                options: {
+                  '',
+                  ...subtitleLanguages,
+                  if (s.subtitleLanguage.isNotEmpty) s.subtitleLanguage,
+                }.toList(),
+                labelOf: (language) =>
+                    language.isEmpty ? 'Any language' : language,
+                semanticLabel: 'Preferred subtitle language',
+                onChanged: (language) =>
+                    edit((s) => s.copyWith(subtitleLanguage: language)),
               ),
             ),
             SettingsTile(

@@ -81,6 +81,87 @@ void main() {
   }
 
   test(
+    'preferred language selects numbered tracks and respects manual choices',
+    () async {
+      const german = SubtitleTrack('2', '7_German', null);
+      const english = SubtitleTrack('3', '3_English', 'und');
+      native.state = native.state.copyWith(
+        tracks: const Tracks(subtitle: [german, english]),
+        track: native.state.track.copyWith(subtitle: german),
+      );
+      final defaults = PlaybackSubtitles(
+        player,
+        defaultEnabled: true,
+        preferredLanguage: () => 'English',
+      );
+      addTearDown(defaults.dispose);
+      defaults.opened();
+      await settlePlayback();
+      expect(defaults.embeddedTrack, english);
+      expect(native.selected.last, english);
+      defaults.chooseTrack(german);
+      native.emitTracks();
+      await settlePlayback();
+      expect(defaults.embeddedTrack, german);
+      defaults.off();
+      native.emitTracks();
+      await settlePlayback();
+      expect(defaults.enabled, isFalse);
+    },
+  );
+
+  test(
+    'late preferred track replaces fallback until a manual choice',
+    () async {
+      const german = SubtitleTrack('2', 'German', 'deu');
+      const croatian = SubtitleTrack('3', '16_hrv', null);
+      native.state = native.state.copyWith(
+        tracks: const Tracks(subtitle: [german]),
+      );
+      final defaults = PlaybackSubtitles(
+        player,
+        defaultEnabled: true,
+        preferredLanguage: () => 'Croatian',
+      );
+      addTearDown(defaults.dispose);
+      defaults.opened();
+      await settlePlayback();
+      expect(defaults.embeddedTrack, german);
+      native.state = native.state.copyWith(
+        tracks: const Tracks(subtitle: [german, croatian]),
+      );
+      native.emitTracks();
+      await settlePlayback();
+      expect(defaults.embeddedTrack, croatian);
+    },
+  );
+
+  test(
+    'preferred sidecar waits for download instead of using other languages',
+    () async {
+      const german = SubtitleTrack('2', 'German', 'deu');
+      native.state = native.state.copyWith(
+        tracks: const Tracks(subtitle: [german]),
+      );
+      final defaults = PlaybackSubtitles(
+        player,
+        defaultEnabled: true,
+        preferredLanguage: () => 'English',
+      );
+      addTearDown(defaults.dispose);
+      defaults.watch(session, [file]);
+      defaults.opened();
+      await settlePlayback();
+      expect(defaults.selectedFile, file.index);
+      expect(defaults.embeddedTrack, isNull);
+      expect(defaults.visible, isFalse);
+      await progress(100);
+      expect(native.selected.last.title, 'Movie.en');
+      expect(defaults.visible, isTrue);
+    },
+  );
+
+  test(
     'saved Off suppresses an automatically selected embedded track',
     () async {
       const track = SubtitleTrack('1', 'English', 'en');

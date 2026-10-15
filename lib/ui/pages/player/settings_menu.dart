@@ -8,9 +8,12 @@ import '../../components/section_header.dart';
 import '../../shared/layout/adaptive.dart';
 import '../../shared/theme/theme.dart';
 import 'menu_rows.dart';
+import 'track_labels.dart';
 import 'player_actions.dart';
 import 'player_value.dart';
 import 'player_layout.dart';
+
+export 'track_labels.dart' show audioLabel, subtitleLabel;
 
 enum _Page { root, speed, audio, subtitles, sleep }
 
@@ -245,34 +248,3 @@ bool _isReal(String id) => id != 'auto' && id != 'no';
 
 List<AudioTrack> _realAudio(Tracks t) =>
     t.audio.where((a) => _isReal(a.id)).toList();
-
-String audioLabel(AudioTrack t) => _label(t.id, t.title, t.language);
-String subtitleLabel(SubtitleTrack t) => _label(t.id, t.title, t.language);
-
-/// "English · SDH", else the language, else the track number.
-String _label(String id, String? title, String? code) {
-  final language = _language(code);
-  final parts = [?language, if (title != null && title != language) title];
-  return parts.isEmpty ? 'Track $id' : parts.join(' · ');
-}
-
-String? _language(String? code) => switch (code?.toLowerCase()) {
-  null || '' || 'und' => null,
-  'en' || 'eng' => 'English',
-  'es' || 'spa' => 'Spanish',
-  'fr' || 'fre' || 'fra' => 'French',
-  'de' || 'ger' || 'deu' => 'German',
-  'it' || 'ita' => 'Italian',
-  'pt' || 'por' => 'Portuguese',
-  'ru' || 'rus' => 'Russian',
-  'ja' || 'jpn' => 'Japanese',
-  'ko' || 'kor' => 'Korean',
-  'zh' || 'chi' || 'zho' => 'Chinese',
-  'ar' || 'ara' => 'Arabic',
-  'hi' || 'hin' => 'Hindi',
-  'nl' || 'dut' || 'nld' => 'Dutch',
-  'pl' || 'pol' => 'Polish',
-  'tr' || 'tur' => 'Turkish',
-  'sv' || 'swe' => 'Swedish',
-  _ => code!.toUpperCase(),
-};

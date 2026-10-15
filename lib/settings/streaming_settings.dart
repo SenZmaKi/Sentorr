@@ -8,6 +8,7 @@ class StreamingSettings {
     this.pauseOnFocusLoss = true,
     this.resumeRewindSeconds = 5,
     this.captionsEnabled = false,
+    this.subtitleLanguage = '',
     this.showRemainingTime = false,
     this.readAheadBytes = 16 * _mb,
     this.downloadAheadMinutes = 10,
@@ -34,6 +35,9 @@ class StreamingSettings {
 
   /// Initial caption intent for a new player session.
   final bool captionsEnabled;
+
+  /// Preferred caption language; empty accepts any language.
+  final String subtitleLanguage;
 
   /// Show time left instead of elapsed time in the player clock.
   final bool showRemainingTime;
@@ -63,6 +67,7 @@ class StreamingSettings {
     bool? pauseOnFocusLoss,
     int? resumeRewindSeconds,
     bool? captionsEnabled,
+    String? subtitleLanguage,
     bool? showRemainingTime,
     int? readAheadBytes,
     int? downloadAheadMinutes,
@@ -78,6 +83,7 @@ class StreamingSettings {
     pauseOnFocusLoss: pauseOnFocusLoss ?? this.pauseOnFocusLoss,
     resumeRewindSeconds: resumeRewindSeconds ?? this.resumeRewindSeconds,
     captionsEnabled: captionsEnabled ?? this.captionsEnabled,
+    subtitleLanguage: subtitleLanguage ?? this.subtitleLanguage,
     showRemainingTime: showRemainingTime ?? this.showRemainingTime,
     readAheadBytes: readAheadBytes ?? this.readAheadBytes,
     downloadAheadMinutes: downloadAheadMinutes ?? this.downloadAheadMinutes,
@@ -104,6 +110,9 @@ class StreamingSettings {
         d.resumeRewindSeconds,
       ),
       captionsEnabled: json['captionsEnabled'] == true,
+      subtitleLanguage: json['subtitleLanguage'] is String
+          ? (json['subtitleLanguage'] as String).trim()
+          : '',
       showRemainingTime: json['showRemainingTime'] == true,
       pauseOnFocusLoss: json['pauseOnFocusLoss'] is bool
           ? json['pauseOnFocusLoss'] as bool
@@ -147,6 +156,7 @@ class StreamingSettings {
     'pauseOnFocusLoss': pauseOnFocusLoss,
     'resumeRewindSeconds': resumeRewindSeconds,
     'captionsEnabled': captionsEnabled,
+    'subtitleLanguage': subtitleLanguage,
     'showRemainingTime': showRemainingTime,
     'readAheadBytes': readAheadBytes,
     'downloadAheadMinutes': downloadAheadMinutes,

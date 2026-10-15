@@ -20,6 +20,7 @@ class PosterCard extends StatelessWidget {
     this.stamp,
     this.ribbon,
     this.onTap,
+    this.onPlay,
     this.preview,
   });
 
@@ -36,6 +37,7 @@ class PosterCard extends StatelessWidget {
   final Widget? stamp;
   final Widget? ribbon;
   final VoidCallback? onTap;
+  final VoidCallback? onPlay;
 
   /// Floating detail card shown while the pointer rests on the tile.
   final WidgetBuilder? preview;
@@ -51,6 +53,7 @@ class PosterCard extends StatelessWidget {
         borderRadius: Radii.card,
         onTap: onTap,
         semanticLabel: semanticLabel,
+        excludeChildSemantics: false,
         builder: (context, s) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -59,17 +62,24 @@ class PosterCard extends StatelessWidget {
               child: ArtworkFrame(
                 active: s.hovered || s.focused,
                 artwork: artwork,
-                hoverOverlay: const Center(
+                hoverOverlay: Center(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     spacing: Space.s8,
                     children: [
-                      OverlayGlyph(
-                        Icons.play_arrow_rounded,
-                        primary: true,
-                        size: 44,
-                      ),
-                      OverlayGlyph(Icons.info_outline_rounded),
+                      if (onPlay != null)
+                        Interactive(
+                          onTap: onPlay,
+                          semanticLabel: 'Play $title',
+                          borderRadius: Radii.full,
+                          focusColor: OverlayColors.focus,
+                          builder: (_, _) => const OverlayGlyph(
+                            Icons.play_arrow_rounded,
+                            primary: true,
+                            size: 44,
+                          ),
+                        ),
+                      const OverlayGlyph(Icons.info_outline_rounded),
                     ],
                   ),
                 ),

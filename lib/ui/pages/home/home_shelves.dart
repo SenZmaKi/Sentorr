@@ -90,6 +90,7 @@ class CatalogShelf extends ConsumerWidget {
           stamp: ListBadge(titleId: t.id, compact: true),
           semanticLabel: describeTitle(t),
           onTap: () => ref.openTitle(t),
+          onPlay: () => ref.playOrPickUp(t),
           preview: _preview(ref, t),
         ),
         _ => _poster(ref, t),

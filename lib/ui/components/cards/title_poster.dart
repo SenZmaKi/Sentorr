@@ -44,6 +44,7 @@ PosterCard titlePoster(
   stamp: ListBadge(titleId: t.id, compact: true),
   semanticLabel: describeTitle(t, lead),
   onTap: onOpen,
+  onPlay: onPlay,
   preview: (_) => PickUpPreview(title: t, onOpen: onOpen, onPlay: onPlay),
 );
 

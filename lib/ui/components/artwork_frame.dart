@@ -11,8 +11,8 @@ import 'surface.dart';
 /// player bars); [hoverOverlay] fades in over a bottom fade while [active].
 /// The frame never moves: only the artwork zooms within its clip.
 ///
-/// The hover overlay's glyphs are decorative hints of what a pointer can do;
-/// touch has no hover to reveal them, so they are left out there. A tap
+/// The hover overlay can contain independent actions. Touch has no hover
+/// to reveal them, so they are left out there. A tap
 /// opens the tile and a long press opens its preview with Play
 /// ([HoverPreview]).
 class ArtworkFrame extends StatelessWidget {
@@ -64,13 +64,19 @@ class ArtworkFrame extends StatelessWidget {
               ),
               if (scrim) const _BottomFade(),
               if (overlay != null)
-                AnimatedOpacity(
-                  opacity: active ? 1 : 0,
-                  duration: Motion.hover,
-                  curve: Motion.change,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [if (!scrim) const _BottomFade(), overlay],
+                IgnorePointer(
+                  ignoring: !active,
+                  child: ExcludeFocus(
+                    excluding: !active,
+                    child: AnimatedOpacity(
+                      opacity: active ? 1 : 0,
+                      duration: Motion.hover,
+                      curve: Motion.change,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [if (!scrim) const _BottomFade(), overlay],
+                      ),
+                    ),
                   ),
                 ),
               ...decorations,

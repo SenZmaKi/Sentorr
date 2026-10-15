@@ -6,6 +6,16 @@ import 'package:sentorr/ui/shared/theme/theme.dart';
 import 'package:torrent_stream/torrent_stream.dart';
 
 void main() {
+  test('transfer totals exclude earlier playback of the same torrent', () {
+    final status = const StreamStatus(
+      stage: StreamStage.streaming,
+      receivedAtStart: 1000,
+      uploadedAtStart: 500,
+      transfer: TorrentStreamState(receivedBytes: 1200, uploadedBytes: 550),
+    ).copyWith(stage: StreamStage.preparing);
+    expect(status.receivedBytes, 200);
+    expect(status.uploadedBytes, 50);
+  });
   testWidgets('stream progress becomes upload-only when the file completes', (
     tester,
   ) async {

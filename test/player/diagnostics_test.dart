@@ -4,6 +4,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/player/diagnostics.dart';
 
 void main() {
+  test('counter totals are scoped to the current source', () async {
+    var source = 'first', count = 100;
+    final diagnostics = PlaybackDiagnostics(
+      (_) async => '$count',
+      source: () => source,
+    );
+    await Future<void>.delayed(Duration.zero);
+    count = 105;
+    await diagnostics.sample();
+    expect(diagnostics.values['frame-drop-count'], '5');
+    source = 'second';
+    await diagnostics.sample();
+    expect(diagnostics.values['frame-drop-count'], '0');
+    diagnostics.dispose();
+  });
+
+  test('a sample crossing a source change is discarded', () async {
+    var source = 'first';
+    final pending = Completer<String>();
+    final diagnostics = PlaybackDiagnostics(
+      (_) => pending.future,
+      source: () => source,
+    );
+    source = 'second';
+    pending.complete('old');
+    await Future<void>.delayed(Duration.zero);
+    expect(diagnostics.values, isEmpty);
+    diagnostics.dispose();
+  });
   test('missing and failed native properties remain unavailable', () async {
     final diagnostics = PlaybackDiagnostics((key) async {
       if (key == 'video-codec') return 'h264';

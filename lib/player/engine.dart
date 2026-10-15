@@ -276,17 +276,20 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
         engine.streaming.item?.id == item.id &&
         engine.streaming.status.value?.stage == StreamStage.streaming,
     // The stores log failed writes and the next save retries them.
-    save: (item, position, duration) {
-      history
-          .record(
-            item,
-            position: position,
-            duration: duration,
-            release: engine.streaming.status.value?.torrent?.release,
-          )
-          .ignore();
-      following.record(item, position: position, duration: duration).ignore();
-      lists.record(item, position: position, duration: duration).ignore();
+    save: (item, position, duration) async {
+      final historySave = history.record(
+        item,
+        position: position,
+        duration: duration,
+        release: engine.streaming.item?.id == item.id
+            ? engine.streaming.status.value?.torrent?.release
+            : null,
+      );
+      await Future.wait([
+        historySave,
+        following.record(item, position: position, duration: duration),
+        lists.record(item, position: position, duration: duration),
+      ]);
       unawaited(nextEpisodes.prepare(item));
     },
   );

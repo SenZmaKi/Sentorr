@@ -18,7 +18,14 @@ class NerdStats extends StatefulWidget {
 }
 
 class _NerdStatsState extends State<NerdStats> {
-  late final _diagnostics = PlaybackDiagnostics.forPlayer(widget.engine.player);
+  late final _diagnostics = PlaybackDiagnostics.forPlayer(
+    widget.engine.player,
+    source: () => (
+      widget.engine.streaming.item?.id,
+      widget.engine.streaming.status.value?.torrent?.release.infoHash,
+      widget.engine.streaming.status.value?.stage,
+    ),
+  );
 
   @override
   void dispose() {
@@ -78,7 +85,7 @@ class _NerdStatsState extends State<NerdStats> {
         '${v('estimated-vf-fps')} / ${v('display-fps')}',
       ),
       (
-        'Dropped frames (decode / output)',
+        'Dropped since sampling (decode / output)',
         '${v('decoder-frame-drop-count')} / ${v('frame-drop-count')}',
       ),
       ('Buffer health (s)', v('demuxer-cache-duration')),
@@ -101,7 +108,7 @@ class _NerdStatsState extends State<NerdStats> {
       ),
       if (status?.localFile != null && t?.selectedFile != null) ...[
         ('Upload speed', '${sizeLabel(t!.uploadBytesPerSecond)}/s'),
-        ('Uploaded', sizeLabel(t.uploadedBytes)),
+        ('Uploaded', sizeLabel(status!.uploadedBytes)),
         (
           'Peers / seeds (connected)',
           '${t.connectedPeers} / ${t.connectedSeeds}',
@@ -127,7 +134,7 @@ class _NerdStatsState extends State<NerdStats> {
         ),
         (
           'Received / uploaded',
-          '${sizeLabel(t.receivedBytes)} / ${sizeLabel(t.uploadedBytes)}',
+          '${sizeLabel(status!.receivedBytes)} / ${sizeLabel(status.uploadedBytes)}',
         ),
         (
           'Read cache / served',

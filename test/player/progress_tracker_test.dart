@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:sentorr/imdb/models.dart';
@@ -85,6 +87,35 @@ void main() {
     await at(const Duration(minutes: 2), playing: true);
     await at(const Duration(minutes: 3), playing: false);
     expect(saved, [('tt2', const Duration(minutes: 3))]);
+  });
+
+  test(
+    'teardown retains the last valid position after the stream is gone',
+    () async {
+      await at(const Duration(minutes: 40), playing: true);
+      streaming = null;
+      native.state = native.state.copyWith(position: Duration.zero);
+      tracker.flush();
+      expect(saved.last, ('tt1', const Duration(minutes: 40)));
+    },
+  );
+
+  test('disposal waits for outstanding persistence', () async {
+    final pending = Completer<void>();
+    await tracker.dispose();
+    tracker = ProgressTracker(
+      player,
+      canRecord: (_) => true,
+      save: (_, _, _) => pending.future,
+    )..item = _movie;
+    await at(const Duration(minutes: 5), playing: true);
+    var disposed = false;
+    final disposal = tracker.dispose().then((_) => disposed = true);
+    await settlePlayback();
+    expect(disposed, isFalse);
+    pending.complete();
+    await disposal;
+    expect(disposed, isTrue);
   });
 
   test('nothing is saved before playback has a position', () async {

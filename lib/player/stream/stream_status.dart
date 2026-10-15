@@ -37,6 +37,8 @@ class StreamStatus {
     this.retryAt,
     this.localFile,
     this.peer,
+    this.receivedAtStart = 0,
+    this.uploadedAtStart = 0,
   });
 
   final StreamStage stage;
@@ -61,6 +63,17 @@ class StreamStatus {
 
   /// The paired device [localFile] plays from; null when it is this one's.
   final String? peer;
+
+  /// Torrent lifetime counters when this playback attached to the transfer.
+  final int receivedAtStart, uploadedAtStart;
+  int get receivedBytes => (transfer.receivedBytes - receivedAtStart).clamp(
+    0,
+    transfer.receivedBytes,
+  );
+  int get uploadedBytes => (transfer.uploadedBytes - uploadedAtStart).clamp(
+    0,
+    transfer.uploadedBytes,
+  );
 
   /// A resolved index remains authoritative even when none of its bytes exist.
   bool get hasDownloadedTimeline =>
@@ -106,6 +119,8 @@ class StreamStatus {
     StreamStage? stage,
     TorrentStreamState? transfer,
     TorrentCandidate? torrent,
+    int? receivedAtStart,
+    int? uploadedAtStart,
     String? problem,
     TorrentResolution? options,
     Set<String>? failed,
@@ -123,6 +138,8 @@ class StreamStatus {
       retryAt: resolved == StreamStage.switching ? retryAt : null,
       localFile: localFile,
       peer: peer,
+      receivedAtStart: receivedAtStart ?? this.receivedAtStart,
+      uploadedAtStart: uploadedAtStart ?? this.uploadedAtStart,
     );
   }
 

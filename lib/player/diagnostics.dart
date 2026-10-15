@@ -6,16 +6,22 @@ import 'package:media_kit/media_kit.dart';
 /// Samples only while diagnostics are visible. Missing native properties are
 /// explicit, because backend support varies across devices.
 class PlaybackDiagnostics extends ChangeNotifier {
-  PlaybackDiagnostics(this.read) {
+  PlaybackDiagnostics(this.read, {this.source}) {
     unawaited(sample());
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => sample());
   }
 
-  factory PlaybackDiagnostics.forPlayer(Player player) =>
-      PlaybackDiagnostics((property) async {
-        final native = player.platform;
-        return native is NativePlayer ? native.getProperty(property) : '';
-      });
+  factory PlaybackDiagnostics.forPlayer(
+    Player player, {
+    Object? Function()? source,
+  }) => PlaybackDiagnostics((property) async {
+    final native = player.platform;
+    return native is NativePlayer ? native.getProperty(property) : '';
+  }, source: source);
+
+  final Object? Function()? source;
+  Object? _source;
+  final _counterStarts = <String, int>{};
 
   final Future<String> Function(String) read;
   late final Timer _timer;
@@ -40,6 +46,13 @@ class PlaybackDiagnostics extends ChangeNotifier {
 
   Future<void> sample() async {
     if (_busy || _closed) return;
+    final identity = source?.call();
+    if (identity != _source) {
+      _source = identity;
+      values = {};
+      _counterStarts.clear();
+      notifyListeners();
+    }
     _busy = true;
     final next = <String, String>{};
     try {
@@ -47,12 +60,23 @@ class PlaybackDiagnostics extends ChangeNotifier {
         if (_closed) return;
         try {
           final value = await read(key);
-          next[key] = value.isEmpty ? 'Unavailable' : value;
+          if (identity != source?.call()) return;
+          final count = int.tryParse(value);
+          if (source != null &&
+              count != null &&
+              (key == 'decoder-frame-drop-count' ||
+                  key == 'frame-drop-count')) {
+            final start = _counterStarts.putIfAbsent(key, () => count);
+            if (count < start) _counterStarts[key] = 0;
+            next[key] = '${count - _counterStarts[key]!}';
+          } else {
+            next[key] = value.isEmpty ? 'Unavailable' : value;
+          }
         } catch (_) {
           next[key] = 'Unavailable';
         }
       }
-      if (!_closed) {
+      if (!_closed && identity == source?.call()) {
         values = next;
         notifyListeners();
       }

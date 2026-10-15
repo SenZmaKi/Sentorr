@@ -150,6 +150,9 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
 
   /// Mirrors [session]'s transfer, logging its timeline and each start.
   void _watchTransfer(int generation, TorrentStreamSession session) {
+    final initial = engine.torrent(session.infoHash ?? '');
+    int? receivedAtStart = initial?.receivedBytes;
+    int? uploadedAtStart = initial?.uploadedBytes;
     var lastIndexStatus = '', lastStartup = '';
     _transfer = session.states.listen((transfer) {
       if (transfer.indexStatus.isNotEmpty &&
@@ -171,7 +174,16 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
           );
         }
       }
-      _update(generation, (s) => s.copyWith(transfer: transfer));
+      receivedAtStart ??= transfer.receivedBytes;
+      uploadedAtStart ??= transfer.uploadedBytes;
+      _update(
+        generation,
+        (s) => s.copyWith(
+          transfer: transfer,
+          receivedAtStart: receivedAtStart,
+          uploadedAtStart: uploadedAtStart,
+        ),
+      );
     });
   }
 

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../settings/notifier.dart';
 
 import '../../components/motion.dart';
 import '../../components/player_control.dart';
@@ -8,21 +11,17 @@ import '../../shared/title_format.dart';
 import 'player_value.dart';
 
 /// Elapsed or remaining over the runtime; pressing swaps the two.
-class Clock extends StatefulWidget {
+class Clock extends ConsumerWidget {
   const Clock({required this.player});
 
   final Player player;
 
   @override
-  State<Clock> createState() => ClockState();
-}
-
-class ClockState extends State<Clock> {
-  bool _remaining = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = widget.player;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final remaining = ref.watch(
+      settingsProvider.select((s) => s.streaming.showRemainingTime),
+    );
+    final p = player;
     final style = context.type.timecode.copyWith(
       color: context.player.foreground,
     );
@@ -33,13 +32,22 @@ class ClockState extends State<Clock> {
         stream: p.stream.position,
         initial: p.state.position,
         builder: (context, position) {
-          final now = _remaining
+          final now = remaining
               ? '−${clockLabel(duration - position)}'
               : clockLabel(position);
           return Tooltip(
-            message: _remaining ? 'Show elapsed time' : 'Show time left',
+            message: remaining ? 'Show elapsed time' : 'Show time left',
             child: GestureDetector(
-              onTap: () => setState(() => _remaining = !_remaining),
+              onTap: () => ref
+                  .read(settingsProvider.notifier)
+                  .update(
+                    (s) => s.copyWith(
+                      streaming: s.streaming.copyWith(
+                        showRemainingTime: !s.streaming.showRemainingTime,
+                      ),
+                    ),
+                  )
+                  .ignore(),
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: Text.rich(

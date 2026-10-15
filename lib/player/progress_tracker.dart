@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:media_kit/media_kit.dart';
+import 'package:logging/logging.dart';
 
 import 'models.dart';
 
@@ -34,7 +35,11 @@ class ProgressTracker {
   /// Whether the player's position belongs to the item, e.g. not while
   /// another torrent or item is starting.
   final bool Function(PlaybackItem item) canRecord;
-  final void Function(PlaybackItem item, Duration position, Duration duration)
+  final FutureOr<void> Function(
+    PlaybackItem item,
+    Duration position,
+    Duration duration,
+  )
   save;
 
   late final List<StreamSubscription<Object?>> _subscriptions;
@@ -42,16 +47,31 @@ class ProgressTracker {
   Timer? _seek;
   Duration _last = Duration.zero;
   PlaybackItem? _item;
+  (Duration, Duration)? _snapshot;
+  Future<void> _pending = Future.value();
 
   /// The item now playing; the one before it is saved first.
   set item(PlaybackItem? next) {
     if (next?.id == _item?.id) return;
     flush();
     _item = next;
+    _snapshot = null;
+    _last = Duration.zero;
     _clock.reset();
   }
 
+  void _capture() {
+    final item = _item, s = _player.state;
+    if (item != null &&
+        canRecord(item) &&
+        s.duration > Duration.zero &&
+        s.position > Duration.zero) {
+      _snapshot = (s.position, s.duration);
+    }
+  }
+
   void _moved(Duration position) {
+    _capture();
     final jumped = (position - _last).abs() >= seekJump;
     _last = position;
     if (jumped) {
@@ -64,14 +84,23 @@ class ProgressTracker {
   }
 
   void flush() {
-    final item = _item, s = _player.state;
+    _capture();
+    final item = _item, snapshot = _snapshot;
     _seek?.cancel();
     _clock
       ..reset()
       ..stop();
-    if (item == null || !canRecord(item)) return;
-    if (s.duration <= Duration.zero || s.position <= Duration.zero) return;
-    save(item, s.position, s.duration);
+    if (item == null || snapshot == null) return;
+    final operation = Future<void>.sync(
+      () => save(item, snapshot.$1, snapshot.$2),
+    );
+    _pending = Future.wait([_pending, operation])
+        .then((_) {})
+        .catchError(
+          (Object error, StackTrace stack) =>
+              Logger('sentorr.player.progress')
+                  .warning('Could not save playback progress', error, stack),
+        );
   }
 
   Future<void> dispose() async {
@@ -80,5 +109,6 @@ class ProgressTracker {
     for (final s in _subscriptions) {
       await s.cancel();
     }
+    await _pending;
   }
 }

@@ -79,7 +79,7 @@ class TorrentStats extends StatelessWidget {
                     leading: const Icon(Icons.arrow_downward_rounded),
                     label: _speed(t.downloadBytesPerSecond),
                     tooltip:
-                        'Download speed · ${sizeLabel(t.receivedBytes)} received',
+                        'Download speed · ${sizeLabel(status.receivedBytes)} received',
                   ),
                 if (sharing && (downloaded || !compact))
                   _Stat(
@@ -87,7 +87,7 @@ class TorrentStats extends StatelessWidget {
                     leading: const Icon(Icons.arrow_upward_rounded),
                     label: _speed(t.uploadBytesPerSecond),
                     tooltip:
-                        'Upload speed · ${sizeLabel(t.uploadedBytes)} shared',
+                        'Upload speed · ${sizeLabel(status.uploadedBytes)} shared',
                   ),
                 if (sharing && !compact) ...[
                   _Stat(

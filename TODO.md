@@ -1,5 +1,3 @@
-
-- Persist duration format to disk
-- Player shows aggregated stats of previously watched content instead of the current one.
-- Saving watched and progress seems hit or miss investigate.
-
+- [x] Persist duration format to disk
+- [x] Scope player diagnostics and transfer totals to the current playback.
+- [x] Retain valid progress through teardown and await watched/progress writes.

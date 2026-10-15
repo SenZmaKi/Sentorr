@@ -8,6 +8,7 @@ class StreamingSettings {
     this.pauseOnFocusLoss = true,
     this.resumeRewindSeconds = 5,
     this.captionsEnabled = false,
+    this.showRemainingTime = false,
     this.readAheadBytes = 16 * _mb,
     this.downloadAheadMinutes = 10,
     this.limitDownloadAhead = true,
@@ -34,6 +35,9 @@ class StreamingSettings {
   /// Initial caption intent for a new player session.
   final bool captionsEnabled;
 
+  /// Show time left instead of elapsed time in the player clock.
+  final bool showRemainingTime;
+
   static const maxKeptTorrents = 20;
 
   /// Legacy byte setting retained for older settings files. Playback now
@@ -59,6 +63,7 @@ class StreamingSettings {
     bool? pauseOnFocusLoss,
     int? resumeRewindSeconds,
     bool? captionsEnabled,
+    bool? showRemainingTime,
     int? readAheadBytes,
     int? downloadAheadMinutes,
     bool? limitDownloadAhead,
@@ -73,6 +78,7 @@ class StreamingSettings {
     pauseOnFocusLoss: pauseOnFocusLoss ?? this.pauseOnFocusLoss,
     resumeRewindSeconds: resumeRewindSeconds ?? this.resumeRewindSeconds,
     captionsEnabled: captionsEnabled ?? this.captionsEnabled,
+    showRemainingTime: showRemainingTime ?? this.showRemainingTime,
     readAheadBytes: readAheadBytes ?? this.readAheadBytes,
     downloadAheadMinutes: downloadAheadMinutes ?? this.downloadAheadMinutes,
     limitDownloadAhead: limitDownloadAhead ?? this.limitDownloadAhead,
@@ -98,6 +104,7 @@ class StreamingSettings {
         d.resumeRewindSeconds,
       ),
       captionsEnabled: json['captionsEnabled'] == true,
+      showRemainingTime: json['showRemainingTime'] == true,
       pauseOnFocusLoss: json['pauseOnFocusLoss'] is bool
           ? json['pauseOnFocusLoss'] as bool
           : d.pauseOnFocusLoss,
@@ -140,6 +147,7 @@ class StreamingSettings {
     'pauseOnFocusLoss': pauseOnFocusLoss,
     'resumeRewindSeconds': resumeRewindSeconds,
     'captionsEnabled': captionsEnabled,
+    'showRemainingTime': showRemainingTime,
     'readAheadBytes': readAheadBytes,
     'downloadAheadMinutes': downloadAheadMinutes,
     'limitDownloadAhead': limitDownloadAhead,

@@ -2,6 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/settings/models.dart';
 
 void main() {
+  test('clock format survives serialization and unrelated edits', () {
+    expect(StreamingSettings.fromJson({}).showRemainingTime, isFalse);
+    final restored = StreamingSettings.fromJson(
+      const StreamingSettings()
+          .copyWith(showRemainingTime: true)
+          .copyWith(keepRecentTorrents: 4)
+          .toJson(),
+    );
+    expect(restored.showRemainingTime, isTrue);
+  });
   test('resume rewind defaults, custom values and Disabled persist', () {
     expect(StreamingSettings.fromJson({}).resumeRewindSeconds, 5);
     for (final seconds in [0, 17]) {

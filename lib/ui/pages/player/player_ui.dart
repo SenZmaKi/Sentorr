@@ -27,8 +27,18 @@ class PlayerUi extends ChangeNotifier {
   bool _awake = true;
   bool statsVisible = false;
 
+  /// A stats recording is running or awaiting export; it outlives hiding
+  /// the readout.
+  bool statsRecording = false;
+
   void toggleStats() {
     statsVisible = !statsVisible;
+    notifyListeners();
+  }
+
+  void setStatsRecording(bool value) {
+    if (value == statsRecording) return;
+    statsRecording = value;
     notifyListeners();
   }
 

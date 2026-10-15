@@ -245,6 +245,13 @@ class TorrentEngine {
     await _command('seek', {'stream': stream});
   }
 
+  /// Swarm, peer, piece and read-wait detail for debugging; costlier than
+  /// [states], so poll it only while someone is looking. See `diagnoseEntry`.
+  Future<Map<String, Object?>> diagnose(String infoHash, {int? stream}) async =>
+      ((await _command('diagnose', {'hash': infoHash, 'stream': stream}))
+              as Map)
+          .cast<String, Object?>();
+
   Future<void> closeStream(int stream) async {
     await _command('closeStream', {'stream': stream});
   }

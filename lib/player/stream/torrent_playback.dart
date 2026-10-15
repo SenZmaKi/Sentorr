@@ -290,6 +290,16 @@ class TorrentPlayback {
   void hold() => _hold();
   bool unplayable() => _unplayable();
 
+  /// Engine-side swarm, piece and read-wait detail on the current torrent;
+  /// null without one or when the engine cannot answer.
+  Future<Map<String, Object?>?> diagnose() async {
+    try {
+      return await _session?.diagnose();
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> seek(Duration position) {
     final generation = _generation;
     return _adapter.seek(

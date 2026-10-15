@@ -10,6 +10,16 @@ class StreamStartup {
   Duration _slowest = Duration.zero;
   String status = '';
 
+  /// How long the latest completed start took.
+  Duration? lastReady;
+
+  Map<String, Object?> describe() => {
+    'status': status,
+    'starting': starting,
+    if (starting) 'startingMs': _clock.elapsedMilliseconds,
+    'lastReadyMs': lastReady?.inMilliseconds,
+  };
+
   void begin(int bytes) {
     begun = starting = true;
     _target = bytes;
@@ -47,6 +57,7 @@ class StreamStartup {
     }
     starting = false;
     _clock.stop();
+    lastReady = _clock.elapsed;
     status =
         'ready: ${_mib(run)} MiB in ${_seconds(_clock.elapsed)}s, '
         '$_pieces piece waits, slowest piece $_slowestPiece '

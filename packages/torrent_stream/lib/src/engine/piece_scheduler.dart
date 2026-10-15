@@ -19,6 +19,19 @@ class PieceScheduler {
   final _priorities = <int, int>{};
   int get urgentPieces => _deadlines.length;
   bool needs(int piece) => _active.contains(piece);
+
+  /// Each live consumer's window: first and last piece, and how many lead
+  /// pieces carry deadlines.
+  List<({int first, int last, int urgent, bool background})> get windows => [
+    for (final MapEntry(key: owner, value: w) in _consumers.entries)
+      if (!owner.isCancelled)
+        (
+          first: w.$1,
+          last: w.$2,
+          urgent: w.$3,
+          background: _background.contains(owner),
+        ),
+  ];
   void demand(
     Cancellation owner,
     int piece,

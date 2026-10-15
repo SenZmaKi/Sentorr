@@ -78,6 +78,9 @@ class PlaybackSubtitles extends ChangeNotifier {
                 !_sidecarTitles.contains(t.title)),
       )
       .toList();
+
+  /// The chosen track inside the video, when captions come from there.
+  SubtitleTrack? get embeddedTrack => _embedded;
   SubtitleDownload? get selected =>
       files.where((f) => f.file.index == selectedFile).firstOrNull;
   String get status => !enabled ? 'Off' : selected?.status ?? 'On';

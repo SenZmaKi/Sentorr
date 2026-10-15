@@ -346,10 +346,15 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                       if (full)
                         ListenableBuilder(
                           listenable: _ui,
-                          builder: (context, _) => _ui.statsVisible
+                          builder: (context, _) =>
+                              _ui.statsVisible || _ui.statsRecording
                               ? NerdStats(
                                   engine: _engine,
-                                  onClose: _ui.toggleStats,
+                                  title:
+                                      session.queue?.current.label ?? 'Sentorr',
+                                  visible: _ui.statsVisible,
+                                  onToggle: _ui.toggleStats,
+                                  onRecordingChanged: _ui.setStatsRecording,
                                 )
                               : const SizedBox.shrink(),
                         ),

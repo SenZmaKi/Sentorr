@@ -71,6 +71,8 @@ Future<Object?> _run(
       );
     case 'metadata':
       return core.metadata(hash(), message['timeout'] as Duration?);
+    case 'diagnose':
+      return core.diagnose(hash(), message['stream'] as int?);
     case 'want':
       await core.want(hash(), owner(), (message['files'] as Set).cast<int>());
     case 'pause':

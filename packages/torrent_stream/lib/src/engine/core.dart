@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../config.dart';
 import '../engine_models.dart';
 import 'cancellation.dart';
+import 'diagnosis.dart';
 import 'files.dart';
 import 'resume_store.dart';
 import 'native_session.dart';
@@ -116,6 +117,13 @@ class EngineCore {
         },
     ];
   }
+
+  /// An on-demand look inside [hash] and, when given, one of its streams.
+  Map<String, Object?> diagnose(String hash, int? stream) => diagnoseEntry(
+    _entry(hash),
+    stream == null ? null : _streams[stream]?.streams[stream],
+    native.session,
+  );
 
   Future<void> want(String hash, String owner, Set<int> files) async {
     final entry = _entry(hash);

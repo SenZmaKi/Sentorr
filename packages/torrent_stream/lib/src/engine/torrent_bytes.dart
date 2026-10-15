@@ -7,6 +7,7 @@ import 'package:libtorrent_dart/libtorrent_dart.dart';
 import 'byte_source.dart';
 import 'cancellation.dart';
 import 'piece_scheduler.dart';
+import 'read_waits.dart';
 import 'stream_startup.dart';
 
 /// One file's bytes for one stream, read through [scheduler], which other
@@ -28,6 +29,7 @@ class TorrentBytes implements ByteSource {
   final int pieceLength, lookahead;
   final _prefetch = Cancellation();
   late final startup = StreamStartup(length);
+  final waits = ReadWaits();
 
   /// The disk window playback wants, held back while playback starts.
   (int, int)? _wanted;
@@ -166,8 +168,15 @@ class TorrentBytes implements ByteSource {
         urgentPieces: urgent && _bytesPerSecond != null ? _urgentPieces : null,
         deadlineStep: _deadlineStep,
       );
-      final waited = Stopwatch()..start();
-      final data = await cancellation.wait(_piece(piece));
+      final waited = playback ? waits.begin(piece) : (Stopwatch()..start());
+      final Uint8List data;
+      try {
+        data = await cancellation.wait(_piece(piece));
+      } catch (_) {
+        if (playback) waits.abandon(piece, waited);
+        rethrow;
+      }
+      if (playback) waits.end(piece, waited);
       cancellation.check();
       final within = absolute % pieceLength;
       final take = min(count - copied, data.length - within);

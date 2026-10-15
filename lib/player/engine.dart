@@ -24,6 +24,8 @@ import 'next_warmup.dart';
 import '../torrents/match.dart';
 import 'cache_ranges.dart';
 import 'buffering.dart';
+import 'playback_event_feed.dart';
+import 'playback_events.dart';
 import 'preparation.dart';
 import 'stream/prepared_stream.dart';
 import 'hot_restart.dart';
@@ -61,6 +63,8 @@ class PlaybackEngine {
          configuration: const PlayerConfiguration(
            title: 'Sentorr',
            bufferSize: 128 * 1024 * 1024,
+           // Warnings too, for the playback event log.
+           logLevel: MPVLogLevel.warn,
          ),
        ) {
     _lifecycle = lifecycle;
@@ -85,13 +89,20 @@ class PlaybackEngine {
     );
     // libmpv's own error-level lines: demuxer and decoder failures that
     // never reach the error stream, e.g. an unsupported codec.
-    _native = player.stream.log.listen(
-      (line) => _log.info('mpv/${line.prefix}: ${line.text.trim()}'),
-    );
+    _native = player.stream.log.listen((line) {
+      if (line.level == 'error') {
+        _log.info('mpv/${line.prefix}: ${line.text.trim()}');
+      }
+    });
+    _unfeed = feedPlaybackEvents(events, player, buffering, streaming.status);
   }
 
   final Player player;
   final buffering = PlaybackBuffering();
+
+  /// What playback did lately, for stats for nerds and their recordings.
+  final events = PlaybackEvents();
+  late final Future<void> Function() _unfeed;
   late final cacheRanges = PlaybackCacheRanges.forPlayer(
     player,
     streaming.status,
@@ -120,6 +131,10 @@ class PlaybackEngine {
     if (item.id == _opened) return;
     cacheRanges.invalidate();
     _opened = item.id;
+    events.opened({
+      'itemId': item.id,
+      'title': item.label,
+    }, start ?? Duration.zero);
     _log.info('Opening $item${start == null ? '' : ' at ${_clock(start)}'}');
     await _restartReady;
     await buffering.attach(player);
@@ -135,6 +150,7 @@ class PlaybackEngine {
   /// Opens [item] again after a failure, from the torrent it last used.
   Future<void> reopen(PlaybackItem item) {
     _log.info('Reopening $item');
+    events.add('reopen', {'itemId': item.id});
     cacheRanges.invalidate();
     final torrent = streaming.status.value?.torrent;
     if (torrent != null && item.id == _opened) {
@@ -147,6 +163,7 @@ class PlaybackEngine {
   /// Seeks through the torrent so obsolete reads are dropped first.
   Future<void> seek(Duration position) async {
     cacheRanges.invalidate();
+    events.seeking(player.state.position, position);
     await buffering.attach(player);
     buffering.beginSeek();
     try {
@@ -162,6 +179,7 @@ class PlaybackEngine {
   /// within the buffered piece, so it skips the torrent's seek handling.
   Future<void> stepFrame({required bool forward}) async {
     buffering.reset();
+    events.add('frame-step', {'forward': forward});
     final native = player.platform;
     if (native is! NativePlayer) return;
     await native.command([forward ? 'frame-step' : 'frame-back-step']);
@@ -199,6 +217,7 @@ class PlaybackEngine {
     await beforeDispose?.call();
     await _errors.cancel();
     await _native.cancel();
+    await _unfeed();
     await streaming.park();
     await buffering.close();
     cacheRanges.dispose();

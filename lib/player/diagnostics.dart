@@ -6,7 +6,7 @@ import 'package:media_kit/media_kit.dart';
 /// Samples only while diagnostics are visible. Missing native properties are
 /// explicit, because backend support varies across devices.
 class PlaybackDiagnostics extends ChangeNotifier {
-  PlaybackDiagnostics(this.read, {this.source}) {
+  PlaybackDiagnostics(this.read, {this.source, this.engine}) {
     unawaited(sample());
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => sample());
   }
@@ -14,10 +14,20 @@ class PlaybackDiagnostics extends ChangeNotifier {
   factory PlaybackDiagnostics.forPlayer(
     Player player, {
     Object? Function()? source,
-  }) => PlaybackDiagnostics((property) async {
-    final native = player.platform;
-    return native is NativePlayer ? native.getProperty(property) : '';
-  }, source: source);
+    Future<Map<String, Object?>?> Function()? engine,
+  }) => PlaybackDiagnostics(
+    (property) async {
+      final native = player.platform;
+      return native is NativePlayer ? native.getProperty(property) : '';
+    },
+    source: source,
+    engine: engine,
+  );
+
+  /// The torrent engine's detail, sampled on the same tick; see
+  /// `TorrentStreamSession.diagnose`.
+  final Future<Map<String, Object?>?> Function()? engine;
+  Map<String, Object?>? torrent;
 
   final Object? Function()? source;
   Object? _source;
@@ -27,7 +37,43 @@ class PlaybackDiagnostics extends ChangeNotifier {
   late final Timer _timer;
   bool _closed = false, _busy = false;
   Map<String, String> values = {};
+
+  /// Player configuration that holds for a session: read once, on request.
+  static const config = [
+    'hwdec',
+    'current-vo',
+    'gpu-api',
+    'gpu-context',
+    'video-sync',
+    'cache',
+    'cache-secs',
+    'demuxer-max-bytes',
+    'demuxer-max-back-bytes',
+    'demuxer-readahead-secs',
+    'mpv-version',
+    'ffmpeg-version',
+  ];
+
+  Future<Map<String, Object?>> readConfig() async => {
+    for (final key in config)
+      key: await read(key).then<String?>((v) => v, onError: (_) => null),
+  };
   static const properties = [
+    ...video,
+    'demuxer-cache-duration',
+    'video-bitrate',
+    'audio-bitrate',
+    // Bytes/s mpv reads from the local torrent server.
+    'cache-speed',
+    'paused-for-cache',
+    'current-tracks/sub/codec',
+    'current-tracks/sub/lang',
+    'current-tracks/sub/external',
+    'sub-delay',
+  ];
+
+  /// Decode and presentation readouts, recorded under their mpv names.
+  static const video = [
     'video-codec',
     'audio-codec-name',
     'hwdec-current',
@@ -38,7 +84,6 @@ class PlaybackDiagnostics extends ChangeNotifier {
     'display-fps',
     'decoder-frame-drop-count',
     'frame-drop-count',
-    'demuxer-cache-duration',
     'avsync',
     'video-params/pixelformat',
     'video-params/gamma',
@@ -50,6 +95,7 @@ class PlaybackDiagnostics extends ChangeNotifier {
     if (identity != _source) {
       _source = identity;
       values = {};
+      torrent = null;
       _counterStarts.clear();
       notifyListeners();
     }
@@ -76,8 +122,10 @@ class PlaybackDiagnostics extends ChangeNotifier {
           next[key] = 'Unavailable';
         }
       }
+      final torrent = await engine?.call();
       if (!_closed && identity == source?.call()) {
         values = next;
+        this.torrent = torrent;
         notifyListeners();
       }
     } finally {

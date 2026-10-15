@@ -248,6 +248,15 @@ class TorrentStreamSession {
   }
 
   /// Pauses this session's hold; another owner may keep the torrent going.
+  /// Engine-side detail on this session's torrent and stream, or null before
+  /// a torrent is added.
+  Future<Map<String, Object?>?> diagnose() async {
+    _check();
+    final hash = _hash;
+    if (hash == null) return null;
+    return engine.diagnose(hash, stream: _stream);
+  }
+
   Future<void> setTransferPaused(bool paused) async {
     _check();
     if (_hash case final hash?) {

@@ -1,23 +1,47 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/services.dart';
 import '../../../player/diagnostics.dart';
 import '../../../player/engine.dart';
+import '../../../settings/notifier.dart';
+import '../../../shared/persistence/app_paths.dart';
 import '../../shared/theme/theme.dart';
-import '../../shared/title_format.dart';
-import 'menu_rows.dart';
+import 'nerd_stats_controls.dart';
+import 'nerd_stats_rows.dart';
+import 'nerd_stats_sections.dart';
+import 'stats_export.dart';
+import 'stats_recorder.dart';
+import 'stats_session.dart';
 
-/// A compact readout independent of auto-hiding playback chrome.
-class NerdStats extends StatefulWidget {
-  const NerdStats({super.key, required this.engine, required this.onClose});
+/// A see-through readout over the picture, independent of auto-hiding
+/// playback chrome. A recording keeps sampling while the readout is hidden
+/// ([visible] false), collapsing to a chip that reopens it, and is kept in
+/// the diagnostics folder if the player closes before it is exported.
+class NerdStats extends ConsumerStatefulWidget {
+  const NerdStats({
+    super.key,
+    required this.engine,
+    required this.title,
+    required this.visible,
+    required this.onToggle,
+    required this.onRecordingChanged,
+  });
+
   final PlaybackEngine engine;
-  final VoidCallback onClose;
+  final String title;
+  final bool visible;
+  final VoidCallback onToggle;
+  final ValueChanged<bool> onRecordingChanged;
 
   @override
-  State<NerdStats> createState() => _NerdStatsState();
+  ConsumerState<NerdStats> createState() => _NerdStatsState();
 }
 
-class _NerdStatsState extends State<NerdStats> {
+class _NerdStatsState extends ConsumerState<NerdStats> {
   late final _diagnostics = PlaybackDiagnostics.forPlayer(
     widget.engine.player,
     source: () => (
@@ -25,187 +49,233 @@ class _NerdStatsState extends State<NerdStats> {
       widget.engine.streaming.status.value?.torrent?.release.infoHash,
       widget.engine.streaming.status.value?.stage,
     ),
+    engine: widget.engine.streaming.diagnose,
+  );
+  late final _recorder = StatsRecorder(
+    diagnostics: _diagnostics,
+    snapshot: () => _snapshot,
+    events: widget.engine.events,
+    paths: _paths,
+    describe: () => describeStatsSession(
+      settings: ref.read(settingsProvider),
+      paths: _paths,
+      diagnostics: _diagnostics,
+    ),
+  );
+
+  /// Read up front: closing the player must not need `ref`.
+  AppPaths? _paths;
+  Size _viewport = Size.zero;
+  double _ratio = 1;
+
+  NerdStatsSnapshot get _snapshot => NerdStatsSnapshot(
+    diagnostics: _diagnostics,
+    playback: widget.engine.state,
+    status: widget.engine.streaming.status.value,
+    captions: widget.engine.streaming.subtitles,
+    title: widget.title,
+    itemId: widget.engine.streaming.item?.id,
+    viewport: _viewport,
+    pixelRatio: _ratio,
   );
 
   @override
+  void initState() {
+    super.initState();
+    try {
+      _paths = ref.read(appPathsProvider);
+    } catch (_) {
+      // Bare test hosts have no app folders; recordings then aren't kept.
+    }
+    // One sample per diagnostics tick (each second).
+    _diagnostics.addListener(_recorder.sample);
+  }
+
+  @override
   void dispose() {
+    // The player is closing: keep what was recorded rather than lose it.
+    unawaited(_recorder.keepIfUnexported().catchError((Object _) => null));
     _diagnostics.dispose();
     super.dispose();
+  }
+
+  void _toggleRecording() {
+    final current = _recorder.recording;
+    setState(
+      current == null || current.stopped ? _recorder.start : _recorder.stop,
+    );
+    widget.onRecordingChanged(true);
+  }
+
+  void _recent() {
+    setState(_recorder.recent);
+    widget.onRecordingChanged(true);
+  }
+
+  void _discard() {
+    setState(_recorder.discard);
+    widget.onRecordingChanged(false);
+  }
+
+  Future<void> _export(Future<bool> Function(String json) send) async {
+    final recording = _recorder.recording;
+    String message;
+    try {
+      final json = await _recorder.encode();
+      if (json == null || !await send(json)) return;
+      recording?.exported = true;
+      message = 'Stats recording exported';
+    } catch (_) {
+      message = 'Could not export stats';
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _copySnapshot() async {
+    final snapshot = [
+      'Sentorr · Stats for nerds',
+      DateTime.now().toIso8601String(),
+      for (final section in _snapshot.sections) ...[
+        '',
+        section.title,
+        for (final (label, value) in section.rows) '$label: $value',
+      ],
+    ].join('\n');
+    await Clipboard.setData(ClipboardData(text: snapshot));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Stats copied')));
   }
 
   @override
   Widget build(BuildContext context) => SafeArea(
     child: LayoutBuilder(
-      builder: (context, box) => Align(
-        alignment: Alignment.topLeft,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 72, 12, 96),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: PlayerMenuSurface(
-              padding: const EdgeInsets.all(12),
-              child: SingleChildScrollView(
-                child: ListenableBuilder(
-                  listenable: Listenable.merge([
-                    _diagnostics,
-                    widget.engine.streaming.status,
-                  ]),
-                  builder: (context, _) => _content(context, box.biggest),
-                ),
-              ),
+      builder: (context, box) {
+        _viewport = box.biggest;
+        _ratio = MediaQuery.devicePixelRatioOf(context);
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 72, 12, 96),
+            child: ListenableBuilder(
+              listenable: Listenable.merge([
+                _diagnostics,
+                widget.engine.streaming.status,
+              ]),
+              builder: (context, _) {
+                final recording = _recorder.recording;
+                if (widget.visible) {
+                  return _panel(context, wide: box.maxWidth >= 1040);
+                }
+                return recording == null
+                    ? const SizedBox.shrink()
+                    : RecordingChip(
+                        recording: recording,
+                        onOpen: widget.onToggle,
+                      );
+              },
             ),
           ),
-        ),
-      ),
+        );
+      },
     ),
   );
 
-  Widget _content(BuildContext context, Size viewport) {
-    final status = widget.engine.streaming.status.value;
-    final t = status?.transfer;
-    final p = widget.engine.state;
-    String v(String key) => _diagnostics.values[key] ?? 'Waiting';
-    final rows = <(String, String)>[
-      (
-        'Viewport',
-        '${viewport.width.round()} × ${viewport.height.round()} · ${MediaQuery.devicePixelRatioOf(context).toStringAsFixed(2)}×',
-      ),
-      (
-        'Resolution / source FPS',
-        '${v('video-params/w')} × ${v('video-params/h')} / ${v('container-fps')}',
-      ),
-      ('Video / audio codec', '${v('video-codec')} / ${v('audio-codec-name')}'),
-      ('Hardware decoder', v('hwdec-current')),
-      (
-        'Pixel format / transfer',
-        '${v('video-params/pixelformat')} / ${v('video-params/gamma')}',
-      ),
-      (
-        'Estimated FPS / display Hz',
-        '${v('estimated-vf-fps')} / ${v('display-fps')}',
-      ),
-      (
-        'Dropped since sampling (decode / output)',
-        '${v('decoder-frame-drop-count')} / ${v('frame-drop-count')}',
-      ),
-      ('Buffer health (s)', v('demuxer-cache-duration')),
-      ('A/V difference (s)', v('avsync')),
-      (
-        'Playback',
-        '${p.buffering
-            ? 'Buffering'
-            : p.playing
-            ? 'Playing'
-            : 'Paused'} · ${p.rate}× · volume ${p.volume.round()}%',
-      ),
-      (
-        'Source',
-        status?.peer != null
-            ? 'Downloaded on ${status!.peer}'
-            : status?.localFile != null
-            ? 'Downloaded file'
-            : status?.stage.name ?? 'Waiting',
-      ),
-      if (status?.localFile != null && t?.selectedFile != null) ...[
-        ('Upload speed', '${sizeLabel(t!.uploadBytesPerSecond)}/s'),
-        ('Uploaded', sizeLabel(status!.uploadedBytes)),
-        (
-          'Peers / seeds (connected)',
-          '${t.connectedPeers} / ${t.connectedSeeds}',
+  Widget _panel(BuildContext context, {required bool wide}) {
+    final recording = _recorder.recording;
+    final recordingLive = recording != null && !recording.stopped;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: wide ? 1000 : 520),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: statsSurface,
+          borderRadius: BorderRadius.circular(Radii.card),
         ),
-      ],
-      if (status?.localFile == null && t != null) ...[
-        ('File', t.selectedFile?.path ?? 'Waiting for metadata'),
-        (
-          'Download / upload',
-          '${sizeLabel(t.downloadBytesPerSecond)}/s / ${sizeLabel(t.uploadBytesPerSecond)}/s',
-        ),
-        (
-          'Peers / seeds (connected)',
-          '${t.connectedPeers} / ${t.connectedSeeds}',
-        ),
-        (
-          'Peers (known / candidates)',
-          '${t.knownPeers} / ${t.connectionCandidates}',
-        ),
-        (
-          'File downloaded',
-          '${sizeLabel(t.selectedBytes)} / ${t.selectedFile == null ? 'Unknown' : sizeLabel(t.selectedFile!.length)}',
-        ),
-        (
-          'Received / uploaded',
-          '${sizeLabel(status!.receivedBytes)} / ${sizeLabel(status.uploadedBytes)}',
-        ),
-        (
-          'Read cache / served',
-          '${sizeLabel(t.cachedBytes)} / ${sizeLabel(t.servedBytes)}',
-        ),
-        ('Read requests', '${t.requests}'),
-      ],
-    ];
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(child: Text('Stats for nerds', style: context.type.label)),
-            IconButton(
-              tooltip: 'Copy stats for nerds',
-              onPressed: () async {
-                final snapshot = [
-                  'Sentorr · Stats for nerds',
-                  DateTime.now().toIso8601String(),
-                  for (final (label, value) in rows) '$label: $value',
-                  'Native metrics sampled every second. FPS is an estimate; '
-                      'downloaded bytes are not playable buffer.',
-                ].join('\n');
-                await Clipboard.setData(ClipboardData(text: snapshot));
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Stats copied')));
-              },
-              icon: const Icon(Icons.copy_outlined, size: 20),
-            ),
-            IconButton(
-              tooltip: 'Close stats for nerds',
-              onPressed: widget.onClose,
-              icon: const Icon(Icons.close_rounded, size: 20),
-            ),
-          ],
-        ),
-        for (final (label, value) in rows)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    label,
-                    style: context.type.caption.copyWith(
-                      color: context.colors.foregroundSecondary,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            Space.s12,
+            Space.s4,
+            Space.s4,
+            Space.s12,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Stats for nerds',
+                      style: context.type.label.copyWith(
+                        color: OverlayColors.foreground,
+                      ),
                     ),
                   ),
+                  if (recording != null) RecordingBadge(recording: recording),
+                  StatsIconButton(
+                    tooltip: recordingLive ? 'Stop recording' : 'Record stats',
+                    icon: recordingLive
+                        ? Icons.stop_circle_outlined
+                        : Icons.radio_button_checked_rounded,
+                    color: recordingLive
+                        ? OverlayColors.recording
+                        : OverlayColors.foreground,
+                    onPressed: _toggleRecording,
+                  ),
+                  if (!recordingLive)
+                    StatsIconButton(
+                      tooltip: 'Export the last 15 minutes',
+                      icon: Icons.history_rounded,
+                      onPressed: _recent,
+                    ),
+                  StatsIconButton(
+                    tooltip: 'Copy stats for nerds',
+                    icon: Icons.copy_outlined,
+                    onPressed: _copySnapshot,
+                  ),
+                  StatsIconButton(
+                    tooltip: 'Close stats for nerds',
+                    icon: Icons.close_rounded,
+                    onPressed: widget.onToggle,
+                  ),
+                ],
+              ),
+              if (recording != null && recording.stopped)
+                RecordingExportBar(
+                  recording: recording,
+                  onCopy: () => _export((json) async {
+                    await StatsExport.copy(json);
+                    return true;
+                  }),
+                  onSave: () => _export(
+                    (json) => StatsExport.save(
+                      json,
+                      widget.title,
+                      recording.startedAt,
+                    ),
+                  ),
+                  onDiscard: _discard,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 3,
-                  child: Text(value, style: context.type.technical),
+              StatsSectionList(
+                sections: _snapshot.sections,
+                columns: wide ? 2 : 1,
+              ),
+              const SizedBox(height: Space.s8),
+              Text(
+                'Sampled every second · D to toggle · recordings include '
+                'the playback events before them\n'
+                'FPS is an estimate; downloaded bytes are not playable buffer.',
+                style: context.type.caption.copyWith(
+                  color: OverlayColors.foregroundMuted,
                 ),
-              ],
-            ),
-          ),
-        const SizedBox(height: 8),
-        Text(
-          'Native metrics sampled every second · D to toggle\nFPS is an estimate; downloaded bytes are not playable buffer.',
-          style: context.type.caption.copyWith(
-            color: context.colors.foregroundMuted,
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

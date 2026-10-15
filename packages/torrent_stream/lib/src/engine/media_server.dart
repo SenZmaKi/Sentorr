@@ -16,6 +16,9 @@ class MediaServer {
   late Uri uri;
   int servedBytes = 0;
   int requestCount = 0;
+
+  /// The latest player requests, newest last: a seek shows as a new range.
+  final recent = <ServedRequest>[];
   bool _closed = false;
 
   Future<void> start() async {
@@ -99,6 +102,9 @@ class MediaServer {
           'bytes $start-$end/${source.length}',
         );
       }
+      final served = ServedRequest(id, start, end, response.statusCode);
+      recent.add(served);
+      if (recent.length > 8) recent.removeAt(0);
       onEvent?.call({
         'event': 'request',
         'id': id,
@@ -138,6 +144,7 @@ class MediaServer {
               offset + count > end) {
             await cancellation.wait(socket.flush());
             servedBytes += pendingBytes;
+            served.bytes += pendingBytes;
             pendingBytes = 0;
           }
           offset += count;
@@ -148,6 +155,7 @@ class MediaServer {
       } else {
         await socket.close();
       }
+      served.finish('complete');
       onEvent?.call({'event': 'request-complete', 'id': id});
     } on UnsatisfiableRange {
       response.statusCode = HttpStatus.requestedRangeNotSatisfiable;
@@ -155,6 +163,11 @@ class MediaServer {
       response.contentLength = 0;
       await response.close();
     } catch (error) {
+      // Players drop ranges they no longer need, e.g. on seeking.
+      recent
+          .where((r) => r.id == id)
+          .firstOrNull
+          ?.finish(error is ReadCancelled ? 'cancelled' : '$error');
       onEvent?.call({'event': 'request-ended', 'id': id, 'reason': '$error'});
       // Once body headers have been sent, abort instead of claiming false EOF.
       try {
@@ -186,4 +199,28 @@ class MediaServer {
     cancelReads();
     await _server?.close(force: true);
   }
+}
+
+/// One player request and how it went.
+class ServedRequest {
+  ServedRequest(this.id, this.start, this.end, this.status);
+  final int id, start, end, status;
+  final _clock = Stopwatch()..start();
+  int bytes = 0;
+  String? outcome;
+
+  void finish(String outcome) {
+    this.outcome ??= outcome;
+    _clock.stop();
+  }
+
+  Map<String, Object?> describe() => {
+    'id': id,
+    'start': start,
+    'end': end,
+    'status': status,
+    'servedBytes': bytes,
+    'ms': _clock.elapsedMilliseconds,
+    'outcome': outcome ?? 'open',
+  };
 }

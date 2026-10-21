@@ -1,3 +1,0 @@
-- [x] Persist duration format to disk
-- [x] Scope player diagnostics and transfer totals to the current playback.
-- [x] Retain valid progress through teardown and await watched/progress writes.

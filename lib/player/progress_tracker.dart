@@ -60,6 +60,17 @@ class ProgressTracker {
     _clock.reset();
   }
 
+  /// Explicit seeks may save zero; player teardown resets may not.
+  void seeked(Duration position) {
+    final item = _item;
+    if (position == Duration.zero &&
+        item != null &&
+        canRecord(item) &&
+        _player.state.duration > Duration.zero) {
+      _snapshot = (Duration.zero, _player.state.duration);
+    }
+  }
+
   void _capture() {
     final item = _item, s = _player.state;
     if (item != null &&

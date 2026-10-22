@@ -52,6 +52,16 @@ void main() {
     await player.dispose();
   });
 
+  test('explicit rewind to zero replaces the previous snapshot', () async {
+    await at(const Duration(minutes: 20), playing: true);
+    tracker.flush();
+    native.state = native.state.copyWith(position: Duration.zero);
+    tracker.seeked(Duration.zero);
+    await at(Duration.zero, playing: false);
+    tracker.flush();
+    expect(saved.last, ('tt1', Duration.zero));
+  });
+
   test('pausing saves where playback stopped', () async {
     await at(const Duration(minutes: 5), playing: true);
     await at(const Duration(minutes: 6), playing: false);

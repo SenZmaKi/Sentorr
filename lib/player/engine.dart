@@ -111,6 +111,7 @@ class PlaybackEngine {
   late final PlayerLifecycle? _lifecycle;
   Future<void>? _disposal;
   Future<void> Function()? beforeDispose;
+  void Function(Duration)? onSeeked;
   late final Future<void> _restartReady;
   late final TorrentPlayback streaming;
   late final VideoController video = VideoController(player);
@@ -169,6 +170,7 @@ class PlaybackEngine {
     buffering.beginSeek();
     try {
       await streaming.seek(position);
+      onSeeked?.call(position);
       buffering.seekIssued();
     } catch (_) {
       buffering.reset();
@@ -313,6 +315,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
       unawaited(nextEpisodes.prepare(item));
     },
   );
+  engine.onSeeked = progress.seeked;
   final warmup = NextTorrentWarmup(
     prepared: ref.read(preparedStreamsProvider),
     available: (item) => offlineSourceFor(ref, item) != null,

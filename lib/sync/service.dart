@@ -120,8 +120,8 @@ class SyncService implements SyncRoutes, BufferedSyncRoutes {
 
   /// Trusts [device] from now on and syncs with it.
   Future<void> addPaired(PairedDevice device) async {
-    server.trust(device.certificatePem);
     await _ref.read(devicesProvider.notifier).add(device);
+    server.trust(device.certificatePem);
     unawaited(_ref.read(peersProvider.notifier).syncWith(device.id));
   }
 

@@ -8,6 +8,7 @@ import 'package:sentorr/sync/devices.dart';
 import 'package:sentorr/sync/identity.dart';
 import 'package:sentorr/sync/models.dart';
 import 'package:sentorr/sync/pairing.dart';
+import 'package:sentorr/sync/repository.dart';
 import 'package:sentorr/sync/service.dart';
 
 import '../support/fake_following.dart';
@@ -22,10 +23,13 @@ Future<ProviderContainer> syncDevice(
   List<LibraryEntry> library = const [],
   List<DownloadItem> downloads = const [],
   List<Override> overrides = const [],
+  DevicesRepository? devicesRepository,
 }) async {
   final container = ProviderContainer(
     overrides: [
-      devicesRepositoryProvider.overrideWithValue(MemoryDevices()),
+      devicesRepositoryProvider.overrideWithValue(
+        devicesRepository ?? MemoryDevices(),
+      ),
       initialDevicesProvider.overrideWithValue((
         identity: DeviceIdentity.generate(name),
         devices: const [],

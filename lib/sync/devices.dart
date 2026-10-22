@@ -40,6 +40,7 @@ final devicesProvider = NotifierProvider<DevicesNotifier, DevicesState>(
 
 class DevicesNotifier extends Notifier<DevicesState> {
   late DevicesRepository _repository;
+  Future<void> _pending = Future.value();
 
   @override
   DevicesState build() {
@@ -48,16 +49,16 @@ class DevicesNotifier extends Notifier<DevicesState> {
     return DevicesState(initial.identity, initial.devices);
   }
 
-  Future<void> rename(String name) {
+  Future<void> rename(String name) => _serial(() {
     final trimmed = name.trim();
     if (trimmed.isEmpty || trimmed == state.identity.name) {
       return Future.value();
     }
     return _commit(DevicesState(state.identity.named(trimmed), state.paired));
-  }
+  });
 
   /// Saves [device], replacing an earlier pairing with it.
-  Future<void> add(PairedDevice device) {
+  Future<void> add(PairedDevice device) => _serial(() {
     _log.info('Paired with ${device.name} (${device.id})');
     return _commit(
       DevicesState(state.identity, [
@@ -66,9 +67,9 @@ class DevicesNotifier extends Notifier<DevicesState> {
         device,
       ]),
     );
-  }
+  });
 
-  Future<void> remove(String id) {
+  Future<void> remove(String id) => _serial(() {
     _log.info('Unpaired $id');
     return _commit(
       DevicesState(state.identity, [
@@ -76,25 +77,34 @@ class DevicesNotifier extends Notifier<DevicesState> {
           if (d.id != id) d,
       ]),
     );
-  }
+  });
 
   /// Changes [id]'s record; nothing when it is not paired or unchanged.
-  Future<void> update(String id, PairedDevice Function(PairedDevice) change) {
-    final device = state.byId(id);
-    if (device == null) return Future.value();
-    final next = change(device);
-    if (next.toJson().toString() == device.toJson().toString()) {
-      return Future.value();
-    }
-    return _commit(
-      DevicesState(state.identity, [
-        for (final d in state.paired) d.id == id ? next : d,
-      ]),
-    );
+  Future<void> update(String id, PairedDevice Function(PairedDevice) change) =>
+      _serial(() {
+        final device = state.byId(id);
+        if (device == null) return Future.value();
+        final next = change(device);
+        if (next.toJson().toString() == device.toJson().toString()) {
+          return Future.value();
+        }
+        return _commit(
+          DevicesState(state.identity, [
+            for (final d in state.paired) d.id == id ? next : d,
+          ]),
+        );
+      });
+
+  Future<void> _serial(Future<void> Function() change) {
+    final operation = _pending.then((_) async {
+      if (ref.mounted) await change();
+    });
+    _pending = operation.then<void>((_) {}, onError: (Object _) {});
+    return operation;
   }
 
-  Future<void> _commit(DevicesState next) {
+  Future<void> _commit(DevicesState next) async {
+    await _repository.save(next.identity, next.paired);
     if (ref.mounted) state = next;
-    return _repository.save(next.identity, next.paired);
   }
 }

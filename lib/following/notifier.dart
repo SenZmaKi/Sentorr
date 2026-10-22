@@ -108,13 +108,24 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
 
   /// Follows [series] without watching it: the latest aired episode counts
   /// as reached, so only episodes after it are new.
+  final _followIntents = <String, int>{};
+
   Future<void> follow(ImdbTitle series) async {
+    final intent = _followIntents.update(
+      series.id,
+      (n) => n + 1,
+      ifAbsent: () => 1,
+    );
     if (_series.any((s) => s.id == series.id)) return;
     final latest = await latestEpisode(
       ref.read(imdbRepositoryProvider),
       series.id,
     );
-    if (!ref.mounted || _series.any((s) => s.id == series.id)) return;
+    if (!ref.mounted ||
+        _followIntents[series.id] != intent ||
+        _series.any((s) => s.id == series.id)) {
+      return;
+    }
     _log.info('Following ${series.title} (${series.id}) from its page');
     final now = DateTime.now();
     await _commit([
@@ -255,6 +266,7 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
 
   /// Stops looking for new episodes of [seriesId] until it is watched again.
   Future<void> unfollow(String seriesId) {
+    _followIntents.update(seriesId, (n) => n + 1, ifAbsent: () => 1);
     _log.info('Unfollowing $seriesId');
     _repository.removals[seriesId] = DateTime.now();
     _repository.removalRevisions[seriesId] = _clock.next();

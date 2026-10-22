@@ -203,4 +203,24 @@ void main() {
       c.dispose();
     }
   });
+  test('unfollow invalidates a pending follow', () async {
+    final imdb = GatedImdb(show);
+    final c = ProviderContainer(
+      overrides: [
+        imdbRepositoryProvider.overrideWithValue(imdb),
+        ...followedSeriesOverrides(),
+      ],
+    );
+    try {
+      final notifier = c.read(followedSeriesProvider.notifier);
+      final pending = notifier.follow(show);
+      await imdb.entered.future;
+      await notifier.unfollow(show.id);
+      imdb.gate.complete();
+      await pending;
+      expect(c.read(followedProvider(show.id)), isNull);
+    } finally {
+      c.dispose();
+    }
+  });
 }

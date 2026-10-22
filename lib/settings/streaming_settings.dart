@@ -9,6 +9,7 @@ class StreamingSettings {
     this.resumeRewindSeconds = 5,
     this.captionsEnabled = false,
     this.subtitleLanguage = '',
+    this.audioLanguage = '',
     this.showRemainingTime = false,
     this.readAheadBytes = 16 * _mb,
     this.downloadAheadMinutes = 10,
@@ -39,6 +40,9 @@ class StreamingSettings {
   /// Preferred caption language; empty accepts any language.
   final String subtitleLanguage;
 
+  /// Preferred audio language; empty keeps the file default.
+  final String audioLanguage;
+
   /// Show time left instead of elapsed time in the player clock.
   final bool showRemainingTime;
 
@@ -68,6 +72,7 @@ class StreamingSettings {
     int? resumeRewindSeconds,
     bool? captionsEnabled,
     String? subtitleLanguage,
+    String? audioLanguage,
     bool? showRemainingTime,
     int? readAheadBytes,
     int? downloadAheadMinutes,
@@ -84,6 +89,7 @@ class StreamingSettings {
     resumeRewindSeconds: resumeRewindSeconds ?? this.resumeRewindSeconds,
     captionsEnabled: captionsEnabled ?? this.captionsEnabled,
     subtitleLanguage: subtitleLanguage ?? this.subtitleLanguage,
+    audioLanguage: audioLanguage ?? this.audioLanguage,
     showRemainingTime: showRemainingTime ?? this.showRemainingTime,
     readAheadBytes: readAheadBytes ?? this.readAheadBytes,
     downloadAheadMinutes: downloadAheadMinutes ?? this.downloadAheadMinutes,
@@ -112,6 +118,9 @@ class StreamingSettings {
       captionsEnabled: json['captionsEnabled'] == true,
       subtitleLanguage: json['subtitleLanguage'] is String
           ? (json['subtitleLanguage'] as String).trim()
+          : '',
+      audioLanguage: json['audioLanguage'] is String
+          ? (json['audioLanguage'] as String).trim()
           : '',
       showRemainingTime: json['showRemainingTime'] == true,
       pauseOnFocusLoss: json['pauseOnFocusLoss'] is bool
@@ -157,6 +166,7 @@ class StreamingSettings {
     'resumeRewindSeconds': resumeRewindSeconds,
     'captionsEnabled': captionsEnabled,
     'subtitleLanguage': subtitleLanguage,
+    'audioLanguage': audioLanguage,
     'showRemainingTime': showRemainingTime,
     'readAheadBytes': readAheadBytes,
     'downloadAheadMinutes': downloadAheadMinutes,

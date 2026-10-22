@@ -37,7 +37,10 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     } finally {
       if (_openingGeneration == generation) _openingGeneration = null;
     }
-    if (!_stale(generation)) subtitles.opened();
+    if (!_stale(generation)) {
+      audio.opened();
+      subtitles.opened();
+    }
     _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
   }
 
@@ -214,6 +217,7 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
       );
       if (!_stale(generation)) {
         _downloadAhead = DownloadAhead(_player, session);
+        audio.opened();
         subtitles.opened();
       }
     } finally {

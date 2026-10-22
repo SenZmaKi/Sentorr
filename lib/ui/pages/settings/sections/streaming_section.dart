@@ -71,6 +71,26 @@ class StreamingSection extends ConsumerWidget {
               ),
             ),
             SettingsTile(
+              icon: Icons.translate_rounded,
+              title: 'Preferred audio language',
+              subtitle:
+                  'Used when playback starts. Falls back to the file default',
+              keywords: 'audio tracks automatic language',
+              trailing: ChoiceField<String>(
+                value: s.audioLanguage,
+                options: {
+                  '',
+                  ...subtitleLanguages,
+                  if (s.audioLanguage.isNotEmpty) s.audioLanguage,
+                }.toList(),
+                labelOf: (language) =>
+                    language.isEmpty ? 'Any language' : language,
+                semanticLabel: 'Preferred audio language',
+                onChanged: (language) =>
+                    edit((s) => s.copyWith(audioLanguage: language)),
+              ),
+            ),
+            SettingsTile(
               icon: Icons.pause_circle_outline_rounded,
               title: 'Pause when leaving the app',
               subtitle:

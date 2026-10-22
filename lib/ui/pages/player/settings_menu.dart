@@ -19,7 +19,7 @@ export 'track_labels.dart' show audioLabel, subtitleLabel;
 enum _Page { root, speed, audio, subtitles, sleep }
 
 /// Player settings, one level deep like YouTube's: speed, audio and
-/// subtitle tracks, and a sleep timer. Track choices persist across items.
+/// subtitle tracks, and a sleep timer. Audio language defaults apply to each file.
 class SettingsMenu extends ConsumerStatefulWidget {
   const SettingsMenu({super.key, required this.player, required this.actions});
 
@@ -108,14 +108,15 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
         chevron: true,
         onTap: () => _go(_Page.speed),
       ),
-      if (audio.length > 1)
-        PlayerMenuRow(
-          icon: Icons.audiotrack_outlined,
-          label: 'Audio',
-          value: _isReal(track.audio.id) ? audioLabel(track.audio) : 'Auto',
-          chevron: true,
-          onTap: () => _go(_Page.audio),
-        ),
+      PlayerMenuRow(
+        icon: Icons.audiotrack_outlined,
+        label: 'Audio',
+        value: _isReal(track.audio.id)
+            ? audioLabel(track.audio)
+            : '${audio.length} available',
+        chevron: audio.isNotEmpty,
+        onTap: audio.isNotEmpty ? () => _go(_Page.audio) : null,
+      ),
       PlayerMenuRow(
         icon: Icons.subtitles_outlined,
         label: 'Subtitles',
@@ -185,8 +186,9 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
     for (final t in _realAudio(tracks))
       PlayerMenuRow(
         label: audioLabel(t),
+        scrollLabel: true,
         selected: track.audio.id == t.id,
-        onTap: () => widget.player.setAudioTrack(t),
+        onTap: () => widget.actions.engine.streaming.audio.choose(t),
       ),
   ];
 

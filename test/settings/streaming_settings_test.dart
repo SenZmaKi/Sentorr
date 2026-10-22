@@ -2,6 +2,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/settings/models.dart';
 
 void main() {
+  test('audio language persists with a backward compatible default', () {
+    expect(StreamingSettings.fromJson({}).audioLanguage, '');
+    expect(StreamingSettings.fromJson({'audioLanguage': 3}).audioLanguage, '');
+    final saved = const StreamingSettings().copyWith(audioLanguage: 'Japanese');
+    expect(
+      StreamingSettings.fromJson(saved.toJson()).audioLanguage,
+      'Japanese',
+    );
+    expect(saved.copyWith(audioLanguage: '').audioLanguage, '');
+  });
+
   test('subtitle language persists and older settings accept any language', () {
     expect(StreamingSettings.fromJson({}).subtitleLanguage, '');
     expect(

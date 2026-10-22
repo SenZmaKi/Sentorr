@@ -63,7 +63,6 @@ class NotificationService {
   final _plugin = FlutterLocalNotificationsPlugin();
   final _taps = StreamController<NotificationTarget>.broadcast();
   Future<bool>? _initialized;
-  bool? _permitted;
 
   /// Targets of notifications the viewer clicked.
   Stream<NotificationTarget> get taps => _taps.stream;
@@ -112,7 +111,6 @@ class NotificationService {
   /// Asks the system to allow notifications where it must be asked.
   Future<bool> requestPermission() async {
     if (!await initialize()) return false;
-    if (_permitted case final permitted?) return permitted;
     final bool? granted;
     if (Platform.isMacOS) {
       granted = await _plugin
@@ -132,7 +130,7 @@ class NotificationService {
     _log.info(
       'Notification permission ${granted == false ? 'denied' : 'granted'}',
     );
-    return _permitted = granted ?? true;
+    return granted ?? true;
   }
 
   Future<void> showNewEpisode({

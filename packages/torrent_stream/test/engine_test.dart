@@ -21,6 +21,40 @@ void main() {
   });
   tearDown(() => root.delete(recursive: true));
 
+  test('failed native promotion preserves the original storage', () async {
+    if (Platform.isWindows) return;
+    final (metadata, _, closeSeed) = await seedFile(source);
+    final engine = loopbackEngine();
+    final destination = await Directory('${root.path}/unwritable').create();
+    final original = source.parent.path;
+    try {
+      final hash = await engine.add(
+        TorrentSource.metadata(metadata),
+        owner: 'cached',
+        directory: original,
+        storage: TorrentStorage.cached,
+      );
+      await engine.metadata(hash);
+      await Process.run('chmod', ['500', destination.path]);
+      await expectLater(
+        engine.add(
+          TorrentSource.metadata(metadata),
+          owner: 'download',
+          directory: destination.path,
+          storage: TorrentStorage.kept,
+        ),
+        throwsA(isA<TorrentStreamException>()),
+      );
+      expect(engine.torrent(hash)!.savePath, original);
+      expect(engine.torrent(hash)!.storage, TorrentStorage.cached);
+      expect(source.existsSync(), isTrue);
+    } finally {
+      await Process.run('chmod', ['700', destination.path]);
+      await engine.close();
+      closeSeed();
+    }
+  });
+
   test('replacement owner survives concurrent final release', () async {
     final (metadata, _, closeSeed) = await seedFile(source);
     final engine = loopbackEngine();

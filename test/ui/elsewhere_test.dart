@@ -88,6 +88,19 @@ Future<_Copies> _pump(
   addTearDown(tester.view.reset);
   final root = Directory.systemTemp.createTempSync('sentorr-ui-');
   addTearDown(() => root.deleteSync(recursive: true));
+  library = [
+    for (final entry in library)
+      LibraryEntry(
+        item: entry.item,
+        downloadId: entry.downloadId,
+        release: entry.release,
+        fileIndex: entry.fileIndex,
+        path: (File(
+          '${root.path}/${entry.id}.mkv',
+        )..writeAsStringSync('fixture')).path,
+        addedAt: entry.addedAt,
+      ),
+  ];
   late _Copies copies;
   final laptop = onlinePeer('Laptop', [
     for (final i in finished) _finished(i),

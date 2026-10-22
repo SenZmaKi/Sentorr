@@ -127,6 +127,30 @@ void main() {
       expect((await store.read())!['version'], 99);
     },
   );
+  test('completed missing files are unavailable', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'sentorr-missing-library-',
+    );
+    try {
+      final e = entry('${root.path}/missing.mkv');
+      for (final status in [
+        DownloadStatus.completed,
+        DownloadStatus.seeding,
+        DownloadStatus.failed,
+      ]) {
+        final completed = DownloadItem(
+          id: 'd1',
+          job: job(root.path),
+          status: status,
+          files: const [DownloadFileProgress(1, 'missing.mkv', 4, 4)],
+        );
+        expect(offlineStateOf(e, completed), isA<DownloadFailed>());
+      }
+      expect(offlineStateOf(e, null), isA<DownloadFailed>());
+    } finally {
+      await root.delete(recursive: true);
+    }
+  });
   test('rejected enqueue never starts or persists work', () async {
     final root = await Directory.systemTemp.createTemp(
       'sentorr-enqueue-write-',

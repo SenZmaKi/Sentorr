@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -89,8 +90,15 @@ void main() {
     expect(LibraryEntry.fromJson({'title': 'nope'}), isNull);
   });
 
-  test('download status maps onto offline state', () {
-    final e = entry(episode());
+  test('download status maps onto offline state', () async {
+    final root = await Directory.systemTemp.createTemp('sentorr-offline-');
+    addTearDown(() => root.delete(recursive: true));
+    final file = await File('${root.path}/episode.mkv')
+        .writeAsString('fixture');
+    final e = LibraryEntry.fromJson({
+      ...entry(episode()).toJson(),
+      'path': file.path,
+    })!;
     DownloadItem at(DownloadStatus s, {int done = 50}) => DownloadItem(
       id: 'd1',
       job: TorrentDownloadJob(
@@ -126,6 +134,7 @@ void main() {
       (offlineStateOf(e, at(DownloadStatus.paused)) as Downloading).status,
       OfflineProgress.paused,
     );
+    await file.delete();
     // Cleared from download history with its file gone.
     expect(offlineStateOf(e, null), isA<DownloadFailed>());
   });

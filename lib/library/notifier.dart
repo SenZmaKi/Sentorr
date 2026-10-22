@@ -197,12 +197,14 @@ final offlineStateProvider = Provider.family<OfflineState, String>((ref, id) {
 /// [entry]'s state given its download, or its file when the download was
 /// cleared from history.
 OfflineState offlineStateOf(LibraryEntry entry, DownloadItem? download) {
-  if (download == null) {
+  if (download == null ||
+      download.hasFinishedDownloading ||
+      download.status == DownloadStatus.completed ||
+      download.status == DownloadStatus.seeding) {
     return File(entry.path).existsSync()
         ? Downloaded(entry)
         : DownloadFailed(entry, 'The file is missing');
   }
-  if (download.hasFinishedDownloading) return Downloaded(entry);
   final progress = download.progress;
   return switch (download.status) {
     DownloadStatus.completed || DownloadStatus.seeding => Downloaded(entry),

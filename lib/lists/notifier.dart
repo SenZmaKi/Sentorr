@@ -55,16 +55,21 @@ class WatchListsNotifier extends Notifier<List<ListEntry>> {
   /// series put on Watching before any of it was watched is looked for new
   /// episodes from the latest one aired. Completed marks all aired seasons
   /// watched and clears any explicit season resets.
+  final _intents = <String, int>{};
+
   Future<void> set(ImdbTitle title, WatchStatus? status) async {
+    final intent = _intents.update(title.id, (n) => n + 1, ifAbsent: () => 1);
     if (status == WatchStatus.completed && title.canHaveEpisodes == true) {
       final through = await completedThrough(
         ref.read(imdbRepositoryProvider),
         title.id,
       );
+      if (!ref.mounted || _intents[title.id] != intent) return;
       await ref
           .read(followedSeriesProvider.notifier)
           .markAllWatched(title, through);
     }
+    if (!ref.mounted || _intents[title.id] != intent) return;
     await _set(title, status);
     if (status == WatchStatus.watching && title.canHaveEpisodes == true) {
       await ref.read(followedSeriesProvider.notifier).follow(title);

@@ -182,4 +182,25 @@ void main() {
       c.dispose();
     }
   });
+  test('newer Dropped invalidates pending Completed', () async {
+    final imdb = GatedImdb(show);
+    final c = ProviderContainer(
+      overrides: [
+        imdbRepositoryProvider.overrideWithValue(imdb),
+        ...watchListsOverrides(),
+        ...followedSeriesOverrides(),
+      ],
+    );
+    try {
+      final lists = c.read(watchListsProvider.notifier);
+      final pending = lists.set(show, WatchStatus.completed);
+      await imdb.entered.future;
+      await lists.set(show, WatchStatus.dropped);
+      imdb.gate.complete();
+      await pending;
+      expect(lists.statusOf(show.id), WatchStatus.dropped);
+    } finally {
+      c.dispose();
+    }
+  });
 }

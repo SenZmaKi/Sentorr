@@ -2,8 +2,7 @@
 
 The application backend uses owned full GraphQL documents and injected Dio.
 There are no persisted hashes, browser bootstrap, HTML scraping or per-person
-photo enrichment requests in application operations. The captured homepage
-hash remains only in an explicit historical diagnostic tool.
+photo enrichment requests in application operations.
 
 ## Implemented interface
 
@@ -22,8 +21,9 @@ hash remains only in an explicit historical diagnostic tool.
 
 Models are under `lib/imdb/models/`, selections under `lib/imdb/queries/`, wire
 normalization in `mappers.dart`, transport/error handling in `client.dart`, and
-application methods in `repository.dart`. No UI or Riverpod presentation state
-is included yet. Repository/model code stays usable from the future Flutter app.
+application methods in `repository.dart`. `lib/app/services.dart` supplies the
+shared repository; `lib/imdb/providers.dart` exposes title details and reviews
+to the Flutter UI.
 
 `ImdbTitleDetails.backdropCandidate` selects a landscape still-frame candidate
 at least 1280 pixels wide. It is not a designated backdrop or a spoiler-safe
@@ -59,9 +59,9 @@ final detail = await repository.getTitleDetails('tt0903747');
 ```
 
 ```sh
-dart pub get
-dart analyze lib test tool/imdb
-dart test
+flutter pub get
+flutter analyze
+flutter test test/imdb
 dart run tool/imdb/check.dart trending
 dart run tool/imdb/check.dart suggest matrix
 dart run tool/imdb/check_backend.dart
@@ -70,13 +70,12 @@ dart run tool/imdb/check_backend.dart
 The backend check is an explicit bounded live check and bypasses cache. It
 verified trending, two search pages, Matrix/Breaking Bad details, two episode
 pages, standalone episode details, two review/credit/image pages and related
-titles. The offline tests use stored research evidence and local HTTP servers.
+titles. The offline tests use captured responses in `test/imdb/fixtures/` and local HTTP servers.
 
-See [network stack](../network-stack.md) for cache/logging/cancellation ownership,
-[backend design](imdb-backend-map.md), [catalog research](imdb-catalog-shapes.md),
-[entity research](imdb-title-entities.md) and
-[hash investigation](imdb-hash-refresh-research.md). The latter documents are
-research snapshots; the initial integration probe is retained as history.
+See [network stack](../network-stack.md) for cache, logging and cancellation
+ownership. Query documents and mappers in `lib/imdb/` are the maintained wire
+contract; the initial migration proposals and captured-hash probe have been
+removed. Historical research remains available in Git.
 
 ## Limits
 

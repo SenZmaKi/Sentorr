@@ -50,18 +50,12 @@ always show the whole track.
 
 ## Bulk native availability
 
-The sibling `../libtorrent_dart` checkout adds `TorrentHandle.getPieces()` and
-`torrent_get_pieces`: a copied 0/1 byte array from one native status snapshot.
-The app uses this bulk snapshot when supported and retains bounded individual
-piece probes for the published 1.1.2 package or an older native binary.
-
-This Mac has gitignored `pubspec_overrides.yaml` files in the app and stream
-package pointing to that checkout. Matching macOS ARM64 and Android ARM64 native
-binaries were built locally. Path overrides do not compile native C++ by
-themselves; follow the dependency's `docs/BUILD.md` when rebuilding.
-Other machines use the published dependency until the new API and matching
-platform artifacts are released. Do not commit the local override or a path
-resolution in the application lockfile.
+The app and stream package consume published `libtorrent_dart` 1.2.x, which
+provides `TorrentHandle.getPieces()`: a copied 0/1 byte array from one native
+status snapshot. The worker uses this bulk snapshot when supported and retains
+bounded individual piece probes for an older native binary. Wrapper and native
+artifact versions must agree; a local Dart path override alone does not rebuild
+native C++.
 
 ## Validation
 

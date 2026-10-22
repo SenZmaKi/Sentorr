@@ -7,7 +7,7 @@ import 'package:sentorr/imdb/repository.dart';
 import 'package:test/test.dart';
 
 Map<String, dynamic> evidence(String stem) => jsonDecode(
-  File('docs/IMDB/imdb-research/$stem.response.json').readAsStringSync(),
+  File('test/imdb/fixtures/$stem.response.json').readAsStringSync(),
 ) as Map<String, dynamic>;
 
 void main() {

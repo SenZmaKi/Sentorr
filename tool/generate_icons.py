@@ -36,7 +36,7 @@ for name, source in (("dark", ICON), ("light", light)):
     source.save(ROOT / f"assets/images/window-{name}.ico",
                 sizes=[(size, size) for size in (16, 24, 32, 48, 64, 128, 256)])
 
-for app in (ROOT, ROOT / "tool/design_demo", ROOT / "tool/codec_lab"):
+for app in (ROOT, ROOT / "tool/codec_lab"):
     mac_icons = app / "macos/Runner/Assets.xcassets/AppIcon.appiconset"
     if mac_icons.exists():
         for size in (16, 32, 64, 128, 256, 512, 1024):

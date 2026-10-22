@@ -164,6 +164,7 @@ No. Sentorr's player is built on mpv and bundled with the app.
   `flutter test` before submitting.
 - The app lives in `lib/`, the torrent streaming engine in
   `packages/torrent_stream/`, and the website in `website/`.
+- Browse the [developer documentation](docs/README.md) for architecture and operations.
 - Read [DESIGN.md](DESIGN.md) before UI work, and the
   [sync architecture](docs/sync/ARCHITECTURE.md) before changing sync or
   backups.

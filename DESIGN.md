@@ -348,8 +348,7 @@ Widgets still own structure, semantics and behavior. The theme owns their shared
 
 ## Research
 
-- See [design research](docs/design-research.md) for primary-source examples and the reasoning behind the proposed structure. Research informs the contract. The archived sources in [design references](docs/design-references/README.md) explain provenance; this merged contract controls implementation when those sources conflict.
-- See [design demo](tool/design_demo) for a sample flutter app showcasing the design.
+- The [design references](docs/design-references/README.md) preserve source provenance and merge decisions. This contract controls implementation when those sources conflict. Production examples live in `lib/ui/shared/theme/` and `lib/ui/components/`.
 
 ### Inline title references
 

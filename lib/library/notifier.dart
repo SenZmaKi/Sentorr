@@ -54,15 +54,14 @@ class LibraryNotifier extends Notifier<List<LibraryEntry>> {
   /// torrent engine.
   Future<void> remove(String id) => removeAll({id});
 
-  /// Removes [ids] from the library at once, then stops their downloads and
-  /// deletes their files once the engine has let each torrent go.
+  /// Stops downloads and deletes files once the engine releases each torrent.
+  /// Forgets each entry only after cleanup succeeds, retaining failures to retry.
   Future<void> removeAll(Set<String> ids) async {
     final gone = [
       for (final e in state)
         if (ids.contains(e.id)) e,
     ];
     if (gone.isEmpty) return;
-    await _commit([...state.where((e) => !ids.contains(e.id))]);
     final queue = ref.read(downloadQueueProvider);
     // Items can share resume state and folders; clean them up in order.
     for (final entry in gone) {
@@ -72,6 +71,7 @@ class LibraryNotifier extends Notifier<List<LibraryEntry>> {
         await queue.cancel(entry.downloadId);
       }
       await _delete(entry);
+      await _commit([...state.where((e) => e.id != entry.id)]);
     }
   }
 
@@ -93,6 +93,7 @@ class LibraryNotifier extends Notifier<List<LibraryEntry>> {
       // Resume state belongs to the torrent, so other episodes still need it.
       if (!state.any(
         (other) =>
+            other.id != entry.id &&
             other.infoHash == entry.infoHash &&
             p.isWithin(directory, other.path),
       )) {
@@ -110,6 +111,7 @@ class LibraryNotifier extends Notifier<List<LibraryEntry>> {
       }
     } on FileSystemException catch (error) {
       _log.warning('Could not delete ${entry.path}', error);
+      rethrow;
     }
   }
 

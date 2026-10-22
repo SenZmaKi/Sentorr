@@ -191,4 +191,44 @@ void main() {
       await root.delete(recursive: true);
     }
   });
+  test('failed deletion retains the library entry for retry', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'sentorr-delete-failure-',
+    );
+    final dir = await Directory('${root.path}/Movie').create();
+    final file = await File('${dir.path}/Movie.mkv').writeAsString('fixture');
+    final queue = DownloadQueue(
+      FakeTorrents(),
+      DownloadRepository(JsonFileStore(File('${root.path}/queue.json'))),
+    );
+    final memory = MemoryLibrary();
+    await memory.save([entry(file.path)]);
+    final container = ProviderContainer(
+      overrides: [
+        ...libraryOverrides([entry(file.path)], memory),
+        downloadQueueProvider.overrideWithValue(queue),
+        downloadsDirectoryProvider.overrideWithValue(root.path),
+      ],
+    );
+    try {
+      await queue.initialize(const DownloadSettings());
+      await Process.run('chmod', ['500', dir.path]);
+      await expectLater(
+        container.read(libraryProvider.notifier).remove('tt1'),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(container.read(libraryProvider), hasLength(1));
+      expect(memory.saved, hasLength(1));
+      await Process.run('chmod', ['700', dir.path]);
+      await container.read(libraryProvider.notifier).remove('tt1');
+      expect(container.read(libraryProvider), isEmpty);
+      expect(memory.saved, isEmpty);
+      expect(await file.exists(), isFalse);
+    } finally {
+      await Process.run('chmod', ['700', dir.path]);
+      container.dispose();
+      await queue.dispose();
+      await root.delete(recursive: true);
+    }
+  });
 }

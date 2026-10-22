@@ -87,6 +87,16 @@ Future<FakePlanner> _pump(
   addTearDown(tester.view.reset);
   final root = Directory.systemTemp.createTempSync('sentorr-ui-');
   addTearDown(() => root.deleteSync(recursive: true));
+  library = [
+    for (final entry in library)
+      LibraryEntry.fromJson({
+        ...entry.toJson(),
+        'path': '${root.path}/${entry.id}.mkv',
+      })!,
+  ];
+  for (final entry in library) {
+    File(entry.path).writeAsStringSync('download fixture');
+  }
   final planner = FakePlanner();
   final container = ProviderContainer(
     overrides: [
@@ -152,6 +162,18 @@ Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 200));
   }
+}
+
+Future<void> _finishCleanup(WidgetTester tester) async {
+  // File futures created by handlers use the widget test's fake async zone.
+  // Alternate real I/O and frame pumps until every cleanup stage can settle.
+  for (var n = 0; n < 20; n++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 5)),
+    );
+    await tester.pump();
+  }
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -275,7 +297,7 @@ void main() {
     expect(find.byTooltip('Resume season'), findsNothing);
   });
 
-  testWidgets('cancelling an episode asks, then removes it at once', (
+  testWidgets('cancelling an episode asks, then removes it after cleanup', (
     tester,
   ) async {
     await _pump(
@@ -296,7 +318,8 @@ void main() {
     await tester.tap(find.byTooltip('Cancel download').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cancel download'));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await _finishCleanup(tester);
     expect(find.text('Episode 1'), findsNothing);
     expect(find.text('Episode 2'), findsOneWidget);
   });
@@ -318,6 +341,7 @@ void main() {
     expect(find.text('Cancel season 1?'), findsOneWidget);
     await tester.tap(find.text('Cancel season'));
     await tester.pumpAndSettle();
+    await _finishCleanup(tester);
     expect(find.text('Episode 1'), findsNothing);
     expect(find.text('Episode 2'), findsNothing);
     expect(find.byTooltip('Cancel season'), findsNothing);

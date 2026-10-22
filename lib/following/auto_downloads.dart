@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import 'package:logging/logging.dart';
 
 import '../app/services.dart';
@@ -14,6 +15,8 @@ import '../player/models.dart';
 import '../settings/notifier.dart';
 import 'due_episodes.dart';
 import 'models.dart';
+import 'notifier.dart';
+import '../lists/notifier.dart';
 import 'tracked.dart';
 
 final _log = Logger('sentorr.following.downloads');
@@ -111,42 +114,68 @@ class AutoDownloads {
   });
 
   Future<void> _run(FollowedSeries series, {required bool refresh}) async {
-    if (!_ref.mounted || !enabledFor(series)) return;
+    if (!_eligible(series.id)) return;
     final library = _ref.read(libraryProvider.notifier);
     final reviews = _ref.read(autoDownloadReviewsProvider.notifier);
-    final List<PlaybackItem> due;
+    final cancel = CancelToken();
+    void checkIntent() {
+      if (!_eligible(series.id)) cancel.cancel('Automatic download disabled');
+    }
+
+    final tracking = _ref.listen(
+      followedSeriesProvider,
+      (_, _) => checkIntent(),
+    );
+    final lists = _ref.listen(watchListsProvider, (_, _) => checkIntent());
+    final settings = _ref.listen(settingsProvider, (_, _) => checkIntent());
     try {
-      due = await dueEpisodes(
-        _ref.read(imdbRepositoryProvider),
-        series,
-        refresh: refresh,
-      );
-    } catch (error, stack) {
-      _log.warning('Could not list episodes of ${series.id}', error, stack);
-      return;
-    }
-    var queued = 0;
-    for (final item in due) {
-      if (!_ref.mounted || !enabledFor(series)) return;
-      if (library.entry(item.id) != null || reviews.skipped(item.id)) continue;
+      final List<PlaybackItem> due;
       try {
-        await _ref
-            .read(downloadPlannerProvider)
-            .download(item, automatic: true);
-        queued++;
-      } on DownloadPlanException catch (error) {
-        _log.info('$item needs review: $error');
-        reviews.add(AutoDownloadReview(item, error.message));
-      } catch (error, stack) {
-        _log.warning('Auto-download of $item failed', error, stack);
-        reviews.add(
-          AutoDownloadReview(item, "Couldn't find a torrent right now."),
+        due = await dueEpisodes(
+          _ref.read(imdbRepositoryProvider),
+          series,
+          refresh: refresh,
         );
+      } catch (error, stack) {
+        _log.warning('Could not list episodes of ${series.id}', error, stack);
+        return;
       }
+      if (!_eligible(series.id) || cancel.isCancelled) return;
+      var queued = 0;
+      for (final item in due) {
+        if (!_eligible(series.id) || cancel.isCancelled) return;
+        if (library.entry(item.id) != null || reviews.skipped(item.id)) {
+          continue;
+        }
+        try {
+          await _ref
+              .read(downloadPlannerProvider)
+              .download(item, automatic: true, cancel: cancel);
+          queued++;
+        } on DownloadPlanException catch (error) {
+          if (!_eligible(series.id) || cancel.isCancelled) return;
+          _log.info('$item needs review: $error');
+          reviews.add(AutoDownloadReview(item, error.message));
+        } catch (error, stack) {
+          if (!_eligible(series.id) || cancel.isCancelled) return;
+          _log.warning('Auto-download of $item failed', error, stack);
+          reviews.add(
+            AutoDownloadReview(item, "Couldn't find a torrent right now."),
+          );
+        }
+      }
+      if (queued > 0) _log.info('Queued $queued episodes of ${series.id}');
+      if (_eligible(series.id) && !cancel.isCancelled) await _trim(series.id);
+    } finally {
+      tracking.close();
+      lists.close();
+      settings.close();
     }
-    if (queued > 0) _log.info('Queued $queued episodes of ${series.id}');
-    await _trim(series.id);
   }
+
+  bool _eligible(String id) =>
+      _ref.mounted &&
+      _ref.read(trackedSeriesProvider).any((s) => s.id == id && enabledFor(s));
 
   /// Deletes [seriesId]'s oldest automatic downloads past the limit.
   Future<void> _trim(String seriesId) async {
@@ -157,6 +186,7 @@ class AutoDownloads {
         if (e.automatic && e.item.series?.id == seriesId) e,
     ]..sort((a, b) => compareEpisodes(_number(b), _number(a)));
     for (final old in entries.skip(keep)) {
+      if (!_eligible(seriesId)) return;
       _log.info('Keeping $keep episodes of $seriesId: removing ${old.item}');
       await _ref.read(libraryProvider.notifier).remove(old.id);
     }

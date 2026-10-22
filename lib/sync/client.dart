@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -14,6 +15,32 @@ class PeerException implements Exception {
 
   @override
   String toString() => message;
+}
+
+/// Owns one cancellable media operation, without closing other peer traffic.
+class PeerRequest {
+  final _cancelled = Completer<void>();
+  final _clients = <HttpClient>{};
+  bool get isCancelled => _cancelled.isCompleted;
+  void bind(HttpClient client) {
+    _clients.add(client);
+    if (isCancelled) client.close(force: true);
+  }
+
+  void cancel() {
+    if (!isCancelled) _cancelled.complete();
+    for (final client in _clients) {
+      client.close(force: true);
+    }
+    _clients.clear();
+  }
+
+  Future<T> wait<T>(Future<T> operation) => Future.any([
+    operation,
+    _cancelled.future.then<T>(
+      (_) => throw const PeerException('Request cancelled'),
+    ),
+  ]);
 }
 
 /// Talks to other devices' [SyncServer]s. Paired devices are pinned to
@@ -62,12 +89,19 @@ class PeerClient {
     Map<String, dynamic>? body,
     String method = 'GET',
     Map<String, String> headers = const {},
+    PeerRequest? cancellation,
   }) async {
-    final client = _pinned[fingerprint] ??=
-        HttpClient(context: identity.context())
-          ..connectionTimeout = const Duration(seconds: 5)
-          ..badCertificateCallback = (certificate, _, _) =>
-              fingerprintOfDer(certificate.der) == fingerprint;
+    HttpClient create() => HttpClient(context: identity.context())
+      ..connectionTimeout = const Duration(seconds: 5)
+      ..badCertificateCallback = (certificate, _, _) =>
+          fingerprintOfDer(certificate.der) == fingerprint;
+    final client = cancellation == null
+        ? (_pinned[fingerprint] ??= create())
+        : create();
+    cancellation?.bind(client);
+    if (cancellation?.isCancelled == true) {
+      throw const PeerException('Request cancelled');
+    }
     final metadata = {
       ...headers,
       syncPortHeader: '${port()}',

@@ -29,6 +29,7 @@ class PeerCopies {
   final Ref _ref;
 
   Future<void> _tail = Future.value();
+  final _attempts = <String, PeerRequest>{};
 
   /// What reachable devices hold of the items [asked] wants that this
   /// device has not got or is not getting.
@@ -71,7 +72,9 @@ class PeerCopies {
           .read(copyingProvider.notifier)
           .set(CopyProgress(entry, from: copy.deviceName));
       _log.info('Copying ${media.item} from ${copy.deviceName}');
-      _tail = _tail.then((_) => _copy(copy, entry));
+      final attempt = PeerRequest();
+      _attempts[entry.id] = attempt;
+      _tail = _tail.then((_) => _copy(copy, entry, attempt));
     }
   }
 
@@ -81,19 +84,33 @@ class PeerCopies {
     if (copy == null) return;
     _log.info('Cancelled copying ${copy.entry.item}');
     _ref.read(copyingProvider.notifier).end(itemId);
-    // A copy under way notices between chunks and deletes it.
-    final partial = File(_partial(copy.entry));
+    _attempts.remove(itemId)?.cancel();
+    // Cleanup shares the copy queue so it cannot delete a replacement's files.
+    _tail = _tail
+        .then((_) => _deletePartial(copy.entry))
+        .catchError(
+          (Object error, StackTrace stack) =>
+              _log.warning('Could not delete canceled copy', error, stack),
+        );
+  }
+
+  Future<void> _deletePartial(LibraryEntry entry) async {
+    final partial = File(_partial(entry));
     if (await partial.exists()) await partial.delete();
     final metadata = File('${partial.path}.json');
     if (await metadata.exists()) await metadata.delete();
   }
 
-  bool _wanted(String id) =>
-      _ref.mounted && _ref.read(copyingProvider).containsKey(id);
+  bool _wanted(String id, PeerRequest attempt) =>
+      _ref.mounted && identical(_attempts[id], attempt);
 
-  Future<void> _copy(PeerCopy copy, LibraryEntry entry) async {
+  Future<void> _copy(
+    PeerCopy copy,
+    LibraryEntry entry,
+    PeerRequest attempt,
+  ) async {
     final id = entry.id;
-    if (!_wanted(id)) return;
+    if (!_wanted(id, attempt)) return;
     final partial = File(_partial(entry));
     try {
       final route = _ref.read(peersProvider.notifier).route(copy.deviceId);
@@ -119,18 +136,25 @@ class PeerCopies {
       var have = same && await partial.exists() ? await partial.length() : 0;
       await metadata.writeAsString(identity, flush: true);
       if (have >= copy.media.size) have = 0;
-      final response = await _ref
-          .read(syncServiceProvider)
-          .client
-          .open(
-            route.address,
-            route.fingerprint,
-            '/v1/media/$id',
-            headers: {
-              HttpHeaders.ifMatchHeader: '"$version"',
-              if (have > 0) HttpHeaders.rangeHeader: 'bytes=$have-',
-            },
-          );
+      final response = await attempt.wait(
+        _ref
+            .read(syncServiceProvider)
+            .client
+            .open(
+              route.address,
+              route.fingerprint,
+              '/v1/media/$id',
+              cancellation: attempt,
+              headers: {
+                HttpHeaders.ifMatchHeader: '"$version"',
+                if (have > 0) HttpHeaders.rangeHeader: 'bytes=$have-',
+              },
+            ),
+      );
+      if (!_wanted(id, attempt)) {
+        await response.listen((_) {}).cancel();
+        return;
+      }
       if (response.statusCode == HttpStatus.ok) {
         have = 0;
       } else if (response.statusCode != HttpStatus.partialContent) {
@@ -155,18 +179,18 @@ class PeerCopies {
       var shown = DateTime.now();
       try {
         await for (final chunk in response) {
-          if (!_wanted(id)) break;
+          if (!_wanted(id, attempt)) break;
           sink.add(chunk);
           have += chunk.length;
           if (DateTime.now().difference(shown) > _tick) {
             shown = DateTime.now();
-            _progress(entry, copy, have / copy.media.size);
+            _progress(entry, copy, have / copy.media.size, attempt);
           }
         }
       } finally {
         await sink.close();
       }
-      if (!_wanted(id)) {
+      if (!_wanted(id, attempt)) {
         if (await partial.exists()) await partial.delete();
         if (await metadata.exists()) await metadata.delete();
         return;
@@ -180,16 +204,19 @@ class PeerCopies {
           route.fingerprint) {
         throw const PeerException('The source device is no longer paired');
       }
-      final verified = await _ref
-          .read(syncServiceProvider)
-          .client
-          .open(
-            route.address,
-            route.fingerprint,
-            '/v1/media/$id',
-            method: 'HEAD',
-            headers: {HttpHeaders.ifMatchHeader: '"$version"'},
-          );
+      final verified = await attempt.wait(
+        _ref
+            .read(syncServiceProvider)
+            .client
+            .open(
+              route.address,
+              route.fingerprint,
+              '/v1/media/$id',
+              method: 'HEAD',
+              cancellation: attempt,
+              headers: {HttpHeaders.ifMatchHeader: '"$version"'},
+            ),
+      );
       final unchanged =
           verified.statusCode == HttpStatus.ok &&
           verified.headers.value(HttpHeaders.etagHeader) == '"$version"';
@@ -199,12 +226,19 @@ class PeerCopies {
         if (await metadata.exists()) await metadata.delete();
         throw const PeerException('The source file changed during copying');
       }
-      if (!_wanted(id)) return;
+      if (!_wanted(id, attempt)) return;
       final target = File(entry.path);
       // Windows will not rename over a file.
-      if (await target.exists()) await target.delete();
+      final exists = await target.exists();
+      if (!_wanted(id, attempt)) return;
+      if (exists) await target.delete();
+      if (!_wanted(id, attempt)) return;
       await partial.rename(entry.path);
       if (await metadata.exists()) await metadata.delete();
+      if (!_wanted(id, attempt)) {
+        if (await target.exists()) await target.delete();
+        return;
+      }
       await _ref
           .read(libraryProvider.notifier)
           .add(
@@ -220,7 +254,7 @@ class PeerCopies {
           );
       _log.info('Copied ${entry.item} from ${copy.deviceName}');
     } catch (error, stack) {
-      if (!_wanted(id)) return;
+      if (!_wanted(id, attempt)) return;
       // The partial file stays, so trying again resumes it.
       ErrorReports.report(
         "Couldn't copy ${entry.item.name} from ${copy.deviceName}",
@@ -228,14 +262,23 @@ class PeerCopies {
         stack,
       );
     } finally {
-      if (_ref.mounted) _ref.read(copyingProvider.notifier).end(id);
+      attempt.cancel();
+      if (_wanted(id, attempt)) {
+        _attempts.remove(id);
+        _ref.read(copyingProvider.notifier).end(id);
+      }
     }
   }
 
   static const _tick = Duration(milliseconds: 250);
 
-  void _progress(LibraryEntry entry, PeerCopy copy, double progress) {
-    if (!_wanted(entry.id)) return;
+  void _progress(
+    LibraryEntry entry,
+    PeerCopy copy,
+    double progress,
+    PeerRequest attempt,
+  ) {
+    if (!_wanted(entry.id, attempt)) return;
     _ref
         .read(copyingProvider.notifier)
         .set(

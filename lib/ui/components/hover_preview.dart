@@ -12,6 +12,13 @@ import 'motion.dart';
 import 'preview_layout.dart';
 import 'preview_sheet.dart';
 
+/// Lets a containing page keep the preview's shelf in place during updates.
+class HoverPreviewVisibility extends Notification {
+  const HoverPreviewVisibility(this.visible);
+
+  final bool visible;
+}
+
 /// Where the preview sits horizontally over its tile.
 enum PreviewAlign {
   /// Centred, for posters and stills.
@@ -227,6 +234,7 @@ class _HoverPreviewState extends State<HoverPreview>
     if (_scrolls != _scrollsAtSettle || _scrolling()) return;
     if (_shown != this) _shown?._dismiss(animate: true);
     _shown = this;
+    const HoverPreviewVisibility(true).dispatch(context);
     _portal.show();
     if (reduceMotion(context)) {
       _t.value = 1;
@@ -264,7 +272,10 @@ class _HoverPreviewState extends State<HoverPreview>
       return;
     }
     _overPreview = false;
-    if (_portal.isShowing) _portal.hide();
+    if (_portal.isShowing) {
+      _portal.hide();
+      const HoverPreviewVisibility(false).dispatch(context);
+    }
     if (_shown == this) _shown = null;
   }
 

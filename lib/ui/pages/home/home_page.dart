@@ -8,11 +8,13 @@ import '../../../home/watch_activity.dart';
 import '../../../shared/net/online.dart';
 import '../../../lists/models.dart';
 import '../../components/motion.dart';
+import '../../components/hover_preview.dart';
 import 'downloaded_shelf.dart';
 import 'list_shelf.dart';
 import 'featured_section.dart';
 import '../../shared/layout/layout_size.dart';
 import 'home_layout.dart';
+import 'home_section.dart';
 import 'continue_shelf.dart';
 import 'home_shelves.dart';
 import 'offline_notice.dart';
@@ -31,6 +33,7 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   final _scroll = ScrollController();
+  int? _previewSection;
 
   @override
   void dispose() {
@@ -125,15 +128,40 @@ class _HomePageState extends ConsumerState<HomePage> {
     final layout = HomeLayout.of(context);
     final gutter = layout.gutter;
     final sections = ref.watch(onlineProvider) ? _sections : _offlineSections;
-    return ListView.builder(
+    return CustomScrollView(
       controller: _scroll,
-      padding: EdgeInsets.only(top: gutter, bottom: gutter * 2),
-      itemCount: sections.length,
-      // The hero sits in the content column; shelves span the page and
-      // align their headers with it.
-      itemBuilder: (context, i) => i == 0
-          ? Padding(padding: layout.insets.horizontal, child: sections[i])
-          : sections[i],
+      slivers: [
+        SliverPadding(padding: EdgeInsets.only(top: gutter)),
+        // Separate slivers measure every preceding section exactly, even when
+        // its shelf is empty, rather than estimating lazy-list child offsets.
+        for (var i = 0; i < sections.length; i++)
+          HomeSection(
+            preserveFollowing: _previewSection != null && i < _previewSection!,
+            child: NotificationListener<HoverPreviewVisibility>(
+              onNotification: (notice) {
+                if (notice.visible) {
+                  setState(() => _previewSection = i);
+                } else {
+                  // Menu actions can dismiss the preview before the list's
+                  // new geometry is laid out. Retain its anchor for that frame.
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && _previewSection == i) {
+                      setState(() => _previewSection = null);
+                    }
+                  });
+                }
+                return true;
+              },
+              child: i == 0
+                  ? Padding(
+                      padding: layout.insets.horizontal,
+                      child: sections[i],
+                    )
+                  : sections[i],
+            ),
+          ),
+        SliverPadding(padding: EdgeInsets.only(bottom: gutter * 2)),
+      ],
     );
   }
 }

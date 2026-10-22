@@ -4,6 +4,9 @@ import 'package:test/test.dart';
 
 const hash = '0123456789abcdef0123456789abcdef01234567';
 void main() {
+  test('malformed magnet UTF-8 is rejected locally', () {
+    expect(magnetHash(Uri.parse('magnet:?xt=%FF')), isNull);
+  });
   test('resolution accepts underscore-delimited release names', () {
     expect(resolutionOf('big_buck_bunny_1080p_h264.mov'), 1080);
   });

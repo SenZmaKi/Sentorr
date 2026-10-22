@@ -24,10 +24,15 @@ Uri magnetFor(String hash, String name) => Uri(
 );
 String? magnetHash(Uri? uri) {
   if (uri?.scheme != 'magnet') return null;
-  for (final xt in uri!.queryParametersAll['xt'] ?? <String>[]) {
-    if (xt.toLowerCase().startsWith('urn:btih:')) {
-      return infoHash(xt.substring(9));
+  try {
+    for (final xt in uri!.queryParametersAll['xt'] ?? <String>[]) {
+      if (xt.toLowerCase().startsWith('urn:btih:')) {
+        return infoHash(xt.substring(9));
+      }
     }
+  } on FormatException {
+    // Provider-controlled percent escapes can contain invalid UTF-8.
+    return null;
   }
   return null;
 }

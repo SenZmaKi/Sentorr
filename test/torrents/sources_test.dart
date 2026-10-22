@@ -93,6 +93,33 @@ void main() {
     },
   );
 
+  test('malformed Bitsearch magnets preserve healthy source results', () async {
+    final broken = File('test/torrents/fixtures/bitsearch.html')
+        .readAsStringSync()
+        .replaceAll(RegExp(r'magnet:[^\"]+'), 'magnet:?xt=%FF');
+    dio.interceptors.clear();
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (o, h) {
+          h.resolve(
+            Response(
+              requestOptions: o,
+              statusCode: 200,
+              data: o.uri.host == 'apibay.org' ? [pirate()] : broken,
+            ),
+          );
+        },
+      ),
+    );
+    final result = await TorrentRepository([
+      PirateBaySource(dio),
+      BitsearchSource(dio),
+    ]).search(movie);
+    expect(result.releases, hasLength(1));
+    expect(result.releases.single.infoHash, hash);
+    expect(result.diagnostics, hasLength(2));
+  });
+
   test('Bitsearch categories do not depend on a video icon', () async {
     payload = File('test/torrents/fixtures/bitsearch.html')
         .readAsStringSync()

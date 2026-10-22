@@ -85,6 +85,12 @@ class TorrentRepository {
                 : 'HTTP ${error.response!.statusCode}',
             searchText: query.searchText,
           );
+        } on FormatException catch (error) {
+          failure = SourceFailure(
+            source.id,
+            'Malformed source response: ${error.message}',
+            searchText: query.searchText,
+          );
         } on SourceException catch (error) {
           failure = SourceFailure(
             source.id,

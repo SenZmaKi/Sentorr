@@ -36,6 +36,8 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
   late FollowedSeriesRepository _repository;
 
   late StateClock _clock;
+  bool _dirty = false;
+  int _saveGeneration = 0;
 
   /// The latest records, readable after disposal; see [_commit].
   List<FollowedSeries> _series = const [];
@@ -286,7 +288,9 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
     _observe(incoming);
     final current = snapshot;
     final merged = current.merge(incoming);
-    if (merged.matches(current)) return Future.value();
+    if (merged.matches(current)) {
+      return _dirty ? _commit(_series) : Future.value();
+    }
     _log.info('Merged ${incoming.series.length} followed series from a device');
     _repository.removals = merged.removals;
     _repository.removalRevisions = merged.removalRevisions;
@@ -308,13 +312,16 @@ class FollowedSeriesNotifier extends Notifier<List<FollowedSeries>> {
       if (s.id != seriesId) s,
   ];
 
-  Future<void> _commit(List<FollowedSeries> next) {
+  Future<void> _commit(List<FollowedSeries> next) async {
+    final generation = ++_saveGeneration;
+    _dirty = true;
     final series = _series = List<FollowedSeries>.unmodifiable(next);
     // The player saves its last position as the app shuts down, which may
     // come after this notifier is disposed; the file still gets it.
     if (ref.mounted) state = series;
     _repository.clock = _clock.current;
-    return _repository.save(series);
+    await _repository.save(series);
+    if (generation == _saveGeneration) _dirty = false;
   }
 }
 

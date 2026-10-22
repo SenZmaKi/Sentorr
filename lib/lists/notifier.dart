@@ -35,6 +35,8 @@ final watchListsProvider =
 class WatchListsNotifier extends Notifier<List<ListEntry>> {
   late WatchListsRepository _repository;
   late StateClock _clock;
+  bool _dirty = false;
+  int _saveGeneration = 0;
 
   /// Removals included, readable after disposal; see [_commit].
   List<ListEntry> _entries = const [];
@@ -195,7 +197,9 @@ class WatchListsNotifier extends Notifier<List<ListEntry>> {
     _clock.observe(incoming.entries.map((e) => e.revision));
     final current = snapshot;
     final merged = current.merge(incoming);
-    if (merged.matches(current)) return Future.value();
+    if (merged.matches(current)) {
+      return _dirty ? _commit(_entries) : Future.value();
+    }
     _log.info('Merged ${incoming.entries.length} list entries');
     return _commit(merged.entries);
   }
@@ -203,13 +207,16 @@ class WatchListsNotifier extends Notifier<List<ListEntry>> {
   static List<ListEntry> _live(List<ListEntry> entries) =>
       List.unmodifiable(entries.where((e) => !e.removed));
 
-  Future<void> _commit(List<ListEntry> next) {
+  Future<void> _commit(List<ListEntry> next) async {
+    final generation = ++_saveGeneration;
+    _dirty = true;
     final entries = _entries = List<ListEntry>.unmodifiable(next);
     // The player may report progress as the app shuts down, after this
     // notifier is disposed; the file still gets it.
     if (ref.mounted) state = _live(entries);
     _repository.clock = _clock.current;
-    return _repository.save(entries);
+    await _repository.save(entries);
+    if (generation == _saveGeneration) _dirty = false;
   }
 }
 

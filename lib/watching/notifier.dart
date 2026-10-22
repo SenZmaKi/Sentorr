@@ -40,6 +40,8 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
   late WatchHistoryRepository _repository;
 
   late StateClock _clock;
+  bool _dirty = false;
+  int _saveGeneration = 0;
 
   /// The latest entries, readable after disposal; see [_commit].
   List<WatchEntry> _entries = const [];
@@ -122,7 +124,9 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
   Future<void> merge(WatchSnapshot incoming) {
     _observe(incoming);
     final merged = snapshot.merge(incoming, capacity: capacity);
-    if (merged.matches(snapshot)) return Future.value();
+    if (merged.matches(snapshot)) {
+      return _dirty ? _commit(_entries) : Future.value();
+    }
     _repository.removals = merged.removals;
     _repository.removalRevisions = merged.removalRevisions;
     return _commit(merged.entries);
@@ -150,13 +154,16 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
       if (!test(e)) e,
   ];
 
-  Future<void> _commit(List<WatchEntry> next) {
+  Future<void> _commit(List<WatchEntry> next) async {
+    final generation = ++_saveGeneration;
+    _dirty = true;
     final entries = _entries = List<WatchEntry>.unmodifiable(next);
     // The player saves its last position as the app shuts down, which may
     // come after this notifier is disposed; the file still gets it.
     if (ref.mounted) state = entries;
     _repository.clock = _clock.current;
-    return _repository.save(entries);
+    await _repository.save(entries);
+    if (generation == _saveGeneration) _dirty = false;
   }
 }
 

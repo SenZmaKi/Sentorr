@@ -120,7 +120,7 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
       PlayerMenuRow(
         icon: Icons.subtitles_outlined,
         label: 'Subtitles',
-        value: !captions.enabled
+        value: !captions.active
             ? '$count available'
             : captions.selected != null
             ? captions.selected!.ready
@@ -129,7 +129,7 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
             : _isReal(track.subtitle.id)
             ? subtitleLabel(track.subtitle)
             : 'On',
-        scrollValue: captions.enabled,
+        scrollValue: captions.active,
         chevron: available,
         onTap: available ? () => _go(_Page.subtitles) : null,
       ),

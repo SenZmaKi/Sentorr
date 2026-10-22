@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:sentorr/player/stream/subtitles.dart';
+import 'package:sentorr/ui/components/player_control.dart';
 import 'package:sentorr/ui/pages/player/captions_control.dart';
 import 'package:sentorr/ui/pages/player/captions_view.dart';
 import 'package:sentorr/ui/pages/player/player_actions.dart';
@@ -27,6 +28,7 @@ class _Actions implements PlayerActions {
 }
 
 class _VisualPlayer extends FakePlayback {
+  void emitTracks() => tracksController.add(state.tracks);
   void emitSubtitle(List<String> lines) {
     state = state.copyWith(subtitle: lines);
     subtitleController.add(lines);
@@ -93,6 +95,56 @@ void main() {
     }
   });
   for (final brightness in Brightness.values) {
+    testWidgets('caption default waits for available tracks in $brightness', (
+      tester,
+    ) async {
+      final native = _VisualPlayer();
+      final player = Player(platformPlayer: native);
+      final captions = PlaybackSubtitles(player, defaultEnabled: true)
+        ..opened();
+      final ui = PlayerUi();
+      addTearDown(captions.dispose);
+      addTearDown(ui.dispose);
+      final actions = _Actions(captions, ui);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildSentorrTheme(brightness),
+          home: Scaffold(body: CaptionsControl(actions: actions)),
+        ),
+      );
+      bool selected() =>
+          tester.widget<PlayerControl>(find.byType(PlayerControl)).selected;
+      expect(captions.enabled, isTrue);
+      expect(selected(), isFalse);
+      native.state = native.state.copyWith(
+        tracks: const Tracks(subtitle: [SubtitleTrack('1', 'English', 'en')]),
+      );
+      native.emitTracks();
+      await tester.pump();
+      expect(selected(), isTrue);
+      captions.off();
+      await tester.pump();
+      expect(selected(), isFalse);
+      captions.on();
+      await captions.reset();
+      native.state = native.state.copyWith(tracks: const Tracks());
+      native.emitTracks();
+      captions.opened();
+      await tester.pump();
+      expect(captions.enabled, isTrue);
+      expect(selected(), isFalse);
+      const file = TorrentStreamFile(
+        index: 1,
+        path: 'English.srt',
+        length: 100,
+        isPadFile: false,
+      );
+      captions.files = [const SubtitleDownload(file, failed: true)];
+      captions.on();
+      await tester.pump();
+      expect(selected(), isFalse);
+    });
+
     for (final size in [const Size(192, 108), const Size(480, 270)]) {
       testWidgets(
         'compact captions stay near the bottom at $size in $brightness',

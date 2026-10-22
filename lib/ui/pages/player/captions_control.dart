@@ -21,7 +21,7 @@ class CaptionsControl extends StatelessWidget {
           tooltip: downloading
               ? 'Captions · ${file.status} (c)'
               : 'Captions (c)',
-          selected: captions.enabled,
+          selected: captions.active,
           onPressed: actions.toggleSubtitles,
           child: downloading
               ? Stack(

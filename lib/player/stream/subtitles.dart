@@ -68,6 +68,11 @@ class PlaybackSubtitles extends ChangeNotifier {
   bool get visible =>
       enabled && _opened && _desired != null && _selectedKey == _key(_desired!);
 
+  /// Caption intent can remain enabled while a file has no captions.
+  /// Pending sidecars count so their download progress stays selected.
+  bool get active =>
+      enabled && (embedded.isNotEmpty || files.any((f) => !f.failed));
+
   bool get available => files.isNotEmpty || embedded.isNotEmpty;
   List<SubtitleTrack> get embedded => player.state.tracks.subtitle
       .where(

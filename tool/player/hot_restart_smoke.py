@@ -15,7 +15,11 @@ root = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
 parser.add_argument('--shutdown', action='store_true',
                     help='Check application shutdown during active playback')
+parser.add_argument('--checkpoint-failure', action='store_true',
+                    help='Inject a failed checkpoint during shutdown')
 args = parser.parse_args()
+if args.checkpoint_failure:
+    args.shutdown = True
 fixture = root / 'tool/codec_lab/assets/media/bbb_h264.mp4'
 if not fixture.is_file():
     raise SystemExit('Missing codec lab fixture: ' + str(fixture))
@@ -29,6 +33,7 @@ process = subprocess.Popen(
     ['flutter', 'run', '-d', 'macos', '-t', 'tool/player_native_smoke.dart',
      '--dart-define=SMOKE_SHUTDOWN=true' if args.shutdown else
      '--dart-define=SMOKE_HOT_RESTART=true',
+     *(['--dart-define=SMOKE_CHECKPOINT_FAILURE=true'] if args.checkpoint_failure else []),
      f'--dart-define=SMOKE_MEDIA=http://127.0.0.1:{server.server_port}/bbb_h264.mp4'],
     cwd=root, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
     stderr=subprocess.STDOUT, text=True, bufsize=1,

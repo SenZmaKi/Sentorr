@@ -1,3 +1,4 @@
+import '../shared/cleanup.dart';
 import '../watching/next_episode.dart';
 import '../settings/streaming_settings.dart';
 import '../settings/notifier.dart';
@@ -213,20 +214,20 @@ class PlaybackEngine {
 
   Future<void> dispose() => _disposal ??= _dispose();
 
-  Future<void> _dispose() async {
-    await beforeDispose?.call();
-    await _errors.cancel();
-    await _native.cancel();
-    await _unfeed();
-    await streaming.park();
-    await buffering.close();
-    cacheRanges.dispose();
-    streaming.dispose();
-    await _restartReady;
-    await player.dispose();
-    await PlayerHotRestart.unregister(player);
-    _lifecycle?.unregister(dispose);
-  }
+  Future<void> _dispose() => cleanupAll([
+    () async => beforeDispose?.call(),
+    _errors.cancel,
+    _native.cancel,
+    _unfeed,
+    streaming.park,
+    buffering.close,
+    cacheRanges.dispose,
+    streaming.dispose,
+    () => _restartReady,
+    player.dispose,
+    () => PlayerHotRestart.unregister(player),
+    () => _lifecycle?.unregister(dispose),
+  ]);
 }
 
 String _clock(Duration d) =>
@@ -347,15 +348,17 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
       playing: engine.state.playing,
     );
   });
-  engine.beforeDispose = () async {
-    await checkpoint();
-    if (recovery.checkpoint == checkpoint) recovery.checkpoint = null;
-    await recovering.cancel();
-    await completed.cancel();
-    warmup.dispose();
-    await warming.cancel();
-    await progress.dispose();
-  };
+  engine.beforeDispose = () => cleanupAll([
+    checkpoint,
+    () {
+      if (recovery.checkpoint == checkpoint) recovery.checkpoint = null;
+    },
+    recovering.cancel,
+    completed.cancel,
+    warmup.dispose,
+    warming.cancel,
+    progress.dispose,
+  ]);
   ref.onDispose(engine.dispose);
   final started = <String>{};
   ref.listen(playerSessionProvider.select((s) => s?.current), (_, item) {

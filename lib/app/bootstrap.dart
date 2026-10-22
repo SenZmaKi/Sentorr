@@ -1,4 +1,7 @@
 import 'dart:io';
+
+import '../shared/cleanup.dart';
+
 import 'dart:async';
 
 import '../shared/source_directory/repository.dart';
@@ -331,32 +334,31 @@ class AppRuntime with WidgetsBindingObserver {
   Future<void> _dispose() async {
     _quitting = true;
     Logger('sentorr.app').info('Shutting down');
-    await tray.dispose();
-    // Give immediate visual feedback while durable state/native cleanup finishes.
-    if (supportsWindowCustomization) await window.hide();
-    await flush();
-    // Riverpod's onDispose cannot await the player's native cleanup. Finish
-    // it while Dart callbacks and torrent sessions are still available.
-    await container.read(playerLifecycleProvider).dispose();
-    await container.read(playbackRecoveryProvider).flush();
-    // Player cleanup can park its session; release it before closing the engine.
-    await container.read(parkedStreamsProvider).dispose();
-    await container.read(taskbarProgressProvider).dispose();
-    await container.read(downloadQueueProvider).dispose();
-    await container.read(torrentEngineProvider).close();
-    WidgetsBinding.instance.removeObserver(this);
-    window.dispose();
-    await network.close();
-    await AppImageCache.dispose();
-    // Unmount consumers before releasing their provider container.
-    runApp(const SizedBox.shrink());
-    await WidgetsBinding.instance.endOfFrame;
-    container.dispose();
-    // An open player saves where it stopped as the container disposes it.
-    await history.store.flushed;
-    await following.store.flushed;
-    await lists.store.flushed;
-    await flushLogs();
+    await cleanupAll([
+      tray.dispose,
+      if (supportsWindowCustomization) window.hide,
+      flush,
+      () => container.read(playerLifecycleProvider).dispose(),
+      () => container.read(playbackRecoveryProvider).flush(),
+      () => container.read(parkedStreamsProvider).dispose(),
+      () => container.read(taskbarProgressProvider).dispose(),
+      () => container.read(downloadQueueProvider).dispose(),
+      () => container.read(syncServiceProvider).close(),
+      () => container.read(torrentEngineProvider).close(),
+      () => WidgetsBinding.instance.removeObserver(this),
+      window.dispose,
+      network.close,
+      AppImageCache.dispose,
+      () async {
+        runApp(const SizedBox.shrink());
+        await WidgetsBinding.instance.endOfFrame;
+      },
+      container.dispose,
+      () => history.store.flushed,
+      () => following.store.flushed,
+      () => lists.store.flushed,
+      flushLogs,
+    ]);
   }
 
   Future<void> quit() => _quit ??= _quitApplication();

@@ -34,11 +34,17 @@ TorrentStreamFile? playableFile(
       .where((f) => !_extra.hasMatch(p.basenameWithoutExtension(f.path)))
       .toList();
   var pool = features.isEmpty && !pack ? videos : features;
-  if (item.isEpisode && (pack || pool.length > 1)) {
+  if (item.isEpisode) {
     final named = pool
         .where((f) => _plays(f, item, requireSeason: seriesPack))
         .toList();
-    if (named.isNotEmpty || pack) pool = named;
+    if (named.isNotEmpty || pack) {
+      pool = named;
+    } else {
+      // An opaque name may rely on the release identity; an explicit different
+      // episode/season must never inherit it, even for a single video.
+      pool = pool.where((f) => !_contradicts(f, item)).toList();
+    }
   }
   if (pool.isEmpty) return null;
   return pool.reduce((a, b) => b.length > a.length ? b : a);
@@ -69,4 +75,29 @@ bool _plays(
       (season.isEmpty
           ? !requireSeason
           : season.length == 1 && season.single == item.season);
+}
+
+bool _contradicts(TorrentStreamFile file, PlaybackItem item) {
+  final name = ReleaseMetadata.parse(p.basenameWithoutExtension(file.path));
+  final episodes = name.episodes.isNotEmpty
+      ? name.episodes
+      : [
+          ?int.tryParse(
+            _leading.firstMatch(p.basenameWithoutExtension(file.path))?[1] ??
+                '',
+          ),
+        ];
+  final seasons = name.seasons.isNotEmpty
+      ? name.seasons
+      : p
+                .split(p.dirname(file.path))
+                .reversed
+                .map((folder) => ReleaseMetadata.parse(folder).seasons)
+                .where((s) => s.isNotEmpty)
+                .firstOrNull ??
+            <int>[];
+  return (episodes.isNotEmpty &&
+          (episodes.length != 1 || episodes.single != item.episode)) ||
+      (seasons.isNotEmpty &&
+          (seasons.length != 1 || seasons.single != item.season));
 }

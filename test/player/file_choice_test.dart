@@ -24,6 +24,24 @@ PlaybackItem _episode(int season, int episode) => PlaybackItem(
 );
 
 void main() {
+  test('non-pack files reject explicit contradictory episode or season', () {
+    for (final files in [
+      [_file('Show.S01E02.mkv', 1000)],
+      [_file('Show.S02E03.mkv', 1000)],
+      [_file('Show.S01E02.mkv', 1000), _file('Show.S01E04.mkv', 900)],
+    ]) {
+      expect(playableFile(files, _episode(1, 3), pack: false), isNull);
+    }
+    final opaque = _file('video.mkv', 500);
+    expect(
+      playableFile(
+        [_file('Show.S01E02.mkv', 1000), opaque],
+        _episode(1, 3),
+        pack: false,
+      ),
+      opaque,
+    );
+  });
   test('series batch chooses exact season and episode from nested folders', () {
     final requested = _file('Show Complete/Season 2/02 - Name.mkv', 900);
     final files = [

@@ -101,7 +101,7 @@ class WatchListsNotifier extends Notifier<List<ListEntry>> {
 
   /// Episodes whose series was checked for being finished, so progress
   /// saves do not ask IMDb again.
-  final _checked = <String>{};
+  final _checked = <String, bool>{};
 
   /// Notes that [item] opened in the player; [record] applies it.
   void started(PlaybackItem item) {
@@ -164,13 +164,15 @@ class WatchListsNotifier extends Notifier<List<ListEntry>> {
         return await standingOf(ref.read(imdbRepositoryProvider), followed)
             is AllWatched;
       }
-      if (at == null || !_checked.add(item.id)) return false;
+      if (at == null) return false;
+      if (_checked[item.id] case final cached?) return cached;
       final latest = await latestEpisode(
         ref.read(imdbRepositoryProvider),
         item.series!.id,
       );
       final last = latest?.number;
-      return latest != null &&
+      return _checked[item.id] =
+          latest != null &&
           last != null &&
           hasEnded(latest.series) &&
           compareEpisodes(at, last) >= 0;

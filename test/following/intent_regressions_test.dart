@@ -242,4 +242,48 @@ void main() {
       c.dispose();
     }
   });
+  test('repeated finale completes another rewatch', () async {
+    final ended = ImdbTitle(
+      id: 'tt2',
+      title: 'Ended',
+      canHaveEpisodes: true,
+      endYear: 2024,
+    );
+    final imdb = FakeImdbRepository(
+      trending: [ended],
+      seasons: {
+        ended.id: [1],
+      },
+      episodes: {
+        '${ended.id}/1': [ep(1), ep(2)],
+      },
+    );
+    final c = ProviderContainer(
+      overrides: [
+        imdbRepositoryProvider.overrideWithValue(imdb),
+        ...watchListsOverrides(),
+        ...followedSeriesOverrides([following(ended, episode: 2)]),
+      ],
+    );
+    final item = PlaybackItem.episode(ended, ep(2), season: 1);
+    try {
+      final lists = c.read(watchListsProvider.notifier);
+      lists.started(item);
+      await lists.record(
+        item,
+        position: const Duration(minutes: 57),
+        duration: const Duration(hours: 1),
+      );
+      expect(lists.statusOf(ended.id), WatchStatus.completed);
+      lists.started(item);
+      await lists.record(
+        item,
+        position: const Duration(minutes: 57),
+        duration: const Duration(hours: 1),
+      );
+      expect(lists.statusOf(ended.id), WatchStatus.completed);
+    } finally {
+      c.dispose();
+    }
+  });
 }

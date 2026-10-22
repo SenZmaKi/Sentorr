@@ -124,6 +124,69 @@ void main() {
       expect(opened!.queryParameters['code_challenge_method'], 'S256');
     });
 
+    for (final rotate in [false, true]) {
+      test('disconnect rejects delayed refresh (rotation=$rotate)', () async {
+        final entered = Completer<void>(), release = Completer<void>();
+        var refreshing = false;
+        final adapter = _Adapter((o) async {
+          if (refreshing && o.path.contains('/token')) {
+            entered.complete();
+            await release.future;
+            return (
+              200,
+              {
+                'access_token': 'stale',
+                if (rotate) 'refresh_token': 'stale-refresh',
+              },
+            );
+          }
+          return _tokens(o);
+        });
+        final auth = await _connected(adapter);
+        refreshing = true;
+        final pending = auth.refresh();
+        final rejected = expectLater(pending, throwsA(isA<BackupException>()));
+        await entered.future;
+        await auth.disconnect();
+        release.complete();
+        await rejected;
+        expect(auth.connected, false);
+        await expectLater(auth.accessToken(), throwsA(isA<BackupException>()));
+      });
+    }
+
+    test('obsolete refresh cannot replace a newer connection', () async {
+      final entered = Completer<void>(), release = Completer<void>();
+      var hold = false, grants = 0;
+      final adapter = _Adapter((o) async {
+        if (hold && (o.data as Map?)?['grant_type'] == 'refresh_token') {
+          entered.complete();
+          await release.future;
+          return (400, {'error': 'invalid_grant'});
+        }
+        if (o.path.contains('/token')) {
+          grants++;
+          return (
+            200,
+            {'access_token': 'access-$grants', 'refresh_token': 'r-$grants'},
+          );
+        }
+        return (200, {});
+      });
+      final auth = await _connected(adapter);
+      hold = true;
+      final old = auth.refresh();
+      final rejected = expectLater(old, throwsA(isA<DioException>()));
+      await entered.future;
+      await auth.disconnect();
+      await auth.connect();
+      expect(await auth.accessToken(), 'access-2');
+      release.complete();
+      await rejected;
+      expect(auth.connected, true);
+      expect(await auth.accessToken(), 'access-2');
+    });
+
     test('signs out when Google refuses the saved sign-in', () async {
       var refusing = false;
       final adapter = _Adapter(

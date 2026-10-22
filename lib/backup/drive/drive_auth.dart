@@ -53,6 +53,8 @@ class DriveAuth {
   final String authorizeEndpoint, tokenEndpoint, revokeEndpoint;
   final Duration signInTimeout;
 
+  int _generation = 0;
+  Future<void> _credentialWrite = Future.value();
   String? _refreshToken, _accessToken;
   DateTime _expires = DateTime.fromMillisecondsSinceEpoch(0);
 
@@ -60,12 +62,16 @@ class DriveAuth {
 
   /// Picks up a sign-in saved earlier; true when there was one.
   Future<bool> restore() async {
-    _refreshToken ??= await credentials?.readDriveToken();
+    final generation = _generation;
+    final token = await credentials?.readDriveToken();
+    if (generation == _generation) _refreshToken ??= token;
     return connected;
   }
 
   /// Opens Google's consent page and waits for the viewer to finish it.
   Future<void> connect() async {
+    final generation = ++_generation;
+    _refreshing = null;
     final clock = Stopwatch()..start();
     _log.info(
       'Drive sign-in starting (pid=$pid, platform=${Platform.operatingSystem})',
@@ -115,7 +121,7 @@ class DriveAuth {
         'code': granted,
         'redirect_uri': redirect,
         'code_verifier': verifier,
-      });
+      }, generation);
       _log.info(
         'Drive sign-in complete after ${clock.elapsedMilliseconds}ms; connected=$connected',
       );
@@ -146,20 +152,28 @@ class DriveAuth {
   /// signs out.
   Future<String>? _refreshing;
 
-  Future<String> refresh() => _refreshing ??= _refresh().whenComplete(() {
-    _refreshing = null;
-  });
+  Future<String> refresh() {
+    final generation = _generation;
+    return _refreshing ??= _refresh().whenComplete(() {
+      if (generation == _generation) _refreshing = null;
+    });
+  }
 
   Future<String> _refresh() async {
+    final generation = _generation;
     final token = _refreshToken;
     if (token == null) {
       throw const BackupException('Google Drive is not connected.');
     }
     try {
-      await _grant({'grant_type': 'refresh_token', 'refresh_token': token});
+      await _grant({
+        'grant_type': 'refresh_token',
+        'refresh_token': token,
+      }, generation);
     } on DioException catch (error) {
-      if (error.response?.statusCode == 400 ||
-          error.response?.statusCode == 401) {
+      if (generation == _generation &&
+          (error.response?.statusCode == 400 ||
+              error.response?.statusCode == 401)) {
         _log.warning('Google refused the saved sign-in; signing out');
         await _forget();
         throw const BackupException(
@@ -168,11 +182,16 @@ class DriveAuth {
       }
       rethrow;
     }
+    if (generation != _generation) {
+      throw const BackupException('Google Drive connection changed.');
+    }
     return _accessToken!;
   }
 
   /// Signs out and tells Google to drop the access.
   Future<void> disconnect() async {
+    ++_generation;
+    _refreshing = null;
     final token = _refreshToken;
     await _forget();
     if (token == null) return;
@@ -187,7 +206,7 @@ class DriveAuth {
     }
   }
 
-  Future<void> _grant(Map<String, String> form) async {
+  Future<void> _grant(Map<String, String> form, int generation) async {
     final response = await dio.post<Map<String, dynamic>>(
       tokenEndpoint,
       data: {
@@ -197,6 +216,9 @@ class DriveAuth {
       },
       options: Options(contentType: Headers.formUrlEncodedContentType),
     );
+    if (generation != _generation) {
+      throw const BackupException('Google Drive connection changed.');
+    }
     final json = response.data;
     final access = json?['access_token'];
     if (access is! String) {
@@ -211,26 +233,33 @@ class DriveAuth {
     final refresh = json?['refresh_token'];
     if (refresh is String && refresh.isNotEmpty) {
       _refreshToken = refresh;
-      await _save(refresh);
+      await _save(refresh, generation);
+      if (generation != _generation) {
+        throw const BackupException('Google Drive connection changed.');
+      }
     }
   }
 
-  Future<void> _save(String token) async {
-    try {
-      await credentials?.writeDriveToken(token);
-    } catch (error, stack) {
-      // Signed in for now; the viewer signs in again next launch.
-      _log.warning('Could not keep the Drive token', error, stack);
-    }
-  }
+  Future<void> _save(String token, int generation) =>
+      _credentialWrite = _credentialWrite.then((_) async {
+        if (generation != _generation) return;
+        try {
+          await credentials?.writeDriveToken(token);
+        } catch (error, stack) {
+          // Signed in for now; the viewer signs in again next launch.
+          _log.warning('Could not keep the Drive token', error, stack);
+        }
+      });
 
   Future<void> _forget() async {
     _refreshToken = _accessToken = null;
-    try {
-      await credentials?.deleteDriveToken();
-    } catch (error, stack) {
-      _log.warning('Could not delete the Drive token', error, stack);
-    }
+    await (_credentialWrite = _credentialWrite.then((_) async {
+      try {
+        await credentials?.deleteDriveToken();
+      } catch (error, stack) {
+        _log.warning('Could not delete the Drive token', error, stack);
+      }
+    }));
   }
 
   /// The code Google redirects the browser to us with, for our [state].

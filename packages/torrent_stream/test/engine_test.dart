@@ -21,6 +21,37 @@ void main() {
   });
   tearDown(() => root.delete(recursive: true));
 
+  test('replacement owner survives concurrent final release', () async {
+    final (metadata, _, closeSeed) = await seedFile(source);
+    final engine = loopbackEngine();
+    try {
+      for (var n = 0; n < 5; n++) {
+        final hash = await engine.add(
+          TorrentSource.metadata(metadata),
+          owner: 'old',
+          directory: '${root.path}/cache',
+          storage: TorrentStorage.cached,
+        );
+        await engine.metadata(hash);
+        final releasing = engine.release(hash, 'old');
+        final replacement = engine.add(
+          TorrentSource.metadata(metadata),
+          owner: 'new',
+          directory: '${root.path}/cache',
+          storage: TorrentStorage.cached,
+        );
+        await releasing;
+        expect(await replacement, hash);
+        expect(await engine.metadata(hash), isNotEmpty);
+        await engine.want(hash, 'new', {0});
+        await engine.release(hash, 'new');
+      }
+    } finally {
+      await engine.close();
+      closeSeed();
+    }
+  });
+
   test(
     'mismatched HTTP metadata is rejected before adding or creating storage',
     () async {

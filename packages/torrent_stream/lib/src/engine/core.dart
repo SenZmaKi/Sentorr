@@ -19,6 +19,7 @@ import 'stream_host.dart';
 import 'torrent_entry.dart';
 
 part 'adds.dart';
+part 'storage.dart';
 
 /// The engine isolate's one session and every torrent in it. Commands may
 /// interleave; each leaves the entries consistent at its awaits.
@@ -165,30 +166,6 @@ class EngineCore {
     }
   }
 
-  /// Moves the torrent's files to [directory], kept as [storage].
-  Future<void> move(String hash, String directory, TorrentStorage storage) =>
-      _move(_entry(hash), directory, storage);
-
-  Future<void> _move(
-    TorrentEntry entry,
-    String directory,
-    TorrentStorage storage,
-  ) async {
-    if (storage == TorrentStorage.temporary) {
-      throw ArgumentError('Torrents move only into caller folders');
-    }
-    await Directory(directory).create(recursive: true);
-    if (entry.savePath != directory) entry.handle.moveStorage(directory);
-    entry.savePath = directory;
-    entry.storage = storage;
-    final left = [...entry.temporary];
-    entry.temporary.clear();
-    for (final folder in left) {
-      unawaited(deleteWhenEmptied(folder));
-    }
-    publish();
-  }
-
   void addPeers(String hash, List peers) => _addPeers(_entry(hash), peers);
 
   void _addPeers(TorrentEntry entry, List peers) => entry.connect(peers);
@@ -253,10 +230,13 @@ class EngineCore {
 
   /// Drops [owner] and its streams. The torrent leaves the session with its
   /// last owner, deleting its files when asked or when they were temporary.
-  Future<void> release(
+  Future<void> release(String hash, String owner, {bool deleteFiles = false}) =>
+      _serialize(hash, () => _release(hash, owner, deleteFiles: deleteFiles));
+
+  Future<void> _release(
     String hash,
     String owner, {
-    bool deleteFiles = false,
+    required bool deleteFiles,
   }) async {
     final entry = _torrents[hash];
     if (entry == null) return;
@@ -275,7 +255,6 @@ class EngineCore {
   }
 
   Future<void> _remove(TorrentEntry entry, {required bool deleteFiles}) async {
-    _torrents.remove(entry.infoHash);
     entry.lifetime.cancel();
     for (final stream in entry.streams.values.toList()) {
       await closeStream(stream.id);
@@ -296,9 +275,21 @@ class EngineCore {
         entry.handle,
         deleteFiles: deleteFiles || temporary,
       );
+      final deadline = DateTime.now().add(const Duration(seconds: 30));
+      while (native.session.getTorrents().any((h) => h.id == entry.handle.id)) {
+        if (DateTime.now().isAfter(deadline)) {
+          throw TimeoutException('Removing torrent ${entry.infoHash}');
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+    } on TimeoutException {
+      // Keep the canceled entry reserved; an add must not reuse native storage
+      // whose removal has not been confirmed.
+      rethrow;
     } catch (_) {
       // A failed handle is already gone from libtorrent's point of view.
     }
+    _torrents.remove(entry.infoHash);
     for (final folder in entry.temporary) {
       await deleteSoon(folder);
     }

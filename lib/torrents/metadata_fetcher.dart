@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:logging/logging.dart';
 
 import 'models.dart';
+import 'metadata_identity.dart';
 import 'parsing.dart';
 
 /// Downloads only the chosen release's metadata through the shared transport.
@@ -32,6 +33,7 @@ class TorrentMetadataFetcher {
       try {
         final bytes = await _download(url, token).timeout(requestTimeout);
         _checkCancelled(cancel);
+        validateMetadataIdentity(bytes, release.infoHash);
         _log.info(
           '${release.infoHash}: ${bytes.length} metadata bytes from '
           '${url.host} in ${clock.elapsedMilliseconds}ms',
@@ -45,6 +47,9 @@ class TorrentMetadataFetcher {
       } on TimeoutException catch (error) {
         lastError = error;
         _log.fine('Metadata download timed out from ${url.host}', error);
+      } on FormatException catch (error) {
+        lastError = error;
+        _log.fine('Invalid torrent metadata from ${url.host}', error);
       } on SourceException catch (error) {
         lastError = error;
         _log.fine('Invalid metadata response from ${url.host}', error);

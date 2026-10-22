@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/torrents/metadata_fetcher.dart';
@@ -16,7 +18,7 @@ void main() {
   final release = TorrentRelease(
     source: original.source,
     name: original.name,
-    infoHash: original.infoHash,
+    infoHash: sha1.convert('de'.codeUnits).toString(),
     magnet: original.magnet,
     torrentUrls: [Uri.parse('https://provider.test/movie.torrent')],
     seeders: 1,
@@ -99,6 +101,21 @@ void main() {
       requested.last.path,
       '/torrent/${release.infoHash.toUpperCase()}.torrent',
     );
+  });
+
+  test('wrong hash and corrupt bencode fall back to a valid mirror', () async {
+    for (final invalid in ['d4:infod1:xi1eee', 'd4:infoBADDICTe']) {
+      requested.clear();
+      response = (o) => ResponseBody.fromString(
+        o.uri.host == 'provider.test' ? invalid : 'd4:infodee',
+        200,
+      );
+      expect(
+        await fetcher.fetch(release, CancelToken()),
+        'd4:infodee'.codeUnits,
+      );
+      expect(requested.map((u) => u.host), ['provider.test', 'itorrents.org']);
+    }
   });
 
   test('limits streamed bytes without relying on Content-Length', () async {

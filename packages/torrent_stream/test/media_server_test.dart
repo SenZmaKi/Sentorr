@@ -39,6 +39,14 @@ class TestBytes implements ByteSource {
 }
 
 void main() {
+  test('close while binding prevents a late listener', () async {
+    final server = MediaServer(TestBytes());
+    final starting = server.start();
+    final rejected = expectLater(starting, throwsStateError);
+    await server.close();
+    await rejected;
+    await server.close();
+  });
   late TestBytes source;
   late MediaServer server;
   late HttpClient client;

@@ -22,7 +22,13 @@ class MediaServer {
   bool _closed = false;
 
   Future<void> start() async {
-    _server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    if (_closed) throw StateError('Media server is closed');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    if (_closed) {
+      await server.close(force: true);
+      throw StateError('Media server is closed');
+    }
+    _server = server;
     final random = Random.secure();
     final token = List.generate(
       24,

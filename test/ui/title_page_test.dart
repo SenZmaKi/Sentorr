@@ -459,7 +459,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(PreviewCard), findsOneWidget);
 
-      await mouse.moveTo(const Offset(1430, 990));
+      // Leave all artwork; the bottom-right corner can contain another tile.
+      await mouse.moveTo(const Offset(5, 5));
+      // Settling frames alone need not advance the 80 ms exit grace timer.
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.pumpAndSettle();
       expect(find.byType(PreviewCard), findsNothing);
     });

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -113,7 +114,7 @@ class NotificationService {
         ),
         onDidReceiveNotificationResponse: _received,
       );
-      if (!Platform.isLinux) {
+      if (defaultTargetPlatform != TargetPlatform.linux) {
         final launch = await _plugin.getNotificationAppLaunchDetails();
         if (launch?.didNotificationLaunchApp == true &&
             launch?.notificationResponse != null) {
@@ -132,13 +133,13 @@ class NotificationService {
   Future<bool> requestPermission() async {
     if (!await initialize()) return false;
     final bool? granted;
-    if (Platform.isMacOS) {
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
       granted = await _plugin
           .resolvePlatformSpecificImplementation<
             MacOSFlutterLocalNotificationsPlugin
           >()
           ?.requestPermissions(alert: true, sound: true);
-    } else if (Platform.isAndroid) {
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
       granted = await _plugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin

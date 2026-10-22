@@ -37,6 +37,14 @@ void main() {
       const expectedNightly = bool.fromEnvironment('EXPECT_NIGHTLY');
       expect(ApplicationIdentity.nightly, expectedNightly);
       expect(
+        ApplicationIdentity.name,
+        expectedNightly ? 'Sentorr Nightly' : 'Sentorr',
+      );
+      expect(
+        ApplicationIdentity.packageName,
+        expectedNightly ? 'com.sentorr.sentorr.nightly' : 'com.sentorr.sentorr',
+      );
+      expect(
         ApplicationIdentity.dataDirectory,
         expectedNightly ? 'SentorrNightlyData' : 'SentorrData',
       );

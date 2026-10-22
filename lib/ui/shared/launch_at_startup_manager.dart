@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import '../../shared/application_identity.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 
@@ -32,9 +34,9 @@ class LaunchAtStartupManager {
   void _configure() {
     if (_configured) return;
     launchAtStartup.setup(
-      appName: 'Sentorr',
+      appName: ApplicationIdentity.name,
       appPath: Platform.resolvedExecutable,
-      packageName: 'com.sentorr.sentorr',
+      packageName: ApplicationIdentity.packageName,
     );
     _configured = true;
   }

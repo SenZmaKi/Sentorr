@@ -6,6 +6,9 @@ abstract final class ApplicationIdentity {
   );
   static const nightly = channel == 'nightly';
   static const name = nightly ? 'Sentorr Nightly' : 'Sentorr';
+  static const packageName = nightly
+      ? 'com.sentorr.sentorr.nightly'
+      : 'com.sentorr.sentorr';
   static const dataDirectory = nightly ? 'SentorrNightlyData' : 'SentorrData';
   static const credentialsAccount = nightly
       ? 'com.sentorr.sentorr.nightly.credentials'

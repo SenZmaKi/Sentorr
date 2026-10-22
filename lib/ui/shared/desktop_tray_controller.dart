@@ -26,8 +26,7 @@ class DesktopTrayController with TrayListener {
     required Future<void> Function() prepareToQuit,
     required Future<void> Function() checkFollowedSeries,
   }) async {
-    if (!supportsWindowCustomization || _initialized) return;
-    _disposed = false;
+    if (!supportsWindowCustomization || _initialized || _disposed) return;
     _quit = quit;
     _checkFollowedSeries = checkFollowedSeries;
     configureTerminationHandler(prepareToQuit);
@@ -39,13 +38,23 @@ class DesktopTrayController with TrayListener {
       // The native plugin survives hot restart. Reuse its singleton after
       // removing any icon left by the previous Dart isolate.
       await trayManager.destroy();
+      if (_disposed) return;
       trayManager.addListener(this);
       await trayManager.setIcon(_iconAsset('assets/images/tray.png'));
+      if (_disposed) {
+        await trayManager.destroy();
+        return;
+      }
       if (!Platform.isLinux) {
         await trayManager.setToolTip(ApplicationIdentity.name);
       }
+      if (_disposed) {
+        await trayManager.destroy();
+        return;
+      }
       _initialized = true;
       await _refreshMenu();
+      if (_disposed) return;
       WindowManager.getInstance().visible.addListener(_refreshVisibilityLabel);
     } catch (error, stack) {
       Logger('sentorr.tray').warning('Tray disabled', error, stack);

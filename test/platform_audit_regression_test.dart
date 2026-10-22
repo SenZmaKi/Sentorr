@@ -93,4 +93,37 @@ void main() {
       expect(service.takePendingTargets(), isEmpty);
     },
   );
+
+  test('late tray initialization stays disposed', () async {
+    const channel = MethodChannel('tray_manager');
+    final entered = Completer<void>(), release = Completer<void>();
+    final calls = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      if (call.method == 'setIcon' && !entered.isCompleted) {
+        entered.complete();
+        await release.future;
+      }
+      return null;
+    });
+    final tray = DesktopTrayController();
+    final initializing = tray.initialize(
+      quit: () async {},
+      prepareToQuit: () async {},
+      checkFollowedSeries: () async {},
+    );
+    await entered.future;
+    await tray.dispose();
+    expect(tray.canHideWindow, false);
+    release.complete();
+    await initializing;
+    expect(tray.canHideWindow, false);
+    expect(trayManager.hasListeners, false);
+    final before = calls.length;
+    await tray.dispose();
+    expect(calls.length, before);
+    messenger.setMockMethodCallHandler(channel, null);
+    DesktopTrayController.termination.setMethodCallHandler(null);
+    DesktopTrayController.reopen.setMethodCallHandler(null);
+  });
 }

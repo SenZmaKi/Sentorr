@@ -91,6 +91,7 @@ class BackupNotifier extends Notifier<BackupState> {
   late SyncCoordinator _coordinator;
   bool _dirty = false;
   int _changes = 0;
+  int _generation = 0;
 
   @override
   BackupState build() {
@@ -128,25 +129,35 @@ class BackupNotifier extends Notifier<BackupState> {
 
   /// Picks up a Drive sign-in from an earlier run and syncs with it.
   Future<void> initialize() async {
+    final generation = _generation;
     if (!driveConfigured || !await ref.read(driveAuthProvider).restore()) {
       return;
     }
+    if (!ref.mounted || generation != _generation) return;
     state = state.copyWith(connected: true);
     _arm();
     await syncNow();
   }
 
-  Future<void> connect() => _run(() async {
-    await ref.read(driveAuthProvider).connect();
-    state = state.copyWith(connected: true);
-    _arm();
-    await _sync();
-  });
+  Future<void> connect() {
+    final generation = ++_generation;
+    // Authentication is an explicit action, not a coalescible sync pass. The
+    // coordinator discards an overlapping run's first callback.
+    return _perform(() async {
+      await ref.read(driveAuthProvider).connect();
+      if (!ref.mounted || generation != _generation) return;
+      state = state.copyWith(connected: true);
+      _arm();
+      await syncNow();
+    });
+  }
 
   Future<void> disconnect() async {
+    final generation = ++_generation;
     _coordinator.stopRepeating();
+    _coordinator.clearFollowUp();
     await ref.read(driveAuthProvider).disconnect();
-    state = const BackupState();
+    if (ref.mounted && generation == _generation) state = const BackupState();
   }
 
   /// Merges Drive's copy into this device and backs the result up.
@@ -182,16 +193,21 @@ class BackupNotifier extends Notifier<BackupState> {
   /// backends can request a retry; Drive retains concurrent snapshots instead.
   /// Changes during an upload cause a follow-up pass.
   Future<void> _sync() async {
+    final generation = _generation;
+    bool valid() => ref.mounted && generation == _generation;
     final remote = ref.read(backupRemoteProvider);
     final data = ref.read(backupDataProvider);
     for (var attempt = 0; attempt < _attempts; attempt++) {
+      if (!valid()) return;
       final RemoteBackup? held;
       try {
         held = await remote.download();
       } on BackupConflict {
         continue;
       }
-      if (held != null) await data.apply(held.bundle);
+      if (!valid()) return;
+      if (held != null) await data.apply(held.bundle, valid: valid);
+      if (!valid()) return;
       final merged = data.current();
       final changes = _changes;
       if (held == null ||
@@ -203,6 +219,7 @@ class BackupNotifier extends Notifier<BackupState> {
           continue;
         }
       }
+      if (!valid()) return;
       _dirty = _changes != changes;
       state = state.copyWith(lastBackup: DateTime.now(), error: () => null);
       return;
@@ -216,15 +233,16 @@ class BackupNotifier extends Notifier<BackupState> {
       _coordinator.run(first: () => _perform(action));
 
   Future<void> _perform(Future<void> Function() action) async {
+    final generation = _generation;
     state = state.copyWith(busy: true, error: () => null);
     try {
       await action();
     } catch (error, stack) {
-      if (ref.mounted) _fail(error, stack);
+      if (ref.mounted && generation == _generation) _fail(error, stack);
       // Failed passes stop the drain; the next trigger retries normally.
-      _coordinator.clearFollowUp();
+      if (generation == _generation) _coordinator.clearFollowUp();
     } finally {
-      if (ref.mounted) {
+      if (ref.mounted && generation == _generation) {
         state = state.copyWith(
           busy: false,
           connected: ref.read(driveAuthProvider).connected,

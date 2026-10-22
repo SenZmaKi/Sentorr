@@ -20,7 +20,7 @@ class BackupData {
     );
   }
 
-  Future<void> apply(BackupBundle bundle) => _ref
+  Future<void> apply(BackupBundle bundle, {bool Function()? valid}) => _ref
       .read(userStateSyncProvider)
       .merge(
         SyncPayload(
@@ -28,5 +28,6 @@ class BackupData {
           following: bundle.following,
           lists: bundle.lists,
         ),
+        valid: valid,
       );
 }

@@ -114,8 +114,99 @@ List<String> _ids(ProviderContainer d) => [
   for (final e in d.read(watchHistoryProvider)) e.id,
 ];
 
+class _MutableAuth extends DriveAuth {
+  _MutableAuth() : super(dio: Dio(), openBrowser: (_) async => false);
+  bool signedIn = true;
+  int connections = 0;
+  @override
+  Future<void> connect() async {
+    connections++;
+    signedIn = true;
+  }
+
+  @override
+  bool get connected => signedIn;
+  @override
+  Future<void> disconnect() async {
+    signedIn = false;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'reconnect authenticates while an obsolete sync is still draining',
+    () async {
+      final remote = _Remote();
+      final auth = _MutableAuth();
+      final device = ProviderContainer(
+        overrides: [
+          ...watchHistoryOverrides(),
+          ...watchListsOverrides(),
+          ...followedSeriesOverrides(),
+          initialSettingsProvider.overrideWithValue(const AppSettings()),
+          backupRemoteProvider.overrideWithValue(remote),
+          driveAuthProvider.overrideWithValue(auth),
+        ],
+      );
+      addTearDown(device.dispose);
+      final notifier = device.read(backupProvider.notifier);
+      final entered = Completer<void>(), release = Completer<void>();
+      remote.afterDownload = () async {
+        entered.complete();
+        await release.future;
+      };
+      final oldSync = notifier.syncNow();
+      await entered.future;
+      await notifier.disconnect();
+      final reconnect = notifier.connect();
+      // The auth callback runs before the old network request finishes.
+      expect(auth.connections, 1);
+      release.complete();
+      await Future.wait([oldSync, reconnect]);
+      expect(device.read(backupProvider).connected, isTrue);
+      expect(device.read(backupProvider).busy, isFalse);
+      expect(device.read(backupProvider).lastBackup, isNotNull);
+      expect(remote.uploads, 1);
+    },
+  );
+
+  test('pending sync cannot merge or upload after disconnect', () async {
+    final remote = _Remote()
+      .._content = BackupBundle(
+        watch: WatchSnapshot([_watched(9, Duration.zero)], {}),
+        following: const FollowedSnapshot([], {}),
+      ).encode()
+      ..needsPublication = true;
+    final auth = _MutableAuth();
+    final device = ProviderContainer(
+      overrides: [
+        ...watchHistoryOverrides(),
+        ...watchListsOverrides(),
+        ...followedSeriesOverrides(),
+        initialSettingsProvider.overrideWithValue(const AppSettings()),
+        backupRemoteProvider.overrideWithValue(remote),
+        driveAuthProvider.overrideWithValue(auth),
+      ],
+    );
+    addTearDown(device.dispose);
+    final notifier = device.read(backupProvider.notifier);
+    final entered = Completer<void>(), release = Completer<void>();
+    remote.afterDownload = () async {
+      entered.complete();
+      await release.future;
+    };
+    final pending = notifier.syncNow();
+    await entered.future;
+    await notifier.disconnect();
+    expect(device.read(backupProvider).connected, false);
+    expect(device.read(watchHistoryProvider), isEmpty);
+    release.complete();
+    await pending;
+    expect(device.read(watchHistoryProvider), isEmpty);
+    expect(remote.uploads, 0);
+    expect(device.read(backupProvider).lastBackup, isNull);
+  });
 
   test(
     'unchanged migrated snapshots are published once into the shared backup',

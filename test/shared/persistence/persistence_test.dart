@@ -75,6 +75,17 @@ void main() {
     await store.write({'value': 2});
     await file.writeAsString('{broken');
     expect(await JsonFileStore(file).read(), {'value': 1});
+    expect(await JsonFileStore(file).read(), {'value': 1});
+  });
+
+  test('missing primary recovers its backup across reads', () async {
+    final file = File('${root.path}/missing.json');
+    final store = JsonFileStore(file);
+    await store.write({'value': 1});
+    await store.write({'value': 2});
+    await file.delete();
+    expect(await store.read(), {'value': 1});
+    expect(await JsonFileStore(file).read(), {'value': 1});
   });
 
   test('a corrupt file with no usable backup reads as empty', () async {

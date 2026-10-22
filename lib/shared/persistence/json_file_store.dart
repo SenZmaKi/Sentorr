@@ -22,9 +22,8 @@ class JsonFileStore {
 
   Future<Map<String, dynamic>?> read() async {
     await _tail;
-    if (!await file.exists()) return null;
     try {
-      return _decode(await file.readAsString());
+      if (await file.exists()) return _decode(await file.readAsString());
     } on FormatException catch (error, stack) {
       await file.rename(
         '${file.path}.${DateTime.now().microsecondsSinceEpoch}.corrupt',

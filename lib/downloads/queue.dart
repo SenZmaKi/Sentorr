@@ -87,8 +87,15 @@ class DownloadQueue {
     );
     _indices[id] = _items.length - 1;
     _log.info('Queued ${job.title} ($id) to ${job.destinationDirectory}');
+    try {
+      await repository.save(items);
+    } catch (_) {
+      _items.removeAt(_index(id));
+      _reindex();
+      rethrow;
+    }
+    _publish();
     if (!paused) _attach(id);
-    await _commit();
     return id;
   });
 

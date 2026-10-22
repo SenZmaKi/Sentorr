@@ -127,4 +127,44 @@ void main() {
       expect((await store.read())!['version'], 99);
     },
   );
+  test('rejected enqueue never starts or persists work', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'sentorr-enqueue-write-',
+    );
+    final store = FailingStore(File('${root.path}/queue.json'));
+    final repository = DownloadRepository(store);
+    final torrents = FakeTorrents();
+    final queue = DownloadQueue(torrents, repository);
+    try {
+      await queue.initialize(
+        const DownloadSettings(seedingMode: SeedingMode.disabled),
+      );
+      store.failNext = true;
+      await expectLater(
+        queue.enqueue(job(root.path)),
+        throwsA(isA<FileSystemException>()),
+      );
+      await settle();
+      expect(queue.items, isEmpty);
+      expect(torrents.running('test'), isFalse);
+      expect(await repository.load(), isEmpty);
+      // A continuing outage also rejects without leaving runtime work.
+      store.failNext = true;
+      await expectLater(
+        queue.enqueue(job(root.path)),
+        throwsA(isA<FileSystemException>()),
+      );
+      await settle();
+      expect(queue.items, isEmpty);
+      expect(torrents.running('test'), isFalse);
+      // Recovery accepts exactly one new download after the failed attempts.
+      final accepted = await queue.enqueue(job(root.path));
+      await settle();
+      expect(queue.items.single.id, accepted);
+      expect((await repository.load()).single.id, accepted);
+    } finally {
+      await queue.dispose();
+      await root.delete(recursive: true);
+    }
+  });
 }

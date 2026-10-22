@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:logging/logging.dart';
+
 import '../shared/persistence/json_file_store.dart';
 import 'models.dart';
 
@@ -9,16 +13,74 @@ class DownloadRepository {
 
   /// Unfinished downloads come back preparing; their torrents are re-added.
   Future<List<DownloadItem>> load() async {
-    final json = await store.read();
+    var json = await store.read();
     if (json == null) return [];
-    cancelledBatches.addAll(
-      (json['cancelledBatches'] as List? ?? []).cast<String>(),
-    );
-    pausedBatches.addAll((json['pausedBatches'] as List? ?? []).cast<String>());
-    return [
-      for (final raw in json['items'] as List)
-        _decode(raw as Map<String, dynamic>),
-    ];
+    final version = json['version'];
+    if (version is! int || version < 1 || version > 3) {
+      throw const FormatException('Unsupported saved download queue version');
+    }
+    if (json['items'] is! List) {
+      await _preserve();
+      if (!await store.backup.exists()) {
+        throw const FormatException('Expected saved download items');
+      }
+      final recovered = jsonDecode(await store.backup.readAsString());
+      if (recovered is! Map<String, dynamic> ||
+          recovered['items'] is! List ||
+          recovered['version'] is! int ||
+          (recovered['version'] as int) < 1 ||
+          (recovered['version'] as int) > 3) {
+        throw const FormatException('Invalid saved download backup');
+      }
+      json = recovered;
+    }
+    final items = <DownloadItem>[];
+    final rejected = <Object?>[];
+    final ids = <String>{};
+    final records = json['items'];
+    if (records is! List) {
+      await _preserve();
+      throw const FormatException('Expected saved download items');
+    }
+    for (final raw in records) {
+      try {
+        final item = _decode(raw as Map<String, dynamic>);
+        if (item.id.isEmpty || !ids.add(item.id)) {
+          throw const FormatException('Invalid or duplicate download id');
+        }
+        items.add(item);
+      } on Object catch (error, stack) {
+        rejected.add(raw);
+        Logger('sentorr.downloads')
+            .warning('Rejected saved download', error, stack);
+      }
+    }
+    List<String> batches(String field) {
+      final value = json![field];
+      if (value == null) return [];
+      if (value is! List || value.any((e) => e is! String)) {
+        rejected.add(value);
+        return value is List ? value.whereType<String>().toList() : [];
+      }
+      return value.cast<String>();
+    }
+
+    cancelledBatches
+      ..clear()
+      ..addAll(batches('cancelledBatches'));
+    pausedBatches
+      ..clear()
+      ..addAll(batches('pausedBatches'));
+    if (rejected.isNotEmpty) await _preserve();
+    return items;
+  }
+
+  Future<void> _preserve() async {
+    final preserved =
+        '${store.file.path}.${DateTime.now().microsecondsSinceEpoch}.rejected';
+    await store.file.copy(preserved);
+    Logger('sentorr.downloads')
+        .warning('Preserved damaged queue at $preserved');
   }
 
   DownloadItem _decode(Map<String, dynamic> json) {

@@ -169,10 +169,17 @@ void main() {
         await container
             .read(downloadQueueProvider)
             .initialize(
-              const DownloadSettings(seedingMode: SeedingMode.disabled),
+              const DownloadSettings(seedingMode: SeedingMode.indefinitely),
             );
         container.listen(downloadsProvider, (_, _) {});
+        final handoff = Stopwatch()..start();
         await container.read(downloadPlannerProvider).download(item);
+        expect(handoff.elapsed, lessThan(const Duration(seconds: 8)));
+        await container
+            .read(downloadQueueProvider)
+            .configure(
+              const DownloadSettings(seedingMode: SeedingMode.disabled),
+            );
         final entry = container.read(libraryProvider).single;
         expect(metadataRequests, 1);
         expect(

@@ -284,7 +284,12 @@ class DownloadPlanner {
           .first;
       if (queued.status == DownloadStatus.paused) return;
       await engine.states
-          .map((_) => engine.torrent(hash)?.owners.contains('download:$id'))
+          .map(
+            (_) => engine
+                .torrent(hash)
+                ?.owners
+                .any((owner) => owner.startsWith('download:$id:')),
+          )
           .firstWhere((held) => held != false)
           .timeout(const Duration(seconds: 10), onTimeout: () => null);
     } finally {

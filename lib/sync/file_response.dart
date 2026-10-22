@@ -4,9 +4,17 @@ import 'file_version.dart';
 
 /// Sends [file] in answer to [request], honouring a single byte range so
 /// the player on the other device can seek.
-Future<void> sendFile(HttpRequest request, File file) async {
+Future<void> sendFile(
+  HttpRequest request,
+  File file, {
+  bool Function()? authorized,
+}) async {
   final response = request.response;
   final stat = await file.stat();
+  if (authorized != null && !authorized()) {
+    response.statusCode = HttpStatus.forbidden;
+    return response.close();
+  }
   final version = '"${fileVersionFromStat(file, stat)}"';
   final expected = request.headers.value(HttpHeaders.ifMatchHeader);
   if (expected != null && expected != version) {

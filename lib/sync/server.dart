@@ -172,7 +172,17 @@ class SyncServer {
           if (file == null || !await file.exists()) {
             throw const SyncRefusal('Gone', status: HttpStatus.notFound);
           }
-          await sendFile(request, file);
+          if (routes.paired(device.fingerprint) == null) {
+            throw const SyncRefusal(
+              'Not paired with this device',
+              status: HttpStatus.forbidden,
+            );
+          }
+          await sendFile(
+            request,
+            file,
+            authorized: () => routes.paired(device.fingerprint) != null,
+          );
         default:
           throw const SyncRefusal('Unknown', status: HttpStatus.notFound);
       }

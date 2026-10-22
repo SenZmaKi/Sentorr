@@ -42,4 +42,55 @@ void main() {
     expect(requests, 2);
     expect(shows, 1);
   });
+  test('launch payload is requested and dispatched', () async {
+    final calls = <String>[];
+    messenger.setMockMethodCallHandler(notifications, (call) async {
+      calls.add(call.method);
+      if (call.method == 'initialize') return true;
+      if (call.method == 'getNotificationAppLaunchDetails') {
+        return {
+          'notificationLaunchedApp': true,
+          'notificationResponse': {
+            'notificationResponseType': 0,
+            'payload': 'downloads:',
+          },
+        };
+      }
+      return null;
+    });
+    final service = NotificationService();
+    addTearDown(service.dispose);
+    final targets = <NotificationTarget>[];
+    final sub = service.taps.listen(targets.add);
+    addTearDown(sub.cancel);
+    expect(await service.initialize(), true);
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, ['initialize', 'getNotificationAppLaunchDetails']);
+    expect(targets.single, isA<DownloadsTarget>());
+  });
+  test(
+    'cold launch target waits for a listener and is consumed once',
+    () async {
+      messenger.setMockMethodCallHandler(notifications, (call) async {
+        if (call.method == 'initialize') return true;
+        if (call.method == 'getNotificationAppLaunchDetails') {
+          return {
+            'notificationLaunchedApp': true,
+            'notificationResponse': {
+              'notificationResponseType': 0,
+              'payload': 'downloads:',
+            },
+          };
+        }
+        return null;
+      });
+      final service = NotificationService();
+      addTearDown(service.dispose);
+      await service.initialize();
+      expect(service.takePendingTargets().single, isA<DownloadsTarget>());
+      expect(service.takePendingTargets(), isEmpty);
+      await service.initialize();
+      expect(service.takePendingTargets(), isEmpty);
+    },
+  );
 }

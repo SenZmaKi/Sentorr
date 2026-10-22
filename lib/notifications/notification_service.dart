@@ -63,6 +63,23 @@ class NotificationService {
   final _plugin = FlutterLocalNotificationsPlugin();
   final _taps = StreamController<NotificationTarget>.broadcast();
   Future<bool>? _initialized;
+  final _pending = <NotificationTarget>[];
+
+  List<NotificationTarget> takePendingTargets() {
+    final targets = List<NotificationTarget>.of(_pending);
+    _pending.clear();
+    return targets;
+  }
+
+  void _received(NotificationResponse response) {
+    final target = NotificationTarget.parse(response.payload);
+    if (target == null || _taps.isClosed) return;
+    if (_taps.hasListener) {
+      _taps.add(target);
+    } else {
+      _pending.add(target);
+    }
+  }
 
   /// Targets of notifications the viewer clicked.
   Stream<NotificationTarget> get taps => _taps.stream;
@@ -94,12 +111,15 @@ class NotificationService {
             iconPath: _windowsIconPath,
           ),
         ),
-        onDidReceiveNotificationResponse: (response) {
-          final target = NotificationTarget.parse(response.payload);
-          _log.info('Notification opened: ${response.payload}');
-          if (target != null) _taps.add(target);
-        },
+        onDidReceiveNotificationResponse: _received,
       );
+      if (!Platform.isLinux) {
+        final launch = await _plugin.getNotificationAppLaunchDetails();
+        if (launch?.didNotificationLaunchApp == true &&
+            launch?.notificationResponse != null) {
+          _received(launch!.notificationResponse!);
+        }
+      }
       _log.info('Notifications ${ready == false ? 'declined' : 'ready'}');
       return ready ?? true;
     } catch (error, stack) {

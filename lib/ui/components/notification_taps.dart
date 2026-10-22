@@ -26,7 +26,14 @@ class _NotificationTapsState extends ConsumerState<NotificationTaps> {
   @override
   void initState() {
     super.initState();
-    _taps = ref.read(notificationServiceProvider).taps.listen(_open);
+    final notifications = ref.read(notificationServiceProvider);
+    _taps = notifications.taps.listen(_open);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final target in notifications.takePendingTargets()) {
+        _open(target);
+      }
+    });
   }
 
   void _open(NotificationTarget target) {

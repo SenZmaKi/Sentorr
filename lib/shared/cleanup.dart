@@ -13,3 +13,16 @@ Future<void> cleanupAll(Iterable<FutureOr<void> Function()> stages) async {
     }
   }
 }
+
+/// Releases only acquired resources when an initialization stage rejects.
+Future<T> initializeWithRollback<T>(
+  Future<T> Function(List<FutureOr<void> Function()> rollback) initialize,
+) async {
+  final rollback = <FutureOr<void> Function()>[];
+  try {
+    return await initialize(rollback);
+  } catch (_) {
+    await cleanupAll(rollback.reversed);
+    rethrow;
+  }
+}

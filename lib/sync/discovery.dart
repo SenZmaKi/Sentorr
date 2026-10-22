@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import '../shared/cleanup.dart';
+
 import 'package:bonsoir/bonsoir.dart';
 import 'package:logging/logging.dart';
 
@@ -31,11 +33,13 @@ class LocalDiscovery {
   BonsoirDiscovery? _discovery;
   StreamSubscription<BonsoirDiscoveryEvent>? _events;
   bool _pairing = false;
+  bool _stopped = false;
 
   Map<String, NearbyDevice> get nearby => Map.unmodifiable(_nearby);
 
   Future<void> start() async {
     await _announce();
+    if (_stopped) return;
     try {
       final discovery = _discovery = BonsoirDiscovery(type: _type);
       await discovery.initialize();
@@ -65,10 +69,12 @@ class LocalDiscovery {
   /// Announcements in order, so a quick close and reopen cannot overlap.
   Future<void> _announcing = Future.value();
 
-  Future<void> _announce() =>
-      _announcing = _announcing.then((_) => _replaceBroadcast());
+  Future<void> _announce() => _stopped
+      ? Future.value()
+      : _announcing = _announcing.then((_) => _replaceBroadcast());
 
   Future<void> _replaceBroadcast() async {
+    if (_stopped) return;
     try {
       await _broadcast?.stop();
       final broadcast = _broadcast = BonsoirBroadcast(
@@ -92,6 +98,7 @@ class LocalDiscovery {
   }
 
   void _onEvent(BonsoirDiscovery discovery, BonsoirDiscoveryEvent event) {
+    if (_stopped) return;
     switch (event) {
       case BonsoirDiscoveryServiceFoundEvent(:final service):
       case BonsoirDiscoveryServiceUpdatedEvent(:final service):
@@ -134,12 +141,12 @@ class LocalDiscovery {
   }
 
   Future<void> stop() async {
-    await _events?.cancel();
-    try {
-      await _discovery?.stop();
-      await _broadcast?.stop();
-    } catch (error) {
-      _log.fine('Stopping discovery failed: $error');
-    }
+    _stopped = true;
+    await cleanupAll([
+      () => _announcing,
+      () async => _events?.cancel(),
+      () async => _discovery?.stop(),
+      () async => _broadcast?.stop(),
+    ]);
   }
 }

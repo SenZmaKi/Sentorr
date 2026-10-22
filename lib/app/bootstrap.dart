@@ -92,7 +92,10 @@ class AppRuntime with WidgetsBindingObserver {
   Future<void>? _shutdown;
   Future<void>? _quit;
 
-  static Future<AppRuntime> initialize({Directory? rootDirectory}) async {
+  static Future<AppRuntime> initialize({
+    Directory? rootDirectory,
+    bool configureLoginStartup = true,
+  }) async {
     WidgetsFlutterBinding.ensureInitialized();
     // The native video plugin links this framework. Loading another copy via
     // an environment override or framework search can pass an incompatible
@@ -148,147 +151,171 @@ class AppRuntime with WidgetsBindingObserver {
       '${followed.length} followed series, ${listed.length} list entries '
       'and ${downloaded.length} downloads',
     );
-    AppImageCache.initialize(paths, maxSizeBytes: settings.imageCacheMaxBytes);
-    await configureGraphicsCache();
-    final network = NetworkClient(
-      cacheDirectory: paths.networkCacheDirectory.path,
-      ttls: settings.cache.ttl,
-      maxCacheBytes: settings.cache.maxBytes,
-    );
-    final tray = DesktopTrayController();
-    late final AppRuntime runtime;
-    final container = ProviderContainer(
-      observers: const [ProviderLogObserver()],
-      overrides: [
-        prepareForUpdateProvider.overrideWithValue(() => runtime.flush()),
-        quitApplicationProvider.overrideWithValue(() => runtime.quit()),
-        appPathsProvider.overrideWithValue(paths),
-        credentialStoreProvider.overrideWithValue(credentials),
-        settingsRepositoryProvider.overrideWithValue(repository),
-        initialSettingsProvider.overrideWithValue(settings),
-        watchHistoryRepositoryProvider.overrideWithValue(history),
-        initialWatchHistoryProvider.overrideWithValue(watched),
-        followedSeriesRepositoryProvider.overrideWithValue(following),
-        initialFollowedSeriesProvider.overrideWithValue(followed),
-        watchListsRepositoryProvider.overrideWithValue(lists),
-        initialWatchListsProvider.overrideWithValue(listed),
-        libraryRepositoryProvider.overrideWithValue(library),
-        initialLibraryProvider.overrideWithValue(downloaded),
-        devicesRepositoryProvider.overrideWithValue(devices),
-        initialDevicesProvider.overrideWithValue(paired),
-        peerPlaybackProvider.overrideWith(
-          (ref) =>
-              (item, excluded) => verifiedPeerSource(ref, item, excluded),
-        ),
-        peerSourceProvider.overrideWith(
-          (ref) => ref.read(peersProvider.notifier).sourceFor,
-        ),
-        peerCopyProvider.overrideWith(
-          (ref) =>
-              (item) => ref
-                  .read(peerCopiesProvider)
-                  .copyIfOffered(item, automatic: true),
-        ),
-        networkClientProvider.overrideWithValue(network),
-        networkFailuresProvider.overrideWithValue(network.networkFailures),
-        appIconControllerProvider.overrideWithValue(
-          AppIconController(tray: tray),
-        ),
-      ],
-    );
-    await container.read(sourceDirectoryProvider.notifier).initialize();
-    unawaited(container.read(updatesProvider.notifier).initialize());
-    unawaited(container.read(backupProvider.notifier).initialize());
-    runtime = AppRuntime._(
-      container,
-      network,
-      repository,
-      history,
-      following,
-      lists,
-      tray,
-    );
-    await runtime.window.init(
-      settings.window,
-      WindowStateRepository(store: JsonFileStore(paths.windowStateFile)),
-    );
-    try {
-      await LaunchAtStartupManager.getInstance().init(
-        settings.window.launchAtStartup,
+    return initializeWithRollback((rollback) async {
+      rollback.add(AppImageCache.dispose);
+      AppImageCache.initialize(
+        paths,
+        maxSizeBytes: settings.imageCacheMaxBytes,
       );
-    } catch (error, stack) {
-      log.warning('Launch at login unavailable', error, stack);
-    }
-    await runtime.tray.initialize(
-      quit: runtime.quit,
-      prepareToQuit: runtime.dispose,
-      checkFollowedSeries: container.read(releaseAlertsProvider).check,
-    );
-    await runtime.window.configureCloseHandler(() async {
-      final preferences = container.read(settingsProvider).window;
-      if (preferences.closeToTray && runtime.tray.canHideWindow) {
-        await runtime.flush();
-        await runtime.tray.hideWindow();
-      } else {
-        await runtime.quit();
-      }
-    });
-    await container.read(notificationServiceProvider).initialize();
-    container.read(releaseAlertsProvider).start();
-    await container
-        .read(downloadQueueProvider)
-        .initialize(container.read(settingsProvider).downloads.queue);
-    container.read(downloadAlertsProvider).start();
-    if (Platform.isAndroid) {
-      container
-          .read(downloadServiceProvider)
-          .start(exit: runtime.exitInBackground);
-    }
-    if (Platform.isWindows) container.read(taskbarProgressProvider).start();
-    container.read(autoDownloadsProvider).start();
-    unawaited(container.read(syncServiceProvider).start());
-    // Listens for failed requests from the start, whatever page is open.
-    container.read(onlineProvider);
-    final recovery = await container.read(playbackRecoveryProvider).load();
-    if (recovery != null) {
-      final item = recovery.item;
-      final request = item.series == null
-          ? PlayTitle(item.title)
-          : PlayEpisode(
-              item.series!,
-              ImdbEpisode(
-                title: item.title,
-                seasonNumber: item.season,
-                episodeNumber: item.episode,
-              ),
-              season: item.season,
-            );
-      final release = recovery.release;
-      container
-          .read(playerSessionProvider.notifier)
-          .play(
-            request,
-            autoplay: false,
-            start: PlaybackRecovery.start(
-              recovery,
-              settings: settings.streaming,
-            ),
-            torrent: release == null
-                ? null
-                : TorrentCandidate(
-                    release: release,
-                    score: 0,
-                    qualityScore: 0,
-                    availabilityScore: 0,
-                    sizeScore: 0,
-                    requiresFileSelection: release.isPack,
-                  ),
+      await configureGraphicsCache();
+      final network = NetworkClient(
+        cacheDirectory: paths.networkCacheDirectory.path,
+        ttls: settings.cache.ttl,
+        maxCacheBytes: settings.cache.maxBytes,
+      );
+      rollback.add(network.close);
+      final tray = DesktopTrayController();
+      rollback.add(tray.dispose);
+      late final AppRuntime runtime;
+      final container = ProviderContainer(
+        observers: const [ProviderLogObserver()],
+        overrides: [
+          prepareForUpdateProvider.overrideWithValue(() => runtime.flush()),
+          quitApplicationProvider.overrideWithValue(() => runtime.quit()),
+          appPathsProvider.overrideWithValue(paths),
+          credentialStoreProvider.overrideWithValue(credentials),
+          settingsRepositoryProvider.overrideWithValue(repository),
+          initialSettingsProvider.overrideWithValue(settings),
+          watchHistoryRepositoryProvider.overrideWithValue(history),
+          initialWatchHistoryProvider.overrideWithValue(watched),
+          followedSeriesRepositoryProvider.overrideWithValue(following),
+          initialFollowedSeriesProvider.overrideWithValue(followed),
+          watchListsRepositoryProvider.overrideWithValue(lists),
+          initialWatchListsProvider.overrideWithValue(listed!),
+          libraryRepositoryProvider.overrideWithValue(library),
+          initialLibraryProvider.overrideWithValue(downloaded),
+          devicesRepositoryProvider.overrideWithValue(devices),
+          initialDevicesProvider.overrideWithValue(paired),
+          peerPlaybackProvider.overrideWith(
+            (ref) =>
+                (item, excluded) => verifiedPeerSource(ref, item, excluded),
+          ),
+          peerSourceProvider.overrideWith(
+            (ref) => ref.read(peersProvider.notifier).sourceFor,
+          ),
+          peerCopyProvider.overrideWith(
+            (ref) =>
+                (item) => ref
+                    .read(peerCopiesProvider)
+                    .copyIfOffered(item, automatic: true),
+          ),
+          networkClientProvider.overrideWithValue(network),
+          networkFailuresProvider.overrideWithValue(network.networkFailures),
+          appIconControllerProvider.overrideWithValue(
+            AppIconController(tray: tray),
+          ),
+        ],
+      );
+      rollback.add(container.dispose);
+      await container.read(sourceDirectoryProvider.notifier).initialize();
+      unawaited(container.read(updatesProvider.notifier).initialize());
+      unawaited(container.read(backupProvider.notifier).initialize());
+      runtime = AppRuntime._(
+        container,
+        network,
+        repository,
+        history,
+        following,
+        lists,
+        tray,
+      );
+      rollback.add(() async {
+        try {
+          if (supportsWindowCustomization) {
+            await windowManager.setPreventClose(false);
+          }
+        } finally {
+          runtime.window.dispose();
+        }
+      });
+      await runtime.window.init(
+        settings.window,
+        WindowStateRepository(store: JsonFileStore(paths.windowStateFile)),
+      );
+      try {
+        if (configureLoginStartup) {
+          await LaunchAtStartupManager.getInstance().init(
+            settings.window.launchAtStartup,
           );
-      container.read(playerViewProvider.notifier).minimize();
-    }
-    WidgetsBinding.instance.addObserver(runtime);
-    log.info('Application services ready in ${clock.elapsedMilliseconds}ms');
-    return runtime;
+        }
+      } catch (error, stack) {
+        log.warning('Launch at login unavailable', error, stack);
+      }
+      await runtime.tray.initialize(
+        quit: runtime.quit,
+        prepareToQuit: runtime.dispose,
+        checkFollowedSeries: container.read(releaseAlertsProvider).check,
+      );
+      await runtime.window.configureCloseHandler(() async {
+        final preferences = container.read(settingsProvider).window;
+        if (preferences.closeToTray && runtime.tray.canHideWindow) {
+          await runtime.flush();
+          await runtime.tray.hideWindow();
+        } else {
+          await runtime.quit();
+        }
+      });
+      await container.read(notificationServiceProvider).initialize();
+      container.read(releaseAlertsProvider).start();
+      rollback.add(() => container.read(torrentEngineProvider).close());
+      rollback.add(() => container.read(downloadQueueProvider).dispose());
+      await container
+          .read(downloadQueueProvider)
+          .initialize(container.read(settingsProvider).downloads.queue);
+      container.read(downloadAlertsProvider).start();
+      if (Platform.isAndroid) {
+        container
+            .read(downloadServiceProvider)
+            .start(exit: runtime.exitInBackground);
+      }
+      if (Platform.isWindows) container.read(taskbarProgressProvider).start();
+      container.read(autoDownloadsProvider).start();
+      final sync = container.read(syncServiceProvider);
+      rollback.add(sync.close);
+      await sync.start();
+      // Listens for failed requests from the start, whatever page is open.
+      container.read(onlineProvider);
+      final recovery = await container.read(playbackRecoveryProvider).load();
+      if (recovery != null) {
+        final item = recovery.item;
+        final request = item.series == null
+            ? PlayTitle(item.title)
+            : PlayEpisode(
+                item.series!,
+                ImdbEpisode(
+                  title: item.title,
+                  seasonNumber: item.season,
+                  episodeNumber: item.episode,
+                ),
+                season: item.season,
+              );
+        final release = recovery.release;
+        container
+            .read(playerSessionProvider.notifier)
+            .play(
+              request,
+              autoplay: false,
+              start: PlaybackRecovery.start(
+                recovery,
+                settings: settings.streaming,
+              ),
+              torrent: release == null
+                  ? null
+                  : TorrentCandidate(
+                      release: release,
+                      score: 0,
+                      qualityScore: 0,
+                      availabilityScore: 0,
+                      sizeScore: 0,
+                      requiresFileSelection: release.isPack,
+                    ),
+            );
+        container.read(playerViewProvider.notifier).minimize();
+      }
+      WidgetsBinding.instance.addObserver(runtime);
+      log.info('Application services ready in ${clock.elapsedMilliseconds}ms');
+      return runtime;
+    });
   }
 
   Future<void> flush() async {

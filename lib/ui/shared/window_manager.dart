@@ -75,6 +75,7 @@ class WindowManager with WindowListener {
 
   Future<void> reveal() async {
     if (!supportsWindowCustomization || _ready) return;
+    await windowManager.ensureInitialized();
     await focus();
     _ready = true;
   }
@@ -153,6 +154,9 @@ class WindowManager with WindowListener {
   }
 
   void dispose() {
+    _ready = false;
+    _closeHandler = null;
+    _stateRepository = null;
     _saveBoundsTimer?.cancel();
     if (supportsWindowCustomization) windowManager.removeListener(this);
   }

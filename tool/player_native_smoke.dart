@@ -15,9 +15,14 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:sentorr/app/bootstrap.dart';
 import 'package:sentorr/player/hot_restart.dart';
 import 'package:sentorr/player/lifecycle.dart';
+import 'package:sentorr/player/recovery.dart';
 
 Future<void> main() async {
-  final runtime = await AppRuntime.initialize();
+  final root = await Directory.systemTemp.createTemp('sentorr-native-smoke-');
+  final runtime = await AppRuntime.initialize(
+    rootDirectory: root,
+    configureLoginStartup: false,
+  );
   final player = Player();
   Future<void>? disposal;
   Future<void> disposePlayer() => disposal ??= player.dispose();
@@ -58,7 +63,19 @@ Future<void> main() async {
     print('HOT_RESTART_READY');
   } else if (const bool.fromEnvironment('SMOKE_SHUTDOWN')) {
     if (width <= 0) exit(1);
+    var released = false;
+    runtime.container.read(playerLifecycleProvider).register(() async {
+      released = true;
+    });
+    if (const bool.fromEnvironment('SMOKE_CHECKPOINT_FAILURE')) {
+      runtime.container.read(playbackRecoveryProvider).checkpoint = () async {
+        throw const FileSystemException('injected smoke checkpoint failure');
+      };
+    }
     await runtime.dispose();
+    await runtime.dispose();
+    if (!released) throw StateError('Player cleanup was skipped');
+    await root.delete(recursive: true);
     print('SHUTDOWN_READY');
     // Match application exit immediately after Dart cleanup completes.
     exit(0);

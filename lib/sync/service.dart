@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import '../shared/cleanup.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
@@ -56,36 +58,49 @@ class SyncService implements SyncRoutes, BufferedSyncRoutes {
   );
   LocalDiscovery? _discovery;
   bool _started = false;
+  bool _closing = false;
+  Future<void>? _starting, _closed;
 
   DeviceIdentity get _identity => _ref.read(devicesProvider).identity;
 
   Map<String, NearbyDevice> get nearby => _discovery?.nearby ?? const {};
 
-  Future<void> start() async {
-    if (_started) return;
+  Future<void> start() {
+    if (_closing) return Future.value();
+    return _starting ??= _start();
+  }
+
+  Future<void> _start() async {
     _started = true;
+    // Capture provider-backed identity before the first await. A container
+    // disposal may begin while the operating system is still binding ports.
+    final serving = server;
+    final forwarding = proxy;
     try {
-      await server.start([
+      await serving.start([
         for (final d in _ref.read(devicesProvider).paired) d.certificatePem,
       ]);
-      await proxy.start();
+      if (_closing || !_ref.mounted) return;
+      await forwarding.start();
     } on SocketException catch (error, stack) {
       _log.warning('Device sync unavailable', error, stack);
       return;
     }
+    if (_closing || !_ref.mounted) return;
     final discovery = _discovery = LocalDiscovery(
       identity: _identity,
       port: server.port,
       onChanged: _onNearby,
     );
     _ref.listen(devicesProvider.select((s) => s.identity), (_, renamed) {
-      unawaited(discovery.rename(renamed));
+      if (!_closing) unawaited(discovery.rename(renamed));
     });
-    unawaited(discovery.start());
-    _ref.read(peersProvider.notifier).start();
+    await discovery.start();
+    if (!_closing && _ref.mounted) _ref.read(peersProvider.notifier).start();
   }
 
   void _onNearby(Map<String, NearbyDevice> found) {
+    if (_closing || !_ref.mounted) return;
     final before = _ref.read(nearbyDevicesProvider);
     _ref.read(nearbyDevicesProvider.notifier).set(found);
     final paired = _ref.read(devicesProvider);
@@ -161,13 +176,22 @@ class SyncService implements SyncRoutes, BufferedSyncRoutes {
     String itemId,
   ) => _buffered.serve(request, itemId);
 
-  Future<void> close() async {
-    // Its parts are made on first use; a service never started has none.
+  Future<void> close() {
+    _closing = true;
+    return _closed ??= _close();
+  }
+
+  Future<void> _close() async {
     if (!_started) return;
-    await _discovery?.stop();
-    await server.close();
-    await proxy.close();
-    await _buffered.close();
-    client.close();
+    // A bind/discovery operation may complete after close was requested.
+    // Drain it before closing its resources, including on provider disposal.
+    await cleanupAll([
+      () async => _starting,
+      () async => _discovery?.stop(),
+      server.close,
+      proxy.close,
+      _buffered.close,
+      client.close,
+    ]);
   }
 }

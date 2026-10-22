@@ -38,6 +38,37 @@ void main() {
     sizeScore: 1,
     requiresFileSelection: false,
   );
+  for (final change in ['rewind', 'pause', 'available']) {
+    test('late search respects $change', () async {
+      final prepared = _Preparation();
+      final gate = Completer<TorrentCandidate?>();
+      var available = false;
+      final warmup = NextTorrentWarmup(
+        prepared: prepared,
+        available: (_) => available,
+        find: (_, _) => gate.future,
+      );
+      warmup.update(
+        queue,
+        const Duration(seconds: 550),
+        const Duration(seconds: 600),
+        playing: true,
+      );
+      if (change == 'available') available = true;
+      if (change != 'available') {
+        warmup.update(
+          queue,
+          Duration(seconds: change == 'rewind' ? 10 : 550),
+          const Duration(seconds: 600),
+          playing: change != 'pause',
+        );
+      }
+      gate.complete(candidate);
+      await Future<void>.delayed(Duration.zero);
+      expect(prepared.calls, 0);
+      warmup.dispose();
+    });
+  }
   test(
     'only warms a playing next item near the end, once per queue target',
     () async {

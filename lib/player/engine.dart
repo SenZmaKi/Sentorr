@@ -348,6 +348,17 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
       playing: engine.state.playing,
     );
   });
+  final warmingPlaying = engine.stream.playing.listen((playing) {
+    final queue = ref.read(playerSessionProvider)?.queue;
+    warmup.update(
+      queue,
+      engine.state.position,
+      engine.state.duration,
+      playing:
+          playing &&
+          engine.streaming.status.value?.stage == StreamStage.streaming,
+    );
+  });
   engine.beforeDispose = () => cleanupAll([
     checkpoint,
     () {
@@ -357,6 +368,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     completed.cancel,
     warmup.dispose,
     warming.cancel,
+    warmingPlaying.cancel,
     progress.dispose,
   ]);
   ref.onDispose(engine.dispose);

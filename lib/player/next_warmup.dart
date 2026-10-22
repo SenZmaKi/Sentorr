@@ -47,6 +47,7 @@ class NextTorrentWarmup {
     final next = queue?.next;
     final key = next == null ? null : '${queue!.current.id}:${next.id}';
     if (key != _key) _forget();
+    _remaining = null;
     if (_closed ||
         !playing ||
         next == null ||
@@ -96,7 +97,8 @@ class NextTorrentWarmup {
         next == null ||
         candidate == null ||
         remaining == null ||
-        remaining > prepareLead) {
+        remaining > prepareLead ||
+        available(next)) {
       return;
     }
     _started = true;

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/services.dart';
 import '../following/latest_episode.dart';
 import '../following/models.dart';
+import '../following/season_episodes.dart';
 import '../following/notifier.dart';
 import '../imdb/models.dart';
 import 'models.dart';
@@ -41,9 +42,11 @@ class SeasonMarker {
   /// only planned, is now being watched, or completed when that was the
   /// end of a series that has ended.
   Future<void> mark(ImdbTitle series, int season) async {
-    final page = await _ref
-        .read(imdbRepositoryProvider)
-        .getEpisodes(series.id, season, limit: 50);
+    final page = await seasonEpisodes(
+      _ref.read(imdbRepositoryProvider),
+      series.id,
+      season,
+    );
     final today = DateTime.now();
     final last = page.items
         .where((e) => airDate(e.releaseDate)?.isAfter(today) == false)

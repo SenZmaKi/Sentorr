@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../imdb/models.dart';
 import '../imdb/repository.dart';
 import 'models.dart';
+import 'season_episodes.dart';
 
 /// The latest aired episode of a followed series and when its season began.
 class SeriesUpdate {
@@ -55,16 +56,11 @@ Future<SeriesUpdate?> latestEpisode(
     refresh: refresh,
     cancelToken: cancel,
   );
-  Future<ImdbPage<ImdbEpisode>> episodes(int season) => imdb.getEpisodes(
-    seriesId,
-    season,
-    limit: 50,
-    refresh: refresh,
-    cancelToken: cancel,
-  );
+  Future<ImdbPage<ImdbEpisode>> episodes(int season) =>
+      seasonEpisodes(imdb, seriesId, season, refresh: refresh, cancel: cancel);
   final today = DateTime.now();
   final seasons = details.seasons.where((s) => s > 0).toList()..sort();
-  for (final season in seasons.reversed.take(2)) {
+  for (final season in seasons.reversed) {
     final page = await episodes(season);
     final aired = [
       for (final e in page.items)
@@ -72,7 +68,9 @@ Future<SeriesUpdate?> latestEpisode(
           (e, date),
     ];
     if (aired.isEmpty) continue;
-    final (episode, date) = aired.reduce((a, b) => b.$2.isBefore(a.$2) ? a : b);
+    final (episode, date) = aired.reduce(
+      (a, b) => (b.$1.episodeNumber ?? 0) > (a.$1.episodeNumber ?? 0) ? b : a,
+    );
     final premiere = page.items.where((e) => e.episodeNumber == 1).firstOrNull;
     return SeriesUpdate(
       series: details.title,
@@ -104,8 +102,12 @@ Future<EpisodeNumber?> _previous(
   final before = seasons.where((s) => s < season).lastOrNull;
   if (before == null) return null;
   final page = await episodes(before);
-  final last = page.items.map((e) => e.episodeNumber ?? 0).fold(0, _max);
-  final count = page.total != null && page.total! > last ? page.total! : last;
+  final today = DateTime.now();
+  final last = page.items
+      .where((e) => airDate(e.releaseDate)?.isAfter(today) == false)
+      .map((e) => e.episodeNumber ?? 0)
+      .fold(0, _max);
+  final count = last;
   return count > 0 ? (season: before, episode: count) : null;
 }
 

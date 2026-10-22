@@ -223,4 +223,23 @@ void main() {
       c.dispose();
     }
   });
+  test('latest episode and season mark include later pages', () async {
+    final imdb = PagedImdb();
+    final latest = await latestEpisode(imdb, show.id);
+    expect(latest!.number!.episode, 60);
+    expect(imdb.cursors, [null, 'next']);
+    final c = ProviderContainer(
+      overrides: [
+        imdbRepositoryProvider.overrideWithValue(imdb),
+        ...watchListsOverrides(),
+        ...followedSeriesOverrides(),
+      ],
+    );
+    try {
+      await c.read(seasonMarkerProvider).mark(show, 1);
+      expect(c.read(followedProvider(show.id))!.reached.episode, 60);
+    } finally {
+      c.dispose();
+    }
+  });
 }

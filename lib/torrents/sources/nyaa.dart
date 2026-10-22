@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as html;
+import 'package:html/dom.dart';
 
 import '../diagnostics.dart';
 import '../models.dart';
@@ -50,12 +51,17 @@ class NyaaSource extends SpecializedTorrentSource {
         ),
         cancelToken: cancelToken,
         html: true,
-        isResult: (body) =>
-            html.parse('$body').querySelector('table.torrent-list') != null,
+        isResult: (body) {
+          final document = html.parse('$body');
+          return document.querySelector('table.torrent-list') != null ||
+              _empty(document);
+        },
       ),
       cancelToken,
     );
-    final table = html.parse('$page').querySelector('table.torrent-list');
+    final document = html.parse('$page');
+    final table = document.querySelector('table.torrent-list');
+    if (table == null && _empty(document)) return [];
     if (table == null) {
       throw const SourceException('Unrecognized Nyaa search page');
     }
@@ -130,3 +136,13 @@ class NyaaSource extends SpecializedTorrentSource {
     return releases;
   }
 }
+
+// Empty search pages omit the table. Require the search site's own markers,
+// rather than treating arbitrary challenge/error pages as successful results.
+bool _empty(Document page) =>
+    (page.querySelector('title')?.text.toLowerCase().contains('nyaa') ??
+        false) &&
+    page.body != null &&
+    page.body!.text.contains('No results found') &&
+    RegExp(r'Displaying results 0\s*-\s*0 out of 0 results')
+        .hasMatch(page.body!.text);

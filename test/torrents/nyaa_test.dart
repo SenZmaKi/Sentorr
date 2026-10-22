@@ -45,6 +45,21 @@ void main() {
   });
   tearDown(() => dio.close(force: true));
 
+  test('normal empty search page succeeds without a torrent table', () async {
+    body =
+        '<html><head><title>Browse :: Nyaa</title></head><body>'
+        'No results found Displaying results 0-0 out of 0 results</body></html>';
+    final result = await TorrentRepository([NyaaSource(dio)]).search(animation);
+    expect(result.releases, isEmpty);
+    expect(result.failures, isEmpty);
+    expect(result.diagnostics.single.status, SourceSearchStatus.succeeded);
+    body = '<html><title>Challenge</title><body>No results found</body></html>';
+    expect(
+      (await TorrentRepository([NyaaSource(dio)]).search(animation)).failures,
+      hasLength(1),
+    );
+  });
+
   test(
     'conditional source skips ordinary media and preserves genre variants',
     () async {

@@ -88,7 +88,11 @@ extension _TorrentPlaybackFailures on TorrentPlayback {
       options: s.options,
       failed: failed,
     );
-    final next = candidate == null
+    final engineFailed =
+        error is TorrentStreamException &&
+        (error.code == TorrentStreamErrorCode.workerExited ||
+            engine.failure != null);
+    final next = candidate == null || engineFailed
         ? null
         : s.options?.candidates
               .where((c) => !failed.contains(c.release.infoHash))
@@ -126,6 +130,8 @@ extension _TorrentPlaybackFailures on TorrentPlayback {
     _Unplayable() =>
       "This video couldn't be played. It may be in a format this device "
           'does not support.',
+    TorrentStreamException(code: TorrentStreamErrorCode.workerExited) =>
+      'The torrent engine stopped unexpectedly.',
     TorrentStreamException(code: TorrentStreamErrorCode.timeout) =>
       'No peers sent the video in time.',
     TorrentStreamException() => "The torrent couldn't be streamed.",

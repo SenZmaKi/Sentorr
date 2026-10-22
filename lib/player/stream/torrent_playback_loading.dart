@@ -177,6 +177,20 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
           );
         }
       }
+      if (transfer.phase == TorrentStreamPhase.failed && !_stale(generation)) {
+        final item = _item;
+        if (item != null) {
+          _fail(
+            generation,
+            item,
+            _candidate,
+            transfer.failure ??
+                const _Problem('The torrent stopped unexpectedly.'),
+            null,
+          );
+        }
+        return;
+      }
       receivedAtStart ??= transfer.receivedBytes;
       uploadedAtStart ??= transfer.uploadedBytes;
       _update(

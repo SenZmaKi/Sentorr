@@ -84,6 +84,30 @@ void main() {
   });
 
   test(
+    'terminal worker failure stops playback without retrying the dead engine',
+    () async {
+      await playback.play(
+        item,
+        options: TorrentResolution(
+          query: TorrentQuery(title: 'Movie'),
+          candidates: [first, second],
+          failures: [],
+        ),
+      );
+      engine.updates.addError(
+        const TorrentStreamException(
+          TorrentStreamErrorCode.workerExited,
+          'injected worker exit',
+        ),
+      );
+      await settlePlayback();
+      expect(playback.status.value!.stage, StreamStage.failed);
+      expect(playback.status.value!.problem, isNotNull);
+      expect(engine.released, isNotEmpty);
+    },
+  );
+
+  test(
     'failed peer advances to another peer then falls back to torrent',
     () async {
       final a = PeerFile(Uri.parse('http://127.0.0.1/a'), 'A');

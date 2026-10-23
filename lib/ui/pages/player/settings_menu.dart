@@ -8,6 +8,7 @@ import '../../components/section_header.dart';
 import '../../shared/layout/adaptive.dart';
 import '../../shared/theme/theme.dart';
 import 'menu_rows.dart';
+import 'audio_selection.dart';
 import 'track_labels.dart';
 import 'player_actions.dart';
 import 'player_value.dart';
@@ -70,18 +71,30 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
                 builder: (context, tracks) => PlayerValue(
                   stream: p.stream.track,
                   initial: p.state.track,
-                  builder: (context, track) => PlayerValue(
-                    stream: p.stream.rate,
-                    initial: p.state.rate,
-                    builder: (context, rate) => Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: switch (_page) {
-                        _Page.root => _root(tracks, track, rate),
-                        _Page.speed => _speed(rate),
-                        _Page.audio => _audio(tracks, track),
-                        _Page.subtitles => _subtitles(tracks, track),
-                        _Page.sleep => _sleep(),
-                      },
+                  builder: (context, reportedTrack) => AudioSelection(
+                    player: p,
+                    tracks: tracks,
+                    track: reportedTrack,
+                    builder: (audio) => PlayerValue(
+                      stream: p.stream.rate,
+                      initial: p.state.rate,
+                      builder: (context, rate) => Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: switch (_page) {
+                          _Page.root => _root(
+                            tracks,
+                            reportedTrack.copyWith(audio: audio),
+                            rate,
+                          ),
+                          _Page.speed => _speed(rate),
+                          _Page.audio => _audio(
+                            tracks,
+                            reportedTrack.copyWith(audio: audio),
+                          ),
+                          _Page.subtitles => _subtitles(tracks, reportedTrack),
+                          _Page.sleep => _sleep(),
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -114,6 +127,7 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
         value: _isReal(track.audio.id)
             ? audioLabel(track.audio)
             : '${audio.length} available',
+        scrollValue: _isReal(track.audio.id),
         chevron: audio.isNotEmpty,
         onTap: audio.isNotEmpty ? () => _go(_Page.audio) : null,
       ),

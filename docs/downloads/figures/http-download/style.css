@@ -1,0 +1,4 @@
+.iso-stage{cursor:pointer;touch-action:pan-y}
+.iso-stage:focus-visible{outline:1px solid var(--anatomy-muted);outline-offset:6px}
+.iso-plate:has(.iso-stage){overflow:hidden}
+.tb-lead{margin:0 0 14px;color:var(--anatomy-text);font-size:14px;line-height:1.6}

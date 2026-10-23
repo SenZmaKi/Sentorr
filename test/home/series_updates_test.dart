@@ -4,6 +4,7 @@ import 'package:sentorr/app/services.dart';
 import 'package:sentorr/following/models.dart';
 import 'package:sentorr/home/series_updates.dart';
 import 'package:sentorr/imdb/models.dart';
+import 'package:sentorr/ui/pages/lists/list_sections.dart';
 
 import '../support/fake_following.dart';
 import '../support/fake_lists.dart';
@@ -190,6 +191,8 @@ void main() {
     await c.read(seriesUpdatesProvider.future);
     final episodes = c.read(newEpisodesProvider).requireValue;
     expect(episodes.map((u) => u.series.id), ['tt4', 'tt1']);
+    // Four tracked shows, but only two have a new episode for the viewer.
+    expect(c.read(sectionCountsProvider)[ListsSection.newEpisodes], 2);
     final combined = c.read(newSeriesReleasesProvider).requireValue;
     expect(combined.map((u) => u.series.id), ['tt4', 'tt1']);
     expect(combined.where((u) => u.series.id == 'tt4'), hasLength(1));

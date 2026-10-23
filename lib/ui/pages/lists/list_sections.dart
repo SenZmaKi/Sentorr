@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../following/tracked.dart';
+import '../../../home/series_updates.dart';
 import '../../../lists/models.dart';
 import '../../../lists/notifier.dart';
 import '../../components/navigation.dart';
@@ -44,14 +44,15 @@ class ListsSectionNotifier extends Notifier<ListsSection> {
   void pick(ListsSection section) => state = section;
 }
 
-/// How many titles each section holds; New episodes counts series.
+/// How many titles each section holds; New episodes counts available updates.
 final sectionCountsProvider = Provider<Map<ListsSection, int>>((ref) {
   final counts = {for (final s in ListsSection.values) s: 0};
   for (final e in ref.watch(watchListsProvider)) {
     final section = ListsSection.of(e.status!);
     counts[section] = counts[section]! + 1;
   }
-  counts[ListsSection.newEpisodes] = ref.watch(trackedSeriesProvider).length;
+  counts[ListsSection.newEpisodes] =
+      ref.watch(newEpisodesProvider).value?.length ?? 0;
   return counts;
 });
 

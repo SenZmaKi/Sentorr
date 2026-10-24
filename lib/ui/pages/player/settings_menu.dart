@@ -160,13 +160,6 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
         chevron: true,
         onTap: () => _go(_Page.sleep),
       ),
-      PlayerMenuRow(
-        icon: Icons.swap_horiz_rounded,
-        label: 'Torrent',
-        value: 'Switch',
-        chevron: true,
-        onTap: widget.actions.chooseTorrent,
-      ),
       ScreenshotAction(player: widget.player, actions: widget.actions),
       PlayerMenuRow(
         icon: Icons.analytics_outlined,

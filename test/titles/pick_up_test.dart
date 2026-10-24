@@ -65,18 +65,62 @@ FollowedSeries _followed(int n, double progress, {bool manual = false}) =>
 void main() {
   ProviderContainer container(
     List<WatchEntry> history,
-    List<FollowedSeries> followed,
-  ) {
+    List<FollowedSeries> followed, [
+    MemoryWatchHistory? repository,
+  ]) {
     final c = ProviderContainer(
       overrides: [
         ...watchListsOverrides(),
         imdbRepositoryProvider.overrideWithValue(_imdb),
-        ...watchHistoryOverrides(history),
+        ...watchHistoryOverrides(history, repository),
         ...followedSeriesOverrides(followed),
       ],
     );
     addTearDown(c.dispose);
     return c;
+  }
+
+  for (final cached in [false, true]) {
+    test(
+      'unrelated history saves do not reload caught-up action (cached: $cached)',
+      () async {
+        final repository = MemoryWatchHistory();
+        if (cached) {
+          repository.nextEpisodes[nextEpisodeKey(_series.id, 2, 3)] = null;
+        }
+        final c = container(
+          [_watching(3, progress: 1)],
+          [_followed(3, 1)],
+          repository,
+        );
+        final labels = <String>[];
+        final sub = c.listen(
+          pickUpPresentationProvider(_series.id),
+          (_, pick) => labels.add(pickUpLabel(pick)),
+          fireImmediately: true,
+        );
+        addTearDown(sub.close);
+        await c.read(pickUpProvider(_series.id).future);
+        await c.pump();
+        expect(labels.last, 'Caught up');
+        labels.clear();
+        final settled = c.read(pickUpProvider(_series.id).future);
+        await c
+            .read(watchHistoryProvider.notifier)
+            .record(
+              PlaybackItem(title: fakeTitle(99)),
+              position: const Duration(minutes: 2),
+              duration: const Duration(hours: 1),
+            );
+        await c.pump();
+        expect(c.read(pickUpProvider(_series.id).future), same(settled));
+        expect(labels, isNot(contains('Continue')));
+        expect(
+          pickUpLabel(c.read(pickUpPresentationProvider(_series.id))),
+          'Caught up',
+        );
+      },
+    );
   }
 
   test('saved next metadata renders on reopening without a lookup', () async {

@@ -67,6 +67,10 @@ class PickUpPreview extends ConsumerWidget {
     title: title,
     onOpen: onOpen,
     onPlay: onPlay,
-    playAction: PickUpButton(titleId: title.id, onPressed: onPlay),
+    playAction: PickUpButton(
+      titleId: title.id,
+      onPressed: onPlay,
+      onCaughtUp: onOpen,
+    ),
   );
 }

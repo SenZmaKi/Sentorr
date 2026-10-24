@@ -4,91 +4,63 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../titles/pick_up.dart';
 import '../shared/play_route.dart';
 import '../shared/theme/theme.dart';
-import '../shared/title_format.dart';
 import 'buttons.dart';
-import 'motion.dart';
 import 'skeleton.dart';
 
-/// Play, or pick up where the viewer left off. A started series shows its
-/// action word at once with a skeleton where the episode code will land,
-/// so resolving metadata fills the slot instead of reflowing the button.
-/// Titles with nothing to pick up keep a plain, natural-width Play.
+/// A text skeleton while the next episode resolves. All states
+/// reserve the same space, measured with the active typography and scale.
 class PickUpButton extends ConsumerWidget {
-  const PickUpButton({super.key, required this.titleId, this.onPressed});
+  const PickUpButton({
+    super.key,
+    required this.titleId,
+    this.onPressed,
+    this.onCaughtUp,
+  });
 
   final String titleId;
-
-  /// Stays enabled while pending; [PlayMedia.playOrPickUp] awaits the lookup.
   final VoidCallback? onPressed;
+  final VoidCallback? onCaughtUp;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pick = ref.watch(pickUpPresentationProvider(titleId));
-    final pending =
-        pick?.pending == true && !ref.watch(pickUpProvider(titleId)).hasError;
-    final item = pick?.item;
-    final code = item != null && item.isEpisode
-        ? episodeCode(item.season, item.episode)
-        : null;
-    if (!pending && code == null) {
-      return SButton.primary(
-        label: pickUpLabel(pick),
-        icon: Icons.play_arrow_rounded,
-        onPressed: onPressed,
-      );
-    }
-    final verb = pick!.resume ? 'Resume' : 'Continue';
-    return SButton.primary(
-      label: pending ? '$verb, loading episode' : pickUpLabel(pick),
-      icon: Icons.play_arrow_rounded,
-      onPressed: onPressed,
-      labelContent: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(text: '$verb '),
-            // A placeholder wraps as one unit at large text scales.
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: EpisodeCodeSlot(code: code),
-            ),
-          ],
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-}
-
-/// The episode code, or a skeleton sized like a typical one while [code]
-/// is null. The swap crossfades and any width difference eases.
-class EpisodeCodeSlot extends StatelessWidget {
-  const EpisodeCodeSlot({super.key, this.code});
-
-  final String? code;
-
-  @override
-  Widget build(BuildContext context) {
-    final current = switch (code) {
-      final code? => Text(code, key: ValueKey(code)),
-      null => const Skeleton.text(key: ValueKey('skeleton'), sample: 'S1 E10'),
-    };
-    // A zero-length AnimatedSize re-dirties itself mid-layout, so reduced
-    // motion swaps immediately without the transition wrappers.
-    if (reduceMotion(context)) return current;
-    return AnimatedSize(
-      duration: Motion.panel,
-      curve: Motion.change,
-      alignment: AlignmentDirectional.centerStart,
-      child: AnimatedSwitcher(
-        duration: Motion.panel,
-        switchInCurve: Motion.enter,
-        switchOutCurve: Motion.enter,
-        layoutBuilder: (current, previous) => Stack(
-          alignment: AlignmentDirectional.centerStart,
-          children: [...previous, ?current],
-        ),
-        child: current,
-      ),
+    final failed =
+        pick?.pending == true && ref.watch(pickUpProvider(titleId)).hasError;
+    final pending = pick?.pending == true && !failed;
+    final label = failed ? 'Retry continue' : pickUpLabel(pick);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const chrome = Space.s16 * 2 + IconSizes.control + Space.s8;
+        final painter = TextPainter(
+          text: TextSpan(text: 'Continue S99 E99', style: context.type.label),
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout();
+        final width = constraints.constrainWidth(painter.width + chrome);
+        // Reserve wrapped height too, so narrow layouts and larger text
+        // don't move neighbouring actions when loading finishes.
+        painter.layout(maxWidth: (width - chrome).clamp(1, double.infinity));
+        final height = constraints.constrainHeight(
+          painter.height.clamp(context.density.control, double.infinity),
+        );
+        painter.dispose();
+        return SizedBox(
+          width: width,
+          height: height,
+          child: SButton.primary(
+            label: pending ? 'Loading playback action' : label,
+            labelContent: pending
+                ? const Skeleton.text(sample: 'Continue S99 E99')
+                : null,
+            icon: pick?.caughtUp == true
+                ? Icons.video_library_outlined
+                : Icons.play_arrow_rounded,
+            onPressed: pick?.caughtUp == true
+                ? onCaughtUp ?? onPressed
+                : onPressed,
+          ),
+        );
+      },
     );
   }
 }

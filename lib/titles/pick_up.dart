@@ -30,6 +30,9 @@ class PickUp {
   /// Local history is known; the next aired episode is still resolving.
   final bool pending;
 
+  /// A successful lookup found no remaining aired episode.
+  bool get caughtUp => !pending && item == null;
+
   /// The season the viewer is in; null for a movie.
   final int? season;
 }
@@ -73,23 +76,32 @@ final pickUpProvider = FutureProvider.autoDispose.family<PickUp?, String>((
   ref,
   id,
 ) {
-  if (ref.watch(removedListTitlesProvider).contains(id)) return null;
+  if (ref.watch(removedListTitlesProvider.select((ids) => ids.contains(id)))) {
+    return null;
+  }
   final entry = ref.watch(
     inProgressProvider.select((l) => l.where((e) => e.key == id).firstOrNull),
   );
   final followed = ref.watch(followedProvider(id));
   final local = localPickUp(entry, followed);
   if (local?.pending != true) return local;
-  final saved = ref.watch(savedNextEpisodesProvider);
   final key = nextEpisodeKey(
     id,
     followed!.reached.season,
     followed.reached.episode,
   );
+  // History saves rebuild the cache map, including progress for unrelated
+  // titles. Only this key's presence/value can change this pickup; presence
+  // matters because a stored null means confirmed caught up.
+  final saved = ref.watch(
+    savedNextEpisodesProvider.select(
+      (entries) => (known: entries.containsKey(key), next: entries[key]),
+    ),
+  );
   if (!followed.seasonWatches.values.any((watch) => watch.through != null) &&
       followed.seen(followed.reached) &&
-      saved.containsKey(key)) {
-    final next = saved[key];
+      saved.known) {
+    final next = saved.next;
     return PickUp(
       item: next?.item,
       season: next?.season ?? followed.reached.season,

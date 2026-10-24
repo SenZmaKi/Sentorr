@@ -89,7 +89,7 @@ class _TitlePageState extends ConsumerState<TitlePage> {
     final seasons = [...?d?.seasons.where((n) => n >= 0)]..sort();
     final pickUp = ref.watch(pickUpProvider(_title.id));
     final pick = ref.watch(pickUpPresentationProvider(_title.id));
-    if (!pickUp.isLoading) {
+    if (!pickUp.isLoading && !pickUp.hasError && pick?.caughtUp != true) {
       final request = pick?.item == null
           ? PlayTitle(d?.title ?? _title)
           : requestFor(pick!.item!);
@@ -132,6 +132,7 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                   onPlay: () => ref.playOrPickUp(d?.title ?? _title),
                   playAction: PickUpButton(
                     titleId: _title.id,
+                    onCaughtUp: _showEpisodes,
                     onPressed: () => ref.playOrPickUp(d?.title ?? _title),
                   ),
                   onEpisodes: seasons.isEmpty ? null : _showEpisodes,

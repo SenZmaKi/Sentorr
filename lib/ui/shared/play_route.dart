@@ -7,6 +7,7 @@ import '../../player/queue_builder.dart';
 import '../../titles/pick_up.dart';
 import '../../watching/models.dart';
 import 'title_format.dart';
+import 'title_route.dart';
 
 /// Play requests find a torrent first; the player opens once one is chosen.
 extension PlayMedia on WidgetRef {
@@ -27,14 +28,23 @@ extension PlayMedia on WidgetRef {
   Future<void> playOrPickUp(ImdbTitle title) async {
     final id = title.id;
     final launch = read(playbackLaunchProvider.notifier);
+    final routes = read(titleRoutesProvider.notifier);
     PickUp? pick;
     try {
+      if (read(pickUpProvider(id)).hasError) {
+        invalidate(pickUpProvider(id));
+      }
       final saved = read(pickUpProvider(id));
       pick = saved.hasValue && !saved.isLoading
           ? saved.value
           : await read(pickUpProvider(id).future);
     } on Object {
-      pick = null;
+      // Keep the failed lookup retryable instead of restarting the series.
+      return;
+    }
+    if (pick?.caughtUp == true) {
+      routes.open(title);
+      return;
     }
     launch.start(switch (pick?.item) {
       final item? => requestFor(item),
@@ -70,7 +80,7 @@ PlayRequest requestFor(PlaybackItem item) => switch (item.series) {
 };
 
 /// "Resume", "Resume S1 E3", "Continue S1 E4", or "Play" with nothing to
-/// pick up.
+/// pick up, or "Caught up" after a successful empty episode lookup.
 String pickUpLabel(PickUp? pick) => switch (pick) {
   PickUp(item: final item?, resume: true) =>
     item.isEpisode
@@ -79,5 +89,6 @@ String pickUpLabel(PickUp? pick) => switch (pick) {
   PickUp(item: final item?) =>
     'Continue ${episodeCode(item.season, item.episode)}',
   PickUp(pending: true) => 'Continue',
+  PickUp() => 'Caught up',
   _ => 'Play',
 };

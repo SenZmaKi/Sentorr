@@ -7,6 +7,7 @@ import 'package:sentorr/player/models.dart';
 import 'package:sentorr/titles/pick_up.dart';
 import 'package:sentorr/ui/components/pick_up_button.dart';
 import 'package:sentorr/ui/components/skeleton.dart';
+import 'package:sentorr/ui/components/surface.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 
 import '../support/fake_imdb.dart';
@@ -25,6 +26,7 @@ void main() {
   late PickUp? pick;
   late Completer<PickUp?> request;
   late int plays;
+  late int episodeLists;
 
   Future<ProviderContainer> show(
     WidgetTester tester, {
@@ -33,6 +35,7 @@ void main() {
   }) async {
     request = Completer<PickUp?>();
     plays = 0;
+    episodeLists = 0;
     final container = ProviderContainer(
       overrides: [
         pickUpPresentationProvider('tt2').overrideWith((ref) => pick),
@@ -57,7 +60,11 @@ void main() {
                   child: Wrap(
                     spacing: 8,
                     children: [
-                      PickUpButton(titleId: 'tt2', onPressed: () => plays++),
+                      PickUpButton(
+                        titleId: 'tt2',
+                        onPressed: () => plays++,
+                        onCaughtUp: () => episodeLists++,
+                      ),
                       const SizedBox(
                         key: ValueKey('next'),
                         width: 70,
@@ -75,21 +82,18 @@ void main() {
     return container;
   }
 
-  testWidgets('a title with nothing to pick up is a natural Play', (
-    tester,
-  ) async {
+  testWidgets('a title with nothing to pick up shows Play', (tester) async {
     pick = null;
     await show(tester);
     expect(find.text('Play'), findsOneWidget);
     expect(find.byType(Skeleton), findsNothing);
-    final play = tester.getSize(find.byType(PickUpButton)).width;
-    // Icon, gap, label and padding only: no reserved episode slot.
-    expect(play, lessThan(tester.getSize(find.text('Play')).width + 80));
+    await tester.tap(find.byType(PickUpButton));
+    expect(plays, 1);
   });
 
   for (final brightness in Brightness.values) {
-    for (final scale in [1.0, 1.5]) {
-      testWidgets('episode code fills its skeleton slot in $brightness at '
+    for (final scale in [1.0, 1.5, 2.0]) {
+      testWidgets('text skeleton keeps its button size in $brightness at '
           '$scale', (tester) async {
         pick = const PickUp(season: 2, pending: true);
         final container = await show(
@@ -97,39 +101,74 @@ void main() {
           brightness: brightness,
           scale: scale,
         );
-        final skeleton = find.byType(Skeleton);
-        expect(skeleton, findsOneWidget);
-        expect(
-          find.textContaining('Continue ', findRichText: true),
-          findsOneWidget,
+        expect(find.byType(Skeleton), findsOneWidget);
+        expect(find.textContaining('Continue'), findsNothing);
+        expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+        final surface = tester.widget<DepthBox>(
+          find.descendant(
+            of: find.byType(PickUpButton),
+            matching: find.byType(DepthBox),
+          ),
         );
-        final slot = tester.getTopLeft(skeleton);
+        final context = tester.element(find.byType(PickUpButton));
+        expect(surface.style.fill, context.colors.action);
+        expect(
+          tester.widget<Icon>(find.byIcon(Icons.play_arrow_rounded)).color,
+          context.colors.onAction,
+        );
+        final before = tester.getRect(find.byType(PickUpButton));
+        final neighbour = tester.getRect(find.byKey(const ValueKey('next')));
+        final skeleton = tester.getRect(find.byType(Skeleton));
         final icon = tester.getRect(find.byIcon(Icons.play_arrow_rounded));
-        final before = tester.getSize(find.byType(PickUpButton));
+        expect(skeleton.left, greaterThanOrEqualTo(icon.right + 8));
+        expect(skeleton.right, lessThan(before.right));
+        expect(skeleton.height, lessThan(before.height));
         await tester.tap(find.byType(PickUpButton));
-        expect(plays, 1, reason: 'pending still plays via the lookup');
+        expect(plays, 1, reason: 'loading keeps the normal enabled button');
 
-        pick = _continue(12);
-        container.invalidate(pickUpPresentationProvider('tt2'));
-        await tester.pump();
-        expect(skeleton, findsNothing);
-        final code = find.text('S2 E12');
-        expect(tester.getTopLeft(code), slot);
-        expect(tester.getRect(find.byIcon(Icons.play_arrow_rounded)), icon);
-        final after = tester.getSize(find.byType(PickUpButton));
-        expect(after.height, before.height);
-        expect((after.width - before.width).abs(), lessThan(4 * scale));
-        expect(tester.takeException(), isNull);
+        for (final resolved in [
+          _continue(12),
+          const PickUp(season: 2),
+          PickUp(
+            season: null,
+            item: PlaybackItem(title: fakeTitle(3)),
+            resume: true,
+          ),
+        ]) {
+          pick = resolved;
+          container.invalidate(pickUpPresentationProvider('tt2'));
+          await tester.pump();
+          expect(find.byType(Skeleton), findsNothing);
+          expect(tester.getRect(find.byType(PickUpButton)), before);
+          expect(tester.getRect(find.byKey(const ValueKey('next'))), neighbour);
+          expect(tester.takeException(), isNull);
+        }
       });
     }
   }
 
-  testWidgets('failed metadata lookup settles on Continue', (tester) async {
+  testWidgets('caught up opens episodes instead of playing', (tester) async {
+    pick = const PickUp(season: 2);
+    await show(tester);
+    expect(find.text('Caught up'), findsOneWidget);
+    expect(find.byIcon(Icons.video_library_outlined), findsOneWidget);
+    await tester.tap(find.byType(PickUpButton));
+    expect(episodeLists, 1);
+    expect(plays, 0);
+  });
+
+  testWidgets('failed lookup offers retry without changing size', (
+    tester,
+  ) async {
     pick = const PickUp(season: 2, pending: true);
     await show(tester);
+    final before = tester.getSize(find.byType(PickUpButton));
     request.completeError(StateError('offline'));
     await tester.pump();
     expect(find.byType(Skeleton), findsNothing);
-    expect(find.text('Continue'), findsOneWidget);
+    expect(find.text('Retry continue'), findsOneWidget);
+    expect(tester.getSize(find.byType(PickUpButton)), before);
+    await tester.tap(find.byType(PickUpButton));
+    expect(plays, 1);
   });
 }

@@ -20,6 +20,8 @@ class TorrentBytes implements ByteSource {
     this.scheduler, {
     int readAheadBytes = 16 * 1024 * 1024,
     this.maxCacheBytes = 24 * 1024 * 1024,
+    this.readRange,
+    this.waitReadable,
   }) : lookahead = max(1, (readAheadBytes / handle.pieceLength).ceil() - 1),
        pieceLength = handle.pieceLength;
   final TorrentHandle handle;
@@ -27,6 +29,8 @@ class TorrentBytes implements ByteSource {
   final Future<Uint8List> Function(int, Cancellation) readPiece;
   final PieceScheduler scheduler;
   final int pieceLength, lookahead;
+  final Future<Uint8List> Function(int, int, Cancellation)? readRange;
+  final Future<void> Function(int, Cancellation)? waitReadable;
   final _prefetch = Cancellation();
   late final startup = StreamStartup(length);
   final waits = ReadWaits();
@@ -171,14 +175,26 @@ class TorrentBytes implements ByteSource {
       final waited = playback ? waits.begin(piece) : (Stopwatch()..start());
       final Uint8List data;
       try {
-        data = await cancellation.wait(_piece(piece));
+        if (readRange != null) {
+          await cancellation.wait(waitReadable!(piece, cancellation));
+          // Bound each filesystem operation even for unusually large pieces.
+          final take = min(
+            count - copied,
+            min(64 * 1024, pieceLength - absolute % pieceLength),
+          );
+          data = await cancellation.wait(
+            readRange!(offset + copied, take, cancellation),
+          );
+        } else {
+          data = await cancellation.wait(_piece(piece));
+        }
       } catch (_) {
         if (playback) waits.abandon(piece, waited);
         rethrow;
       }
       if (playback) waits.end(piece, waited);
       cancellation.check();
-      final within = absolute % pieceLength;
+      final within = readRange != null ? 0 : absolute % pieceLength;
       final take = min(count - copied, data.length - within);
       if (take <= 0) throw StateError('Invalid native piece layout');
       if (playback && startup.served(piece, offset + copied, take, waited)) {

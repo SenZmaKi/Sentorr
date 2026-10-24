@@ -10,6 +10,9 @@ import 'package:torrent_stream/torrent_stream.dart';
 class PriorityHandle implements TorrentHandle {
   var updates = 0;
   List<int> priorities = [];
+  List<int> piecePriorities = [];
+  @override
+  void prioritizePieces(List<int> values) => piecePriorities = List.of(values);
   @override
   void resume() {}
   @override
@@ -95,6 +98,31 @@ void main() {
       owner.paused = true;
       await entry.applyWanted(until);
       expect(handle.priorities, [0, 0]);
+    },
+  );
+
+  test(
+    'materializing a streamed file does not turn it into a full download',
+    () async {
+      final handle = PriorityHandle();
+      final entry = TorrentEntry(
+        infoHash: 'a',
+        handle: handle,
+        savePath: '/a',
+        storage: TorrentStorage.cached,
+      );
+      final owner = entry.owners['player'] = TorrentOwner();
+      Future<void> until(bool Function() ready) async =>
+          expect(ready(), isTrue);
+      await entry.prepare(until);
+      entry.materialized.add(0);
+      await entry.applyWanted(until);
+      expect(handle.priorities, [4, 0]);
+      expect(handle.piecePriorities, [0, 0, 0, 0]);
+      owner.wanted.add(1);
+      await entry.applyWanted(until);
+      expect(handle.priorities, [4, 4]);
+      expect(handle.piecePriorities, [0, 0, 4, 4]);
     },
   );
 

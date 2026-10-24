@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
+import 'package:libtorrent_dart/libtorrent_dart.dart';
 import 'package:torrent_stream/torrent_stream.dart';
 
 import 'engine_support.dart';
@@ -55,10 +56,59 @@ void main() {
           await session.close();
           await engine.close();
           if (legacy) {
-            for (final file in Directory(
-              '${root.path}/cache/retained',
-            ).listSync().whereType<File>()) {
-              if (file.path.endsWith('.resume')) await file.delete();
+            // Produce a genuine old-style cache: priority-zero file bytes live
+            // in libtorrent's partfile, with no normal media file or resume.
+            final retained = Directory('${root.path}/cache/retained');
+            await retained.delete(recursive: true);
+            await retained.create();
+            final old = createSessionFromTags([
+              LibtorrentTagItem.settingsBool(
+                LibtorrentSettingsTag.enableDht,
+                false,
+              ),
+              LibtorrentTagItem.settingsBool(
+                LibtorrentSettingsTag.enableLsd,
+                false,
+              ),
+              LibtorrentTagItem.settingsBool(
+                LibtorrentSettingsTag.enableUpnp,
+                false,
+              ),
+              LibtorrentTagItem.settingsBool(
+                LibtorrentSettingsTag.enableNatpmp,
+                false,
+              ),
+            ]);
+            try {
+              final handle = old.addTorrentData(
+                torrentData: metadata,
+                savePath: retained.path,
+              );
+              handle.unsetFlags(
+                LibtorrentTorrentFlags.autoManaged |
+                    LibtorrentTorrentFlags.paused,
+              );
+              handle.prioritizeFiles([0]);
+              final clock = Stopwatch()..start();
+              while (handle.getFilePriorities().single != 0) {
+                if (clock.elapsed > const Duration(seconds: 10)) {
+                  throw StateError('Legacy priorities');
+                }
+                await Future<void>.delayed(const Duration(milliseconds: 20));
+              }
+              handle.setPiecePriority(0, 7);
+              handle.setPiecePriority(1, 7);
+              handle.connectPeer(address: peer.address, port: peer.port);
+              while (!handle.havePiece(0) ||
+                  !handle.havePiece(1) ||
+                  handle.getDownloadQueue().any((q) => q.writing > 0)) {
+                if (clock.elapsed > const Duration(seconds: 15)) {
+                  throw StateError('Legacy piece');
+                }
+                await Future<void>.delayed(const Duration(milliseconds: 20));
+              }
+            } finally {
+              old.close();
             }
           }
           if (corrupt) {

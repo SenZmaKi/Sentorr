@@ -43,7 +43,19 @@ class StreamHost {
       ),
       entry.scheduler!,
       readAheadBytes: options.readAheadBytes,
-      maxCacheBytes: options.pieceCacheBytes,
+      maxCacheBytes: 0,
+      readRange: (offset, count, cancel) => entry.disk.read(
+        () => entry.files[file.index].path,
+        offset,
+        count,
+        cancel,
+      ),
+      waitReadable: (piece, cancel) => native.waitReadable(
+        entry.handle,
+        piece,
+        cancel,
+        options.pieceTimeout,
+      ),
     ),
   );
 

@@ -58,7 +58,7 @@ Future<TorrentStreamConfig> sessionConfigFor(
     // The playback-position window independently drives disk prefetch.
     readAheadBytes: 2 * 1024 * 1024,
     downloadAheadMinutes: s.limitDownloadAhead ? s.downloadAheadMinutes : 0,
-    // MediaKit owns packet caching; avoid retaining duplicate raw pieces.
+    // File reads use the OS cache; MediaKit owns playback packet caching.
     pieceCacheBytes: 0,
     metadataTimeout: Duration(seconds: s.metadataTimeoutSeconds),
     pieceTimeout: Duration(seconds: s.pieceTimeoutSeconds),

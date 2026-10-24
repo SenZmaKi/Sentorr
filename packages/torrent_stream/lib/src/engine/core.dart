@@ -149,23 +149,6 @@ class EngineCore {
     publish();
   }
 
-  /// Renames files relative to the save path; names must stay inside it.
-  Future<void> rename(String hash, Map<int, String> names) async {
-    final entry = _entry(hash);
-    await entry.lifetime.wait(entry.ready.future);
-    for (final MapEntry(key: index, value: name) in names.entries) {
-      final parts = name.split(RegExp(r'[\\/]'));
-      if (index < 0 ||
-          index >= entry.files.length ||
-          name.isEmpty ||
-          File(name).isAbsolute ||
-          parts.any((p) => p == '..' || p.isEmpty)) {
-        throw ArgumentError('File names must stay within the save directory');
-      }
-      entry.handle.renameFile(index, name);
-    }
-  }
-
   void addPeers(String hash, List peers) => _addPeers(_entry(hash), peers);
 
   void _addPeers(TorrentEntry entry, List peers) => entry.connect(peers);
@@ -187,6 +170,12 @@ class EngineCore {
     if (file.size == 0 || (file.flags & 1) != 0) {
       throw ArgumentError('Select a nonempty, non-pad file');
     }
+    entry.materialized.add(index);
+    await entry.disk.exclusive(
+      () => entry.applyWanted((ready) => waitUntil(entry.lifetime, ready)),
+    );
+    entry.lifetime.check();
+    if (!entry.owners.containsKey(owner)) throw StateError('Not an owner');
     final id = ++_streamIds;
     final host = StreamHost.open(id, owner, entry, file, native, options);
     entry.streams[id] = host;
@@ -259,6 +248,9 @@ class EngineCore {
     for (final stream in entry.streams.values.toList()) {
       await closeStream(stream.id);
     }
+    // Cancelled reads can still be closing their OS handles. Drain them before
+    // native removal/deletion, particularly on Windows.
+    await entry.disk.exclusive(() async {});
     final temporary = entry.storage == TorrentStorage.temporary;
     if (!temporary && !deleteFiles && entry.files.isNotEmpty) {
       try {

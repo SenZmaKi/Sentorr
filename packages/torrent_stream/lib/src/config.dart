@@ -103,7 +103,8 @@ class StreamOptions {
   /// How far past each read pieces are requested.
   final int readAheadBytes;
 
-  /// Memory held for recently read pieces.
+  /// Legacy piece-reader cache budget. File-backed engine streams use the OS
+  /// cache and retain no raw pieces; kept for configuration compatibility.
   final int pieceCacheBytes;
   final Duration pieceTimeout, nativeReadTimeout;
 

@@ -173,6 +173,28 @@ class NativeSession {
       .$2
       .future;
 
+  Future<void> waitReadable(
+    TorrentHandle torrent,
+    int piece,
+    Cancellation cancellation,
+    Duration timeout,
+  ) async {
+    final clock = Stopwatch()..start();
+    while (true) {
+      _lifetime.check();
+      cancellation.check();
+      if (pieceReadable(torrent, piece)) return;
+      if (clock.elapsed >= timeout) {
+        throw TimeoutException('Waiting for readable torrent piece $piece');
+      }
+      await _lifetime.wait(
+        cancellation.wait(
+          Future<void>.delayed(const Duration(milliseconds: 20)),
+        ),
+      );
+    }
+  }
+
   Future<Uint8List> read(
     TorrentHandle torrent,
     int piece,
@@ -232,4 +254,16 @@ class NativeSession {
     session.close();
     await _events.close();
   }
+}
+
+/// havePiece may become true after hashing but before disk writes finish.
+/// A completed piece must also have no unfinished writes in the public queue.
+bool pieceReadable(TorrentHandle torrent, int piece) {
+  if (!torrent.havePiece(piece)) return false;
+  for (final queued in torrent.getDownloadQueue()) {
+    if (queued.pieceIndex == piece) {
+      return queued.writing == 0 && queued.finished == queued.blocksInPiece;
+    }
+  }
+  return true;
 }

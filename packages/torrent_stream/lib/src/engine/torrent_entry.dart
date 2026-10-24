@@ -7,6 +7,7 @@ import 'package:libtorrent_dart/libtorrent_dart.dart';
 import '../engine_models.dart';
 import '../models.dart';
 import 'cancellation.dart';
+import 'file_ranges.dart';
 import 'piece_scheduler.dart';
 import 'stream_host.dart';
 
@@ -33,6 +34,12 @@ class TorrentEntry {
   final bool private;
   String savePath;
   TorrentStorage storage;
+  late final disk = FileRanges(() => savePath);
+
+  // Materialize streamed files instead of storing their bytes in .parts.
+  // Keep this choice for the entry lifetime, independently of download demand.
+  final materialized = <int>{};
+  Set<int>? _appliedMaterialized;
 
   /// Engine-created folders to delete when the torrent leaves.
   final temporary = <Directory>[];
@@ -94,7 +101,10 @@ class TorrentEntry {
   bool _wantedApplied() {
     final applied = _appliedWanted;
     final next = wanted;
-    return applied != null &&
+    return _appliedMaterialized != null &&
+        _appliedMaterialized!.length == materialized.length &&
+        _appliedMaterialized!.containsAll(materialized) &&
+        applied != null &&
         applied.length == next.length &&
         applied.containsAll(next);
   }
@@ -102,11 +112,32 @@ class TorrentEntry {
   Future<void> _setFiles(Future<void> Function(bool Function()) until) async {
     if (_wantedApplied()) return;
     final wanted = this.wanted;
+    final materialized = {...this.materialized};
     final priorities = [
       for (final f in files)
-        wanted.contains(f.index) && (f.flags & 1) == 0 ? wantedPriority : 0,
+        (wanted.contains(f.index) || materialized.contains(f.index)) &&
+                (f.flags & 1) == 0
+            ? wantedPriority
+            : 0,
     ];
+    final base = Uint8List(handle.numPieces);
+    final length = handle.pieceLength;
+    for (final f in files) {
+      if (!wanted.contains(f.index) || f.size == 0 || (f.flags & 1) != 0) {
+        continue;
+      }
+      final last = (f.offset + f.size - 1) ~/ length;
+      for (var p = f.offset ~/ length; p <= last; p++) {
+        base[p] = wantedPriority;
+      }
+    }
     handle.prioritizeFiles(priorities);
+    // Materialization must not request the whole file while disk export runs.
+    if (materialized.isNotEmpty) {
+      _base = base;
+      handle.prioritizePieces(base.toList());
+      scheduler?.reapply();
+    }
     // Priorities apply on libtorrent's thread; windows set before then
     // would be overwritten.
     await until(() {
@@ -116,18 +147,13 @@ class TorrentEntry {
       }
       return true;
     });
-    final base = Uint8List(handle.numPieces);
-    final length = handle.pieceLength;
-    for (final f in files) {
-      if (priorities[f.index] == 0 || f.size == 0) continue;
-      final last = (f.offset + f.size - 1) ~/ length;
-      for (var p = f.offset ~/ length; p <= last; p++) {
-        base[p] = wantedPriority;
-      }
-    }
     _base = base;
+    // File priorities select physical storage, not the streaming demand.
+    // Reset all piece priorities before restoring the scheduler's windows.
+    if (materialized.isNotEmpty) handle.prioritizePieces(base.toList());
     scheduler?.reapply();
     _appliedWanted = wanted;
+    _appliedMaterialized = materialized;
   }
 
   void applyPause() {
@@ -153,6 +179,11 @@ class TorrentEntry {
         port: peer['port'] as int,
       );
     }
+  }
+
+  void refreshFiles() {
+    files = handle.getFiles();
+    _snapshotFiles = List.unmodifiable(files.map(fileOf));
   }
 
   TorrentStreamFile fileOf(TorrentFileEntry f) => TorrentStreamFile(

@@ -74,6 +74,78 @@ void main() {
     expect(loads, 1);
   });
 
+  test(
+    'range reads stay bounded with 128 MiB pieces and never load a piece',
+    () async {
+      bytes.close();
+      final huge = TestHandle(pieceLength: 128 * 1024 * 1024);
+      final reads = <(int, int)>[];
+      final checked = <int>[];
+      bytes = TorrentBytes(
+        huge,
+        const TorrentFileEntry(
+          index: 0,
+          offset: 17,
+          size: 256 * 1024 * 1024,
+          flags: 0,
+          path: 'video.mkv',
+        ),
+        (_, _) => throw StateError('Whole-piece read must not be used'),
+        PieceScheduler(huge),
+        readAheadBytes: 1,
+        readRange: (offset, count, _) async {
+          reads.add((offset, count));
+          return Uint8List.fromList(
+            List.generate(count, (i) => (offset + i) % 251),
+          );
+        },
+        waitReadable: (piece, _) async {
+          checked.add(piece);
+        },
+      );
+      const start = 128 * 1024 * 1024 - 17 - 11;
+      final result = await bytes.read(start, 128 * 1024, Cancellation());
+      expect(result, List.generate(128 * 1024, (i) => (start + i) % 251));
+      expect(checked, [0, 1, 1]);
+      expect(reads.every((r) => r.$2 <= 64 * 1024), isTrue);
+      expect(reads.first, (start, 11));
+      expect(bytes.cachedBytes, 0);
+    },
+  );
+
+  test('range playback waits for availability and cancellation prevents file reads', () async {
+    bytes.close();
+    final ready = Completer<void>();
+    var reads = 0;
+    bytes = TorrentBytes(
+      handle,
+      const TorrentFileEntry(
+        index: 0,
+        offset: 0,
+        size: 16,
+        flags: 0,
+        path: 'video',
+      ),
+      (_, _) => throw StateError('Whole-piece read'),
+      PieceScheduler(handle),
+      readRange: (_, count, _) async {
+        reads++;
+        return Uint8List(count);
+      },
+      waitReadable: (_, _) => ready.future,
+    );
+    final owner = Cancellation();
+    final pending = bytes.read(0, 4, owner);
+    final rejected = expectLater(pending, throwsA(isA<ReadCancelled>()));
+    await Future<void>.delayed(Duration.zero);
+    expect(reads, 0);
+    owner.cancel();
+    await rejected;
+    ready.complete();
+    expect(reads, 0);
+    bytes.release(owner);
+  });
+
   test('cancellation and invalid ranges still reject reads', () async {
     final owner = Cancellation()..cancel();
     await expectLater(bytes.read(0, 4, owner), throwsA(isA<ReadCancelled>()));

@@ -1,5 +1,4 @@
-/// How long a stream's playback reads waited on pieces: the time a stall
-/// spends waiting on the swarm, as opposed to the player or disk.
+/// Playback read latency, including availability waits and local file I/O.
 class ReadWaits {
   final _pending = <int, Stopwatch>{};
   int waits = 0;
@@ -16,7 +15,7 @@ class ReadWaits {
     if (_pending[piece] != clock) return;
     _pending.remove(piece);
     final elapsed = clock.elapsed;
-    // Pieces already on disk return within a millisecond or two.
+    // Ignore fast reads; this measures latency, not just swarm stalls.
     if (elapsed.inMilliseconds <= 5) return;
     waits++;
     waited += elapsed;

@@ -77,12 +77,13 @@ class PlayerChrome extends StatelessWidget {
                 player: engine.player,
                 actions: actions,
                 queue: queue,
+                resolving: session.resolving,
               ),
             ),
           ),
         ),
         // Yields to an open panel, which occupies the same corner.
-        if (queue?.next != null &&
+        if ((queue?.next != null || session.resolving) &&
             !ended &&
             layout.showUpNextCard &&
             ui.panel == PlayerPanel.none)
@@ -176,7 +177,7 @@ class _UpNextSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ui = PlayerUiScope.of(context);
-    final next = session.queue!.next!;
+    final next = session.queue?.next;
     final p = engine.player;
     // Fixed above the bar whether or not it shows: a card that moves with
     // the chrome would drag its hover preview along.
@@ -214,7 +215,7 @@ class _UpNextSlot extends StatelessWidget {
               ),
               child: show
                   ? UpNextCard(
-                      key: ValueKey(next.id),
+                      key: ValueKey(next?.id ?? 'loading-next'),
                       item: next,
                       remaining: remaining,
                       onPlay: actions.next,

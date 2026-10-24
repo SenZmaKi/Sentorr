@@ -20,17 +20,34 @@ class ListPoster extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = entry.title;
-    final standing = t.canHaveEpisodes == true
-        ? ref.watch(seriesStandingProvider(t.id)).value
+    final status = t.canHaveEpisodes == true
+        ? ref.watch(seriesStandingProvider(t.id))
         : null;
+    final standing = status?.value;
+    final loading = status?.isLoading == true && !status!.hasValue;
     return titlePoster(
       t,
       meta: [
-        if (standing != null)
+        if (loading)
+          const MetaItem(
+            'Up next S99 E99',
+            icon: Icons.live_tv_outlined,
+            loading: true,
+          )
+        else if (status?.hasError == true && !status!.hasValue)
+          const MetaItem(
+            'Couldn’t check episodes',
+            icon: Icons.error_outline_rounded,
+          )
+        else if (standing != null)
           MetaItem(standingLabel(standing), icon: Icons.live_tv_outlined),
         if (entry.rewatches > 0)
           MetaItem('Rewatched ${entry.rewatches}×', icon: Icons.replay_rounded),
-        if (standing == null && entry.rewatches == 0) ...titleFacts(t),
+        if (!loading &&
+            status?.hasError != true &&
+            standing == null &&
+            entry.rewatches == 0)
+          ...titleFacts(t),
       ],
       onOpen: () => ref.openTitle(t),
       onPlay: () => ref.playOrPickUp(t),

@@ -161,3 +161,29 @@ class _SkeletonState extends State<Skeleton>
     );
   }
 }
+
+/// A replacement for a whole button label, including its wrapped line height.
+/// Unlike a one-line text skeleton, it reserves the actual label's geometry
+/// when a narrow control or large text makes the eventual words wrap.
+class ButtonLabelSkeleton extends StatelessWidget {
+  const ButtonLabelSkeleton({super.key, required this.sample});
+  final String sample;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final painter = TextPainter(
+        text: TextSpan(text: sample, style: DefaultTextStyle.of(context).style),
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout(maxWidth: constraints.maxWidth);
+      final size = painter.size;
+      painter.dispose();
+      return SizedBox(
+        width: size.width,
+        height: size.height,
+        child: Center(child: Skeleton.text(sample: sample)),
+      );
+    },
+  );
+}

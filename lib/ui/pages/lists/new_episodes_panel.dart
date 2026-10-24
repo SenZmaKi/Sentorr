@@ -11,6 +11,7 @@ import '../../../settings/notifier.dart';
 import '../../components/buttons.dart';
 import '../../components/motion.dart';
 import '../../components/toggle.dart';
+import '../../components/skeleton.dart';
 import '../../shared/theme/theme.dart';
 import '../../../lists/series_standing.dart';
 import '../../shared/standing_label.dart';
@@ -52,10 +53,7 @@ class NewEpisodesPanel extends ConsumerWidget {
             SettingsTile(
               icon: Icons.live_tv_outlined,
               title: s.series.title,
-              subtitle: _reachedLine(
-                s,
-                ref.watch(seriesStandingProvider(s.id)).value,
-              ),
+              subtitleContent: _StandingSubtitle(series: s),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 spacing: Space.s8,
@@ -132,6 +130,26 @@ class _Empty extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _StandingSubtitle extends ConsumerWidget {
+  const _StandingSubtitle({required this.series});
+  final FollowedSeries series;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(seriesStandingProvider(series.id));
+    if (!series.manual && status.isLoading && !status.hasValue) {
+      return const Skeleton.text(sample: 'Up next S99 E99 · Yesterday');
+    }
+    return Text(
+      status.hasError && !status.hasValue
+          ? 'Couldn’t check episodes · ${relativeDay(series.watchedAt)}'
+          : _reachedLine(series, status.value),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }

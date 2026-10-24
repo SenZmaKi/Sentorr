@@ -5,6 +5,8 @@ import 'package:media_kit/media_kit.dart';
 
 import '../../../player/models.dart';
 import '../../components/motion.dart';
+import '../../components/buttons.dart';
+import '../../components/skeleton.dart';
 import '../../components/player_control.dart';
 import '../../shared/picture_in_picture.dart';
 import '../../shared/screen_rotation.dart';
@@ -31,11 +33,13 @@ class BottomBar extends StatelessWidget {
     required this.player,
     required this.actions,
     required this.queue,
+    this.resolving = false,
   });
 
   final Player player;
   final PlayerActions actions;
   final PlayQueue? queue;
+  final bool resolving;
 
   @override
   Widget build(BuildContext context) {
@@ -115,15 +119,15 @@ class BottomBar extends StatelessWidget {
         BarControl.settings,
         BarControl.captions,
         BarControl.torrents,
-        if (queue != null) BarControl.episodes,
-        if (next != null || queue?.canExtend == true) BarControl.next,
+        if (queue != null || resolving) BarControl.episodes,
+        if (queue != null || resolving) BarControl.next,
         if (queue?.previous != null) BarControl.previous,
         if (PictureInPicture.instance.supported) BarControl.popOut,
         if (layout.showVolume) BarControl.volume,
       },
     );
     bool has(BarControl c) => fit.shown.contains(c);
-    final canOpenQueue = (queue?.items.length ?? 0) > 1;
+    final canOpenQueue = queue != null || resolving;
     return Row(
       children: [
         PlayerValue(
@@ -143,7 +147,13 @@ class BottomBar extends StatelessWidget {
             onPressed: actions.previous,
           ),
         if (has(BarControl.next))
-          QueueControl(item: next, onPressed: actions.next),
+          QueueControl(
+            item: next,
+            loading: resolving && next == null,
+            onPressed: next != null || queue?.canExtend == true
+                ? actions.next
+                : null,
+          ),
         if (has(BarControl.volume))
           PlayerValue(
             stream: s.volume,
@@ -157,13 +167,22 @@ class BottomBar extends StatelessWidget {
           child: has(BarControl.episodes)
               ? Align(
                   alignment: Alignment.centerLeft,
-                  child: EpisodeChip(
-                    item: queue!.current,
-                    open: ui.panel == PlayerPanel.queue,
-                    onTap: canOpenQueue
-                        ? () => ui.toggle(PlayerPanel.queue)
-                        : null,
-                  ),
+                  child: queue == null
+                      ? SButton.ghost(
+                          label: 'Loading episodes',
+                          labelContent: const ButtonLabelSkeleton(
+                            sample: 'Episodes',
+                          ),
+                          icon: Icons.video_library_outlined,
+                          onPressed: () => ui.toggle(PlayerPanel.queue),
+                        )
+                      : EpisodeChip(
+                          item: queue.current,
+                          open: ui.panel == PlayerPanel.queue,
+                          onTap: canOpenQueue
+                              ? () => ui.toggle(PlayerPanel.queue)
+                              : null,
+                        ),
                 )
               : const SizedBox.shrink(),
         ),
@@ -212,6 +231,7 @@ class BottomBar extends StatelessWidget {
             ui: ui,
             actions: actions,
             queue: queue,
+            resolving: resolving,
           ),
         if (has(BarControl.rotate))
           PlayerControl(

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../home/watch_activity.dart';
+import '../../../home/continue_rows.dart';
+import '../../../following/notifier.dart';
+import '../../../titles/pick_up.dart';
 import '../../../imdb/models.dart';
-import '../../../watching/models.dart';
 import '../../../watching/notifier.dart';
 import '../../components/buttons.dart';
 import '../../components/cards/card_parts.dart';
@@ -20,6 +21,7 @@ import '../../shared/layout/adaptive.dart';
 import '../../shared/play_route.dart';
 import 'async_shelf.dart';
 import 'home_layout.dart';
+import 'continue_pending_card.dart';
 
 WidgetBuilder _preview(WidgetRef ref, ImdbTitle t) =>
     (_) => PickUpPreview(
@@ -45,19 +47,35 @@ class ContinueWatchingShelf extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final history = ref.read(watchHistoryProvider.notifier);
-    return AsyncShelf<WatchEntry>(
+    final rows = ref.watch(continueRowsProvider);
+    if (rows.isEmpty &&
+        !ref.watch(followedSeriesProvider).any((s) => !s.manual)) {
+      return const SizedBox.shrink();
+    }
+    return AsyncShelf<ContinueRow>(
       icon: Icons.history_rounded,
       title: 'Continue watching',
       count: (n) => '$n to continue',
-      items: ref.watch(continueWatchingProvider),
+      items: AsyncData(rows),
+      emptyMessage: 'No episodes waiting to continue.',
       spec: HomeLayout.of(context).resume,
       gutter: gutter,
       top: top,
       action: editable && ref.watch(inProgressProvider).isNotEmpty
           ? _ClearProgress(onClear: history.clear)
           : null,
-      onRetry: () => ref.invalidate(continueWatchingProvider),
-      cardBuilder: (context, entry, _) {
+      onRetry: () => ref.invalidate(continueRowsProvider),
+      cardBuilder: (context, row, _) {
+        final entry = row.entry;
+        if (entry == null) {
+          return ContinuePendingCard(
+            key: ValueKey(row.title.id),
+            title: row.title,
+            onRetry: row.error == null
+                ? null
+                : () => ref.invalidate(pickUpProvider(row.title.id)),
+          );
+        }
         final show = entry.series ?? entry.title;
         return ResumeCard(
           key: ValueKey(entry.key),

@@ -29,12 +29,14 @@ class MiniChrome extends StatefulWidget {
     required this.item,
     required this.hasNext,
     required this.poppedOut,
+    this.resolvingNext = false,
   });
 
   final Player player;
   final PlayerActions actions;
   final PlaybackItem? item;
   final bool hasNext;
+  final bool resolvingNext;
   final bool poppedOut;
 
   @override
@@ -185,8 +187,20 @@ class _MiniChromeState extends State<MiniChrome> {
                     PlayerControl(
                       size: control,
                       icon: Icons.skip_next_rounded,
-                      tooltip: 'Next',
-                      onPressed: widget.hasNext ? a.next : null,
+                      tooltip: widget.resolvingNext
+                          ? 'Loading next episode'
+                          : 'Next',
+                      child: widget.resolvingNext
+                          ? const SizedBox.square(
+                              dimension: IconSizes.control,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : null,
+                      onPressed: widget.resolvingNext
+                          ? null
+                          : widget.hasNext
+                          ? a.next
+                          : null,
                     ),
                 ],
               ),

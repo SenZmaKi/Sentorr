@@ -22,6 +22,8 @@ class AsyncShelf<T> extends ConsumerWidget {
     required this.cardBuilder,
     required this.onRetry,
     this.subtitle,
+    this.emptyMessage,
+    this.loadingCardBuilder,
     this.count,
     this.action,
     this.gutter,
@@ -31,6 +33,8 @@ class AsyncShelf<T> extends ConsumerWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
+  final String? emptyMessage;
+  final WidgetBuilder? loadingCardBuilder;
 
   /// Optional tally for the header once items arrive, e.g. "5 new".
   final String Function(int length)? count;
@@ -50,7 +54,10 @@ class AsyncShelf<T> extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (items.hasError && !items.hasValue && !ref.watch(onlineProvider)) {
+    if (emptyMessage == null &&
+        items.hasError &&
+        !items.hasValue &&
+        !ref.watch(onlineProvider)) {
       return const SizedBox.shrink();
     }
     final layout = HomeLayout.of(context);
@@ -76,8 +83,16 @@ class AsyncShelf<T> extends ConsumerWidget {
       action: action,
     );
     final content = items.when(
+      skipLoadingOnReload: true,
       data: (list) => list.isEmpty
-          ? null
+          ? emptyMessage == null
+                ? null
+                : shelf(
+                    message: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(emptyMessage!, style: context.type.bodySmall),
+                    ),
+                  )
           : shelf(
               length: list.length,
               builder: (context, i) => cardBuilder(context, list[i], i),
@@ -101,15 +116,17 @@ class AsyncShelf<T> extends ConsumerWidget {
         tileHeight: spec.height,
         artworkHeight: spec.artworkHeight,
         itemCount: 8,
-        itemBuilder: (_, _) => Align(
-          alignment: Alignment.topRight,
-          child: SizedBox(
-            width: spec.artworkWidth,
-            child: CardSkeleton(
-              aspectRatio: spec.artworkWidth / spec.artworkHeight,
+        itemBuilder: (context, _) =>
+            loadingCardBuilder?.call(context) ??
+            Align(
+              alignment: Alignment.topRight,
+              child: SizedBox(
+                width: spec.artworkWidth,
+                child: CardSkeleton(
+                  aspectRatio: spec.artworkWidth / spec.artworkHeight,
+                ),
+              ),
             ),
-          ),
-        ),
       ),
     );
     if (content == null) return const SizedBox.shrink();

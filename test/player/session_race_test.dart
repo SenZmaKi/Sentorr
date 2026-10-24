@@ -9,6 +9,7 @@ import 'package:sentorr/player/queue_builder.dart';
 import 'package:sentorr/player/session.dart';
 
 import '../support/fake_imdb.dart';
+import '../support/fake_library.dart';
 import '../support/fake_playback.dart';
 
 class _SlowBuilder extends QueueBuilder {
@@ -41,7 +42,10 @@ void main() {
   setUp(() {
     builder = _SlowBuilder();
     container = ProviderContainer(
-      overrides: [queueBuilderProvider.overrideWithValue(builder)],
+      overrides: [
+        queueBuilderProvider.overrideWithValue(builder),
+        ...libraryOverrides(),
+      ],
     );
     session = container.read(playerSessionProvider.notifier);
     initial = PlayQueue(
@@ -53,6 +57,23 @@ void main() {
     session.play(PlayTitle(series), queue: initial);
   });
   tearDown(() => container.dispose());
+
+  test('failed next-season metadata stays distinguishable and retries without advancing', () async {
+    session.next();
+    builder.pending.single.completeError(StateError('offline'));
+    await settlePlayback();
+    final failed = container.read(playerSessionProvider)!;
+    expect(failed.resolving, isFalse);
+    expect(failed.error, isA<StateError>());
+    expect(failed.current!.id, initial.current.id);
+    session.retryNext();
+    expect(container.read(playerSessionProvider)!.resolving, isTrue);
+    expect(container.read(playerSessionProvider)!.error, isNull);
+    builder.pending.last.complete(initial.extended(items.skip(2).toList()));
+    await settlePlayback();
+    expect(session.queue!.current.id, initial.current.id);
+    expect(session.queue!.next!.id, items[2].id);
+  });
 
   test(
     'recovery stays paused while the queue changes; normal launches autoplay',

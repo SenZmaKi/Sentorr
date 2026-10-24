@@ -13,6 +13,8 @@ import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_row.dart';
 import '../../components/cards/episode_row_skeleton.dart';
 import '../../components/chips.dart';
+import '../../components/season_chips_loading.dart';
+import '../../components/skeleton.dart';
 import '../../components/download_button.dart';
 import '../../components/elsewhere_button.dart';
 import '../../components/title_link.dart';
@@ -78,12 +80,11 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
   Widget build(BuildContext context) {
     final episodes = widget.queue.kind == QueueKind.episodes;
     final series = _current.series;
-    final seasons = series == null
-        ? const <int>[]
-        : ref
-                  .watch(titleDetailsProvider(series.id))
-                  .whenOrNull(data: (d) => d.seasons) ??
-              [?_season];
+    final details = series == null
+        ? null
+        : ref.watch(titleDetailsProvider(series.id));
+    final seasonsLoading = details?.isLoading == true && !details!.hasValue;
+    final seasons = details?.value?.seasons ?? [?_season];
     final season = _season;
     final state = series != null && season != null
         ? ref.watch(seasonEpisodesProvider((series.id, season)))
@@ -133,13 +134,14 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
               onPressed: widget.onClose,
             ),
           ),
-          if (seasons.length > 1 || downloadable) ...[
+          if (episodes) ...[
             SizedBox(height: dense ? Space.s8 : Space.s16),
             Row(
               children: [
                 Expanded(
-                  child: seasons.length > 1
-                      ? SingleChildScrollView(
+                  child: seasonsLoading
+                      ? const SeasonChipsLoading()
+                      : SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           padding: EdgeInsets.all(dense ? Space.s2 : Space.s4),
                           child: Row(
@@ -153,11 +155,20 @@ class _EpisodesPanelState extends ConsumerState<EpisodesPanel> {
                                 ),
                             ],
                           ),
-                        )
-                      : const SizedBox.shrink(),
+                        ),
                 ),
                 if (downloadable)
-                  SeasonDownloadButton(series: series, season: season),
+                  SeasonDownloadButton(series: series, season: season)
+                else
+                  SizedBox.square(
+                    dimension: context.density.iconButton,
+                    child: seasonsLoading || state?.loading == true
+                        ? const Padding(
+                            padding: EdgeInsets.all(Space.s8),
+                            child: Skeleton(),
+                          )
+                        : null,
+                  ),
               ],
             ),
           ],

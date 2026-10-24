@@ -6,6 +6,7 @@ import '../../components/interactive.dart';
 import '../../components/motion.dart';
 import '../../components/player_control.dart';
 import '../../components/title_artwork.dart';
+import '../../components/skeleton.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'menu_rows.dart';
@@ -17,12 +18,14 @@ class QueueControl extends StatefulWidget {
     required this.item,
     required this.onPressed,
     this.previous = false,
+    this.loading = false,
   });
 
   /// Null when the next season is still to be fetched.
   final PlaybackItem? item;
   final bool previous;
-  final VoidCallback onPressed;
+  final bool loading;
+  final VoidCallback? onPressed;
 
   @override
   State<QueueControl> createState() => _QueueControlState();
@@ -38,7 +41,7 @@ class _QueueControlState extends State<QueueControl> {
     final label = widget.previous ? 'Previous' : 'Next';
     final shortcut = widget.previous ? 'Shift+P' : 'Shift+N';
     return MouseRegion(
-      onEnter: (_) => item == null ? null : _portal.show(),
+      onEnter: (_) => item != null || widget.loading ? _portal.show() : null,
       onExit: (_) => _portal.hide(),
       child: CompositedTransformTarget(
         link: _link,
@@ -52,7 +55,9 @@ class _QueueControlState extends State<QueueControl> {
             child: Align(
               alignment: Alignment.bottomLeft,
               child: IgnorePointer(
-                child: _Peek(item: item!, label: '$label · $shortcut'),
+                child: item == null
+                    ? const _LoadingPeek()
+                    : _Peek(item: item, label: '$label · $shortcut'),
               ),
             ),
           ),
@@ -60,12 +65,22 @@ class _QueueControlState extends State<QueueControl> {
             icon: widget.previous
                 ? Icons.skip_previous_rounded
                 : Icons.skip_next_rounded,
-            tooltip: item == null && !widget.previous
-                ? 'Next season ($shortcut)'
+            tooltip: widget.loading
+                ? 'Loading next episode'
+                : item == null && !widget.previous
+                ? widget.onPressed == null
+                      ? 'No next episode'
+                      : 'Next season ($shortcut)'
                 : '$label ($shortcut)',
             // The preview already identifies the destination.
             showTooltip: item == null,
-            onPressed: widget.onPressed,
+            onPressed: widget.loading ? null : widget.onPressed,
+            child: widget.loading
+                ? const SizedBox.square(
+                    dimension: IconSizes.control,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
           ),
         ),
       ),
@@ -128,7 +143,7 @@ class _Peek extends StatelessWidget {
                   ),
                   Text(
                     item.name,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: context.type.label.copyWith(
                       color: context.colors.foreground,
@@ -257,6 +272,45 @@ class RateBadge extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
+    ),
+  );
+}
+
+class _LoadingPeek extends StatelessWidget {
+  const _LoadingPeek();
+  @override
+  Widget build(BuildContext context) => PlayerMenuSurface(
+    width: 260,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Skeleton(radius: Radii.control),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Space.s4,
+            Space.s8,
+            Space.s4,
+            Space.s4,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Skeleton.text(
+                sample: 'Next · Shift+N',
+                style: context.type.caption,
+              ),
+              Skeleton.text(
+                sample: 'Next episode title',
+                style: context.type.label,
+              ),
+            ],
+          ),
+        ),
+      ],
     ),
   );
 }

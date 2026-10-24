@@ -2,11 +2,13 @@ import 'package:flutter/widgets.dart';
 
 import '../../../player/engine.dart';
 import '../../../player/session.dart';
+import '../../../player/queue_builder.dart';
 import '../../shared/theme/theme.dart';
 import 'episodes_panel.dart';
 import 'panel_slot.dart';
 import 'player_actions.dart';
 import 'player_ui.dart';
+import 'queue_panel_placeholder.dart';
 import 'settings_menu.dart';
 import 'torrents_panel.dart';
 
@@ -37,6 +39,18 @@ SlotPanel? openPlayerPanel({
         onJump: actions.session.jump,
         onBrowse: actions.minimize,
         onClose: ui.closePanel,
+      ),
+    ),
+    PlayerPanel.queue => (
+      width: PlayerMetrics.queueWidth,
+      child: QueuePanelPlaceholder(
+        title: session.request.subject.title,
+        episodes:
+            session.request is PlayEpisode ||
+            session.request.subject.canHaveEpisodes == true,
+        failed: session.error != null,
+        onClose: ui.closePanel,
+        onRetry: actions.session.retryNext,
       ),
     ),
     PlayerPanel.torrents when session.current != null => (

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../home/catalog_rows.dart';
+import '../../../following/tracked.dart';
 import '../../../home/more_like.dart';
 import '../../../home/series_updates.dart';
 import '../../../imdb/models.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/cards/episode_card.dart';
+import '../../components/cards/episode_card_skeleton.dart';
 import '../../components/cards/poster_card.dart';
 import '../../components/cards/title_poster.dart';
 import '../../components/cards/title_preview.dart';
@@ -125,12 +127,17 @@ class NewEpisodesShelf extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(trackedSeriesProvider).isEmpty) {
+      return const SizedBox.shrink();
+    }
     final seasonIds =
         ref.watch(newSeasonsProvider).value?.map((u) => u.series.id).toSet() ??
         <String>{};
     return AsyncShelf<SeriesUpdate>(
       icon: Icons.new_releases_outlined,
       title: 'New in your series',
+      emptyMessage: 'No new episodes or returning seasons.',
+      loadingCardBuilder: (_) => const EpisodeCardSkeleton(),
       subtitle: 'New episodes and returning seasons',
       count: (n) => '$n new',
       items: ref.watch(newSeriesReleasesProvider),

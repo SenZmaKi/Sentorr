@@ -18,6 +18,7 @@ import '../../shared/title_route.dart';
 import '../../shared/play_route.dart';
 import 'cast_column.dart';
 import 'title_episodes.dart';
+import 'title_episodes_loading.dart';
 import 'title_hero.dart';
 import 'title_shelves.dart';
 import '../../shared/layout/adaptive.dart';
@@ -114,7 +115,9 @@ class _TitlePageState extends ConsumerState<TitlePage> {
             // than as a row above them.
             final castBeside =
                 shelves.layout.large && cast.isNotEmpty && seasons.isNotEmpty;
-            final episodes = seasons.isEmpty
+            final episodes = loading && _title.canHaveEpisodes == true
+                ? TitleEpisodesLoading(key: _episodesKey)
+                : seasons.isEmpty
                 ? null
                 : TitleEpisodes(
                     key: _episodesKey,

@@ -96,7 +96,19 @@ Future<int?> _seasonLength(
 /// before any of it was watched or while it cannot be worked out.
 final seriesStandingProvider = FutureProvider.autoDispose
     .family<SeriesStanding?, String>((ref, seriesId) async {
-      final followed = ref.watch(followedProvider(seriesId));
+      // Notification/download preferences and playback timestamps do not
+      // change standing. Keep their updates from restarting metadata work.
+      ref.watch(
+        followedProvider(seriesId).select(
+          (s) => (
+            s?.reached,
+            s == null ? null : s.progress >= FollowedSeries.caughtUpFraction,
+            s?.manual,
+            s?.seasonWatches,
+          ),
+        ),
+      );
+      final followed = ref.read(followedProvider(seriesId));
       if (followed == null) return null;
       final cancel = CancelToken();
       ref.onDispose(cancel.cancel);

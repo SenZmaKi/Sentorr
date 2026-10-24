@@ -145,6 +145,7 @@ class SettingsTile extends StatelessWidget implements SettingsSearchable {
     this.leading,
     required this.title,
     this.subtitle,
+    this.subtitleContent,
     this.keywords = '',
     this.trailing,
     this.below,
@@ -157,6 +158,7 @@ class SettingsTile extends StatelessWidget implements SettingsSearchable {
   final Widget? leading;
   final String title;
   final String? subtitle;
+  final Widget? subtitleContent;
   final String keywords;
   final Widget? trailing;
 
@@ -180,7 +182,14 @@ class SettingsTile extends StatelessWidget implements SettingsSearchable {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: context.type.label.copyWith(color: c.foreground)),
-        if (subtitle != null)
+        if (subtitleContent != null)
+          DefaultTextStyle(
+            style: context.type.bodySmall.copyWith(
+              color: c.foregroundSecondary,
+            ),
+            child: subtitleContent!,
+          )
+        else if (subtitle != null)
           Text(
             subtitle!,
             style: context.type.bodySmall.copyWith(

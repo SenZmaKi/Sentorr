@@ -16,12 +16,14 @@ class BarMore extends StatelessWidget {
     required this.ui,
     required this.actions,
     required this.queue,
+    this.resolving = false,
   });
 
   final List<BarControl> controls;
   final PlayerUi ui;
   final PlayerActions actions;
   final PlayQueue? queue;
+  final bool resolving;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -62,9 +64,18 @@ class BarMore extends StatelessWidget {
       onPressed: () => ui.toggle(PlayerPanel.queue),
     ),
     BarControl.next => MenuAction(
-      'Next',
-      icon: Icons.skip_next_rounded,
-      onPressed: actions.next,
+      resolving && queue?.next == null
+          ? 'Checking next episode…'
+          : queue?.next == null && queue?.canExtend != true
+          ? 'No next episode'
+          : 'Next',
+      icon: resolving && queue?.next == null
+          ? Icons.hourglass_empty_rounded
+          : Icons.skip_next_rounded,
+      stayOpen: resolving,
+      onPressed: queue?.next != null || queue?.canExtend == true
+          ? actions.next
+          : () {},
     ),
     BarControl.captions => MenuAction(
       actions.captions.selected != null

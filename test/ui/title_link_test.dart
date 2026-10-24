@@ -24,6 +24,7 @@ import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
 import '../support/fake_sync.dart';
 import '../support/fake_lists.dart';
+import '../support/fake_following.dart';
 
 void main() {
   final title = fakeTitle(2, series: true);
@@ -163,6 +164,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           ...watchListsOverrides(),
+          ...followedSeriesOverrides(),
           ...libraryOverrides(),
           ...syncOverrides(),
           imdbRepositoryProvider.overrideWithValue(FakeImdbRepository()),

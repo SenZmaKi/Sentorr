@@ -325,12 +325,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                           actions: _actions,
                           item: session.current,
                           hasNext: next != null,
+                          resolvingNext: session.resolving && next == null,
                           poppedOut: view == PlayerView.popOut,
                         ),
                       if (_ended && full)
                         EndScreen(
                           key: ValueKey(session.current?.id),
                           next: next,
+                          resolving: session.resolving && next == null,
+                          error: session.error,
+                          onRetry: _actions.session.retryNext,
                           onPlayNext: _actions.next,
                           onReplay: _replay,
                           onBack: _actions.close,

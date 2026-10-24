@@ -5,6 +5,7 @@ import '../../../imdb/models.dart';
 import '../../../titles/episodes.dart';
 import '../../components/chips.dart';
 import '../../components/section_header.dart';
+import '../../components/skeleton.dart';
 import '../../shared/theme/theme.dart';
 import 'season_download_button.dart';
 import 'season_watched_button.dart';
@@ -87,7 +88,16 @@ class _TitleEpisodesState extends ConsumerState<TitleEpisodes> {
               SeasonDownloadButton(series: widget.series, season: _season),
             ],
           )
-        : null;
+        : SizedBox(
+            width: context.density.iconButton * 2 + Space.s4,
+            height: context.density.iconButton,
+            child: episodes.loading
+                ? const Padding(
+                    padding: EdgeInsets.all(Space.s8),
+                    child: Skeleton(radius: Radii.control),
+                  )
+                : null,
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -98,10 +108,8 @@ class _TitleEpisodesState extends ConsumerState<TitleEpisodes> {
               ? 'Season $_season'
               : '${widget.seasons.length} seasons',
           count: total == null ? null : '$total in season $_season',
-          // With one season there are no chips to sit beside.
-          action: widget.seasons.length == 1 ? download : null,
         ),
-        if (widget.seasons.length > 1) ...[
+        ...[
           const SizedBox(height: Space.s16),
           // The season's download sits at the end of its chips, beside
           // the column of episode downloads below.
@@ -128,7 +136,7 @@ class _TitleEpisodesState extends ConsumerState<TitleEpisodes> {
                   ),
                 ),
               ),
-              if (download != null) ...[
+              ...[
                 const SizedBox(width: Space.s8),
                 // Lines up with the episode rows' download buttons.
                 Padding(

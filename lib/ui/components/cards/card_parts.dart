@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../shared/theme/theme.dart';
+import '../skeleton.dart';
 
 /// Scaled line heights of the text roles cards use, so a row can be sized
 /// before its cards are built.
@@ -17,7 +18,13 @@ class CardLines {
 /// One fact in a metadata line: an optional leading icon, and the mono
 /// role for numbers people compare (ratings, times, counts).
 class MetaItem {
-  const MetaItem(this.label, {this.icon, this.leading, this.technical = false});
+  const MetaItem(
+    this.label, {
+    this.icon,
+    this.leading,
+    this.technical = false,
+    this.loading = false,
+  });
 
   final String label;
   final IconData? icon;
@@ -26,6 +33,7 @@ class MetaItem {
   /// the line gives icons.
   final Widget Function(double size)? leading;
   final bool technical;
+  final bool loading;
 }
 
 /// Facts on one line, icon-led, separated by spacing rather than dots so
@@ -49,6 +57,20 @@ class MetaLine extends StatelessWidget {
       fontSize: base.fontSize,
       height: base.height,
     );
+    if (items.any((item) => item.loading)) {
+      final item = items.firstWhere((item) => item.loading);
+      return Row(
+        children: [
+          if (item.icon != null) ...[
+            Icon(item.icon, size: iconSize, color: fg),
+            const SizedBox(width: Space.s4),
+          ],
+          Expanded(
+            child: Skeleton.text(sample: item.label, style: base),
+          ),
+        ],
+      );
+    }
     // One rich line: facts keep natural widths and only the end ellipsizes,
     // whatever the width or text scale.
     return Text.rich(

@@ -153,6 +153,20 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
     if (s != null && s.queue == null) play(s.request);
   }
 
+  /// Retry queue metadata without restarting the item already playing.
+  void retryNext() {
+    final s = state;
+    if (s == null || s.resolving) return;
+    final queue = s.queue;
+    if (queue != null && queue.canExtend) {
+      _extend(queue, thenAdvance: false);
+    } else {
+      final cancel = _restart();
+      state = s.copyWith(resolving: true);
+      _resolve(s.request, cancel);
+    }
+  }
+
   void next() {
     final queue = state?.queue;
     if (queue == null) return;
@@ -214,6 +228,10 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
         queue: queue.at(at < 0 ? queue.index : at),
         resolving: false,
       );
+      final resolved = state?.queue;
+      if (resolved != null && resolved.next == null && resolved.canExtend) {
+        _extend(resolved, thenAdvance: false);
+      }
     } catch (error, stack) {
       if (!ref.mounted || cancel != _cancel || _cancelled(error)) return;
       _log.warning('Could not build play queue', error, stack);
@@ -247,7 +265,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
     } catch (error, stack) {
       if (!ref.mounted || cancel != _cancel || _cancelled(error)) return;
       _log.warning('Could not load the next season', error, stack);
-      state = state?.copyWith(resolving: false);
+      state = state?.copyWith(error: error, resolving: false);
     } finally {
       if (_extending == cancel) {
         _extending = null;

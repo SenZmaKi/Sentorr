@@ -21,6 +21,8 @@ const shortcutGroups = <(String, List<PlayerShortcut>)>[
         caps: ['0–9'],
         keys: {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'},
       ),
+      (action: 'Playback speed', caps: ['R'], keys: {'r'}),
+      (action: 'Sleep timer', caps: ['Z'], keys: {'z'}),
       (action: 'Slower or faster', caps: ['<', '>'], keys: {'shift', ',', '.'}),
       (action: 'Frame by frame (paused)', caps: [',', '.'], keys: {',', '.'}),
       (
@@ -34,6 +36,8 @@ const shortcutGroups = <(String, List<PlayerShortcut>)>[
     'Sound and captions',
     [
       (action: 'Volume up or down', caps: ['↑', '↓'], keys: {'up', 'down'}),
+      (action: 'Audio tracks', caps: ['A'], keys: {'a'}),
+      (action: 'Subtitle tracks', caps: ['V'], keys: {'v'}),
       (action: 'Mute', caps: ['M'], keys: {'m'}),
       (action: 'Captions on or off', caps: ['C'], keys: {'c'}),
     ],
@@ -43,6 +47,10 @@ const shortcutGroups = <(String, List<PlayerShortcut>)>[
     [
       (action: 'Full screen', caps: ['F'], keys: {'f'}),
       (action: 'Mini player', caps: ['I'], keys: {'i'}),
+      (action: 'Settings', caps: ['S'], keys: {'s'}),
+      (action: 'Take screenshot', caps: ['Shift S'], keys: {'shift', 's'}),
+      (action: 'Pop out', caps: ['O'], keys: {'o'}),
+      (action: 'Close playback', caps: ['Shift X'], keys: {'shift', 'x'}),
       (action: 'Episodes', caps: ['Q'], keys: {'q'}),
       (action: 'Stats for nerds', caps: ['D'], keys: {'d'}),
       (action: 'Torrents', caps: ['T'], keys: {'t'}),

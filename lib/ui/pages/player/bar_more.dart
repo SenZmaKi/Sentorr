@@ -54,7 +54,7 @@ class BarMore extends StatelessWidget {
       onPressed: actions.toggleFullscreen,
     ),
     BarControl.settings => MenuAction(
-      'Settings',
+      'Settings (s)',
       icon: Icons.settings_outlined,
       onPressed: () => ui.toggle(PlayerPanel.settings),
     ),
@@ -95,7 +95,7 @@ class BarMore extends StatelessWidget {
       onPressed: actions.previous,
     ),
     BarControl.popOut => MenuAction(
-      'Pop out',
+      'Pop out (o)',
       icon: Icons.picture_in_picture_alt_rounded,
       onPressed: actions.popOut,
     ),

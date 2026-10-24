@@ -283,7 +283,7 @@ void main() {
         await tester.pump();
         expect(captions.enabled, true);
         expect(find.text('English · Downloading 45%'), findsOneWidget);
-        await tester.tap(find.text('Subtitles'));
+        await tester.tap(find.text('Subtitles (V)'));
         await tester.pumpAndSettle();
         expect(find.text('English'), findsOneWidget);
         expect(find.text('Downloading 45%'), findsOneWidget);

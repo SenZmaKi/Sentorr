@@ -165,7 +165,7 @@ class TopBar extends StatelessWidget {
         const SizedBox(width: Space.s8),
         _BarButton(
           icon: Icons.close_rounded,
-          tooltip: 'Stop and close',
+          tooltip: 'Stop and close (Shift X)',
           onPressed: panelOpen ? null : onClose,
         ),
       ],

@@ -11,7 +11,8 @@ import 'player_ui.dart';
 /// volume, m mute, f full screen, c captions, Shift+N/P next and previous,
 /// </> speed, ,/. a frame back or forward while paused, 0–9 jump to tenths,
 /// i mini player, Esc back. q toggles the episodes panel and ? lists the
-/// shortcuts.
+/// shortcuts. S opens settings, Shift+S saves a screenshot, O pops out,
+/// and Shift+X stops and closes playback.
 class PlayerShortcuts extends StatelessWidget {
   const PlayerShortcuts({
     super.key,
@@ -77,6 +78,24 @@ class PlayerShortcuts extends StatelessWidget {
         () => a.nudgeVolume(-5),
         repeats: true,
       ),
+      LogicalKeyboardKey.keyS when shift => run(
+        () => a.takeScreenshot(context),
+      ),
+      LogicalKeyboardKey.keyS => run(() => a.ui.toggle(PlayerPanel.settings)),
+      LogicalKeyboardKey.keyR => run(
+        () => a.ui.openSettings(PlayerSettingsPage.speed),
+      ),
+      LogicalKeyboardKey.keyA => run(
+        () => a.ui.openSettings(PlayerSettingsPage.audio),
+      ),
+      LogicalKeyboardKey.keyV => run(
+        () => a.ui.openSettings(PlayerSettingsPage.subtitles),
+      ),
+      LogicalKeyboardKey.keyZ => run(
+        () => a.ui.openSettings(PlayerSettingsPage.sleep),
+      ),
+      LogicalKeyboardKey.keyO => run(a.popOut),
+      LogicalKeyboardKey.keyX when shift => run(a.close),
       LogicalKeyboardKey.keyM => run(a.toggleMute),
       LogicalKeyboardKey.keyF => run(a.toggleFullscreen),
       LogicalKeyboardKey.keyC => run(a.toggleSubtitles),

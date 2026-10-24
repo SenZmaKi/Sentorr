@@ -11,13 +11,12 @@ import 'menu_rows.dart';
 import 'audio_selection.dart';
 import 'track_labels.dart';
 import 'player_actions.dart';
+import 'player_ui.dart';
 import 'player_value.dart';
 import 'player_layout.dart';
 import 'screenshot_action.dart';
 
 export 'track_labels.dart' show audioLabel, subtitleLabel;
-
-enum _Page { root, speed, audio, subtitles, sleep }
 
 /// Player settings, one level deep like YouTube's: speed, audio and
 /// subtitle tracks, and a sleep timer. Audio language defaults apply to each file.
@@ -32,13 +31,11 @@ class SettingsMenu extends ConsumerStatefulWidget {
 }
 
 class _SettingsMenuState extends ConsumerState<SettingsMenu> {
-  _Page _page = _Page.root;
-
-  void _go(_Page page) => setState(() => _page = page);
+  void _go(PlayerSettingsPage page) => widget.actions.ui.openSettings(page);
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: widget.actions.captions,
+    listenable: Listenable.merge([widget.actions.captions, widget.actions.ui]),
     builder: (context, _) => _build(context),
   );
 
@@ -80,19 +77,22 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
                       initial: p.state.rate,
                       builder: (context, rate) => Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: switch (_page) {
-                          _Page.root => _root(
+                        children: switch (widget.actions.ui.settingsPage) {
+                          PlayerSettingsPage.root => _root(
                             tracks,
                             reportedTrack.copyWith(audio: audio),
                             rate,
                           ),
-                          _Page.speed => _speed(rate),
-                          _Page.audio => _audio(
+                          PlayerSettingsPage.speed => _speed(rate),
+                          PlayerSettingsPage.audio => _audio(
                             tracks,
                             reportedTrack.copyWith(audio: audio),
                           ),
-                          _Page.subtitles => _subtitles(tracks, reportedTrack),
-                          _Page.sleep => _sleep(),
+                          PlayerSettingsPage.subtitles => _subtitles(
+                            tracks,
+                            reportedTrack,
+                          ),
+                          PlayerSettingsPage.sleep => _sleep(),
                         },
                       ),
                     ),
@@ -116,24 +116,24 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
     return [
       PlayerMenuRow(
         icon: Icons.speed_rounded,
-        label: 'Playback speed',
+        label: 'Playback speed (R)',
         value: rateLabel(rate),
         chevron: true,
-        onTap: () => _go(_Page.speed),
+        onTap: () => _go(PlayerSettingsPage.speed),
       ),
       PlayerMenuRow(
         icon: Icons.audiotrack_outlined,
-        label: 'Audio',
+        label: 'Audio (A)',
         value: _isReal(track.audio.id)
             ? audioLabel(track.audio)
             : '${audio.length} available',
         scrollValue: _isReal(track.audio.id),
         chevron: audio.isNotEmpty,
-        onTap: audio.isNotEmpty ? () => _go(_Page.audio) : null,
+        onTap: audio.isNotEmpty ? () => _go(PlayerSettingsPage.audio) : null,
       ),
       PlayerMenuRow(
         icon: Icons.subtitles_outlined,
-        label: 'Subtitles',
+        label: 'Subtitles (V)',
         value: !captions.active
             ? '$count available'
             : captions.selected != null
@@ -145,11 +145,11 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
             : 'On',
         scrollValue: captions.active,
         chevron: available,
-        onTap: available ? () => _go(_Page.subtitles) : null,
+        onTap: available ? () => _go(PlayerSettingsPage.subtitles) : null,
       ),
       PlayerMenuRow(
         icon: Icons.bedtime_outlined,
-        label: 'Sleep timer',
+        label: 'Sleep timer (Z)',
         value: switch (timer) {
           null => 'Off',
           SleepTimer(endOfItem: true) => 'End of video',
@@ -158,7 +158,7 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
           _ => 'On',
         },
         chevron: true,
-        onTap: () => _go(_Page.sleep),
+        onTap: () => _go(PlayerSettingsPage.sleep),
       ),
       ScreenshotAction(player: widget.player, actions: widget.actions),
       PlayerMenuRow(
@@ -179,7 +179,10 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
   }
 
   List<Widget> _speed(double rate) => [
-    PlayerMenuHeader(title: 'Playback speed', onBack: () => _go(_Page.root)),
+    PlayerMenuHeader(
+      title: 'Playback speed',
+      onBack: () => _go(PlayerSettingsPage.root),
+    ),
     for (final r in PlayerActions.rates)
       PlayerMenuRow(
         label: rateLabel(r),
@@ -189,7 +192,10 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
   ];
 
   List<Widget> _audio(Tracks tracks, Track track) => [
-    PlayerMenuHeader(title: 'Audio', onBack: () => _go(_Page.root)),
+    PlayerMenuHeader(
+      title: 'Audio',
+      onBack: () => _go(PlayerSettingsPage.root),
+    ),
     for (final t in _realAudio(tracks))
       PlayerMenuRow(
         label: audioLabel(t),
@@ -200,7 +206,10 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
   ];
 
   List<Widget> _subtitles(Tracks tracks, Track track) => [
-    PlayerMenuHeader(title: 'Subtitles', onBack: () => _go(_Page.root)),
+    PlayerMenuHeader(
+      title: 'Subtitles',
+      onBack: () => _go(PlayerSettingsPage.root),
+    ),
     PlayerMenuRow(
       label: 'Off',
       selected: !widget.actions.captions.enabled,
@@ -234,7 +243,10 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
     final timer = ref.watch(sleepTimerProvider);
     final notifier = ref.read(sleepTimerProvider.notifier);
     return [
-      PlayerMenuHeader(title: 'Sleep timer', onBack: () => _go(_Page.root)),
+      PlayerMenuHeader(
+        title: 'Sleep timer',
+        onBack: () => _go(PlayerSettingsPage.root),
+      ),
       PlayerMenuRow(
         label: 'Off',
         selected: timer == null,

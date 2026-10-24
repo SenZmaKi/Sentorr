@@ -80,9 +80,15 @@ void main() {
       );
       expect(rect.top, 16);
       expect(rect.bottom, size.height - (size.width >= 1440 ? 16 : 96));
-      await tester.tap(find.text('Playback speed'));
+      await tester.tap(find.text('Playback speed (R)'));
       await tester.pumpAndSettle();
       expect(find.text('0.25×'), findsOneWidget);
+      ui.openSettings(PlayerSettingsPage.sleep);
+      await tester.pumpAndSettle();
+      expect(find.text('15 minutes'), findsOneWidget);
+      expect(find.text('0.25×'), findsNothing);
+      ui.openSettings(PlayerSettingsPage.speed);
+      await tester.pumpAndSettle();
       expect(tester.getRect(find.byType(SettingsMenu)), rect);
       ui.fullscreen = false;
       await tester.pumpAndSettle();

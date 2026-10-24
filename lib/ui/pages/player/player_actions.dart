@@ -11,6 +11,7 @@ import '../../shared/player_view.dart';
 import '../../shared/screen_rotation.dart';
 import '../../shared/window_manager.dart';
 import 'player_ui.dart';
+import 'player_screenshot.dart';
 import 'shortcuts_dialog.dart';
 
 /// Every viewer command, shared by buttons, shortcuts and gestures so each
@@ -31,6 +32,11 @@ class PlayerActions {
   final PlayerSessionNotifier session;
   final PlayerUi ui;
   final PlayerViewNotifier view;
+
+  late final _screenshot = PlayerScreenshot(engine.player, session, ui);
+
+  Future<void> takeScreenshot(BuildContext context) =>
+      _screenshot.capture(() => context.mounted);
 
   Player get _player => engine.player;
   PlaybackSubtitles get captions => engine.streaming.subtitles;

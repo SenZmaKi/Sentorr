@@ -206,7 +206,7 @@ class BottomBar extends StatelessWidget {
         if (has(BarControl.settings))
           PlayerControl(
             icon: Icons.settings_outlined,
-            tooltip: 'Settings',
+            tooltip: 'Settings (s)',
             selected: ui.panel == PlayerPanel.settings,
             onPressed: () => ui.toggle(PlayerPanel.settings),
             child: AnimatedRotation(
@@ -219,7 +219,7 @@ class BottomBar extends StatelessWidget {
         if (has(BarControl.popOut))
           PlayerControl(
             icon: Icons.picture_in_picture_alt_rounded,
-            tooltip: 'Pop out',
+            tooltip: 'Pop out (o)',
             onPressed: actions.popOut,
           ),
         if (fit.overflow.isNotEmpty)

@@ -7,6 +7,8 @@ import '../../shared/theme/theme.dart';
 /// A floating panel over the video; one at a time.
 enum PlayerPanel { none, settings, queue, torrents }
 
+enum PlayerSettingsPage { root, speed, audio, subtitles, sleep }
+
 /// A brief acknowledgement in the middle of the picture, YouTube style:
 /// a glyph and optional words that fade out on their own.
 class PlayerFeedback {
@@ -96,7 +98,17 @@ class PlayerUi extends ChangeNotifier {
     notifyListeners();
   }
 
+  PlayerSettingsPage _settingsPage = PlayerSettingsPage.root;
+  PlayerSettingsPage get settingsPage => _settingsPage;
+
+  void openSettings(PlayerSettingsPage page) {
+    _settingsPage = page;
+    _panel = PlayerPanel.settings;
+    notifyListeners();
+  }
+
   void toggle(PlayerPanel panel) {
+    if (panel == PlayerPanel.settings) _settingsPage = PlayerSettingsPage.root;
     _panel = _panel == panel ? PlayerPanel.none : panel;
     if (_panel == PlayerPanel.none) wake();
     notifyListeners();

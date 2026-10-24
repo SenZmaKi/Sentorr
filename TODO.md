@@ -1,1 +1,0 @@
-- New episodes number badge should show actual new episodes not number of shows we're tracking for new episodes

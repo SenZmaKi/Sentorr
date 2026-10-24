@@ -45,6 +45,17 @@ switching channels. Failed lookups leave downloads disabled and direct visitors
 to the release list. Without JavaScript, stable links and a nightly-release link
 remain available.
 
+For a local Nightly debug run, use `./tool/run-nightly.sh` (additional Flutter
+arguments are forwarded). It applies the same native identity and moon-badged
+artwork as CI in `.dart_tool/nightly-run`, using an isolated Python environment
+with Pillow. The first run installs Pillow and builds its own Flutter cache.
+The native bundle identifier matches installed Nightly, so macOS uses its existing
+Nightly sandbox and viewing history. Close the installed Nightly before running
+this build, since both use the same data. Dart sources and local packages are
+linked to the original checkout for hot reload; rerun the script after changing
+native files, assets or dependencies. Stable source artwork and native identity
+remain untouched.
+
 Local validation: `npm run check` and `npm run build` in `website/`,
 `flutter test test/updates`, and Python with Pillow:
 `python -m unittest discover -s tool/release/tests`.

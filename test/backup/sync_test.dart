@@ -276,6 +276,80 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
   });
 
+  testWidgets('foreground PC publishes progress before phone resumes', (
+    tester,
+  ) async {
+    final remote = _Remote();
+    final pc = _device(remote), phone = _device(remote);
+    await _sync(pc);
+    await _sync(phone);
+    final uploads = remote.uploads;
+    Future<void> record(int minutes) => pc
+        .read(watchHistoryProvider.notifier)
+        .record(
+          _watched(1, Duration.zero).item,
+          position: Duration(minutes: minutes),
+          duration: const Duration(minutes: 90),
+        );
+    await record(20);
+    await tester.pump(const Duration(seconds: 59));
+    expect(remote.uploads, uploads);
+    // Continuous playback must not keep postponing publication.
+    await record(21);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(remote.uploads, uploads + 1);
+    await record(22);
+    await tester.pump(const Duration(seconds: 5));
+    expect(remote.uploads, uploads + 1);
+    await tester.pump(const Duration(seconds: 55));
+    await tester.pump();
+    expect(remote.uploads, uploads + 2);
+    expect(phone.read(watchHistoryProvider), isEmpty);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pump();
+    expect(
+      phone.read(watchHistoryProvider).single.position,
+      const Duration(minutes: 22),
+    );
+    pc.dispose();
+    phone.dispose();
+  });
+
+  testWidgets('playback during upload waits for the automatic batch', (
+    tester,
+  ) async {
+    final remote = _Remote();
+    final pc = _device(remote);
+    await _sync(pc);
+    Future<void> record(int minutes) => pc
+        .read(watchHistoryProvider.notifier)
+        .record(
+          _watched(1, Duration.zero).item,
+          position: Duration(minutes: minutes),
+          duration: const Duration(minutes: 90),
+        );
+    await record(20);
+    remote.afterUpload = () => record(21);
+    final uploads = remote.uploads;
+    await tester.pump(const Duration(minutes: 1));
+    await tester.pump();
+    expect(remote.uploads, uploads + 1);
+    await tester.pump(const Duration(seconds: 59));
+    expect(remote.uploads, uploads + 1);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(remote.uploads, uploads + 2);
+    expect(
+      (await remote.download())!.bundle.watch.entries.single.position,
+      const Duration(minutes: 21),
+    );
+    pc.dispose();
+  });
+
   testWidgets('resume pulls remote lists and progress after a recent sync', (
     tester,
   ) async {
@@ -312,6 +386,8 @@ void main() {
     expect(pc.read(watchListsProvider), isEmpty);
     await _sync(phone);
     expect(phone.read(watchListsProvider), isEmpty);
+    pc.dispose();
+    phone.dispose();
   });
 
   test('devices that sync in turn end up with the same history', () async {

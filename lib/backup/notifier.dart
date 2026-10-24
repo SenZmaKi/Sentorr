@@ -85,6 +85,8 @@ final backupProvider = NotifierProvider<BackupNotifier, BackupState>(
 class BackupNotifier extends Notifier<BackupState> {
   static const _attempts = 3;
 
+  static const _publishDelay = Duration(minutes: 1);
+
   /// Backgrounding clean state only syncs when the last sync is older.
   static const _staleAfter = Duration(minutes: 10);
 
@@ -108,7 +110,12 @@ class BackupNotifier extends Notifier<BackupState> {
     void changed() {
       _dirty = true;
       _changes++;
-      _coordinator.changed();
+      // A foreground desktop may keep playing for hours without a lifecycle
+      // transition. Batch updates for a minute, including changes during an
+      // upload, rather than repeatedly draining immediate follow-up passes.
+      if (state.connected) {
+        _coordinator.schedule(_publishDelay);
+      }
     }
 
     ref.read(userStateSyncProvider).listen(ref, changed);
@@ -191,7 +198,8 @@ class BackupNotifier extends Notifier<BackupState> {
 
   /// Pulls and merges the remote state, then publishes the result. Mutable
   /// backends can request a retry; Drive retains concurrent snapshots instead.
-  /// Changes during an upload cause a follow-up pass.
+  /// Local changes during an upload schedule the next automatic batch;
+  /// explicit overlapping sync requests still cause a follow-up pass.
   Future<void> _sync() async {
     final generation = _generation;
     bool valid() => ref.mounted && generation == _generation;

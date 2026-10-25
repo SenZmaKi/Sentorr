@@ -39,6 +39,30 @@ class TestBytes implements ByteSource {
 }
 
 void main() {
+  test('preview route does not read or release playback source', () async {
+    final playback = TestBytes();
+    final preview = TestBytes(length: playback.length);
+    final host = MediaServer(playback, preview: preview);
+    final client = HttpClient();
+    await host.start();
+    try {
+      final request = await client.getUrl(Uri.parse('${host.uri}/preview'));
+      request.headers.set('Range', 'bytes=3-17');
+      final response = await request.close();
+      final bytes = await response.fold<List<int>>(
+        [],
+        (all, chunk) => all..addAll(chunk),
+      );
+      expect(bytes, preview.data.sublist(3, 18));
+      expect(playback.reads, 0);
+      expect(playback.releases, 0);
+      expect(preview.reads, 1);
+    } finally {
+      client.close(force: true);
+      await host.close();
+    }
+  });
+
   test('close while binding prevents a late listener', () async {
     final server = MediaServer(TestBytes());
     final starting = server.start();

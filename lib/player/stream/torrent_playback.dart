@@ -142,6 +142,19 @@ class TorrentPlayback {
   DownloadAhead? _downloadAhead;
   TorrentStreamSession? _session;
   TorrentStream? _served;
+
+  /// Peers are excluded: only this machine's verified torrent pieces or files.
+  String? get previewSource {
+    if (_served case final served?) return '${served.uri}/preview';
+    if (_local &&
+        _peerFile == null &&
+        _player.state.playlist.medias.isNotEmpty) {
+      final uri = _player.state.playlist.medias.first.uri;
+      if (Uri.tryParse(uri)?.scheme == 'file') return uri;
+    }
+    return null;
+  }
+
   TorrentCandidate? _candidate;
   StreamSubscription<TorrentStreamState>? _transfer;
   CancelToken? _cancel;

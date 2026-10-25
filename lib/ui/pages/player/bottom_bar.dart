@@ -306,6 +306,7 @@ class _Scrubber extends StatelessWidget {
           stream: s.position,
           initial: player.state.position,
           builder: (context, position) => SeekBar(
+            previews: actions.engine.previews,
             position: position,
             duration: duration,
             downloaded: downloaded,

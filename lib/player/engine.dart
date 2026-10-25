@@ -20,6 +20,9 @@ import '../following/notifier.dart';
 import '../lists/notifier.dart';
 import '../watching/notifier.dart';
 import 'models.dart';
+import 'preview/controller.dart';
+import 'preview/availability.dart';
+import 'preview/performance_probe.dart';
 import '../sync/shared_streams.dart';
 import 'next_warmup.dart';
 import '../torrents/match.dart';
@@ -96,8 +99,22 @@ class PlaybackEngine {
       }
     });
     _unfeed = feedPlaybackEvents(events, player, buffering, streaming.status);
+    _previewProbe?.record({'event': 'player-ready'});
   }
 
+  late final PreviewPerformanceProbe? _previewProbe =
+      const bool.fromEnvironment('SENTORR_PREVIEW_DIAGNOSTICS')
+      ? PreviewPerformanceProbe(player, () => previews, buffering)
+      : null;
+  late final PreviewController previews = PreviewController(
+    onDiagnostic: (data) {
+      events.add('preview', data);
+      _previewProbe?.record(data);
+    },
+    available: (target) => previewAvailableAt(streaming.status.value, target),
+    source: () => streaming.previewSource,
+    allowed: () => !player.state.buffering && !buffering.value,
+  );
   final Player player;
   final buffering = PlaybackBuffering();
 
@@ -166,6 +183,11 @@ class PlaybackEngine {
   Future<void> seek(Duration position) async {
     cacheRanges.invalidate();
     events.seeking(player.state.position, position);
+    _previewProbe?.record({
+      'event': 'playback-seek',
+      'fromSeconds': player.state.position.inMilliseconds / 1000,
+      'targetSeconds': position.inMilliseconds / 1000,
+    });
     await buffering.attach(player);
     buffering.beginSeek();
     try {
@@ -218,6 +240,8 @@ class PlaybackEngine {
 
   Future<void> _dispose() => cleanupAll([
     () async => beforeDispose?.call(),
+    () => _previewProbe?.dispose(),
+    previews.dispose,
     _errors.cancel,
     _native.cancel,
     _unfeed,

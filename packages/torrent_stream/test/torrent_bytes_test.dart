@@ -9,6 +9,13 @@ import 'package:torrent_stream/src/engine/torrent_bytes.dart';
 
 import 'read_support.dart';
 
+class PreviewHandle extends TestHandle {
+  PreviewHandle() : super(lastPieceSize: 7);
+  final available = <int>{0, 1, 2};
+  @override
+  bool havePiece(int piece) => available.contains(piece);
+}
+
 void main() {
   final pieces = [
     for (var piece = 0; piece < 3; piece++)
@@ -21,7 +28,7 @@ void main() {
   var loads = 0;
   setUp(() {
     loads = 0;
-    handle = TestHandle(lastPieceSize: 7);
+    handle = PreviewHandle();
     bytes = TorrentBytes(
       handle,
       const TorrentFileEntry(
@@ -40,6 +47,27 @@ void main() {
     );
   });
   tearDown(() => bytes.close());
+
+  test(
+    'preview reads verified pieces without scheduling or startup changes',
+    () async {
+      expect(
+        await bytes.readAvailable(10, 8, Cancellation()),
+        List.generate(8, (i) => 13 + i),
+      );
+      expect(handle.calls, 0);
+      expect(bytes.startup.begun, isFalse);
+      expect(bytes.cachedBytes, 0);
+      (handle as PreviewHandle).available.remove(1);
+      final before = loads;
+      await expectLater(
+        bytes.readAvailable(10, 8, Cancellation()),
+        throwsStateError,
+      );
+      expect(loads, before);
+      expect(handle.calls, 0);
+    },
+  );
 
   test(
     'single-piece reads borrow immutable bytes and remain valid after eviction',
@@ -102,6 +130,7 @@ void main() {
         waitReadable: (piece, _) async {
           checked.add(piece);
         },
+        isReadable: (_) => true,
       );
       const start = 128 * 1024 * 1024 - 17 - 11;
       final result = await bytes.read(start, 128 * 1024, Cancellation());
@@ -113,38 +142,46 @@ void main() {
     },
   );
 
-  test('range playback waits for availability and cancellation prevents file reads', () async {
-    bytes.close();
-    final ready = Completer<void>();
-    var reads = 0;
-    bytes = TorrentBytes(
-      handle,
-      const TorrentFileEntry(
-        index: 0,
-        offset: 0,
-        size: 16,
-        flags: 0,
-        path: 'video',
-      ),
-      (_, _) => throw StateError('Whole-piece read'),
-      PieceScheduler(handle),
-      readRange: (_, count, _) async {
-        reads++;
-        return Uint8List(count);
-      },
-      waitReadable: (_, _) => ready.future,
-    );
-    final owner = Cancellation();
-    final pending = bytes.read(0, 4, owner);
-    final rejected = expectLater(pending, throwsA(isA<ReadCancelled>()));
-    await Future<void>.delayed(Duration.zero);
-    expect(reads, 0);
-    owner.cancel();
-    await rejected;
-    ready.complete();
-    expect(reads, 0);
-    bytes.release(owner);
-  });
+  test(
+    'range playback waits for availability and cancellation prevents file reads',
+    () async {
+      bytes.close();
+      final ready = Completer<void>();
+      var reads = 0;
+      bytes = TorrentBytes(
+        handle,
+        const TorrentFileEntry(
+          index: 0,
+          offset: 0,
+          size: 16,
+          flags: 0,
+          path: 'video',
+        ),
+        (_, _) => throw StateError('Whole-piece read'),
+        PieceScheduler(handle),
+        readRange: (_, count, _) async {
+          reads++;
+          return Uint8List(count);
+        },
+        waitReadable: (_, _) => ready.future,
+        isReadable: (_) => false,
+      );
+      final owner = Cancellation();
+      final pending = bytes.read(0, 4, owner);
+      final rejected = expectLater(pending, throwsA(isA<ReadCancelled>()));
+      await Future<void>.delayed(Duration.zero);
+      expect(reads, 0);
+      await expectLater(
+        bytes.readAvailable(0, 4, Cancellation()),
+        throwsStateError,
+      );
+      owner.cancel();
+      await rejected;
+      ready.complete();
+      expect(reads, 0);
+      bytes.release(owner);
+    },
+  );
 
   test('cancellation and invalid ranges still reject reads', () async {
     final owner = Cancellation()..cancel();

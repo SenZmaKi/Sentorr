@@ -80,6 +80,8 @@ abstract final class PlayerMetrics {
   static const double track = 4;
   static const double trackActive = 6;
   static const double thumb = 14;
+  static const double previewWidth = 240;
+  static const double previewAspectRatio = 16 / 9;
 
   /// Floating panels over video: settings menu and queue.
   static const double menuWidth = 280;

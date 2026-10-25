@@ -7,7 +7,8 @@ import 'cancellation.dart';
 import 'http_range.dart';
 
 class MediaServer {
-  MediaServer(this.source, {this.onEvent});
+  MediaServer(this.source, {this.onEvent, this.preview});
+  final ByteSource? preview;
   final ByteSource source;
   final void Function(Map<String, Object?>)? onEvent;
   final _requests = <Cancellation>{};
@@ -56,7 +57,11 @@ class MediaServer {
   Future<void> _serve(HttpRequest request) async {
     final response = request.response;
     unawaited(response.done.then((_) {}, onError: (Object _) {}));
-    if (_closed || request.uri.path != uri.path) {
+    final previewRequest = request.uri.path == '${uri.path}/preview';
+    final source = previewRequest ? preview : this.source;
+    if (_closed ||
+        source == null ||
+        (request.uri.path != uri.path && !previewRequest)) {
       response.statusCode = HttpStatus.notFound;
       await response.close();
       return;

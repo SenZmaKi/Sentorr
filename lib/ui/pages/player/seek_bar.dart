@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../../../player/preview/controller.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -20,8 +22,10 @@ class SeekBar extends StatefulWidget {
     required this.downloaded,
     required this.onSeek,
     this.onScrubbing,
+    this.previews,
   });
 
+  final PreviewController? previews;
   final Duration position, duration;
   final List<({double start, double end})> downloaded;
   final ValueChanged<Duration> onSeek;
@@ -38,6 +42,7 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
   double? _hover; // 0–1 under the pointer
   double? _drag; // 0–1 while dragging
   bool _focused = false;
+  String? _previewSource;
 
   // A released seek is shown until playback reports it, so the thumb does
   // not snap back while the stream catches up.
@@ -67,6 +72,14 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
   @override
   void didUpdateWidget(SeekBar old) {
     super.didUpdateWidget(old);
+    final source = widget.previews?.source();
+    if (source != _previewSource) {
+      _previewSource = source;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _requestPreview();
+      });
+    }
     final pending = _pending;
     if (pending != null &&
         (widget.position - pending).abs() < const Duration(seconds: 2)) {
@@ -75,7 +88,13 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
     }
   }
 
+  void _requestPreview() {
+    final fraction = _drag ?? _hover;
+    widget.previews?.request(fraction == null ? null : _at(fraction));
+  }
+
   void _syncActive() {
+    _requestPreview();
     // Touch has no hover to reveal the thumb, so it shows with the chrome.
     final on =
         _hover != null || _drag != null || _focused || context.density.isTouch;
@@ -113,6 +132,7 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
+    widget.previews?.request(null);
     _active.dispose();
     _pendingTimeout?.cancel();
     super.dispose();
@@ -156,9 +176,12 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
                     ? (d) => _startDrag(_fraction(d.localPosition, width))
                     : null,
                 onHorizontalDragUpdate: enabled
-                    ? (d) => setState(
-                        () => _drag = _fraction(d.localPosition, width),
-                      )
+                    ? (d) {
+                        setState(
+                          () => _drag = _fraction(d.localPosition, width),
+                        );
+                        _syncActive();
+                      }
                     : null,
                 onHorizontalDragEnd: enabled ? (_) => _endDrag() : null,
                 onHorizontalDragCancel: enabled ? _endDrag : null,
@@ -189,11 +212,22 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
                         ),
                       ),
                       if (preview != null && enabled)
-                        SeekTimeBubble(
-                          label: clockLabel(_at(preview)),
-                          x: preview * width,
-                          width: width,
-                        ),
+                        if (widget.previews == null)
+                          SeekTimeBubble(
+                            label: clockLabel(_at(preview)),
+                            x: preview * width,
+                            width: width,
+                          )
+                        else
+                          ValueListenableBuilder(
+                            valueListenable: widget.previews!,
+                            builder: (context, image, _) => SeekTimeBubble(
+                              image: image,
+                              label: clockLabel(_at(preview)),
+                              x: preview * width,
+                              width: width,
+                            ),
+                          ),
                     ],
                   ),
                 ),

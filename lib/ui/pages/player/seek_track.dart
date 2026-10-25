@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../../shared/theme/theme.dart';
@@ -98,42 +100,82 @@ class SeekTrackPainter extends CustomPainter {
 class SeekTimeBubble extends StatelessWidget {
   const SeekTimeBubble({
     required this.label,
+    this.image,
     required this.x,
     required this.width,
   });
 
+  final Uint8List? image;
   final String label;
   final double x, width;
 
-  static const _half = 44.0;
-
   @override
   Widget build(BuildContext context) {
-    final left = (x - _half).clamp(0.0, (width - _half * 2).clamp(0.0, width));
+    final bubbleWidth = (image == null ? 88.0 : PlayerMetrics.previewWidth)
+        .clamp(0.0, width);
+    final left = (x - bubbleWidth / 2).clamp(0.0, width - bubbleWidth);
+    final colors = context.player;
+    final radius = BorderRadius.circular(Radii.control);
     return Positioned(
       left: left,
       bottom: Space.s24 + Space.s4,
-      width: _half * 2,
+      width: bubbleWidth,
       child: IgnorePointer(
-        child: Center(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: context.player.controlSurface,
-              borderRadius: BorderRadius.circular(Radii.chip),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Space.s8,
-                vertical: Space.s2,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (image != null) ...[
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: radius,
+                  boxShadow: context.depth.of(SurfaceDepth.floating).shadows,
+                ),
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  foregroundDecoration: BoxDecoration(
+                    borderRadius: radius,
+                    border: Border.all(
+                      color: colors.previewBorder,
+                      width: Borders.edge,
+                    ),
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.previewBackdrop,
+                    borderRadius: radius,
+                  ),
+                  child: AspectRatio(
+                    aspectRatio: PlayerMetrics.previewAspectRatio,
+                    child: Image.memory(
+                      image!,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                      excludeFromSemantics: true,
+                    ),
+                  ),
+                ),
               ),
-              child: Text(
-                label,
-                style: context.type.timecode.copyWith(
-                  color: context.player.foreground,
+              const SizedBox(height: Space.s8),
+            ],
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.controlSurface,
+                borderRadius: BorderRadius.circular(Radii.full),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Space.s12,
+                  vertical: Space.s4,
+                ),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: context.type.timecode.copyWith(
+                    color: colors.foreground,
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

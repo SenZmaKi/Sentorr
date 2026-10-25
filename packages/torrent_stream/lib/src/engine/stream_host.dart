@@ -12,6 +12,8 @@ import 'media_bootstrap.dart';
 import 'media_server.dart';
 import 'native_session.dart';
 import 'torrent_bytes.dart';
+import 'byte_source.dart';
+import 'dart:typed_data';
 import 'torrent_entry.dart';
 
 /// One file of a torrent served over loopback HTTP for one owner, reading
@@ -56,6 +58,7 @@ class StreamHost {
         cancel,
         options.pieceTimeout,
       ),
+      isReadable: (piece) => pieceReadable(entry.handle, piece),
     ),
   );
 
@@ -90,7 +93,10 @@ class StreamHost {
   /// Read errors surface through HTTP; warming cannot prevent serving.
   Future<String> start(bool prepare) async {
     lifetime.check();
-    final server = this.server = MediaServer(bytes);
+    final server = this.server = MediaServer(
+      bytes,
+      preview: _PreviewBytes(bytes),
+    );
     await server.start();
     lifetime.check();
     if (prepare) {
@@ -108,4 +114,19 @@ class StreamHost {
     await server?.close();
     bytes.close();
   }
+}
+
+/// Deliberately bypasses playback scheduling and release ownership.
+class _PreviewBytes implements ByteSource {
+  _PreviewBytes(this.bytes);
+  final TorrentBytes bytes;
+  @override
+  String get name => bytes.name;
+  @override
+  int get length => bytes.length;
+  @override
+  Future<Uint8List> read(int offset, int count, Cancellation cancellation) =>
+      bytes.readAvailable(offset, count, cancellation);
+  @override
+  void release(Cancellation cancellation) {}
 }

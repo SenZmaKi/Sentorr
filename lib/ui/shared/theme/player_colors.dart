@@ -36,6 +36,13 @@ class PlayerColors extends ThemeExtension<PlayerColors> {
   /// scrub time bubble.
   final Color controlSurface;
 
+  /// Contrasting outline around seek thumbnails over arbitrary video frames.
+  Color get previewBorder => foreground.withValues(alpha: 0.8);
+
+  /// Video remains on a dark backing while its image decodes, even in light
+  /// mode. Border and timestamp continue to follow the selected theme.
+  Color get previewBackdrop => const Color(0xFF000000);
+
   /// Veils over the whole picture: end screen, errors, the docked player's
   /// hover state, the opening cover.
   final Color scrim;

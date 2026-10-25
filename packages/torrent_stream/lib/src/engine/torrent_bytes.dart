@@ -10,6 +10,8 @@ import 'piece_scheduler.dart';
 import 'read_waits.dart';
 import 'stream_startup.dart';
 
+part 'torrent_preview.dart';
+
 /// One file's bytes for one stream, read through [scheduler], which other
 /// streams of the same torrent share.
 class TorrentBytes implements ByteSource {
@@ -22,6 +24,7 @@ class TorrentBytes implements ByteSource {
     this.maxCacheBytes = 24 * 1024 * 1024,
     this.readRange,
     this.waitReadable,
+    this.isReadable,
   }) : lookahead = max(1, (readAheadBytes / handle.pieceLength).ceil() - 1),
        pieceLength = handle.pieceLength;
   final TorrentHandle handle;
@@ -31,6 +34,7 @@ class TorrentBytes implements ByteSource {
   final int pieceLength, lookahead;
   final Future<Uint8List> Function(int, int, Cancellation)? readRange;
   final Future<void> Function(int, Cancellation)? waitReadable;
+  final bool Function(int)? isReadable;
   final _prefetch = Cancellation();
   late final startup = StreamStartup(length);
   final waits = ReadWaits();
@@ -216,6 +220,8 @@ class TorrentBytes implements ByteSource {
     return output ?? Uint8List(0);
   }
 
+  (int, Uint8List)? _previewPiece;
+
   Future<Uint8List> _piece(int piece) async {
     final cached = _cache.remove(piece);
     if (cached != null) {
@@ -265,6 +271,7 @@ class TorrentBytes implements ByteSource {
       loading.$1.cancel();
     }
     _loading.clear();
+    _previewPiece = null;
     _cache.clear();
     _cachedBytes = 0;
     scheduler.prune();

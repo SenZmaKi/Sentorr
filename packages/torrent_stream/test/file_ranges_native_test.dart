@@ -72,6 +72,10 @@ void main() {
           await readRange(client, stream.uri, 7, 65542),
           data.sublist(7, 65543),
         );
+        expect(
+          await readRange(client, Uri.parse('${stream.uri}/preview'), 9, 65544),
+          data.sublist(9, 65545),
+        );
         final snapshot = await until(engine, hash, (t) => t.streams.isNotEmpty);
         expect(snapshot.streams.single.cachedBytes, 0);
       } finally {

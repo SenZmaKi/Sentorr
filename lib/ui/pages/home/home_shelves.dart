@@ -136,7 +136,6 @@ class NewEpisodesShelf extends ConsumerWidget {
     return AsyncShelf<SeriesUpdate>(
       icon: Icons.new_releases_outlined,
       title: 'New in your series',
-      emptyMessage: 'No new episodes or returning seasons.',
       loadingCardBuilder: (_) => const EpisodeCardSkeleton(),
       subtitle: 'New episodes and returning seasons',
       count: (n) => '$n new',

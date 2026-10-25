@@ -132,6 +132,21 @@ class StreamingSection extends ConsumerWidget {
             ),
             SettingsTile(
               icon: Icons.play_circle_outline,
+              title: 'Playback resume buffer',
+              subtitle: 'Seconds of playable video needed before starting or resuming after buffering. More can reduce repeated stalls. Applies when a file opens',
+              keywords: 'buffer threshold wait stutter resume seconds',
+              trailing: NumberField(
+                value: s.playbackResumeBufferSeconds,
+                min: 1,
+                max: 60,
+                unit: 's',
+                semanticLabel: 'Playback resume buffer in seconds',
+                onSubmitted: (n) =>
+                    edit((s) => s.copyWith(playbackResumeBufferSeconds: n)),
+              ),
+            ),
+            SettingsTile(
+              icon: Icons.play_circle_outline,
               title: 'Player forward buffer',
               subtitle: 'Video held in RAM ahead of playback. Applies when a file opens',
               keywords: 'memory ram cache',

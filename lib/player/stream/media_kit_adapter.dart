@@ -14,9 +14,6 @@ class MediaKitTorrentAdapter {
   final Player player;
   final StreamingSettings Function()? settings;
 
-  /// Seconds of playable cache mpv waits for before starting or resuming.
-  static const readySeconds = 2;
-
   /// Seconds mpv reads ahead of the position.
   static const forwardSeconds = 60;
 
@@ -65,7 +62,7 @@ class MediaKitTorrentAdapter {
         'cache-secs': '$forwardSeconds',
         'cache-pause': 'yes',
         'cache-pause-initial': 'yes',
-        'cache-pause-wait': '$readySeconds',
+        'cache-pause-wait': '${s.playbackResumeBufferSeconds}',
       },
       'demuxer-max-bytes': '${s.playerForwardBufferMiB * 1024 * 1024}',
       'demuxer-max-back-bytes': '${s.playerBackwardBufferMiB * 1024 * 1024}',

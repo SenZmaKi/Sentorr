@@ -2,6 +2,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/settings/models.dart';
 
 void main() {
+  test(
+    'resume buffer defaults and valid values persist across unrelated edits',
+    () {
+      expect(StreamingSettings.fromJson({}).playbackResumeBufferSeconds, 2);
+      for (final seconds in [1, 12, 60]) {
+        final settings = const StreamingSettings()
+            .copyWith(playbackResumeBufferSeconds: seconds)
+            .copyWith(keepRecentTorrents: 4);
+        expect(
+          StreamingSettings.fromJson(settings.toJson())
+              .playbackResumeBufferSeconds,
+          seconds,
+        );
+      }
+      for (final invalid in [0, -1, 61, '5', null]) {
+        expect(
+          StreamingSettings.fromJson({'playbackResumeBufferSeconds': invalid})
+              .playbackResumeBufferSeconds,
+          2,
+        );
+      }
+    },
+  );
+
   test('audio language persists with a backward compatible default', () {
     expect(StreamingSettings.fromJson({}).audioLanguage, '');
     expect(StreamingSettings.fromJson({'audioLanguage': 3}).audioLanguage, '');

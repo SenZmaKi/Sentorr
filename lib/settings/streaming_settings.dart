@@ -16,6 +16,7 @@ class StreamingSettings {
     this.readAheadBytes = 16 * _mb,
     this.downloadAheadMinutes = 10,
     this.limitDownloadAhead = true,
+    this.playbackResumeBufferSeconds = 2,
     this.playerForwardBufferMiB = 128,
     this.playerBackwardBufferMiB = 32,
     this.metadataTimeoutSeconds = 60,
@@ -58,6 +59,9 @@ class StreamingSettings {
   final int downloadAheadMinutes;
   final bool limitDownloadAhead;
 
+  /// Playable seconds cached before a stream starts or resumes after a stall.
+  final int playbackResumeBufferSeconds;
+
   final int playerForwardBufferMiB, playerBackwardBufferMiB;
 
   /// How long to wait for a magnet's metadata, then for any single piece.
@@ -81,6 +85,7 @@ class StreamingSettings {
     int? readAheadBytes,
     int? downloadAheadMinutes,
     bool? limitDownloadAhead,
+    int? playbackResumeBufferSeconds,
     int? playerForwardBufferMiB,
     int? playerBackwardBufferMiB,
     int? metadataTimeoutSeconds,
@@ -99,6 +104,8 @@ class StreamingSettings {
     readAheadBytes: readAheadBytes ?? this.readAheadBytes,
     downloadAheadMinutes: downloadAheadMinutes ?? this.downloadAheadMinutes,
     limitDownloadAhead: limitDownloadAhead ?? this.limitDownloadAhead,
+    playbackResumeBufferSeconds:
+        playbackResumeBufferSeconds ?? this.playbackResumeBufferSeconds,
     playerForwardBufferMiB:
         playerForwardBufferMiB ?? this.playerForwardBufferMiB,
     playerBackwardBufferMiB:
@@ -137,6 +144,12 @@ class StreamingSettings {
           ? json['limitDownloadAhead'] as bool
           : true,
       readAheadBytes: jsonInt(json['readAheadBytes'], d.readAheadBytes, min: 1),
+      playbackResumeBufferSeconds: jsonInt(
+        json['playbackResumeBufferSeconds'],
+        d.playbackResumeBufferSeconds,
+        min: 1,
+        max: 60,
+      ),
       playerForwardBufferMiB: jsonInt(
         json['playerForwardBufferMiB'],
         d.playerForwardBufferMiB,
@@ -178,6 +191,7 @@ class StreamingSettings {
     'readAheadBytes': readAheadBytes,
     'downloadAheadMinutes': downloadAheadMinutes,
     'limitDownloadAhead': limitDownloadAhead,
+    'playbackResumeBufferSeconds': playbackResumeBufferSeconds,
     'playerForwardBufferMiB': playerForwardBufferMiB,
     'playerBackwardBufferMiB': playerBackwardBufferMiB,
     'metadataTimeoutSeconds': metadataTimeoutSeconds,

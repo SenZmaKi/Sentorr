@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:torrent_stream/torrent_stream.dart';
 
 import '../track_labels.dart';
+import '../../settings/playback_preferences.dart';
 
 class SubtitleDownload {
   const SubtitleDownload(
@@ -32,15 +33,22 @@ class SubtitleDownload {
 /// so a late attachment cannot override Off or a newer selection. Off hides
 /// the Flutter overlay without deselecting and flushing mpv's packet cache.
 class PlaybackSubtitles extends ChangeNotifier {
-  PlaybackSubtitles(this.player, {bool? defaultEnabled, this.preferredLanguage})
-    : _defaultEnabled = defaultEnabled,
-      enabled = defaultEnabled ?? false {
+  PlaybackSubtitles(
+    this.player, {
+    bool? defaultEnabled,
+    this.preferredLanguage,
+    this.saved,
+    this.onChoose,
+  }) : _defaultEnabled = defaultEnabled,
+       enabled = defaultEnabled ?? false {
     _tracks = player.stream.tracks.listen((_) {
       _apply();
       notifyListeners();
     });
   }
   final bool? _defaultEnabled;
+  final ItemPlaybackPreferences? Function()? saved;
+  final void Function({TrackPreference? subtitle, bool? enabled})? onChoose;
   final String Function()? preferredLanguage;
   late final StreamSubscription<Tracks> _tracks;
   final Player player;
@@ -105,6 +113,7 @@ class PlaybackSubtitles extends ChangeNotifier {
     _originalTrackIds = null;
     _sidecarTitles.clear();
     _opened = false;
+    if (saved != null) _explicit = false;
     notifyListeners();
     return _commands;
   }
@@ -177,7 +186,12 @@ class PlaybackSubtitles extends ChangeNotifier {
       _selectedKey = _key(track);
       if (!_explicit) _embedded = track;
     }
-    if (!_explicit) enabled = _defaultEnabled ?? (_embedded != null);
+    if (!_explicit) {
+      enabled =
+          saved?.call()?.captionsEnabled ??
+          _defaultEnabled ??
+          (_embedded != null);
+    }
     _apply();
     notifyListeners();
   }
@@ -186,6 +200,7 @@ class PlaybackSubtitles extends ChangeNotifier {
   void on() {
     _explicit = true;
     enabled = true;
+    onChoose?.call(enabled: true);
     if (selectedFile == null && _embedded == null) _chooseDefault();
     _apply();
     notifyListeners();
@@ -194,12 +209,20 @@ class PlaybackSubtitles extends ChangeNotifier {
   void off() {
     _explicit = true;
     enabled = false;
+    onChoose?.call(enabled: false);
     _apply();
     notifyListeners();
   }
 
   void chooseFile(int index) {
     selectedFile = index;
+    final file = selected;
+    if (file != null) {
+      onChoose?.call(
+        subtitle: TrackPreference('$index', file.label, null, file: true),
+        enabled: true,
+      );
+    }
     _embedded = null;
     _explicit = enabled = true;
     _apply();
@@ -207,6 +230,10 @@ class PlaybackSubtitles extends ChangeNotifier {
   }
 
   void chooseTrack(SubtitleTrack track) {
+    onChoose?.call(
+      subtitle: TrackPreference(track.id, track.title, track.language),
+      enabled: true,
+    );
     selectedFile = null;
     _embedded = track;
     _explicit = enabled = true;
@@ -215,6 +242,28 @@ class PlaybackSubtitles extends ChangeNotifier {
   }
 
   void _chooseDefault() {
+    final stored = saved?.call()?.subtitle;
+    if (stored != null) {
+      if (stored.file) {
+        final match = files
+            .where((f) => !f.failed && f.label == stored.title)
+            .firstOrNull;
+        if (match != null) {
+          selectedFile = match.file.index;
+          _embedded = null;
+          return;
+        }
+      } else {
+        final match = embedded
+            .where((t) => stored.matches(t.id, t.title, t.language))
+            .firstOrNull;
+        if (match != null) {
+          _embedded = match;
+          selectedFile = null;
+          return;
+        }
+      }
+    }
     final preference = preferredLanguage?.call() ?? '';
     final language = trackLanguage(preference, null);
     if (language != null) {

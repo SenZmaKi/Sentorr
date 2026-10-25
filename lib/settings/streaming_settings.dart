@@ -1,4 +1,5 @@
 import 'json.dart';
+import 'playback_preferences.dart';
 
 const _mb = 1024 * 1024;
 
@@ -6,6 +7,7 @@ const _mb = 1024 * 1024;
 class StreamingSettings {
   const StreamingSettings({
     this.pauseOnFocusLoss = true,
+    this.playback = const PlaybackPreferences(),
     this.resumeRewindSeconds = 5,
     this.captionsEnabled = false,
     this.subtitleLanguage = '',
@@ -24,6 +26,7 @@ class StreamingSettings {
 
   /// Pause when leaving the app and resume when returning.
   final bool pauseOnFocusLoss;
+  final PlaybackPreferences playback;
 
   /// Seconds replayed when continuing media or restoring an open player.
   /// Zero disables the rewind, retaining the saved position.
@@ -69,6 +72,7 @@ class StreamingSettings {
 
   StreamingSettings copyWith({
     bool? pauseOnFocusLoss,
+    PlaybackPreferences? playback,
     int? resumeRewindSeconds,
     bool? captionsEnabled,
     String? subtitleLanguage,
@@ -86,6 +90,7 @@ class StreamingSettings {
     int? keepRecentTorrents,
   }) => StreamingSettings(
     pauseOnFocusLoss: pauseOnFocusLoss ?? this.pauseOnFocusLoss,
+    playback: playback ?? this.playback,
     resumeRewindSeconds: resumeRewindSeconds ?? this.resumeRewindSeconds,
     captionsEnabled: captionsEnabled ?? this.captionsEnabled,
     subtitleLanguage: subtitleLanguage ?? this.subtitleLanguage,
@@ -111,6 +116,7 @@ class StreamingSettings {
     const d = StreamingSettings();
     final directory = json['torrentDirectory'];
     return StreamingSettings(
+      playback: PlaybackPreferences.fromJson(json['playback']),
       resumeRewindSeconds: jsonInt(
         json['resumeRewindSeconds'],
         d.resumeRewindSeconds,
@@ -163,6 +169,7 @@ class StreamingSettings {
 
   Map<String, dynamic> toJson() => {
     'pauseOnFocusLoss': pauseOnFocusLoss,
+    'playback': playback.toJson(),
     'resumeRewindSeconds': resumeRewindSeconds,
     'captionsEnabled': captionsEnabled,
     'subtitleLanguage': subtitleLanguage,

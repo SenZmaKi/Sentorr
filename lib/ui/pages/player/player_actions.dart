@@ -99,7 +99,7 @@ class PlayerActions {
   }
 
   void setRate(double rate) {
-    unawaited(_player.setRate(rate));
+    unawaited(engine.setRate(rate));
     ui.flash(PlayerFeedback(Icons.speed_rounded, label: rateLabel(rate)));
   }
 

@@ -1,6 +1,7 @@
 import '../shared/cleanup.dart';
 import '../watching/next_episode.dart';
 import '../settings/streaming_settings.dart';
+import '../settings/playback_preferences.dart';
 import '../settings/notifier.dart';
 
 import 'dart:async';
@@ -63,6 +64,7 @@ class PlaybackEngine {
     PreparedStreams? prepared,
     void Function(SharedStream)? share,
     StreamingSettings Function()? bufferSettings,
+    this.savePreferences,
   }) : player = Player(
          configuration: const PlayerConfiguration(
            title: 'Sentorr',
@@ -86,8 +88,21 @@ class PlaybackEngine {
       prepared: prepared,
       share: share,
       bufferSettings: bufferSettings,
-      outputReady: () => video.platform.future,
+      saveSelection: (change) {
+        final id = streaming.item?.id;
+        if (id != null) savePreferences?.call((p) => p.updateItem(id, change));
+      },
+      outputReady: () async {
+        await _preferencesReady;
+        await video.platform.future;
+      },
     );
+    final preferences =
+        bufferSettings?.call().playback ?? const PlaybackPreferences();
+    _preferencesReady = Future.wait([
+      player.setVolume(preferences.volume),
+      player.setRate(preferences.speed),
+    ]);
     _errors = player.stream.error.listen(
       (error) => _log.warning('Playback error: $error'),
     );
@@ -100,6 +115,15 @@ class PlaybackEngine {
     });
     _unfeed = feedPlaybackEvents(events, player, buffering, streaming.status);
     _previewProbe?.record({'event': 'player-ready'});
+  }
+
+  final void Function(PlaybackPreferences Function(PlaybackPreferences))?
+  savePreferences;
+  late final Future<void> _preferencesReady;
+
+  Future<void> setRate(double speed) async {
+    await player.setRate(speed);
+    savePreferences?.call((p) => p.copyWith(speed: speed));
   }
 
   late final PreviewPerformanceProbe? _previewProbe =
@@ -233,8 +257,11 @@ class PlaybackEngine {
   }
 
   /// [volume] is 0–100, as the native player takes it.
-  Future<void> setVolume(double volume) =>
-      player.setVolume(volume.clamp(0, 100).toDouble());
+  Future<void> setVolume(double volume) async {
+    final next = volume.clamp(0, 100).toDouble();
+    await player.setVolume(next);
+    savePreferences?.call((p) => p.copyWith(volume: next));
+  }
 
   Future<void> dispose() => _disposal ??= _dispose();
 
@@ -263,6 +290,22 @@ String _clock(Duration d) =>
 /// item, streaming the torrent chosen for it or the best one found.
 final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
   final engine = PlaybackEngine(
+    savePreferences: (change) {
+      unawaited(
+        ref
+            .read(settingsProvider.notifier)
+            .update(
+              (s) => s.copyWith(
+                streaming: s.streaming.copyWith(
+                  playback: change(s.streaming.playback),
+                ),
+              ),
+            )
+            .catchError((Object error, StackTrace stack) {
+              _log.warning('Could not save playback preferences', error, stack);
+            }),
+      );
+    },
     bufferSettings: () => ref.read(settingsProvider).streaming,
     lifecycle: ref.read(playerLifecycleProvider),
     torrents: ref.read(torrentEngineProvider),

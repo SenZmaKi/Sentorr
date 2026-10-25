@@ -9,6 +9,7 @@ import 'package:torrent_stream/torrent_stream.dart';
 
 import '../../torrents/models.dart';
 import '../../settings/streaming_settings.dart';
+import '../../settings/playback_preferences.dart';
 import '../../torrents/resolution_models.dart';
 import '../models.dart';
 import '../../sync/shared_streams.dart';
@@ -70,16 +71,24 @@ class TorrentPlayback {
     this.prepared,
     this.share,
     StreamingSettings Function()? bufferSettings,
+    void Function(ItemPlaybackPreferences Function(ItemPlaybackPreferences))?
+    saveSelection,
   }) : parked = parked ?? ParkedStreams(),
        offline = offline ?? ((_) => null),
        _player = player,
        _adapter = MediaKitTorrentAdapter(player, settings: bufferSettings) {
     audio = PlaybackAudio(
       player,
+      saved: () => bufferSettings?.call().playback.items[_item?.id]?.audio,
+      onChoose: (track) => saveSelection?.call((s) => s.copyWith(audio: track)),
       preferredLanguage: () => bufferSettings?.call().audioLanguage ?? '',
     );
     subtitles = PlaybackSubtitles(
       player,
+      saved: () => bufferSettings?.call().playback.items[_item?.id],
+      onChoose: ({subtitle, enabled}) => saveSelection?.call(
+        (s) => s.copyWith(subtitle: subtitle, captionsEnabled: enabled),
+      ),
       defaultEnabled: bufferSettings?.call().captionsEnabled ?? false,
       preferredLanguage: () => bufferSettings?.call().subtitleLanguage ?? '',
     );

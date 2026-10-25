@@ -230,6 +230,12 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
         canAutoplay: canAutoplay,
       );
       if (!_stale(generation)) {
+        final settings = _adapter.settings?.call();
+        if (settings != null) {
+          session.setDownloadAheadMinutes(
+            settings.limitDownloadAhead ? settings.downloadAheadMinutes : 0,
+          );
+        }
         _downloadAhead = DownloadAhead(_player, session);
         audio.opened();
         subtitles.opened();

@@ -113,7 +113,7 @@ class StreamingSection extends ConsumerWidget {
             SettingsTile(
               icon: Icons.fast_forward_outlined,
               title: 'Download ahead',
-              subtitle: 'Approximate minutes ahead saved to disk, or the entire file while open, even when paused',
+              subtitle: 'Approximate minutes ahead saved to disk, or the entire file while open, even when paused. Changes apply immediately',
               keywords: 'buffer prefetch stutter minutes entire file unlimited',
               trailing: LimitField(
                 value: s.limitDownloadAhead ? s.downloadAheadMinutes : 0,
@@ -133,7 +133,7 @@ class StreamingSection extends ConsumerWidget {
             SettingsTile(
               icon: Icons.play_circle_outline,
               title: 'Playback resume buffer',
-              subtitle: 'Seconds of playable video needed before starting or resuming after buffering. More can reduce repeated stalls. Applies when a file opens',
+              subtitle: 'Seconds of playable video needed before starting or resuming after buffering. More can reduce repeated stalls. Applies to the active player',
               keywords: 'buffer threshold wait stutter resume seconds',
               trailing: NumberField(
                 value: s.playbackResumeBufferSeconds,
@@ -148,7 +148,7 @@ class StreamingSection extends ConsumerWidget {
             SettingsTile(
               icon: Icons.play_circle_outline,
               title: 'Player forward buffer',
-              subtitle: 'Video held in RAM ahead of playback. Applies when a file opens',
+              subtitle: 'Video held in RAM ahead of playback. Applies to the active player',
               keywords: 'memory ram cache',
               trailing: NumberField(
                 value: s.playerForwardBufferMiB,

@@ -17,6 +17,13 @@ class DownloadAhead {
   late final StreamSubscription<Duration> _position, _duration;
   bool _closed = false, _running = false, _dirty = false;
 
+  /// Recompute immediately even when the playhead is paused.
+  void setMinutes(int minutes) {
+    if (_closed) return;
+    session.setDownloadAheadMinutes(minutes);
+    _update();
+  }
+
   void _update() {
     if (_closed) return;
     _dirty = true;

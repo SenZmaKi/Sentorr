@@ -51,8 +51,29 @@ class MediaKitTorrentAdapter {
     if (isCurrent()) await player.seek(position);
   }
 
-  Future<void> configure({bool streaming = true}) async {
+  Future<void> _commands = Future.value();
+
+  /// Serialize property writes so the latest edit wins during rapid changes.
+  Future<void> updateBuffers() {
     final s = settings?.call() ?? const StreamingSettings();
+    final next = _commands.then((_) => _setBuffers(s));
+    _commands = next.catchError((Object _) {});
+    return next;
+  }
+
+  Future<void> _setBuffers(StreamingSettings s) async {
+    final native = player.platform;
+    if (native is! NativePlayer) return;
+    for (final MapEntry(:key, :value) in {
+      'cache-pause-wait': '${s.playbackResumeBufferSeconds}',
+      'demuxer-max-bytes': '${s.playerForwardBufferMiB * 1024 * 1024}',
+      'demuxer-max-back-bytes': '${s.playerBackwardBufferMiB * 1024 * 1024}',
+    }.entries) {
+      await native.setProperty(key, value);
+    }
+  }
+
+  Future<void> configure({bool streaming = true}) async {
     final native = player.platform;
     if (native is! NativePlayer) return;
     for (final MapEntry(:key, :value) in {
@@ -62,12 +83,10 @@ class MediaKitTorrentAdapter {
         'cache-secs': '$forwardSeconds',
         'cache-pause': 'yes',
         'cache-pause-initial': 'yes',
-        'cache-pause-wait': '${s.playbackResumeBufferSeconds}',
       },
-      'demuxer-max-bytes': '${s.playerForwardBufferMiB * 1024 * 1024}',
-      'demuxer-max-back-bytes': '${s.playerBackwardBufferMiB * 1024 * 1024}',
     }.entries) {
       await native.setProperty(key, value);
     }
+    await updateBuffers();
   }
 }

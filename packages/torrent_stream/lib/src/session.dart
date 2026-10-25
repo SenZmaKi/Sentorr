@@ -12,7 +12,8 @@ import 'stream_state.dart';
 /// Create before open so close can cancel metadata acquisition/preparation.
 class TorrentStreamSession {
   TorrentStreamSession({required this.engine, required this.config})
-    : owner = 'stream:${++_owners}' {
+    : owner = 'stream:${++_owners}',
+      _downloadAheadMinutes = config.downloadAheadMinutes {
     _engineStates = engine.states.listen(_observe, onError: _onEngineError);
     if (engine.failure case final failure?) _fail(failure);
   }
@@ -196,6 +197,19 @@ class TorrentStreamSession {
   }
 
   int? _rate;
+  int _downloadAheadMinutes;
+
+  /// Current disk prefetch window in minutes; zero downloads the entire file.
+  int get downloadAheadMinutes => _downloadAheadMinutes;
+
+  /// Changes the active window without reopening the stream. The next
+  /// [bufferAhead] call applies it, including while playback is paused.
+  /// Already downloaded pieces are retained.
+  void setDownloadAheadMinutes(int minutes) {
+    _check();
+    if (minutes < 0) throw ArgumentError.value(minutes, 'minutes');
+    _downloadAheadMinutes = minutes;
+  }
 
   /// Downloads the file's opening ahead of any player, e.g. for the next
   /// episode, about [span] of it once the bitrate is known.
@@ -222,7 +236,7 @@ class TorrentStreamSession {
     final file = _file, stream = _stream;
     if (file == null || stream == null) return;
     await setMediaDuration(duration);
-    if (config.downloadAheadMinutes == 0) {
+    if (_downloadAheadMinutes == 0) {
       await engine.prefetch(stream, 0, file.length);
     } else if (duration > Duration.zero) {
       final start =
@@ -232,9 +246,7 @@ class TorrentStreamSession {
       final end =
           (file.length *
                   (position.inMilliseconds +
-                      Duration(
-                        minutes: config.downloadAheadMinutes,
-                      ).inMilliseconds) /
+                      Duration(minutes: _downloadAheadMinutes).inMilliseconds) /
                   duration.inMilliseconds)
               .ceil()
               .clamp(start + 1, file.length);

@@ -109,6 +109,20 @@ class TorrentPlayback {
   /// picks, rather than waiting through every torrent found.
   static const maxAutoSwitches = 3;
 
+  /// Apply only buffering controls; language and caption defaults belong to
+  /// future playback, preserving the current player's track choices.
+  Future<void> updateBufferSettings(StreamingSettings settings) async {
+    final minutes = settings.limitDownloadAhead
+        ? settings.downloadAheadMinutes
+        : 0;
+    if (_downloadAhead case final ahead?) {
+      ahead.setMinutes(minutes);
+    } else {
+      _session?.setDownloadAheadMinutes(minutes);
+    }
+    await _adapter.updateBuffers();
+  }
+
   final Player _player;
   final MediaKitTorrentAdapter _adapter;
   late final PlaybackSubtitles subtitles;

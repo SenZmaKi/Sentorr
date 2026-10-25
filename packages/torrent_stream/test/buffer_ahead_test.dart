@@ -60,6 +60,36 @@ class BufferEngine implements TorrentEngine {
 }
 
 void main() {
+  test('active window changes from bounded to entire file and back', () async {
+    final engine = BufferEngine();
+    final session = TorrentStreamSession(
+      engine: engine,
+      config: TorrentStreamConfig(cacheDirectory: '/tmp/buffer'),
+    );
+    await session.open(
+      TorrentSource.magnet(Uri.parse('magnet:?xt=urn:btih:hash')),
+    );
+    await session.prepareFile(0);
+    const position = Duration(minutes: 5);
+    const duration = Duration(minutes: 60);
+    await session.bufferAhead(position, duration);
+    expect(engine.ranges.last, (500000, 1500000));
+    session.setDownloadAheadMinutes(0);
+    await session.bufferAhead(position, duration);
+    expect(engine.ranges.last, (0, 6000000));
+    session.setDownloadAheadMinutes(2);
+    await session.bufferAhead(position, duration);
+    expect(engine.ranges.last, (500000, 700000));
+    expect(session.downloadAheadMinutes, 2);
+    expect(() => session.setDownloadAheadMinutes(-1), throwsArgumentError);
+    expect(session.downloadAheadMinutes, 2);
+    await session.close();
+    expect(
+      () => session.setDownloadAheadMinutes(3),
+      throwsA(isA<TorrentStreamException>()),
+    );
+  });
+
   test('time window follows playback and scales with media duration', () async {
     final engine = BufferEngine();
     final session = TorrentStreamSession(

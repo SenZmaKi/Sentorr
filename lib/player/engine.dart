@@ -320,6 +320,24 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     prepared: ref.read(preparedStreamsProvider),
     share: ref.read(sharedStreamsProvider.notifier).register,
   );
+  ref.listen(
+    settingsProvider.select(
+      (s) => (
+        s.streaming.playbackResumeBufferSeconds,
+        s.streaming.playerForwardBufferMiB,
+        s.streaming.playerBackwardBufferMiB,
+        s.streaming.downloadAheadMinutes,
+        s.streaming.limitDownloadAhead,
+      ),
+    ),
+    (_, _) => unawaited(
+      engine.streaming
+          .updateBufferSettings(ref.read(settingsProvider).streaming)
+          .catchError((Object error, StackTrace stack) {
+            _log.warning('Could not update playback buffers', error, stack);
+          }),
+    ),
+  );
   final recovery = ref.read(playbackRecoveryProvider);
   var activeSession = ref.read(playerSessionProvider);
   engine.streaming.canAutoplay = () => activeSession?.autoplay ?? true;

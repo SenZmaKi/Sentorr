@@ -1,0 +1,46 @@
+[
+  {
+    "file": "bbb_h264.mp4",
+    "previews": false,
+    "wallMs": 5104,
+    "cpuSeconds": 1.79,
+    "rssStart": 283885568,
+    "rssEnd": 295518208,
+    "attempts": 0,
+    "successes": 0,
+    "position": "6.033333"
+  },
+  {
+    "file": "bbb_h264.mp4",
+    "previews": true,
+    "wallMs": 5454,
+    "cpuSeconds": 6.5600000000000005,
+    "rssStart": 318210048,
+    "rssEnd": 394084352,
+    "attempts": 6,
+    "successes": 6,
+    "position": "6.483333"
+  },
+  {
+    "file": "hevc_4k60.mkv",
+    "previews": false,
+    "wallMs": 5023,
+    "cpuSeconds": 17.47,
+    "rssStart": 773193728,
+    "rssEnd": 699645952,
+    "attempts": 0,
+    "successes": 0,
+    "position": "5.667000"
+  },
+  {
+    "file": "hevc_4k60.mkv",
+    "previews": true,
+    "wallMs": 6307,
+    "cpuSeconds": 28.039999999999992,
+    "rssStart": 782286848,
+    "rssEnd": 828882944,
+    "attempts": 2,
+    "successes": 0,
+    "position": "0.317000"
+  }
+]

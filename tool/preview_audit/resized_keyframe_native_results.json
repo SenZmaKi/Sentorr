@@ -1,0 +1,222 @@
+[
+  {
+    "file": "bbb_h264.mp4",
+    "second": 1,
+    "ms": 512,
+    "bytes": 50475,
+    "frameSecond": 0.0,
+    "sha256": "9bd58dbcd8ec51e03f37c9b24dadbaf85a1295c2549b6b60043ed9310ffa24b2",
+    "width": 240,
+    "height": 135,
+    "rss": 270909440
+  },
+  {
+    "file": "bbb_h264.mp4",
+    "second": 5,
+    "ms": 71,
+    "bytes": 50284,
+    "frameSecond": 4.167,
+    "sha256": "9e374d2c52b451b8ec24b5a4085e9db8573af69ce78b50c2a883dab974a4921e",
+    "width": 240,
+    "height": 135,
+    "rss": 277118976
+  },
+  {
+    "file": "bbb_h264.mp4",
+    "second": 8,
+    "ms": 74,
+    "bytes": 50284,
+    "frameSecond": 4.167,
+    "sha256": "9e374d2c52b451b8ec24b5a4085e9db8573af69ce78b50c2a883dab974a4921e",
+    "width": 240,
+    "height": 135,
+    "rss": 284213248
+  },
+  {
+    "file": "bbb_h264.mp4",
+    "second": 2,
+    "ms": 74,
+    "bytes": 50475,
+    "frameSecond": 0.0,
+    "sha256": "9bd58dbcd8ec51e03f37c9b24dadbaf85a1295c2549b6b60043ed9310ffa24b2",
+    "width": 240,
+    "height": 135,
+    "rss": 286195712
+  },
+  {
+    "file": "bbb_h264.mp4",
+    "second": 6,
+    "ms": 67,
+    "bytes": 50284,
+    "frameSecond": 4.167,
+    "sha256": "9e374d2c52b451b8ec24b5a4085e9db8573af69ce78b50c2a883dab974a4921e",
+    "width": 240,
+    "height": 135,
+    "rss": 287391744
+  },
+  {
+    "file": "bbb_h265.mp4",
+    "second": 1,
+    "ms": 118,
+    "bytes": 50295,
+    "frameSecond": 0.0,
+    "sha256": "1b21ad6865224b097b9888f6fddefc6fe396c52e848a1bb6f3bf0395c925c694",
+    "width": 240,
+    "height": 135,
+    "rss": 307675136
+  },
+  {
+    "file": "bbb_h265.mp4",
+    "second": 5,
+    "ms": 69,
+    "bytes": 50295,
+    "frameSecond": 0.0,
+    "sha256": "1b21ad6865224b097b9888f6fddefc6fe396c52e848a1bb6f3bf0395c925c694",
+    "width": 240,
+    "height": 135,
+    "rss": 299106304
+  },
+  {
+    "file": "bbb_h265.mp4",
+    "second": 8,
+    "ms": 75,
+    "bytes": 50295,
+    "frameSecond": 0.0,
+    "sha256": "1b21ad6865224b097b9888f6fddefc6fe396c52e848a1bb6f3bf0395c925c694",
+    "width": 240,
+    "height": 135,
+    "rss": 305938432
+  },
+  {
+    "file": "bbb_h265.mp4",
+    "second": 2,
+    "ms": 73,
+    "bytes": 50295,
+    "frameSecond": 0.0,
+    "sha256": "1b21ad6865224b097b9888f6fddefc6fe396c52e848a1bb6f3bf0395c925c694",
+    "width": 240,
+    "height": 135,
+    "rss": 286294016
+  },
+  {
+    "file": "bbb_h265.mp4",
+    "second": 6,
+    "ms": 62,
+    "bytes": 50295,
+    "frameSecond": 0.0,
+    "sha256": "1b21ad6865224b097b9888f6fddefc6fe396c52e848a1bb6f3bf0395c925c694",
+    "width": 240,
+    "height": 135,
+    "rss": 282050560
+  },
+  {
+    "file": "bbb_av1.mp4",
+    "second": 1,
+    "ms": 111,
+    "bytes": 50575,
+    "frameSecond": 0.0,
+    "sha256": "7c932e006e30339402ec38c4c06eccffe60f4149cb7fbb4d698aabc35622e712",
+    "width": 240,
+    "height": 135,
+    "rss": 316342272
+  },
+  {
+    "file": "bbb_av1.mp4",
+    "second": 5,
+    "ms": 78,
+    "bytes": 50575,
+    "frameSecond": 0.0,
+    "sha256": "7c932e006e30339402ec38c4c06eccffe60f4149cb7fbb4d698aabc35622e712",
+    "width": 240,
+    "height": 135,
+    "rss": 306053120
+  },
+  {
+    "file": "bbb_av1.mp4",
+    "second": 8,
+    "ms": 70,
+    "bytes": 50575,
+    "frameSecond": 0.0,
+    "sha256": "7c932e006e30339402ec38c4c06eccffe60f4149cb7fbb4d698aabc35622e712",
+    "width": 240,
+    "height": 135,
+    "rss": 307232768
+  },
+  {
+    "file": "bbb_av1.mp4",
+    "second": 2,
+    "ms": 60,
+    "bytes": 50575,
+    "frameSecond": 0.0,
+    "sha256": "7c932e006e30339402ec38c4c06eccffe60f4149cb7fbb4d698aabc35622e712",
+    "width": 240,
+    "height": 135,
+    "rss": 321978368
+  },
+  {
+    "file": "bbb_av1.mp4",
+    "second": 6,
+    "ms": 40,
+    "bytes": 50575,
+    "frameSecond": 0.0,
+    "sha256": "7c932e006e30339402ec38c4c06eccffe60f4149cb7fbb4d698aabc35622e712",
+    "width": 240,
+    "height": 135,
+    "rss": 313786368
+  },
+  {
+    "file": "hevc_4k60.mkv",
+    "second": 1,
+    "ms": 156,
+    "bytes": 20217,
+    "frameSecond": 0.0,
+    "sha256": "417900cf0c71527727d33381ed86066709ab853b791073dfeb8eae7a1de63892",
+    "width": 240,
+    "height": 135,
+    "rss": 477413376
+  },
+  {
+    "file": "hevc_4k60.mkv",
+    "second": 5,
+    "ms": 105,
+    "bytes": 21688,
+    "frameSecond": 4.167,
+    "sha256": "5cc93102e42d9f830cd9b97b4400a67d4935762268167ed855fb1f7e66d74939",
+    "width": 240,
+    "height": 135,
+    "rss": 492634112
+  },
+  {
+    "file": "hevc_4k60.mkv",
+    "second": 8,
+    "ms": 109,
+    "bytes": 21688,
+    "frameSecond": 4.167,
+    "sha256": "5cc93102e42d9f830cd9b97b4400a67d4935762268167ed855fb1f7e66d74939",
+    "width": 240,
+    "height": 135,
+    "rss": 482230272
+  },
+  {
+    "file": "hevc_4k60.mkv",
+    "second": 2,
+    "ms": 73,
+    "bytes": 20217,
+    "frameSecond": 0.0,
+    "sha256": "417900cf0c71527727d33381ed86066709ab853b791073dfeb8eae7a1de63892",
+    "width": 240,
+    "height": 135,
+    "rss": 483377152
+  },
+  {
+    "file": "hevc_4k60.mkv",
+    "second": 6,
+    "ms": 116,
+    "bytes": 21688,
+    "frameSecond": 4.167,
+    "sha256": "5cc93102e42d9f830cd9b97b4400a67d4935762268167ed855fb1f7e66d74939",
+    "width": 240,
+    "height": 135,
+    "rss": 485310464
+  }
+]

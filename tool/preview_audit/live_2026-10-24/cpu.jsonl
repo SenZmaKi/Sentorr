@@ -1,0 +1,6 @@
+{"at": "2026-10-24T14:07:49.919126+00:00", "pid": 73899, "wallSeconds": 0.00501729198731482, "cpuTotalSeconds": 111.36, "intervalCpuPercent": null, "rssBytes": 259948544}
+{"at": "2026-10-24T14:07:50.932209+00:00", "pid": 73899, "wallSeconds": 1.018123249989003, "cpuTotalSeconds": 115.8, "intervalCpuPercent": 438.2562322264617, "rssBytes": 274513920}
+{"at": "2026-10-24T14:07:51.942125+00:00", "pid": 73899, "wallSeconds": 2.0280088749714196, "cpuTotalSeconds": 119.28999999999999, "intervalCpuPercent": 345.58368924805325, "rssBytes": 273661952}
+{"at": "2026-10-24T14:07:52.968934+00:00", "pid": 73899, "wallSeconds": 3.054770499933511, "cpuTotalSeconds": 123.7, "intervalCpuPercent": 429.5057287676514, "rssBytes": 305397760}
+{"at": "2026-10-24T14:07:53.983453+00:00", "pid": 73899, "wallSeconds": 4.069302124902606, "cpuTotalSeconds": 123.97, "intervalCpuPercent": 26.61326599929508, "rssBytes": 313262080}
+{"at": "2026-10-24T14:07:54.991919+00:00", "pid": 73899, "wallSeconds": 5.077768000075594, "cpuTotalSeconds": 124.05, "intervalCpuPercent": 7.932841553639627, "rssBytes": 308592640}

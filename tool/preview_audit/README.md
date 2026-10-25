@@ -124,20 +124,13 @@ with separate contention and platform constraints.
 
 ## Live playback diagnostics
 
-Add `--dart-define=SENTORR_PREVIEW_DIAGNOSTICS=true` to a profile run to record
-extra developer audit telemetry. This controls instrumentation only; previews
-are enabled independently in normal builds. This enables the `sentorr.preview.audit` JSON records in the normal app
-log. Without this diagnostic flag, the sampler/timing callback is not installed.
-Controller request events still enter the existing bounded playback-event log.
-
-Each attempt has an ID and target, queue/debounce wait, open/seek/capture timings,
-actual frame timestamp, encoded size, success/display outcome and failure stage.
-Cache hits and buffering-related skips are separate. Once-per-second samples
-include main-player drop counters, A/V sync, cache duration, seeking/cache-pause
-state, hardware decoder, process RSS and Flutter build/raster maxima. Buffering
-transitions and play/pause events are timestamped separately. Flutter frame times
-measure UI work, not native video presentation. Drop counters are cumulative and
-may reset with media changes; compare deltas within one media session.
+The former `SENTORR_PREVIEW_DIAGNOSTICS` sampler has been removed. Open
+Stats for Nerds for request-driven preview counters, last and average extraction
+latency, total request latency (including debounce), and bounded JPEG cache usage.
+These metrics are included in copied stats and recordings through the existing
+Stats for Nerds sampling path. Preview requests no longer enter the playback-event
+log or produce a separate audit log, timer, or Flutter frame callback.
+Historical reports below describe the instrumentation used at the time.
 
 For aligned process CPU/RSS samples:
 

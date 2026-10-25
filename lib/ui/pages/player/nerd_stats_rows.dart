@@ -19,6 +19,7 @@ class NerdStatsSnapshot {
     required PlayerState playback,
     required StreamStatus? status,
     required PlaybackSubtitles captions,
+    this.previews = const {},
     required this.title,
     required this.itemId,
     required this.viewport,
@@ -37,6 +38,7 @@ class NerdStatsSnapshot {
          playback.subtitle,
        );
 
+  final Map<String, Object?> previews;
   final NativeReadout _d;
   final PlayerState _p;
   final NetworkStats _network;
@@ -90,9 +92,33 @@ class NerdStatsSnapshot {
     _network.network,
     ..._swarm.sections,
     _captions.section,
+    (
+      title: 'Seek previews',
+      rows: [
+        ('Extractor', previews['busy'] == true ? 'Busy' : 'Idle'),
+        (
+          'Attempts / cache hits / failures',
+          '${previews['attempts'] ?? 0} / ${previews['cacheHits'] ?? 0} / ${previews['failures'] ?? 0}',
+        ),
+        (
+          'Last extraction / request (ms)',
+          '${previews['lastExtractionMs'] ?? '—'} / ${previews['lastRequestMs'] ?? '—'}',
+        ),
+        (
+          'Average extraction (ms)',
+          (previews['averageExtractionMs'] as num?)?.toStringAsFixed(1) ?? '—',
+        ),
+        (
+          'Cache entries / KiB',
+          '${previews['cacheEntries'] ?? 0} / ${((previews['cacheBytes'] as num? ?? 0) / 1024).toStringAsFixed(1)}',
+        ),
+        ('Bucket (s)', '${previews['bucketSeconds'] ?? '—'}'),
+      ],
+    ),
   ];
 
   Map<String, Object?> get metrics => {
+    for (final entry in previews.entries) 'preview.${entry.key}': entry.value,
     'state': _playback.toLowerCase(),
     'positionSeconds': _p.position.inMilliseconds / 1000,
     'rate': _p.rate,

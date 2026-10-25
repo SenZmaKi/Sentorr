@@ -37,6 +37,23 @@ class PreviewController extends ValueNotifier<Uint8List?> {
   int _bytes = 0, _requestSerial = 0;
   int attempts = 0, hits = 0, failures = 0;
   Duration extractionTime = Duration.zero;
+  int? lastExtractionMs, lastRequestMs;
+
+  /// Small request-driven counters, sampled by Stats for Nerds when open.
+  Map<String, Object?> get metrics => {
+    'busy': busy,
+    'attempts': attempts,
+    'cacheHits': hits,
+    'failures': failures,
+    'cacheEntries': _cache.length,
+    'cacheBytes': cacheBytes,
+    'bucketSeconds': bucket.inMilliseconds / 1000,
+    'lastExtractionMs': lastExtractionMs,
+    'lastRequestMs': lastRequestMs,
+    'averageExtractionMs': attempts == 0
+        ? null
+        : extractionTime.inMicroseconds / 1000 / attempts,
+  };
 
   /// Hold the last image from this video until a replacement is ready.
   void request(Duration? time) {
@@ -156,6 +173,8 @@ class PreviewController extends ValueNotifier<Uint8List?> {
     }
     if (image == null) await _extractor.dispose();
     extractionTime += watch.elapsed;
+    lastExtractionMs = watch.elapsedMilliseconds;
+    lastRequestMs = waitMs + lastExtractionMs!;
     _emit('end', {
       'id': id,
       'target': key.$2 / 1000,

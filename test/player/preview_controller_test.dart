@@ -23,6 +23,39 @@ class FakeExtractor extends PreviewExtractor {
 
 void main() {
   testWidgets(
+    'stats count extraction, cache hits and failures without logging',
+    (tester) async {
+      final extractor = FakeExtractor();
+      final controller = PreviewController(
+        source: () => 'local',
+        allowed: () => true,
+        extractor: extractor,
+      );
+      expect(controller.metrics['averageExtractionMs'], isNull);
+      controller.request(const Duration(seconds: 10));
+      await tester.pump(const Duration(milliseconds: 181));
+      expect(controller.metrics['busy'], true);
+      extractor.pending.last.complete(Uint8List.fromList([1, 2]));
+      await tester.pump();
+      expect(controller.metrics['attempts'], 1);
+      expect(controller.metrics['cacheBytes'], 2);
+      expect(controller.metrics['lastExtractionMs'], isA<int>());
+      expect(controller.metrics['lastRequestMs'], isA<int>());
+      controller.request(null);
+      controller.request(const Duration(seconds: 11));
+      expect(controller.metrics['cacheHits'], 1);
+      controller.request(const Duration(seconds: 20));
+      await tester.pump(const Duration(milliseconds: 181));
+      extractor.pending.last.complete(null);
+      await tester.pump();
+      expect(controller.metrics['attempts'], 2);
+      expect(controller.metrics['failures'], 1);
+      expect(controller.metrics['busy'], false);
+      controller.dispose();
+    },
+  );
+
+  testWidgets(
     'availability is checked after retaining and ignores obsolete results',
     (tester) async {
       final extractor = FakeExtractor();

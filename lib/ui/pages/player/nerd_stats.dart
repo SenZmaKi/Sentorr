@@ -70,6 +70,7 @@ class _NerdStatsState extends ConsumerState<NerdStats> {
 
   NerdStatsSnapshot get _snapshot => NerdStatsSnapshot(
     diagnostics: _diagnostics,
+    previews: widget.engine.previews.metrics,
     playback: widget.engine.state,
     status: widget.engine.streaming.status.value,
     captions: widget.engine.streaming.subtitles,

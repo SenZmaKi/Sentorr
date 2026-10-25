@@ -5,6 +5,7 @@ import '../../components/app_shell.dart';
 
 import '../../components/buttons.dart';
 import '../../components/inputs.dart';
+import '../../components/page_switcher.dart';
 import '../../components/section_header.dart';
 import '../../shared/theme/theme.dart';
 import 'settings_category.dart';
@@ -191,7 +192,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
       ),
       SizedBox(width: gap),
-      Expanded(child: _query.isNotEmpty ? _results() : _page(_category)),
+      Expanded(child: _query.isNotEmpty ? _results() : _categories(_category)),
     ],
   );
 
@@ -205,39 +206,43 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       // The search field keeps one place in one structure whether the
       // list or the results show, so typing never rebuilds it and drops
       // focus (and the keyboard) after the first character.
-      child: opened != null && _query.isEmpty
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SButton.ghost(
-                  label: 'All settings',
-                  icon: Icons.arrow_back_rounded,
-                  onPressed: () => setState(() => _opened = null),
-                ),
-                const SizedBox(height: Space.s8),
-                Expanded(child: _page(opened)),
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _searchField(),
-                const SizedBox(height: Space.s16),
-                Expanded(
-                  child: _query.isNotEmpty
-                      ? _results()
-                      : ListView(
-                          padding: const EdgeInsets.only(bottom: Space.s24),
-                          children: [
-                            SettingsNav(
-                              sidebar: false,
-                              onSelect: (c) => setState(() => _opened = c),
-                            ),
-                          ],
-                        ),
-                ),
-              ],
-            ),
+      child: PageSwitcher(
+        child: opened != null && _query.isEmpty
+            ? Column(
+                key: ValueKey(opened),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SButton.ghost(
+                    label: 'All settings',
+                    icon: Icons.arrow_back_rounded,
+                    onPressed: () => setState(() => _opened = null),
+                  ),
+                  const SizedBox(height: Space.s8),
+                  Expanded(child: _page(opened)),
+                ],
+              )
+            : Column(
+                key: const ValueKey('settings navigation'),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _searchField(),
+                  const SizedBox(height: Space.s16),
+                  Expanded(
+                    child: _query.isNotEmpty
+                        ? _results()
+                        : ListView(
+                            padding: const EdgeInsets.only(bottom: Space.s24),
+                            children: [
+                              SettingsNav(
+                                sidebar: false,
+                                onSelect: (c) => setState(() => _opened = c),
+                              ),
+                            ],
+                          ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 
@@ -255,6 +260,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             tooltip: 'Clear search',
             onPressed: _clearQuery,
           ),
+  );
+
+  Widget _categories(SettingsCategory active) => PageSwitcher(
+    child: KeyedSubtree(key: ValueKey(active), child: _page(active)),
   );
 
   Widget _page(SettingsCategory category) => _scroll([

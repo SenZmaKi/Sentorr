@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../components/interactive.dart';
+import '../../components/motion.dart';
 import '../../components/surface.dart';
 import '../../shared/theme/theme.dart';
 import 'settings_category.dart';
@@ -25,22 +28,83 @@ class SettingsNav extends StatelessWidget {
     final gap = sidebar ? Space.s4 : Space.s8;
     SettingsArea? area;
     final children = <Widget>[];
+    double lineHeight(TextStyle style) {
+      final painter = TextPainter(
+        text: TextSpan(text: 'Ag', style: style),
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+        maxLines: 1,
+      )..layout();
+      final height = painter.height;
+      painter.dispose();
+      return height;
+    }
+
+    final rowHeight =
+        math.max(
+          math.max(lineHeight(context.type.label), IconSizes.control),
+          Space.s16,
+        ) +
+        Space.s8 * 2;
+    final headingHeight = lineHeight(context.type.caption) + Space.s8;
+    var top = 0.0;
+    double? selectedTop;
     for (final c in SettingsCategory.available) {
       if (c.area != area) {
+        top += headingHeight + (children.isEmpty ? 0 : Space.s24);
         area = c.area;
         children.add(_AreaLabel(area, first: children.isEmpty, inset: sidebar));
       } else {
         children.add(SizedBox(height: gap));
+        top += gap;
       }
+      if (c == active) selectedTop = top;
+      top += rowHeight;
       children.add(
         sidebar
             ? _SidebarItem(c, c == active, onSelect)
             : _CardItem(c, onSelect),
       );
     }
-    return Column(
+    final items = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: children,
+    );
+    if (!sidebar) return items;
+    return Stack(
+      children: [
+        AnimatedPositioned(
+          duration: reduceMotion(context) ? Duration.zero : Motion.reveal,
+          curve: Motion.change,
+          top: selectedTop ?? 0,
+          left: 0,
+          right: 0,
+          height: rowHeight,
+          child: IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: selectedTop == null ? 0 : 1,
+              duration: reduceMotion(context) ? Duration.zero : Motion.reveal,
+              child: DepthBox(
+                style: context.depth.of(SurfaceDepth.raised),
+                radius: Radii.control,
+                padding: const EdgeInsets.only(left: Space.s12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: Borders.focus,
+                    height: Space.s16,
+                    decoration: BoxDecoration(
+                      color: context.colors.foreground,
+                      borderRadius: BorderRadius.circular(Radii.full),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        items,
+      ],
     );
   }
 }
@@ -98,24 +162,12 @@ class _SidebarItem extends StatelessWidget {
           vertical: Space.s8,
         ),
         decoration: BoxDecoration(
-          color: selected
-              ? c.selection
-              : s.hovered
-              ? c.stateHover
-              : c.stateHover.clear,
+          color: !selected && s.hovered ? c.stateHover : c.stateHover.clear,
           borderRadius: BorderRadius.circular(Radii.control),
         ),
         child: Row(
           children: [
-            AnimatedContainer(
-              duration: Motion.hover,
-              width: Borders.focus,
-              height: Space.s16,
-              decoration: BoxDecoration(
-                color: selected ? c.foreground : c.foreground.clear,
-                borderRadius: BorderRadius.circular(Radii.full),
-              ),
-            ),
+            const SizedBox(width: Borders.focus, height: Space.s16),
             const SizedBox(width: Space.s8),
             Icon(
               category.icon,

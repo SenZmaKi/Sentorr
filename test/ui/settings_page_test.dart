@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,8 @@ import 'package:sentorr/torrents/providers.dart';
 import 'package:sentorr/torrents/repository.dart';
 import 'package:sentorr/ui/pages/settings/settings_category.dart';
 import 'package:sentorr/ui/pages/settings/settings_page.dart';
+import 'package:sentorr/ui/pages/settings/settings_nav.dart';
+import 'package:sentorr/ui/components/interactive.dart';
 import 'package:sentorr/ui/pages/settings/settings_search.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';
 import 'package:sentorr/watching/models.dart';
@@ -95,6 +98,76 @@ Finder _menuItem(String label) => find.descendant(
 );
 
 void main() {
+  testWidgets('settings selection glides between rows across group headings', (
+    tester,
+  ) async {
+    await _pump(tester, const Size(1440, 1000));
+    await tester.pumpAndSettle();
+    final nav = find.byType(SettingsNav);
+    final indicator = find.descendant(
+      of: nav,
+      matching: find.byType(AnimatedPositioned),
+    );
+    for (final label in ['Streaming', 'General', 'Finding torrents']) {
+      final start = tester.getTopLeft(indicator).dy;
+      final text = find.descendant(of: nav, matching: find.text(label));
+      final row = find
+          .ancestor(of: text, matching: find.byType(Interactive))
+          .first;
+      final target = tester.getTopLeft(row).dy;
+      await tester.tap(text);
+      await tester.pump();
+      expect(tester.getTopLeft(indicator).dy, closeTo(start, .01));
+      await tester.pump(const Duration(milliseconds: 100));
+      final middle = tester.getTopLeft(indicator).dy;
+      expect(middle, greaterThan(math.min(start, target)));
+      expect(middle, lessThan(math.max(start, target)));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(indicator), tester.getRect(row));
+    }
+  });
+
+  testWidgets('compact category opening animates', (tester) async {
+    await _pump(tester, const Size(390, 844));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Streaming'));
+    await tester.pump();
+    final back = find.text('All settings');
+    final fade = find
+        .ancestor(of: back, matching: find.byType(FadeTransition))
+        .first;
+    expect(tester.widget<FadeTransition>(fade).opacity.value, 0);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(tester.widget<FadeTransition>(fade).opacity.value, greaterThan(0));
+    expect(tester.widget<FadeTransition>(fade).opacity.value, lessThan(1));
+    await tester.pumpAndSettle();
+    expect(tester.widget<FadeTransition>(fade).opacity.value, 1);
+  });
+
+  testWidgets('category content fades on first visit and when returning', (
+    tester,
+  ) async {
+    await _pump(tester, const Size(1440, 1000));
+    await tester.pumpAndSettle();
+    for (final label in ['Streaming', 'Finding torrents']) {
+      await tester.tap(find.text(label).first);
+      await tester.pump();
+      final header = find.text(label).last;
+      final opacity = find
+          .ancestor(of: header, matching: find.byType(FadeTransition))
+          .first;
+      expect(tester.widget<FadeTransition>(opacity).opacity.value, lessThan(1));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(
+        tester.widget<FadeTransition>(opacity).opacity.value,
+        greaterThan(0),
+      );
+      expect(tester.widget<FadeTransition>(opacity).opacity.value, lessThan(1));
+      await tester.pumpAndSettle();
+      expect(tester.widget<FadeTransition>(opacity).opacity.value, 1);
+    }
+  });
+
   for (final (name, size) in [
     ('compact', const Size(390, 844)),
     ('desktop', const Size(1440, 1000)),

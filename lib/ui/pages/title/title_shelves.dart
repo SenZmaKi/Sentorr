@@ -9,6 +9,7 @@ import '../../components/cards/card_skeleton.dart';
 import '../../components/cards/person_card.dart';
 import '../../components/cards/poster_card.dart';
 import '../../components/cards/review_card.dart';
+import '../../components/cards/review_card_skeleton.dart';
 import '../../components/cards/title_poster.dart';
 import '../../components/chips.dart';
 import '../../components/content_column.dart';
@@ -119,7 +120,7 @@ class RecommendationsShelf extends ConsumerWidget {
 }
 
 /// Viewer reviews, spoilers hidden unless the viewer asks for them. Absent
-/// until loaded, and when there are none or they cannot be reached.
+/// when there are none or they cannot be reached; skeletons reserve loading space.
 class ReviewsShelf extends ConsumerWidget {
   const ReviewsShelf({super.key, required this.titleId, required this.layout});
 
@@ -138,38 +139,46 @@ class ReviewsShelf extends ConsumerWidget {
     ];
     // Once spoilers are on, keep the row (and its toggle) even while they
     // load or when there are none, so they can be turned off again.
-    if (shown.isEmpty && !spoilers) {
+    final loading = async.isLoading;
+    if (shown.isEmpty && !spoilers && !loading) {
       return const SizedBox.shrink();
     }
     final h = ReviewCard.height(layout.lines);
-    return Shelf(
-      icon: Icons.rate_review_outlined,
-      title: 'Reviews',
-      count: shown.isEmpty ? null : '${shown.length}',
-      action: SChip(
-        label: 'Show spoilers',
-        selected: spoilers,
-        onTap: () => ref.read(showSpoilersProvider.notifier).set(!spoilers),
+    return LayoutBuilder(
+      builder: (context, constraints) => Shelf(
+        icon: Icons.rate_review_outlined,
+        title: 'Reviews',
+        count: shown.isEmpty ? null : '${shown.length}',
+        action: SChip(
+          label: 'Show spoilers',
+          selected: spoilers,
+          onTap: () => ref.read(showSpoilersProvider.notifier).set(!spoilers),
+        ),
+        gutter: layout.insets.side,
+        tileWidth: layout.reviewWidth,
+        tileHeight: h,
+        artworkHeight: h,
+        // Fill the available row and keep another tile beyond its edge.
+        itemCount: loading
+            ? (constraints.maxWidth / (layout.reviewWidth + Space.s16)).ceil() +
+                  1
+            : shown.length,
+        reveal: !loading,
+        itemBuilder: (context, i) {
+          if (loading) return const ReviewCardSkeleton();
+          final r = shown[i];
+          return ReviewCard(
+            headline: r.title ?? 'Review',
+            excerpt: r.content!,
+            score: r.rating,
+            byline: reviewByline(r),
+            likes: r.upVotes,
+            dislikes: r.downVotes,
+            spoiler: r.spoiler == true,
+            onTap: () => showReview(context, r),
+          );
+        },
       ),
-      gutter: layout.insets.side,
-      tileWidth: layout.reviewWidth,
-      tileHeight: h,
-      artworkHeight: h,
-      itemCount: shown.length,
-      reveal: true,
-      itemBuilder: (context, i) {
-        final r = shown[i];
-        return ReviewCard(
-          headline: r.title ?? 'Review',
-          excerpt: r.content!,
-          score: r.rating,
-          byline: reviewByline(r),
-          likes: r.upVotes,
-          dislikes: r.downVotes,
-          spoiler: r.spoiler == true,
-          onTap: () => showReview(context, r),
-        );
-      },
     );
   }
 }

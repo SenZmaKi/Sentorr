@@ -79,10 +79,20 @@ final pickUpProvider = FutureProvider.autoDispose.family<PickUp?, String>((
   if (ref.watch(removedListTitlesProvider.select((ids) => ids.contains(id)))) {
     return null;
   }
+  // Select from source notifiers directly. Selecting through derived history
+  // or follow providers can notify another paused branch while TickerMode
+  // resumes the covered shell during build (Riverpod 3.4.3).
   final entry = ref.watch(
-    inProgressProvider.select((l) => l.where((e) => e.key == id).firstOrNull),
+    watchHistoryProvider.select(
+      (entries) =>
+          inProgressEntries(entries).where((e) => e.key == id).firstOrNull,
+    ),
   );
-  final followed = ref.watch(followedProvider(id));
+  final followed = ref.watch(
+    followedSeriesProvider.select(
+      (all) => all.where((s) => s.id == id).firstOrNull,
+    ),
+  );
   final local = localPickUp(entry, followed);
   if (local?.pending != true) return local;
   final key = nextEpisodeKey(

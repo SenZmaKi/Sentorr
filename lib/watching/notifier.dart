@@ -169,8 +169,12 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
 
 /// Movies still in progress and the furthest episode reached per series.
 /// Choose before filtering completion so older episodes cannot resurface.
-final inProgressProvider = Provider<List<WatchEntry>>((ref) {
-  final entries = ref.watch(watchHistoryProvider);
+final inProgressProvider = Provider<List<WatchEntry>>(
+  (ref) => inProgressEntries(ref.watch(watchHistoryProvider)),
+);
+
+/// Shared selection for shelves and per-title resume subscriptions.
+List<WatchEntry> inProgressEntries(List<WatchEntry> entries) {
   final selected = <String, WatchEntry>{};
   for (final entry in entries) {
     final previous = selected[entry.key];
@@ -196,4 +200,4 @@ final inProgressProvider = Provider<List<WatchEntry>>((ref) {
           (!e.isEpisode || e.progress < FollowedSeries.caughtUpFraction))
         e,
   ];
-});
+}

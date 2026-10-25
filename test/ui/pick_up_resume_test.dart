@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/lists/models.dart';
+import 'package:sentorr/home/continue_rows.dart';
 import 'package:sentorr/lists/notifier.dart';
 import 'package:sentorr/player/models.dart';
 import 'package:sentorr/titles/pick_up.dart';
@@ -61,6 +62,7 @@ void main() {
               enabled: active,
               child: Consumer(
                 builder: (context, ref, _) {
+                  ref.watch(continueRowsProvider);
                   final pick = ref.watch(pickUpPresentationProvider(title.id));
                   return Text(pickUpLabel(pick));
                 },

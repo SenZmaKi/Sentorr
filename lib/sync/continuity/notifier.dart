@@ -36,10 +36,15 @@ class ContinuityOffers extends Notifier<List<ContinuityOffer>> {
     ref.onDispose(() => _poll?.cancel());
     ref.listen(devicesProvider, (_, _) {
       _epoch++;
-      state = state
-          .where((o) => ref.read(devicesProvider).byId(o.deviceId) != null)
-          .toList();
-      _schedule();
+      // Resuming a hidden consumer can flush device changes during build.
+      // Invalidate in-flight requests now, but publish after that build ends.
+      Future.microtask(() {
+        if (!ref.mounted) return;
+        state = state
+            .where((o) => ref.read(devicesProvider).byId(o.deviceId) != null)
+            .toList();
+        _schedule();
+      });
     });
     _schedule();
     return const [];

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentorr/ui/pages/player/player_layout.dart';
 import 'package:sentorr/ui/pages/player/player_ui.dart';
 import 'package:sentorr/ui/pages/player/top_bar.dart';
@@ -17,18 +18,20 @@ void main() {
         addTearDown(stream.dispose);
         var closed = 0, docked = 0;
         await tester.pumpWidget(
-          MaterialApp(
-            theme: buildSentorrTheme(brightness),
-            home: PlayerLayoutScope(
-              child: PlayerUiScope(
-                ui: ui,
-                child: Scaffold(
-                  body: TopBar(
-                    item: null,
-                    fallbackTitle: 'Movie',
-                    stream: stream,
-                    onBack: () => docked++,
-                    onClose: () => closed++,
+          ProviderScope(
+            child: MaterialApp(
+              theme: buildSentorrTheme(brightness),
+              home: PlayerLayoutScope(
+                child: PlayerUiScope(
+                  ui: ui,
+                  child: Scaffold(
+                    body: TopBar(
+                      item: null,
+                      fallbackTitle: 'Movie',
+                      stream: stream,
+                      onBack: () => docked++,
+                      onClose: () => closed++,
+                    ),
                   ),
                 ),
               ),
@@ -42,7 +45,9 @@ void main() {
         ]) {
           ui.toggle(panel);
           await tester.pump();
-          await tester.tap(find.byTooltip('Stop and close'));
+          await tester.tap(
+            find.byTooltip(RegExp(r'^Stop and close(?: \(.*\))?$')),
+          );
           await tester.tap(find.byIcon(Icons.keyboard_arrow_down_rounded));
           expect(closed, 0);
           expect(docked, 0);
@@ -64,12 +69,16 @@ void main() {
         }
         ui.closePanel();
         await tester.pump();
-        await tester.tap(find.byTooltip('Stop and close'));
+        await tester.tap(
+          find.byTooltip(RegExp(r'^Stop and close(?: \(.*\))?$')),
+        );
         expect(closed, 1);
         ui.toggle(PlayerPanel.settings);
         ui.fullscreen = false;
         await tester.pump();
-        await tester.tap(find.byTooltip('Stop and close'));
+        await tester.tap(
+          find.byTooltip(RegExp(r'^Stop and close(?: \(.*\))?$')),
+        );
         expect(closed, 2);
         await tester.pump(const Duration(seconds: 3));
         expect(tester.takeException(), isNull);

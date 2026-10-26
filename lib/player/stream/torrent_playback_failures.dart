@@ -1,23 +1,6 @@
 part of 'torrent_playback.dart';
 
 extension _TorrentPlaybackFailures on TorrentPlayback {
-  void _recoverPeer() {
-    final peer = _peerFile, current = _item;
-    if (peer == null || current == null) return;
-    if (peerLookup == null) {
-      _fail(_generation, current, null, const _Unplayable(), null);
-      return;
-    }
-    _peerFile = null;
-    final resume = status.value?.stage == StreamStage.streaming
-        ? _player.state.position
-        : _start;
-    _log.info('Peer ${peer.deviceName} failed; trying another source');
-    unawaited(
-      play(current, start: resume, failedPeers: {..._failedPeers, peer.url}),
-    );
-  }
-
   /// Starts a pending automatic switch without waiting.
   void _switchNow() {
     final s = status.value;
@@ -43,8 +26,8 @@ extension _TorrentPlaybackFailures on TorrentPlayback {
             s.stage != StreamStage.preparing)) {
       return false;
     }
-    if (_peerFile != null && peerLookup != null) {
-      _recoverPeer();
+    if (_peerFile != null) {
+      unawaited(_recoverPeer());
       return true;
     }
     if (s.localFile != null) {
@@ -74,7 +57,10 @@ extension _TorrentPlaybackFailures on TorrentPlayback {
     if (_stale(generation) || _cancelled(error)) return;
     _log.warning('Could not stream ${item.name}', error, stack);
     final s = status.value!;
-    if (s.stage == StreamStage.streaming) _start = _player.state.position;
+    if (s.stage == StreamStage.streaming ||
+        s.stage == StreamStage.reconnecting) {
+      _start = resumePosition;
+    }
     final failedGeneration = ++_generation;
     unawaited(_release());
     final failed = {

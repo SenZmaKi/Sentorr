@@ -196,6 +196,17 @@ class PlaybackSubtitles extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// A peer's sidecar travels as text, never as its device-local file path.
+  /// Keep it transient so settings do not contain subtitle payloads.
+  void restoreExternal(String data, {String? title, required bool enabled}) {
+    selectedFile = null;
+    _embedded = SubtitleTrack.data(data, title: title);
+    _explicit = true;
+    this.enabled = enabled;
+    _apply();
+    notifyListeners();
+  }
+
   void toggle() => enabled ? off() : on();
   void on() {
     _explicit = true;

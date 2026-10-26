@@ -156,7 +156,14 @@ class TorrentStreamSession {
     return files;
   }
 
-  Future<TorrentStream> prepareFile(int index) async {
+  /// Select a file and create a verified-byte endpoint. A relay attaching to
+  /// an already prepared source may disable warming and index construction;
+  /// ordinary playback retains both defaults.
+  Future<TorrentStream> prepareFile(
+    int index, {
+    bool? prepareContainer,
+    bool indexMedia = true,
+  }) async {
     final file = _files.where((f) => f.index == index).firstOrNull;
     if (file == null ||
         file.isPadFile ||
@@ -171,7 +178,21 @@ class TorrentStreamSession {
     _file = file;
     _at(TorrentStreamPhase.preparing);
     final stream = await _guard(
-      engine.stream(_hash!, owner, index, options: config.streamOptions),
+      engine.stream(
+        _hash!,
+        owner,
+        index,
+        options: prepareContainer == null && indexMedia
+            ? config.streamOptions
+            : StreamOptions(
+                readAheadBytes: config.readAheadBytes,
+                pieceCacheBytes: config.pieceCacheBytes,
+                pieceTimeout: config.pieceTimeout,
+                nativeReadTimeout: config.nativeReadTimeout,
+                prepareContainer: prepareContainer ?? config.prepareContainer,
+                indexMedia: indexMedia,
+              ),
+      ),
     );
     _stream = stream.id;
     _at(TorrentStreamPhase.serving);

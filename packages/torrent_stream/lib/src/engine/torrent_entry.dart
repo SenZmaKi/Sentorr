@@ -213,7 +213,9 @@ class TorrentEntry {
       }
     }
     for (final stream in streams.values) {
-      stream.indexing.refresh(_fileBytes[stream.file.index]);
+      if (stream.indexMedia) {
+        stream.indexing.refresh(_fileBytes[stream.file.index]);
+      }
       stream.availability.update(
         offset: stream.file.offset,
         length: stream.file.size,

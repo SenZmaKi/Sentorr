@@ -91,6 +91,7 @@ class StreamOptions {
     this.pieceTimeout = const Duration(seconds: 45),
     this.nativeReadTimeout = const Duration(seconds: 15),
     this.prepareContainer = true,
+    this.indexMedia = true,
   }) {
     if (readAheadBytes <= 0 ||
         pieceCacheBytes < 0 ||
@@ -111,6 +112,9 @@ class StreamOptions {
   /// Warm the file's header alongside HTTP serving. Container tail/index
   /// reads are driven by the player's requests.
   final bool prepareContainer;
+
+  /// Relays can read verified bytes without building another playback timeline.
+  final bool indexMedia;
 }
 
 /// Byte units are explicit. The cache root belongs to the caller; only a unique

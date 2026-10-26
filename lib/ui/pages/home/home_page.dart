@@ -16,6 +16,7 @@ import '../../shared/layout/layout_size.dart';
 import 'home_layout.dart';
 import 'home_section.dart';
 import 'continue_shelf.dart';
+import 'continuity_card.dart';
 import 'home_shelves.dart';
 import 'offline_notice.dart';
 import 'spotlight_ambient.dart';
@@ -43,6 +44,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   static const _sections = <Widget>[
     FeaturedSection(),
+    ContinuityCard(),
     ContinueWatchingShelf(),
     NewEpisodesShelf(),
     ListShelf(WatchStatus.planned),
@@ -53,6 +55,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   static const _offlineSections = <Widget>[
     OfflineNotice(),
+    ContinuityCard(),
     ContinueWatchingShelf(),
     DownloadedShelf(),
     NewEpisodesShelf(),

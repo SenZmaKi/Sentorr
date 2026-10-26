@@ -7,6 +7,7 @@ import '../imdb/providers.dart';
 import '../library/playback.dart';
 import '../torrents/resolution_models.dart';
 import 'models.dart';
+import 'stream/offline_source.dart';
 import 'recovery.dart';
 import 'preparation.dart';
 import 'queue_builder.dart';
@@ -24,9 +25,11 @@ class PlayerSession {
     this.starts = const {},
     this.torrents = const {},
     this.options = const {},
+    this.source,
   });
 
   final PlayRequest request;
+  final PeerFile? source;
 
   /// Recovery prepares media paused until the viewer presses Play.
   final bool autoplay;
@@ -53,13 +56,15 @@ class PlayerSession {
 
   PlayerSession copyWith({
     PlayQueue? queue,
+    bool? autoplay,
     Object? error,
     bool? resolving,
     Map<String, TorrentCandidate>? torrents,
     Map<String, TorrentResolution>? options,
   }) => PlayerSession(
     request: request,
-    autoplay: autoplay,
+    source: source,
+    autoplay: autoplay ?? this.autoplay,
     starts: starts,
     queue: queue ?? this.queue,
     error: error,
@@ -108,6 +113,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
     TorrentResolution? options,
     Duration? start,
     bool autoplay = true,
+    PeerFile? source,
   }) {
     final cancel = _restart();
     final first = queue ?? _builder.immediate(request);
@@ -117,6 +123,7 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
     );
     state = PlayerSession(
       request: request,
+      source: source,
       autoplay: autoplay,
       starts: {if (first != null && start != null) first.current.id: start},
       queue: first,
@@ -146,6 +153,10 @@ class PlayerSessionNotifier extends Notifier<PlayerSession?> {
       torrents: {...s.torrents, itemId: torrent},
       options: options == null ? null : {...s.options, itemId: options},
     );
+  }
+
+  void enableAutoplay() {
+    state = state?.copyWith(autoplay: true);
   }
 
   void retry() {

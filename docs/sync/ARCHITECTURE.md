@@ -307,3 +307,91 @@ request generations still guard late network results. Drive uses one coordinator
 and keeps its sign-in, errors, dirty-state policy and configured interval in
 `BackupNotifier`. The coordinator does not choose when idle changes should sync.
 Library polling and transport retries remain in their respective adapters.
+
+## Continuity
+
+Home shows an ephemeral **Playing on / Paused on … → Continue here** suggestion
+for reachable paired devices. `lib/sync/continuity/` owns presence polling and
+transfer coordination; `lib/player/continuity_presence.dart` registers callbacks
+only while a player exists. Reading presence never creates a native player.
+Presence is separate from watch-history merge and Drive backup. Home polls every
+three seconds while mounted, drops failed observations, and hides dismissed
+sessions or suggestions when a local player is open. Recently paused playback is
+eligible for two minutes. Multiple devices have separately labelled actions.
+
+`GET /v1/continuity` has its own version-1 envelope. Older peers without the
+endpoint simply contribute no suggestion; existing state/media formats are
+unchanged. All continuity requests use the existing compatibility probe, paired
+certificate checks and mutually authenticated pinned TLS.
+
+The receiver refreshes presence on tap, opens that precise peer source paused and
+waits up to 30 seconds for the native demuxer to recognise it. It skips the normal
+launch confirmation and source ranking: the tap already selected a device.
+Both continuity and ordinary peer playback construct their URLs through
+`peerFileForOffer`. Finished sources carry a file version enforced as If-Match on
+every proxy read; partial sources use the existing torrent-hash binding. Preparation failures do
+not silently fall through to another torrent before the handoff is accepted.
+After playback starts, bounded peer recovery may switch to another copy and then
+the original torrent locally. Retry retains the last playback/seek position. Once prepared, the receiver sends
+`POST /v1/continuity/take` with a session ID and unique handoff ID. The source
+validates the session, pauses and returns its final position; the receiver seeks
+to that position and plays. Session IDs distinguish player/source generations and
+file incarnations. A claim admits one receiver; duplicate requests share the
+same pause/result, including one retry after a lost acknowledgement.
+
+The original player stays mounted and paused, labelled **Continued on …**. Its
+streaming owner and the receiver's independent buffered-media owner keep serving
+bytes. Resuming the source creates a new presence identity. Closing/sleeping the
+host still interrupts media that depends on it. Playback already arriving from a
+peer is not advertised again, preventing forwarding chains. After the source
+pause, connection/seek failures remain possible: the error tells the viewer the
+other player may need a local Play press. This is a coordinated one-tap transfer,
+not an atomic or frame-perfect switch.
+
+The reproducible two-process macOS lab and hidden native smoke check are in
+`tool/continuity_lab/README.md`. They isolate app data and do not require a phone.
+
+Continuity presence optionally carries `HandoffSettings`: current native speed,
+volume and stable audio/subtitle descriptions plus caption visibility. The
+receiver imports only those controls and this title’s track preferences, preserving
+other titles and device/network/cache configuration. Track descriptions resolve
+against the receiver’s tracks instead of blindly trusting native IDs. Automatic
+audio selection is resolved from mpv’s actual `aid`, using the same resolver as
+the player UI, before capturing the handoff. A selected
+sidecar is fetched only on handoff through the authenticated continuity caption
+endpoint, validated against the current session and limited to 512 KiB. Its text
+is imported transiently; host file paths and caption payloads never enter saved
+settings. Older version-1 peers may omit playback settings.
+
+A buffered-media lease retains an independent owner of the existing host engine
+and storage but skips duplicate header warming and media-index construction.
+Discarding a player read closes its dedicated authenticated upstream request; the
+host relay also cancels its loopback read. This prevents abandoned probes/seeks
+from competing with current ranges. Lease readers are counted before asynchronous
+preparation so an expiry cannot close a lease another reader is opening.
+
+## Peer playback recovery
+
+The media relay resumes interrupted responses at the next unsent byte, validating
+Content-Range and file size while retaining the original file version/torrent
+binding. No-progress reads have a five-second idle deadline and a ten-second
+outage retry budget. Every retry resolves the latest peer address. Fully consumed
+HTTPS clients return to a bounded idle pool (four per peer); cancellation or an
+incomplete response discards that connection. Compatibility is still probed for
+every operation. Unpairing closes active and idle peer connections.
+
+A player watchdog detects ten seconds without playback progress while playing,
+independently of mpv error callbacks. Pauses, completions, seeks and source
+changes reset it. Recovery shows Reconnecting/Waiting for video, retries the
+exact peer for up to twenty seconds (four seconds per attempt, exponential
+backoff), checks up to three other peer offers with bounded waits, and finally
+uses a local file/download or opens the original torrent and file index on this
+device. Local torrent recovery still needs usable metadata and swarm peers.
+
+Position is captured before stopping native playback. An outstanding seek target
+cannot be overwritten by late pre-seek position events. Speed, volume, audio
+preferences and current captions intent survive recovery, including sidecar text
+and a pause/caption change made after handoff. Closing playback, switching items
+or disposing the player cancels late reconnects and prevents fallback work from
+opening an obsolete item. The initial handoff remains pinned until accepted so
+failed preparation does not pause the source or start an unintended replacement.

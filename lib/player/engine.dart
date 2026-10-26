@@ -21,6 +21,7 @@ import '../following/notifier.dart';
 import '../lists/notifier.dart';
 import '../watching/notifier.dart';
 import 'models.dart';
+import 'continuity_presence.dart';
 import 'preview/controller.dart';
 import 'preview/availability.dart';
 import '../sync/shared_streams.dart';
@@ -147,6 +148,8 @@ class PlaybackEngine {
   late final TorrentPlayback streaming;
   late final VideoController video = VideoController(player);
   String? _opened;
+  Object? _openedRequest;
+  PeerFile? _openedSource;
   late final StreamSubscription<String> _errors;
   late final StreamSubscription<PlayerLog> _native;
 
@@ -160,8 +163,12 @@ class PlaybackEngine {
     TorrentCandidate? torrent,
     TorrentResolution? options,
     Duration? start,
+    PeerFile? source,
+    Object? requestKey,
   }) async {
-    if (item.id == _opened) return;
+    if (item.id == _opened && identical(requestKey, _openedRequest)) return;
+    _openedRequest = requestKey;
+    _openedSource = source;
     cacheRanges.invalidate();
     _opened = item.id;
     events.opened({
@@ -177,6 +184,7 @@ class PlaybackEngine {
       torrent: torrent,
       options: options,
       start: start,
+      source: source,
     );
   }
 
@@ -190,7 +198,12 @@ class PlaybackEngine {
       return streaming.switchTo(torrent);
     }
     _opened = null;
-    return open(item);
+    return open(
+      item,
+      source: _openedSource,
+      requestKey: _openedRequest,
+      start: streaming.resumePosition,
+    );
   }
 
   /// Seeks through the torrent so obsolete reads are dropped first.
@@ -322,6 +335,7 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
           }),
     ),
   );
+  registerContinuityPlayer(ref, engine);
   final recovery = ref.read(playbackRecoveryProvider);
   var activeSession = ref.read(playerSessionProvider);
   engine.streaming.canAutoplay = () => activeSession?.autoplay ?? true;
@@ -445,23 +459,31 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
   ]);
   ref.onDispose(engine.dispose);
   final started = <String>{};
+  Object? openedRequest;
   ref.listen(playerSessionProvider.select((s) => s?.current), (_, item) {
     progress.item = item;
     if (item == null) return;
     lists.started(item);
     final session = ref.read(playerSessionProvider);
+    if (!identical(openedRequest, session?.request)) {
+      openedRequest = session?.request;
+      started.clear();
+    }
     final resume = history.resumePoint(
       item.id,
       settings: ref.read(settingsProvider).streaming,
     );
+    final firstOpen = started.add(item.id);
     unawaited(
       engine.open(
         item,
+        requestKey: session?.request,
         torrent: session?.torrents[item.id],
         options: session?.options[item.id],
-        start: started.add(item.id)
-            ? session?.starts[item.id] ?? resume
-            : resume,
+        source: firstOpen && session?.starts.containsKey(item.id) == true
+            ? session?.source
+            : null,
+        start: firstOpen ? session?.starts[item.id] ?? resume : resume,
       ),
     );
   }, fireImmediately: true);

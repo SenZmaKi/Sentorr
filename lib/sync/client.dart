@@ -21,9 +21,11 @@ class PeerException implements Exception {
 class PeerRequest {
   final _cancelled = Completer<void>();
   final _clients = <HttpClient>{};
+  final _release = <HttpClient, void Function(bool)>{};
   bool get isCancelled => _cancelled.isCompleted;
-  void bind(HttpClient client) {
+  void bind(HttpClient client, {void Function(bool)? release}) {
     _clients.add(client);
+    if (release != null) _release[client] = release;
     if (isCancelled) client.close(force: true);
   }
 
@@ -31,6 +33,20 @@ class PeerRequest {
     if (!isCancelled) _cancelled.complete();
     for (final client in _clients) {
       client.close(force: true);
+      _release.remove(client)?.call(false);
+    }
+    _clients.clear();
+  }
+
+  /// Return a fully consumed media connection to its per-peer idle pool.
+  void complete() {
+    for (final client in _clients) {
+      final release = _release.remove(client);
+      if (release != null) {
+        release(true);
+      } else {
+        client.close();
+      }
     }
     _clients.clear();
   }
@@ -59,6 +75,10 @@ class PeerClient {
   final int Function() port;
 
   final _pinned = <String, HttpClient>{};
+  final _idleMedia = <String, List<HttpClient>>{};
+  final _activeMedia = <String, Set<HttpClient>>{};
+  final _epochs = <String, int>{};
+  bool _closed = false;
   HttpClient? _pairing;
   String? _presented;
 
@@ -95,10 +115,30 @@ class PeerClient {
       ..connectionTimeout = const Duration(seconds: 5)
       ..badCertificateCallback = (certificate, _, _) =>
           fingerprintOfDer(certificate.der) == fingerprint;
+    if (_closed) throw const PeerException('Peer client closed');
+    final idle = _idleMedia.putIfAbsent(fingerprint, () => []);
     final client = cancellation == null
         ? (_pinned[fingerprint] ??= create())
-        : create();
-    cancellation?.bind(client);
+        : (idle.isEmpty ? create() : idle.removeLast());
+    if (cancellation != null) {
+      final epoch = _epochs[fingerprint] ?? 0;
+      final active = _activeMedia.putIfAbsent(fingerprint, () => {});
+      active.add(client);
+      cancellation.bind(
+        client,
+        release: (reusable) {
+          active.remove(client);
+          if (reusable &&
+              !_closed &&
+              (_epochs[fingerprint] ?? 0) == epoch &&
+              idle.length < 4) {
+            idle.add(client);
+          } else {
+            client.close(force: true);
+          }
+        },
+      );
+    }
     if (cancellation?.isCancelled == true) {
       throw const PeerException('Request cancelled');
     }
@@ -220,10 +260,22 @@ class PeerClient {
   }
 
   /// Forgets [fingerprint]'s connections, e.g. once unpaired.
-  void forget(String fingerprint) =>
-      _pinned.remove(fingerprint)?.close(force: true);
+  void forget(String fingerprint) {
+    _epochs[fingerprint] = (_epochs[fingerprint] ?? 0) + 1;
+    _pinned.remove(fingerprint)?.close(force: true);
+    for (final client in [
+      ...?_idleMedia.remove(fingerprint),
+      ...?_activeMedia.remove(fingerprint),
+    ]) {
+      client.close(force: true);
+    }
+  }
 
   void close() {
+    _closed = true;
+    for (final fingerprint in {..._idleMedia.keys, ..._activeMedia.keys}) {
+      forget(fingerprint);
+    }
     for (final client in _pinned.values) {
       client.close(force: true);
     }

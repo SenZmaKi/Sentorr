@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
 import 'client.dart';
+import 'continuity/host.dart';
 import 'devices.dart';
 import 'discovery.dart';
 import 'identity.dart';
@@ -43,7 +44,12 @@ class NearbyDevicesNotifier extends Notifier<Map<String, NearbyDevice>> {
 /// The device's place on the local network: the HTTPS server paired
 /// devices sync and stream from, the client that reaches theirs, mDNS, and
 /// the loopback proxy the player streams their files through.
-class SyncService implements SyncRoutes, BufferedSyncRoutes {
+class SyncService
+    implements
+        SyncRoutes,
+        BufferedSyncRoutes,
+        ContinuityRoutes,
+        ContinuityCaptionRoutes {
   SyncService(this._ref);
   final Ref _ref;
 
@@ -175,6 +181,46 @@ class SyncService implements SyncRoutes, BufferedSyncRoutes {
     PairedDevice device,
     String itemId,
   ) => _buffered.serve(request, itemId);
+
+  @override
+  Future<Map<String, dynamic>> continuity(PairedDevice device) async {
+    final presence = await _ref.read(continuityHostProvider).presence();
+    if (!_ref.mounted || paired(device.fingerprint)?.id != device.id) {
+      throw const SyncRefusal('Device is no longer paired', status: 403);
+    }
+    return presence;
+  }
+
+  @override
+  Future<Map<String, dynamic>> takePlayback(
+    PairedDevice device,
+    Map<String, dynamic> body,
+  ) => _ref
+      .read(continuityHostProvider)
+      .take(
+        device.id,
+        device.name,
+        body,
+        authorized: () =>
+            _ref.mounted && paired(device.fingerprint)?.id == device.id,
+      );
+
+  @override
+  Future<Map<String, dynamic>> continuityCaption(
+    PairedDevice device,
+    Map<String, dynamic> body,
+  ) async {
+    final session = body['session'];
+    if (session is! String) throw const FormatException('Invalid session');
+    final data = await _ref.read(continuityHostProvider).caption?.call(session);
+    if (!_ref.mounted || paired(device.fingerprint)?.id != device.id) {
+      throw const SyncRefusal('Device is no longer paired', status: 403);
+    }
+    if (data == null) {
+      throw const SyncRefusal('Selected captions are unavailable', status: 404);
+    }
+    return {'data': data};
+  }
 
   Future<void> close() {
     _closing = true;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
+import '../../../player/track_selection.dart';
+
 /// MediaKit retains `auto` after mpv chooses a default track. Resolve its
 /// actual ID without changing the native selection policy.
 class AudioSelection extends StatefulWidget {
@@ -49,13 +51,17 @@ class _AudioSelectionState extends State<AudioSelection> {
     if (widget.track.audio.id != 'auto') return;
     try {
       final native = widget.player.platform;
-      final id = widget.readNativeId != null
-          ? await widget.readNativeId!()
-          : native is NativePlayer
-          ? await native.getProperty('aid')
-          : null;
+      final selected = await resolveAudioSelection(
+        widget.track.audio,
+        widget.tracks.audio,
+        readNativeId: () async => widget.readNativeId != null
+            ? await widget.readNativeId!()
+            : native is NativePlayer
+            ? await native.getProperty('aid')
+            : null,
+      );
       if (!mounted || revision != _revision) return;
-      setState(() => _nativeId = id);
+      setState(() => _nativeId = selected?.id);
     } on Object {
       // Keep the availability summary when native metadata is unavailable.
     }

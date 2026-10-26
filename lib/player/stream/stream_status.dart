@@ -17,6 +17,9 @@ enum StreamStage {
   /// The player reads from the torrent.
   streaming,
 
+  /// Reopening a previously playing peer before trying another source.
+  reconnecting,
+
   /// A torrent failed; [StreamStatus.next] starts at [StreamStatus.retryAt]
   /// unless the viewer picks another or holds the switch.
   switching,
@@ -113,7 +116,8 @@ class StreamStatus {
   bool get starting =>
       stage == StreamStage.finding ||
       stage == StreamStage.connecting ||
-      stage == StreamStage.preparing;
+      stage == StreamStage.preparing ||
+      stage == StreamStage.reconnecting;
 
   StreamStatus copyWith({
     StreamStage? stage,

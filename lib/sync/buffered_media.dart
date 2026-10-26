@@ -9,7 +9,7 @@ class BufferedMedia {
   BufferedMedia(this.lookup);
   final SharedStream? Function(String) lookup;
   final _leases = <String, BufferedStreamLease>{};
-  final _client = HttpClient();
+  final _clients = <HttpClient>{};
   bool _closed = false;
 
   Future<void> serve(HttpRequest request, String itemId) async {
@@ -35,20 +35,22 @@ class BufferedMedia {
       _leases[key] = lease;
     }
     final active = lease;
-    Uri uri;
-    try {
-      uri = await active.ready;
-    } catch (_) {
-      if (identical(_leases[key], active)) _leases.remove(key);
-      rethrow;
-    }
-    if (_closed) {
-      await active.close();
-      throw const SyncRefusal('Gone', status: 404);
-    }
     active.acquire();
+    final client = HttpClient();
+    _clients.add(client);
+    unawaited(
+      request.response.done.then<void>(
+        (_) => client.close(force: true),
+        onError: (Object _) => client.close(force: true),
+      ),
+    );
     try {
-      final upstream = await _client.openUrl(request.method, uri);
+      final uri = await active.ready.catchError((Object error) {
+        if (identical(_leases[key], active)) _leases.remove(key);
+        throw error;
+      });
+      if (_closed) throw const SyncRefusal('Gone', status: 404);
+      final upstream = await client.openUrl(request.method, uri);
       final range = request.headers.value(HttpHeaders.rangeHeader);
       if (range != null) upstream.headers.set(HttpHeaders.rangeHeader, range);
       final incoming = await upstream.close();
@@ -67,6 +69,8 @@ class BufferedMedia {
       await response.addStream(incoming);
       await response.close();
     } finally {
+      client.close(force: true);
+      _clients.remove(client);
       active.release(() {
         if (!identical(_leases[key], active)) return;
         _leases.remove(key);
@@ -77,7 +81,10 @@ class BufferedMedia {
 
   Future<void> close() async {
     _closed = true;
-    _client.close(force: true);
+    for (final client in _clients) {
+      client.close(force: true);
+    }
+    _clients.clear();
     final pending = _leases.values.toList();
     _leases.clear();
     await Future.wait([

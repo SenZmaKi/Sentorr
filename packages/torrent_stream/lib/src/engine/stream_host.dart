@@ -19,7 +19,13 @@ import 'torrent_entry.dart';
 /// One file of a torrent served over loopback HTTP for one owner, reading
 /// through the torrent's shared scheduler.
 class StreamHost {
-  StreamHost(this.id, this.owner, this.file, this.bytes);
+  StreamHost(
+    this.id,
+    this.owner,
+    this.file,
+    this.bytes, {
+    this.indexMedia = true,
+  });
 
   /// [file] of [entry], read with [options]' window and timeouts.
   factory StreamHost.open(
@@ -60,10 +66,12 @@ class StreamHost {
       ),
       isReadable: (piece) => pieceReadable(entry.handle, piece),
     ),
+    indexMedia: options.indexMedia,
   );
 
   final int id;
   final String owner;
+  final bool indexMedia;
   final TorrentFileEntry file;
   final TorrentBytes bytes;
   final availability = DownloadedRanges();
@@ -104,7 +112,7 @@ class StreamHost {
         bootstrapMedia(bytes, lifetime, (_) {}).catchError((Object _) {}),
       );
     }
-    indexing.refresh(0);
+    if (indexMedia) indexing.refresh(0);
     return server.uri.toString();
   }
 

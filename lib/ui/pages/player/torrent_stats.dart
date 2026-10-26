@@ -116,6 +116,8 @@ String? streamLabel(StreamStatus? status) {
   final peers = status.transfer.connectedPeers;
   final suffix = peers == 0 ? '' : ' · $peers ${peers == 1 ? 'peer' : 'peers'}';
   return switch (status.stage) {
+    StreamStage.reconnecting =>
+      status.problem ?? 'Reconnecting to ${status.peer ?? "device"}',
     StreamStage.finding => 'Finding a torrent',
     StreamStage.connecting => 'Connecting to peers$suffix',
     StreamStage.preparing => 'Preparing the video$suffix',

@@ -29,6 +29,7 @@ import '../support/fake_history.dart';
 import '../support/fake_imdb.dart';
 import '../support/fake_library.dart';
 import '../support/fake_torrents.dart';
+import '../support/fake_sync.dart';
 import '../support/viewports.dart';
 
 /// Catalog lookups fail without an answer, as offline.
@@ -77,6 +78,7 @@ Future<ProviderContainer> _pumpHome(
     retry: (_, _) => null,
     overrides: [
       initialSettingsProvider.overrideWithValue(const AppSettings()),
+      ...syncOverrides(),
       ...watchListsOverrides(),
       ...followedSeriesOverrides(),
       ...watchHistoryOverrides(),

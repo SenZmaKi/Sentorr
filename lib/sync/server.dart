@@ -63,6 +63,21 @@ abstract interface class BufferedSyncRoutes {
   );
 }
 
+abstract interface class ContinuityRoutes {
+  Future<Map<String, dynamic>> continuity(PairedDevice device);
+  Future<Map<String, dynamic>> takePlayback(
+    PairedDevice device,
+    Map<String, dynamic> body,
+  );
+}
+
+abstract interface class ContinuityCaptionRoutes {
+  Future<Map<String, dynamic>> continuityCaption(
+    PairedDevice device,
+    Map<String, dynamic> body,
+  );
+}
+
 /// HTTPS on every interface, presenting this device's certificate and
 /// asking callers for theirs.
 class SyncServer {
@@ -139,6 +154,39 @@ class SyncServer {
       }
       routes.seen(device, _from(request));
       switch ((request.method, path)) {
+        case ('GET', ['v1', 'continuity']):
+          final handler = routes;
+          if (handler is! ContinuityRoutes) {
+            throw const SyncRefusal('Unavailable', status: 404);
+          }
+          await _json(
+            request,
+            await (handler as ContinuityRoutes).continuity(device),
+          );
+        case ('POST', ['v1', 'continuity', 'caption']):
+          final handler = routes;
+          if (handler is! ContinuityCaptionRoutes) {
+            throw const SyncRefusal('Unavailable', status: 404);
+          }
+          await _json(
+            request,
+            await (handler as ContinuityCaptionRoutes).continuityCaption(
+              device,
+              await _body(request),
+            ),
+          );
+        case ('POST', ['v1', 'continuity', 'take']):
+          final handler = routes;
+          if (handler is! ContinuityRoutes) {
+            throw const SyncRefusal('Unavailable', status: 404);
+          }
+          await _json(
+            request,
+            await (handler as ContinuityRoutes).takePlayback(
+              device,
+              await _body(request),
+            ),
+          );
         case ('POST', ['v1', 'sync']):
           await _json(request, await routes.sync(device, await _body(request)));
         case ('GET', ['v1', 'library']):

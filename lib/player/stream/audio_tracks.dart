@@ -50,6 +50,10 @@ class PlaybackAudio {
   void _applyDefault() {
     if (!_opened || _explicit) return;
     final preference = saved?.call();
+    if (preference?.id == 'no') {
+      if (_applied != 'no') _select(AudioTrack.no());
+      return;
+    }
     final restored = player.state.tracks.audio
         .where(
           (t) =>

@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 
 import 'client.dart';
 import 'models.dart';
+import 'media_relay.dart';
 
 final _log = Logger('sentorr.sync.proxy');
 
@@ -39,13 +40,13 @@ class MediaProxy {
     String itemId, {
     bool buffered = false,
     String? infoHash,
+    String? fileVersion,
   }) => _server == null
       ? null
-      : Uri.http(
-          '127.0.0.1:${_server!.port}',
-          '/$_token/$deviceId/$itemId',
-          buffered ? {'buffered': '1', 'hash': ?infoHash} : null,
-        );
+      : Uri.http('127.0.0.1:${_server!.port}', '/$_token/$deviceId/$itemId', {
+          if (buffered) ...{'buffered': '1', 'hash': ?infoHash},
+          'version': ?fileVersion,
+        });
 
   Future<void> _forward(HttpRequest request) async {
     final response = request.response;
@@ -55,38 +56,51 @@ class MediaProxy {
       response.statusCode = HttpStatus.notFound;
       return response.close();
     }
+    final cancellation = PeerRequest();
+    unawaited(
+      response.done.then<void>(
+        (_) => cancellation.cancel(),
+        onError: (Object _) => cancellation.cancel(),
+      ),
+    );
     try {
-      final upstream = await client.open(
-        to.address,
-        to.fingerprint,
-        '/v1/${request.uri.queryParameters['buffered'] == '1' ? 'buffered' : 'media'}/${path[2]}',
-        method: request.method,
-        headers: {
-          if (request.uri.queryParameters['buffered'] == '1')
-            'x-sentorr-torrent': request.uri.queryParameters['hash'] ?? '',
-          HttpHeaders.rangeHeader: ?request.headers.value(
-            HttpHeaders.rangeHeader,
-          ),
+      await ResumableMediaRelay(
+        open: (headers, attempt) async {
+          final latest = route(path[1]);
+          if (latest == null) {
+            throw const PeerException(
+              'Device is no longer paired',
+              status: 403,
+            );
+          }
+          return client.open(
+            latest.address,
+            latest.fingerprint,
+            '/v1/${request.uri.queryParameters['buffered'] == '1' ? 'buffered' : 'media'}/${path[2]}',
+            method: request.method,
+            cancellation: attempt,
+            headers: headers,
+          );
         },
-      );
-      response.statusCode = upstream.statusCode;
-      for (final name in [
-        HttpHeaders.contentTypeHeader,
-        HttpHeaders.contentRangeHeader,
-        HttpHeaders.acceptRangesHeader,
-      ]) {
-        if (upstream.headers.value(name) case final v?) {
-          response.headers.set(name, v);
-        }
-      }
-      response.contentLength = upstream.contentLength;
-      // The player seeks by dropping a request; stop pulling with it.
-      await response.addStream(upstream);
-      await response.close();
+      ).send(request, {
+        if (request.uri.queryParameters['buffered'] == '1')
+          'x-sentorr-torrent': request.uri.queryParameters['hash'] ?? '',
+        if (request.uri.queryParameters['version'] case final version?)
+          HttpHeaders.ifMatchHeader: '"$version"',
+        HttpHeaders.rangeHeader: ?request.headers.value(
+          HttpHeaders.rangeHeader,
+        ),
+      }, cancellation);
     } on PeerException catch (error) {
       _log.info('Peer media unavailable: $error');
-      response.statusCode = HttpStatus.badGateway;
-      await response.close();
+      if (!cancellation.isCancelled) {
+        try {
+          response.statusCode = HttpStatus.badGateway;
+          await response.close();
+        } catch (_) {
+          // A seek can close the player socket before headers are written.
+        }
+      }
     } catch (error) {
       _log.fine('Peer media request ended: $error');
       try {
@@ -94,6 +108,8 @@ class MediaProxy {
       } catch (_) {
         // Already gone.
       }
+    } finally {
+      cancellation.cancel();
     }
   }
 

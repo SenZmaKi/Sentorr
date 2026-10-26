@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../sync/continuity/host.dart';
 
 import '../../../player/models.dart';
 import '../../../imdb/models.dart';
@@ -149,6 +152,21 @@ class TopBar extends StatelessWidget {
                     ),
                   ),
                 ),
+              Consumer(
+                builder: (context, ref, _) => ValueListenableBuilder(
+                  valueListenable: ref
+                      .watch(continuityHostProvider)
+                      .destination,
+                  builder: (context, name, _) => name == null
+                      ? const SizedBox.shrink()
+                      : Text(
+                          'Continued on $name',
+                          style: context.type.bodySmall.copyWith(
+                            color: context.player.foregroundSecondary,
+                          ),
+                        ),
+                ),
+              ),
               if (layout.stackedStats)
                 TorrentStats(status: stream, dense: true),
             ],

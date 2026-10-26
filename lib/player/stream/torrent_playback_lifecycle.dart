@@ -3,6 +3,8 @@ part of 'torrent_playback.dart';
 extension _TorrentPlaybackLifecycle on TorrentPlayback {
   /// Stops the player and releases the torrent.
   Future<void> _close() async {
+    _peerRecovery = null;
+    _peerWatchdog.reset();
     final generation = ++_generation;
     _switchTimer?.cancel();
     _item = null;

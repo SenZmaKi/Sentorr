@@ -78,7 +78,11 @@ class BufferedStreamLease {
   Future<Uri> _open(SharedStream source) async {
     try {
       await session.open(TorrentSource.magnet(source.candidate.release.magnet));
-      final stream = await session.prepareFile(source.stream.file.index);
+      final stream = await session.prepareFile(
+        source.stream.file.index,
+        prepareContainer: false,
+        indexMedia: false,
+      );
       return stream.uri;
     } catch (_) {
       await close();

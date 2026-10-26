@@ -11,6 +11,7 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     String? peer,
     bool buffered = false,
     Stream<TorrentStreamState>? transfers,
+    bool Function()? autoplay,
   }) async {
     _log.info('Playing $item from ${peer ?? uri.toFilePath()}');
     status.value = StreamStatus(
@@ -32,7 +33,7 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     try {
       await _player.open(
         Media(uri.toString(), start: start),
-        play: canAutoplay(),
+        play: autoplay?.call() ?? canAutoplay(),
       );
     } finally {
       if (_openingGeneration == generation) _openingGeneration = null;
@@ -40,6 +41,14 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
     if (!_stale(generation)) {
       audio.opened();
       subtitles.opened();
+      final peerSource = _peerFile;
+      if (peerSource?.captionData case final data?) {
+        subtitles.restoreExternal(
+          data,
+          title: peerSource?.captionTitle,
+          enabled: peerSource?.captionsEnabled ?? false,
+        );
+      }
     }
     _update(generation, (s) => s.copyWith(stage: StreamStage.streaming));
   }
@@ -227,7 +236,8 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
         stream,
         start: start,
         isCurrent: () => !_stale(generation),
-        canAutoplay: canAutoplay,
+        canAutoplay: () =>
+            (_peerRecovery == null || _peerDesiredPlaying) && canAutoplay(),
       );
       if (!_stale(generation)) {
         final settings = _adapter.settings?.call();
@@ -239,6 +249,7 @@ extension _TorrentPlaybackLoading on TorrentPlayback {
         _downloadAhead = DownloadAhead(_player, session);
         audio.opened();
         subtitles.opened();
+        _restorePeerCaptions(_fallbackOrigin);
       }
     } finally {
       if (_openingGeneration == generation) _openingGeneration = null;

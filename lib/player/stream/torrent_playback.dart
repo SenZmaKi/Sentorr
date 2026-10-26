@@ -12,6 +12,7 @@ import '../../settings/streaming_settings.dart';
 import '../../settings/playback_preferences.dart';
 import '../../torrents/resolution_models.dart';
 import '../models.dart';
+import '../peer_recovery.dart';
 import '../../sync/shared_streams.dart';
 import 'cleanup_queue.dart';
 import 'download_ahead.dart';
@@ -31,6 +32,7 @@ export 'stream_status.dart';
 part 'torrent_playback_lifecycle.dart';
 part 'torrent_playback_loading.dart';
 part 'torrent_playback_failures.dart';
+part 'torrent_playback_peer_recovery.dart';
 
 final _log = Logger('sentorr.player.stream');
 
@@ -67,6 +69,8 @@ class TorrentPlayback {
     required this.fetchMetadata,
     OfflineLookup? offline,
     this.peerLookup,
+    this.peerRecoveryPolicy = const PeerRecoveryPolicy(),
+    this.peerStallGrace = const Duration(seconds: 10),
     ParkedStreams? parked,
     this.prepared,
     this.share,
@@ -92,6 +96,7 @@ class TorrentPlayback {
       defaultEnabled: bufferSettings?.call().captionsEnabled ?? false,
       preferredLanguage: () => bufferSettings?.call().subtitleLanguage ?? '',
     );
+    _watchPeer();
     _errors = PlaybackErrors(
       player: player,
       generation: () => _generation,
@@ -144,6 +149,20 @@ class TorrentPlayback {
   final OfflineLookup offline;
   final PeerLookup? peerLookup;
   PeerFile? _peerFile;
+  bool _pinnedSource = false;
+  final PeerRecoveryPolicy peerRecoveryPolicy;
+  final Duration peerStallGrace;
+  Object? _peerRecovery;
+  PeerFile? _fallbackOrigin;
+  Duration? _lastPosition, _peerSeekTarget;
+  bool _peerDesiredPlaying = false, _peerHadError = false;
+  late final PeerStallWatchdog _peerWatchdog;
+  late final StreamSubscription<Duration> _peerPositions;
+  late final StreamSubscription<bool> _peerPlaying;
+  late final StreamSubscription<String> _peerErrors;
+  Duration get resumePosition =>
+      _lastPosition ?? _start ?? _player.state.position;
+  void allowPeerRecovery() => _pinnedSource = false;
   Set<Uri> _failedPeers = {};
 
   /// Completes once the video output's render context exists. Torrent
@@ -189,6 +208,7 @@ class TorrentPlayback {
   bool _local = false;
   Timer? _switchTimer;
   int _generation = 0, _autoSwitches = 0;
+  int get generation => _generation;
 
   /// Streams [item] from [torrent], or the best of [options], or the best
   /// [find] returns, from [start] when given.
@@ -198,21 +218,33 @@ class TorrentPlayback {
     TorrentResolution? options,
     Duration? start,
     Set<Uri> failedPeers = const {},
+    PeerFile? source,
   }) async {
+    _peerRecovery = null;
+    _peerWatchdog.reset();
+    _lastPosition = start;
+    _peerSeekTarget = null;
+    _fallbackOrigin = null;
     final generation = await _begin();
     if (generation == null) return;
     _item = item;
     _peerFile = null;
+    _peerHadError = false;
+    _peerDesiredPlaying = canAutoplay();
+    _pinnedSource = source != null;
     _failedPeers = {...failedPeers};
     _start = start;
     _autoSwitches = 0;
-    if (await _resume(generation, item, torrent, options, start)) {
+    if (source == null &&
+        await _resume(generation, item, torrent, options, start)) {
       prepared?.clear();
       return;
     }
     if (_stale(generation)) return;
-    var saved = torrent == null && options == null ? offline(item) : null;
-    if (torrent == null &&
+    var saved =
+        source ?? (torrent == null && options == null ? offline(item) : null);
+    if (source == null &&
+        torrent == null &&
         options == null &&
         (saved == null || saved is PeerFile) &&
         peerLookup != null) {
@@ -246,7 +278,7 @@ class TorrentPlayback {
         );
       } catch (error) {
         _log.info('Peer open failed: $error');
-        if (!_stale(generation)) _recoverPeer();
+        if (!_stale(generation)) await _recoverPeer();
       }
       return;
     }
@@ -344,6 +376,9 @@ class TorrentPlayback {
   }
 
   Future<void> seek(Duration position) {
+    _lastPosition = position;
+    if (_peerFile != null) _peerSeekTarget = position;
+    _peerWatchdog.reset();
     final generation = _generation;
     return _adapter.seek(
       _session,
@@ -353,6 +388,11 @@ class TorrentPlayback {
   }
 
   void dispose() {
+    _peerRecovery = null;
+    _peerWatchdog.dispose();
+    unawaited(_peerPositions.cancel());
+    unawaited(_peerPlaying.cancel());
+    unawaited(_peerErrors.cancel());
     _generation++;
     _errors.dispose();
     _switchTimer?.cancel();
@@ -366,10 +406,14 @@ class TorrentPlayback {
     TorrentResolution? options,
     Duration? resume,
   }) async {
+    _peerRecovery = null;
+    _fallbackOrigin = null;
     final item = _item, previous = status.value;
     if (item == null) return;
     final generation = await _begin();
     if (generation == null) return;
+    _peerFile = null;
+    _pinnedSource = false;
     _start = resume ?? _start;
     status.value = StreamStatus(
       stage: StreamStage.connecting,

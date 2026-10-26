@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../player/models.dart';
 import '../player/stream/offline_source.dart';
 import 'devices.dart';
+import 'peer_file.dart';
 import 'peer_status.dart';
 import 'service.dart';
 
@@ -15,11 +16,12 @@ OfflineSource? sharedPeerSource(
   final devices = ref.read(devicesProvider);
   for (final MapEntry(key: id, value: peer) in peers.entries) {
     if (!peer.online || !peer.media.any((m) => m.id == item.id)) continue;
-    final url = ref.read(syncServiceProvider).proxy.url(id, item.id);
+    final media = peer.media.firstWhere((m) => m.id == item.id);
     final name = devices.byId(id)?.name;
-    if (url != null && name != null && !excluded.contains(url)) {
-      return PeerFile(url, name);
-    }
+    final source = name == null
+        ? null
+        : peerFileForOffer(ref.read(syncServiceProvider), id, name, media);
+    if (source != null && !excluded.contains(source.url)) return source;
   }
   final candidates = [
     for (final entry in peers.entries)
@@ -29,19 +31,16 @@ OfflineSource? sharedPeerSource(
             (id: entry.key, stream: stream),
   ]..sort((a, b) => b.stream.bufferedBytes!.compareTo(a.stream.bufferedBytes!));
   for (final candidate in candidates) {
-    final url = ref
-        .read(syncServiceProvider)
-        .proxy
-        .url(
-          candidate.id,
-          item.id,
-          buffered: true,
-          infoHash: candidate.stream.release.infoHash,
-        );
     final name = devices.byId(candidate.id)?.name;
-    if (url != null && name != null && !excluded.contains(url)) {
-      return PeerFile(url, name, buffered: true);
-    }
+    final source = name == null
+        ? null
+        : peerFileForOffer(
+            ref.read(syncServiceProvider),
+            candidate.id,
+            name,
+            candidate.stream,
+          );
+    if (source != null && !excluded.contains(source.url)) return source;
   }
   return null;
 }

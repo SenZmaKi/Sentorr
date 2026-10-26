@@ -135,6 +135,56 @@ void main() {
   );
 
   test(
+    'continuity preparation stays pinned until handoff is accepted',
+    () async {
+      final peer = PeerFile(
+        Uri.parse('http://127.0.0.1/peer'),
+        'Peer',
+        buffered: true,
+      );
+      playback.dispose();
+      var lookups = 0;
+      playback = makePlayback((_, _) async {
+        lookups++;
+        return null;
+      });
+      saved = DownloadTorrent(first, 0);
+      await playback.play(
+        item,
+        source: peer,
+        start: const Duration(seconds: 42),
+      );
+      expect(native.opened.single.uri, peer.url.toString());
+      expect(native.opened.single.start, const Duration(seconds: 42));
+      expect(lookups, 0);
+      expect(engine.sources, isEmpty);
+      expect(playback.unplayable(), true);
+      await settlePlayback();
+      expect(playback.status.value!.stage, StreamStage.failed);
+      expect(engine.sources, isEmpty);
+      expect(lookups, 0);
+    },
+  );
+
+  test('peer retry retains transferred sidecar and captions intent', () async {
+    final peer = PeerFile(
+      Uri.parse('http://127.0.0.1/peer'),
+      'Peer',
+      buffered: true,
+      captionData: '1\n00:00:00,000 --> 00:00:02,000\nHello',
+      captionTitle: 'English',
+      captionsEnabled: true,
+    );
+    await playback.play(item, source: peer);
+    expect(playback.subtitles.embeddedTrack?.data, true);
+    expect(playback.subtitles.enabled, true);
+    await playback.play(item, source: peer, start: const Duration(seconds: 3));
+    expect(playback.subtitles.embeddedTrack?.id, contains('Hello'));
+    expect(playback.subtitles.enabled, true);
+    expect(engine.sources, isEmpty);
+  });
+
+  test(
     'peer failure during playback resumes through torrent fallback',
     () async {
       final peer = PeerFile(Uri.parse('http://127.0.0.1/peer'), 'Peer');

@@ -26,12 +26,44 @@ class DownloadTorrent extends OfflineSource {
 
 /// A finished download on a paired device, served over the local network.
 class PeerFile extends OfflineSource {
-  const PeerFile(this.url, this.deviceName, {this.buffered = false});
+  const PeerFile(
+    this.url,
+    this.deviceName, {
+    this.buffered = false,
+    this.captionData,
+    this.captionTitle,
+    this.captionsEnabled,
+    this.available,
+    this.torrent,
+    this.fileIndex,
+  });
 
   /// Loopback; the proxy behind it reaches the device.
   final Uri url;
   final String deviceName;
   final bool buffered;
+
+  /// Re-probes the exact source using the latest discovered address.
+  final Future<bool> Function()? available;
+  final TorrentCandidate? torrent;
+  final int? fileIndex;
+
+  /// Transient handoff sidecar, retained with this source for peer retries.
+  final String? captionData, captionTitle;
+  final bool? captionsEnabled;
+
+  PeerFile withCaption({String? data, String? title, bool? enabled}) =>
+      PeerFile(
+        url,
+        deviceName,
+        buffered: buffered,
+        available: available,
+        torrent: torrent,
+        fileIndex: fileIndex,
+        captionData: data,
+        captionTitle: title,
+        captionsEnabled: enabled,
+      );
 }
 
 typedef OfflineLookup = OfflineSource? Function(PlaybackItem item);

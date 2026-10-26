@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -72,6 +73,8 @@ Future<bool> _probe(SyncService service, PeerFile candidate) async {
       '/v1/${candidate.buffered ? 'buffered' : 'media'}/${candidate.url.pathSegments[2]}',
       method: 'HEAD',
       headers: {
+        if (candidate.url.queryParameters['version'] case final version?)
+          HttpHeaders.ifMatchHeader: '"$version"',
         if (candidate.buffered)
           'x-sentorr-torrent': candidate.url.queryParameters['hash'] ?? '',
       },

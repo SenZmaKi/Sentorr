@@ -32,6 +32,14 @@ class MainActivity : FlutterActivity() {
     override fun shouldDestroyEngineWithHost(): Boolean =
         !isChangingConfigurations && !ForegroundService.isRunningServiceState.value
 
+    private val launchThemeMode by lazy { AppAppearance.savedThemeMode(this) }
+
+    override fun getMetaData(): Bundle = Bundle(super.getMetaData() ?: Bundle()).apply {
+        // Flutter replaces the launch theme during super.onCreate. Override its
+        // normal theme too, without overriding the device's system brightness.
+        putInt("io.flutter.embedding.android.NormalTheme", AppAppearance.normalTheme(launchThemeMode))
+    }
+
     private var pip: PipController? = null
     private var appearance: AppAppearance? = null
     private var driveAuthorization: DriveAuthorization? = null
@@ -51,6 +59,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i("SentorrLifecycle", "onCreate pid=${Process.myPid()} restored=${savedInstanceState != null}")
+        setTheme(AppAppearance.launchTheme(launchThemeMode))
         super.onCreate(savedInstanceState)
     }
 

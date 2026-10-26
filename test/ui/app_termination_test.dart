@@ -27,7 +27,15 @@ void main() {
         if (call.method == 'isMinimized') return false;
         return null;
       });
+      const startupChannel = MethodChannel('sentorr/startup');
+      messenger.setMockMethodCallHandler(startupChannel, (_) async => true);
+      final window = WindowManager.getInstance();
+      window.dispose();
+      await window.reveal();
+      calls.clear();
       addTearDown(() {
+        window.dispose();
+        messenger.setMockMethodCallHandler(startupChannel, null);
         messenger.setMockMethodCallHandler(
           DesktopTrayController.menuBarMode,
           null,

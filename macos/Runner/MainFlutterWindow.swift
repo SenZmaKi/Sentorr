@@ -3,13 +3,39 @@ import FlutterMacOS
 import ServiceManagement
 
 class MainFlutterWindow: NSWindow {
+  private var startupReady = false
   private var sparkleUpdateBridge: SparkleUpdateBridge?
 
   override func awakeFromNib() {
+    // Apply the saved brand before starting Flutter and its asynchronous bootstrap.
+    let launchBackground = applyLaunchAppearance()
     let flutterViewController = RestartSafeFlutterViewController()
+    flutterViewController.backgroundColor = launchBackground
     let windowFrame = self.frame
     self.contentViewController = flutterViewController
     self.setFrame(windowFrame, display: true)
+
+    FlutterMethodChannel(
+      name: "sentorr/startup", binaryMessenger: flutterViewController.engine.binaryMessenger
+    ).setMethodCallHandler { [weak self] call, result in
+      guard let self else { result(false); return }
+      guard call.method == "readyToShow" else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      #if DEBUG
+      // Exercise real startup/rasterization without displaying or activating a
+      // window during the native smoke check.
+      if ProcessInfo.processInfo.environment["SENTORR_STARTUP_SMOKE"] == "1" {
+        let white = self.backgroundColor?.usingColorSpace(.genericGray)?.whiteComponent ?? -1
+        NSLog("SENTORR_STARTUP_READY visible=\(self.isVisible) white=\(white)")
+        result(false)
+        return
+      }
+      #endif
+      self.startupReady = true
+      result(true)
+    }
 
     FlutterMethodChannel(
       name: "launch_at_startup", binaryMessenger: flutterViewController.engine.binaryMessenger
@@ -69,7 +95,7 @@ class MainFlutterWindow: NSWindow {
     )
     (NSApp.delegate as? AppDelegate)?.setWindowReopenChannel(windowReopenChannel)
 
-    // Theme-driven running Dock icon. The bundle's launcher remains dark.
+    // Flutter keeps the running Dock icon in sync with later theme changes.
     FlutterMethodChannel(
       name: "sentorr/app_icon", binaryMessenger: flutterViewController.engine.binaryMessenger
     )
@@ -105,14 +131,52 @@ class MainFlutterWindow: NSWindow {
     self.sparkleUpdateBridge = sparkle
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+    // Flutter normally runs from viewWillAppear. Our window stays hidden until
+    // its first app frame is ready, so start the engine without ordering it in.
+    flutterViewController.engine.run(withEntrypoint: nil)
 
     super.awakeFromNib()
   }
 
-  // Keep the window hidden until Dart has applied saved window preferences.
+  private func applyLaunchAppearance() -> NSColor {
+    guard let support = FileManager.default.urls(
+      for: .applicationSupportDirectory, in: .userDomainMask
+    ).first, let bundleID = Bundle.main.bundleIdentifier else { return .windowBackgroundColor }
+    let directory = bundleID.hasSuffix(".nightly") ? "SentorrNightlyData" : "SentorrData"
+    let settings = support.appendingPathComponent(bundleID)
+      .appendingPathComponent(directory).appendingPathComponent("settings/settings.json")
+    let mode = Self.savedThemeMode(at: settings)
+    let systemDark = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+    let light = mode == "light" || (mode == "system" && !systemDark)
+    let background: NSColor = light ? .white : .black
+    backgroundColor = background
+    guard let frameworks = Bundle.main.privateFrameworksURL else { return background }
+    let asset = frameworks.appendingPathComponent(
+      "App.framework/Resources/flutter_assets/assets/images/dock-\(light ? "light" : "dark").png"
+    )
+    if let icon = NSImage(contentsOf: asset) {
+      NSApp.applicationIconImage = icon
+    }
+    return background
+  }
+
+  static func savedThemeMode(at url: URL) -> String {
+    // Match Dart's backup recovery without modifying its settings files.
+    for candidate in [url, URL(fileURLWithPath: url.path + ".bak")] {
+      if let data = try? Data(contentsOf: candidate),
+         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] {
+        let mode = json["themeMode"] as? String ?? "system"
+        return ["light", "dark", "system"].contains(mode) ? mode : "system"
+      }
+    }
+    return "system"
+  }
+
+  // Nib loading, activation and fullscreen restoration must not expose the
+  // Flutter surface before Dart confirms that its app frame was rasterized.
   override public func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {
+    guard startupReady || place == .out else { return }
     super.order(place, relativeTo: otherWin)
-    hiddenWindowAtLaunch()
   }
 }
 

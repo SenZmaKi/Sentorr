@@ -11,6 +11,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
@@ -63,6 +64,7 @@ import '../sync/repository.dart';
 import '../sync/service.dart';
 import '../ui/shared/desktop_tray_controller.dart';
 import '../ui/shared/app_icon_controller.dart';
+import '../ui/shared/theme/brand.dart';
 import '../ui/shared/launch_at_startup_manager.dart';
 import '../ui/shared/window_manager.dart';
 import '../ui/shared/player_view.dart';
@@ -95,6 +97,7 @@ class AppRuntime with WidgetsBindingObserver {
   static Future<AppRuntime> initialize({
     Directory? rootDirectory,
     bool configureLoginStartup = true,
+    ValueChanged<ThemeMode>? onThemeLoaded,
   }) async {
     WidgetsFlutterBinding.ensureInitialized();
     // The native video plugin links this framework. Loading another copy via
@@ -125,6 +128,7 @@ class AppRuntime with WidgetsBindingObserver {
       credentials: credentials,
     );
     final settings = await repository.load();
+    onThemeLoaded?.call(settings.themeMode);
     final history = WatchHistoryRepository(
       JsonFileStore(paths.watchHistoryFile),
     );
@@ -228,6 +232,16 @@ class AppRuntime with WidgetsBindingObserver {
           runtime.window.dispose();
         }
       });
+      final brand = SentorrBrand.resolve(
+        settings.themeMode,
+        WidgetsBinding.instance.platformDispatcher.platformBrightness,
+      );
+      // Set appearance before restoring bounds: maximizing can expose a native
+      // window even before the explicit reveal.
+      if (supportsWindowCustomization) await windowManager.ensureInitialized();
+      final icons = container.read(appIconControllerProvider);
+      await icons.updateSplash(settings.themeMode);
+      await icons.update(brand);
       await runtime.window.init(
         settings.window,
         WindowStateRepository(store: JsonFileStore(paths.windowStateFile)),
@@ -242,6 +256,7 @@ class AppRuntime with WidgetsBindingObserver {
         log.warning('Launch at login unavailable', error, stack);
       }
       await runtime.tray.initialize(
+        initialIcon: brand.tray,
         quit: runtime.quit,
         prepareToQuit: runtime.dispose,
         checkFollowedSeries: container.read(releaseAlertsProvider).check,

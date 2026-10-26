@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 // A class abstraction for a high DPI-aware Win32 Window. Intended to be
@@ -38,6 +39,9 @@ class Win32Window {
 
   // Show the current window. Returns true if the window was successfully shown.
   bool Show();
+
+  // Dart supplies the resolved app brightness before revealing the window.
+  void SetDarkMode(bool dark);
 
   // Release OS resources associated with window.
   void Destroy();
@@ -87,8 +91,9 @@ class Win32Window {
   // Retrieves a class instance pointer for |window|
   static Win32Window* GetThisFromHandle(HWND const window) noexcept;
 
-  // Update the window frame's theme to match the system theme.
-  static void UpdateTheme(HWND const window);
+  // Keep the app choice when Windows sends a system-theme notification.
+  void UpdateTheme(HWND const window);
+  std::optional<bool> dark_mode_;
 
   bool quit_on_close_ = false;
 

@@ -9,6 +9,16 @@ class SentorrBrand extends ThemeExtension<SentorrBrand> {
   static const dark = SentorrBrand('dark');
   static const light = SentorrBrand('light');
 
+  static SentorrBrand resolve(ThemeMode mode, Brightness systemBrightness) =>
+      switch (mode) {
+        ThemeMode.light => light,
+        ThemeMode.dark => dark,
+        ThemeMode.system => systemBrightness == Brightness.light ? light : dark,
+      };
+
+  Brightness get brightness =>
+      variant == 'light' ? Brightness.light : Brightness.dark;
+
   String get logo => variant == 'light'
       ? 'assets/images/sentorr-icon-light.png'
       : 'assets/images/sentorr-icon.png';

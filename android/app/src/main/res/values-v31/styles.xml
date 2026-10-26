@@ -2,7 +2,7 @@
 <resources>
     <!-- Android 12+ system splash: the icon's own background, no white icon chip.
          LaunchTheme follows the system; the app persists SplashLight/SplashDark
-         on Android 13+ when its own theme is explicit (see AppAppearance.kt). -->
+         on Android 12+ when its own theme is explicit (see AppAppearance.kt). -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_background</item>

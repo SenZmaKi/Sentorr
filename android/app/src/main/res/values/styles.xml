@@ -15,4 +15,17 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+    <!-- Explicit themes must not inherit the device's night-mode resources. -->
+    <style name="SplashLight" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background_light</item>
+    </style>
+    <style name="SplashDark" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background_dark</item>
+    </style>
+    <style name="NormalLight" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/splash_background_light</item>
+    </style>
+    <style name="NormalDark" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/splash_background_dark</item>
+    </style>
 </resources>

@@ -22,6 +22,7 @@ class DesktopTrayController with TrayListener {
   static const menuBarMode = MethodChannel('sentorr/menu_bar_mode');
 
   Future<void> initialize({
+    String initialIcon = 'assets/images/tray.png',
     required Future<void> Function() quit,
     required Future<void> Function() prepareToQuit,
     required Future<void> Function() checkFollowedSeries,
@@ -40,7 +41,7 @@ class DesktopTrayController with TrayListener {
       await trayManager.destroy();
       if (_disposed) return;
       trayManager.addListener(this);
-      await trayManager.setIcon(_iconAsset('assets/images/tray.png'));
+      await trayManager.setIcon(_iconAsset(initialIcon));
       if (_disposed) {
         await trayManager.destroy();
         return;

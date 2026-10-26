@@ -29,6 +29,7 @@ class WindowManager with WindowListener {
   /// The window starts hidden until startup has applied its preferences.
   final visible = ValueNotifier<bool>(!supportsWindowCustomization);
   WindowStateRepository? _stateRepository;
+  WindowPreferences? _launchPreferences;
 
   /// While set, moves and resizes are temporary (e.g. the pop-out player)
   /// and must not replace the saved window bounds.
@@ -46,6 +47,7 @@ class WindowManager with WindowListener {
   ) async {
     if (!supportsWindowCustomization) return;
     _stateRepository = stateRepository;
+    _launchPreferences = preferences;
     await windowManager.ensureInitialized();
     windowManager.addListener(this);
     // The tray controller enables close prevention only after it has created
@@ -58,26 +60,41 @@ class WindowManager with WindowListener {
       center: restoredBounds == null,
       size: const Size(1100, 760),
       minimumSize: minimumWindowSize,
-      fullScreen: preferences.startFullScreen,
       title: ApplicationIdentity.name,
     );
-    await windowManager.waitUntilReadyToShow(windowOptions, () async {
-      if (restoredBounds != null &&
-          !preferences.startMaximized &&
-          !preferences.startFullScreen) {
-        await windowManager.setBounds(restoredBounds);
-      }
-      if (preferences.startMaximized && !preferences.startFullScreen) {
-        await windowManager.maximize();
-      }
-    });
+    await windowManager.waitUntilReadyToShow(windowOptions);
+    if (restoredBounds != null &&
+        !preferences.startMaximized &&
+        !preferences.startFullScreen) {
+      await windowManager.setBounds(restoredBounds);
+    }
+    // Fullscreen and maximize can expose a native window. Apply them only
+    // after AppStartup has rendered the first app frame, on every desktop.
   }
 
   Future<void> reveal() async {
     if (!supportsWindowCustomization || _ready) return;
     await windowManager.ensureInitialized();
-    await focus();
+    if (Platform.isMacOS) {
+      final show = await const MethodChannel('sentorr/startup')
+          .invokeMethod<bool>('readyToShow');
+      if (show == false) return;
+    }
     _ready = true;
+    try {
+      final preferences = _launchPreferences;
+      if (preferences != null) {
+        await windowManager.setFullScreen(preferences.startFullScreen);
+        if (preferences.startMaximized && !preferences.startFullScreen) {
+          await windowManager.maximize();
+        }
+      }
+      await focus();
+      _launchPreferences = null;
+    } catch (_) {
+      _ready = false;
+      rethrow;
+    }
   }
 
   Future<void> applyAlwaysOnTop(bool alwaysOnTop) async {
@@ -105,7 +122,8 @@ class WindowManager with WindowListener {
       : _mobileFullScreen;
 
   Future<void> focus() async {
-    if (!supportsWindowCustomization) return;
+    // Activation/reopen notifications can arrive while bootstrap is running.
+    if (!supportsWindowCustomization || !_ready) return;
     await windowManager.show();
     visible.value = true;
     await windowManager.focus();
@@ -157,6 +175,7 @@ class WindowManager with WindowListener {
     _ready = false;
     _closeHandler = null;
     _stateRepository = null;
+    _launchPreferences = null;
     _saveBoundsTimer?.cancel();
     if (supportsWindowCustomization) windowManager.removeListener(this);
   }

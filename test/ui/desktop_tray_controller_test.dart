@@ -17,8 +17,12 @@ void main() {
           TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
       final calls = <String>[];
       Map<dynamic, dynamic>? menu;
+      String? iconPath;
       messenger.setMockMethodCallHandler(channel, (call) async {
         calls.add(call.method);
+        if (call.method == 'setIcon') {
+          iconPath = (call.arguments as Map)['iconPath'] as String;
+        }
         if (call.method == 'setContextMenu') {
           menu = (call.arguments as Map)['menu'] as Map;
         }
@@ -33,6 +37,7 @@ void main() {
       });
       var checks = 0;
       await controller.initialize(
+        initialIcon: 'assets/images/tray-light.png',
         quit: () async {},
         prepareToQuit: () async {},
         checkFollowedSeries: () async {
@@ -40,6 +45,7 @@ void main() {
         },
       );
       expect(calls.take(2), ['destroy', 'setIcon']);
+      expect(iconPath, endsWith('assets/images/tray-light.png'));
       expect(trayManager.hasListeners, true);
       final items = menu!['items'] as List;
       final checkItem = items.cast<Map>().firstWhere(

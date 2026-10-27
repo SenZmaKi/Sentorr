@@ -1,0 +1,1 @@
+- If ur update movie in ur continue watching to sth like dropped or paused it shouldn't be shown in continue watching

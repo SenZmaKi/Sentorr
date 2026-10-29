@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../following/notifier.dart';
+import '../lists/models.dart';
 import '../lists/notifier.dart';
 import '../titles/pick_up.dart';
 import '../watching/next_episode.dart';
@@ -11,9 +12,17 @@ import '../watching/notifier.dart';
 /// Next metadata is persisted separately; it never counts as watched.
 final continueWatchingProvider = Provider<AsyncValue<List<WatchEntry>>>((ref) {
   final removed = ref.watch(removedListTitlesProvider);
+  final hidden = {
+    ...removed,
+    for (final entry in ref.watch(watchListsProvider))
+      if (entry.status == WatchStatus.paused ||
+          entry.status == WatchStatus.dropped ||
+          entry.status == WatchStatus.planned)
+        entry.id,
+  };
   final entries = {for (final e in ref.watch(inProgressProvider)) e.key: e};
   for (final followed in ref.watch(followedSeriesProvider)) {
-    if (followed.manual || removed.contains(followed.id)) continue;
+    if (followed.manual || hidden.contains(followed.id)) continue;
     final entry = entries.remove(followed.id);
     final local = localPickUp(entry, followed);
     if (local?.resume == true) {
@@ -35,7 +44,7 @@ final continueWatchingProvider = Provider<AsyncValue<List<WatchEntry>>>((ref) {
     );
   }
   return AsyncData(
-    entries.values.where((entry) => !removed.contains(entry.key)).toList()
+    entries.values.where((entry) => !hidden.contains(entry.key)).toList()
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt)),
   );
 });

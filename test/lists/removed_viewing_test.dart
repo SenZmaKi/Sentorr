@@ -20,6 +20,54 @@ import '../support/fake_lists.dart';
 void main() {
   for (final series in [false, true]) {
     test(
+      'inactive list statuses hide ${series ? 'series' : 'movies'}',
+      () async {
+        final title = fakeTitle(2, series: series);
+        final item = series
+            ? PlaybackItem(
+                title: fakeTitle(21),
+                series: title,
+                season: 1,
+                episode: 2,
+              )
+            : PlaybackItem(title: title);
+        final entry = WatchEntry.of(
+          item,
+          position: const Duration(minutes: 20),
+          duration: const Duration(hours: 1),
+        );
+        final c = ProviderContainer(
+          overrides: [
+            ...watchListsOverrides(),
+            ...watchHistoryOverrides([entry]),
+            ...followedSeriesOverrides(
+              series ? [following(title, episode: 2, progress: .3)] : [],
+            ),
+          ],
+        );
+        addTearDown(c.dispose);
+        final sub = c.listen(continueWatchingProvider, (_, _) {});
+        addTearDown(sub.close);
+        final lists = c.read(watchListsProvider.notifier);
+        for (final status in [
+          WatchStatus.paused,
+          WatchStatus.dropped,
+          WatchStatus.planned,
+        ]) {
+          await lists.set(title, WatchStatus.watching);
+          expect(c.read(continueWatchingProvider).requireValue, hasLength(1));
+          await lists.set(title, status);
+          expect(c.read(continueWatchingProvider).requireValue, isEmpty);
+          expect(c.read(watchHistoryProvider), [entry]);
+        }
+        await lists.set(title, WatchStatus.rewatching);
+        expect(c.read(continueWatchingProvider).requireValue, hasLength(1));
+      },
+    );
+  }
+
+  for (final series in [false, true]) {
+    test(
       'removing a ${series ? 'series' : 'movie'} hides prompts and preserves history',
       () async {
         final title = fakeTitle(2, series: series);

@@ -61,7 +61,7 @@ import { releases } from '../lib/site';
       if (request !== generation) return;
       rows.forEach((row, index) => {
         const picker = row.querySelector<HTMLSelectElement>('[data-architecture]');
-        const architecture = picker?.value ?? 'universal';
+        const architecture = picker?.value ?? row.dataset.defaultArchitecture!;
         const asset = assetFor(release.assets, row.dataset.platform!, architecture);
         if (asset) {
           links[index].href = asset.browser_download_url;

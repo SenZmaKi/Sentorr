@@ -18,7 +18,7 @@ const { notes = false } = Astro.props;
   {platforms.map((platform) => {
     const [first] = platform.architectures;
     return (
-      <div class="platform" id={platform.id} data-platform={platform.id}>
+      <div class="platform" id={platform.id} data-platform={platform.id} data-default-architecture={first.value}>
         <Tile title={platform.name} subtitle={platform.requirement}>
           <span slot="leading" class="glyph raised" set:html={platformSvgs[platform.id]} />
           {notes && <p slot="below" class="note t-caption muted"><Icon name="info" size={16} outlined /> {platform.note}</p>}

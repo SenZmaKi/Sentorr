@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 
 import '../../../player/models.dart';
@@ -75,48 +76,65 @@ class _MiniChromeState extends State<MiniChrome> {
   Widget build(BuildContext context) {
     final a = widget.actions;
     final duration = reduceMotion(context) ? Duration.zero : Motion.hover;
-    return MouseRegion(
-      onEnter: (_) => _show(true),
-      onHover: (_) => _show(true),
-      onExit: (_) => _show(false),
-      child: Listener(
-        onPointerDown: (_) => _touched(),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          // Popped out, clicks pause like the full player; docked, they
-          // bring the player back.
-          onTap: widget.poppedOut
-              ? a.togglePlay
-              : context.input.isTouch
-              ? _toggleTouch
-              : a.expand,
-          onPanStart: widget.poppedOut && PopOutWindow.instance.supported
-              ? (_) => PopOutWindow.instance.startDragging()
-              : null,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              AnimatedOpacity(
-                opacity: _shown ? 1 : 0,
-                duration: duration,
-                child: IgnorePointer(
-                  ignoring: !_shown,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(color: context.player.scrim),
-                    child: LayoutBuilder(
-                      builder: (context, box) => _veil(context, box.biggest),
+    return Focus(
+      canRequestFocus: context.input == InputMode.remote,
+      onFocusChange: (focused) {
+        if (context.input == InputMode.remote) _show(focused);
+      },
+      onKeyEvent: (_, event) {
+        if (context.input != InputMode.remote || event is KeyUpEvent) {
+          return KeyEventResult.ignored;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.select ||
+            event.logicalKey == LogicalKeyboardKey.enter) {
+          if (event is! KeyRepeatEvent) a.expand();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: MouseRegion(
+        onEnter: (_) => _show(true),
+        onHover: (_) => _show(true),
+        onExit: (_) => _show(false),
+        child: Listener(
+          onPointerDown: (_) => _touched(),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            // Popped out, clicks pause like the full player; docked, they
+            // bring the player back.
+            onTap: widget.poppedOut
+                ? a.togglePlay
+                : context.input.isTouch
+                ? _toggleTouch
+                : a.expand,
+            onPanStart: widget.poppedOut && PopOutWindow.instance.supported
+                ? (_) => PopOutWindow.instance.startDragging()
+                : null,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                AnimatedOpacity(
+                  opacity: _shown ? 1 : 0,
+                  duration: duration,
+                  child: IgnorePointer(
+                    ignoring: !_shown,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(color: context.player.scrim),
+                      child: LayoutBuilder(
+                        builder: (context, box) => _veil(context, box.biggest),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 3,
-                child: _ProgressLine(player: widget.player, actions: a),
-              ),
-            ],
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 3,
+                  child: _ProgressLine(player: widget.player, actions: a),
+                ),
+              ],
+            ),
           ),
         ),
       ),

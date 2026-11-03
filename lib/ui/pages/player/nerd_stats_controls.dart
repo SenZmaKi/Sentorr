@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../player/stats_recording.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
+import '../../components/interactive.dart';
 
 /// Stats for nerds are read against the picture, so like captions they keep
 /// the dark overlay treatment in either brightness.
@@ -76,10 +77,11 @@ class RecordingChip extends StatelessWidget {
   Widget build(BuildContext context) => Material(
     color: statsSurface,
     borderRadius: BorderRadius.circular(Radii.full),
-    child: InkWell(
+    child: Interactive(
       onTap: onOpen,
-      borderRadius: BorderRadius.circular(Radii.full),
-      child: Tooltip(
+      borderRadius: Radii.full,
+      semanticLabel: 'Show stats for nerds',
+      builder: (context, _) => Tooltip(
         message: 'Show stats for nerds',
         child: Padding(
           padding: const EdgeInsets.symmetric(

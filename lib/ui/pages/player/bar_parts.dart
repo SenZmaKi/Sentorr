@@ -6,6 +6,7 @@ import '../../../settings/notifier.dart';
 
 import '../../components/motion.dart';
 import '../../components/player_control.dart';
+import '../../components/interactive.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'player_value.dart';
@@ -37,7 +38,7 @@ class Clock extends ConsumerWidget {
               : clockLabel(position);
           return Tooltip(
             message: remaining ? 'Show elapsed time' : 'Show time left',
-            child: GestureDetector(
+            child: Interactive(
               onTap: () => ref
                   .read(settingsProvider.notifier)
                   .update(
@@ -48,24 +49,23 @@ class Clock extends ConsumerWidget {
                     ),
                   )
                   .ignore(),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: now),
-                      TextSpan(
-                        text: ' / ${clockLabel(duration)}',
-                        style: TextStyle(
-                          color: context.player.foregroundSecondary,
-                        ),
+              semanticLabel: remaining ? 'Show elapsed time' : 'Show time left',
+              focusColor: context.player.focus,
+              builder: (context, _) => Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: now),
+                    TextSpan(
+                      text: ' / ${clockLabel(duration)}',
+                      style: TextStyle(
+                        color: context.player.foregroundSecondary,
                       ),
-                    ],
-                  ),
-                  style: style,
-                  maxLines: 1,
-                  overflow: TextOverflow.clip,
+                    ),
+                  ],
                 ),
+                style: style,
+                maxLines: 1,
+                overflow: TextOverflow.clip,
               ),
             ),
           );

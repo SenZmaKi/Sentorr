@@ -169,7 +169,7 @@ class _SettingsMenuState extends ConsumerState<SettingsMenu> {
           widget.actions.ui.closePanel();
         },
       ),
-      if (!context.input.isTouch)
+      if (context.input == InputMode.pointer)
         PlayerMenuRow(
           icon: Icons.keyboard_outlined,
           label: 'Keyboard shortcuts (?)',

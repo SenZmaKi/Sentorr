@@ -19,11 +19,27 @@ import 'app_icon_sync.dart';
 import 'error_toasts.dart';
 import 'notification_taps.dart';
 import '../../shared/application_identity.dart';
+import '../shared/android_tv.dart';
 
-class SentorrApp extends ConsumerWidget {
+class SentorrApp extends ConsumerStatefulWidget {
   const SentorrApp({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SentorrApp> createState() => _SentorrAppState();
+}
+
+class _SentorrAppState extends ConsumerState<SentorrApp> {
+  bool _isTv = false;
+
+  @override
+  void initState() {
+    super.initState();
+    detectAndroidTv().then((tv) {
+      if (mounted) setState(() => _isTv = tv);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: ApplicationIdentity.name,
       debugShowCheckedModeBanner: false,
@@ -34,7 +50,7 @@ class SentorrApp extends ConsumerWidget {
       ),
       builder: (context, child) => AppActivity(
         child: AdaptiveScope(
-          input: InputMode.platform,
+          input: _isTv ? InputMode.remote : InputMode.platform,
           child: AppIconSync(
             child: NotificationTaps(child: ErrorToasts(child: child!)),
           ),

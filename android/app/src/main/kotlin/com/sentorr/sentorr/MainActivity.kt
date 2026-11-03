@@ -6,6 +6,8 @@ import android.util.Log
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.app.UiModeManager
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -125,6 +127,22 @@ class MainActivity : FlutterActivity() {
                     }
                 }
 
+                else -> result.notImplemented()
+            }
+        }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "sentorr/device",
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "isTv" -> {
+                    val mode = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+                    result.success(
+                        mode.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION ||
+                            packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
+                            packageManager.hasSystemFeature("android.software.leanback_only")
+                    )
+                }
                 else -> result.notImplemented()
             }
         }

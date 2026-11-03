@@ -7,6 +7,7 @@ import '../../components/motion.dart';
 import '../../components/hero_frame.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/layout/adaptive.dart';
+import '../../components/interactive.dart';
 
 /// Spotlight backdrop with title, synopsis and the primary actions. Text sits
 /// over bottom and leading artwork fades rather than trusting the image.
@@ -82,10 +83,12 @@ class FeaturedHero extends StatelessWidget {
         );
         // The artwork opens the title too, as a poster does; the actions
         // inside keep their own taps.
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
+        return Interactive(
           onTap: onDetails,
-          child: HeroFrame(
+          semanticLabel: 'Details for $title',
+          excludeChildSemantics: false,
+          borderRadius: Radii.card,
+          builder: (context, _) => HeroFrame(
             banner: banner,
             background: Stack(
               fit: StackFit.expand,

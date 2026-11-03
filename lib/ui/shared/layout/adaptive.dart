@@ -11,7 +11,8 @@ export 'layout_size.dart';
 /// Input decides interaction, never layout: layout follows size.
 enum InputMode {
   touch,
-  pointer;
+  pointer,
+  remote;
 
   static InputMode get platform => switch (defaultTargetPlatform) {
     TargetPlatform.android || TargetPlatform.iOS => touch,
@@ -22,7 +23,9 @@ enum InputMode {
   bool get canHover => this == InputMode.pointer;
 
   /// Minimum hit target for icon buttons and rows.
-  double get target => isTouch ? ControlHeights.touch : ControlHeights.standard;
+  double get target => this == InputMode.pointer
+      ? ControlHeights.standard
+      : ControlHeights.touch;
 }
 
 /// App-wide input mode, provided once above the app. Tests may override it.

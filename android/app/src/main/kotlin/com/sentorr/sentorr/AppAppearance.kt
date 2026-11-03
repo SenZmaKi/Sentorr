@@ -58,6 +58,7 @@ class AppAppearance(
 
     private val channel = MethodChannel(messenger, "sentorr/app_icon")
     private var pendingLauncher: String? = null
+    private var pendingTvLauncher: String? = null
 
     init {
         channel.setMethodCallHandler { call, result ->
@@ -82,30 +83,51 @@ class AppAppearance(
     }
 
     fun onStop() {
-        val variant = pendingLauncher ?: return
+        val variant = pendingLauncher
+        val tvVariant = pendingTvLauncher
+        if (variant == null && tvVariant == null) return
         pendingLauncher = null
-        Log.i("SentorrLifecycle", "Applying pending launcher variant=$variant onStop")
+        pendingTvLauncher = null
+        Log.i("SentorrLifecycle", "Applying launcher phone=$variant tv=$tvVariant onStop")
         val packageManager = activity.packageManager
-        // Enable before disabling so the app never has zero launcher entries.
-        for (name in VARIANTS.sortedBy { it != variant }) {
-            val alias = "Launcher" + name.replaceFirstChar(Char::uppercase)
-            // Manifest aliases use the code namespace, not the applicationId or
-            // this class's runtime package, which R8 can rename in release builds.
-            val component = ComponentName(activity, "com.sentorr.sentorr.$alias")
-            val state = if (name == variant) {
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-            } else {
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        // Enable each replacement before disabling its old entry, so neither
+        // the phone launcher nor the TV launcher ever has zero entries.
+        if (variant != null) {
+            for (name in VARIANTS.sortedBy { it != variant }) {
+                val alias = "Launcher" + name.replaceFirstChar(Char::uppercase)
+                // Manifest aliases use the code namespace, not the applicationId
+                // or this class's runtime package, which R8 can rename.
+                val component = ComponentName(activity, "com.sentorr.sentorr.$alias")
+                val state = if (name == variant) {
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                } else {
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                }
+                if (packageManager.getComponentEnabledSetting(component) == state) continue
+                Log.i("SentorrLifecycle", "Changing launcher alias=$alias state=$state DONT_KILL_APP")
+                packageManager.setComponentEnabledSetting(component, state, PackageManager.DONT_KILL_APP)
             }
-            if (packageManager.getComponentEnabledSetting(component) == state) continue
-            Log.i("SentorrLifecycle", "Changing launcher alias=$alias state=$state DONT_KILL_APP")
-            packageManager.setComponentEnabledSetting(component, state, PackageManager.DONT_KILL_APP)
+        }
+        if (tvVariant != null) {
+            for (name in listOf("system", "dark", "light").sortedBy { it != tvVariant }) {
+                val alias = "TvLauncher" + name.replaceFirstChar(Char::uppercase)
+                val component = ComponentName(activity, "com.sentorr.sentorr.$alias")
+                val state = if (name == tvVariant) {
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                } else {
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                }
+                if (packageManager.getComponentEnabledSetting(component) == state) continue
+                Log.i("SentorrLifecycle", "Changing launcher alias=$alias state=$state DONT_KILL_APP")
+                packageManager.setComponentEnabledSetting(component, state, PackageManager.DONT_KILL_APP)
+            }
         }
     }
 
     /// Android 12+ persists this for later launches; "system" restores the
     /// manifest's LaunchTheme, which follows the system night mode.
     private fun setSplashTheme(mode: String?) {
+        pendingTvLauncher = mode?.takeIf { it in listOf("light", "dark", "system") }
         activity.window.setBackgroundDrawableResource(
             when (mode) {
                 "light" -> R.color.splash_background_light

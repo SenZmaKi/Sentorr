@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'player_actions.dart';
 import 'player_ui.dart';
+import '../../shared/layout/adaptive.dart';
 
 /// YouTube's keyboard layout: k/space play, j/l ±10 s, arrows ±5 s and
 /// volume, m mute, f full screen, c captions, Shift+N/P next and previous,
@@ -47,6 +48,23 @@ class PlayerShortcuts extends StatelessWidget {
     final key = event.logicalKey;
     final shift = HardwareKeyboard.instance.isShiftPressed;
     a.ui.wake();
+    if (context.input == InputMode.remote) {
+      // The D-pad navigates visible controls and menus. Seeking and volume
+      // shortcuts belong to a keyboard, where arrows are not navigation.
+      if (key == LogicalKeyboardKey.arrowLeft ||
+          key == LogicalKeyboardKey.arrowRight ||
+          key == LogicalKeyboardKey.arrowUp ||
+          key == LogicalKeyboardKey.arrowDown) {
+        return KeyEventResult.ignored;
+      }
+      if ((key == LogicalKeyboardKey.select ||
+              key == LogicalKeyboardKey.enter ||
+              key == LogicalKeyboardKey.gameButtonA) &&
+          FocusManager.instance.primaryFocus == focusNode) {
+        if (event is! KeyRepeatEvent) a.togglePlay();
+        return KeyEventResult.handled;
+      }
+    }
     bool run(void Function() f, {bool repeats = false}) {
       if (repeat && !repeats) return true;
       f();

@@ -4,6 +4,10 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-feature android:name="android.software.leanback" android:required="false"/>
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+    <!-- Discovery uses Wi-Fi when present; Ethernet-only TVs can still stream. -->
+    <uses-feature android:name="android.hardware.wifi" android:required="false"/>
     <application
         android:label="Sentorr"
         android:name="${applicationName}"
@@ -63,6 +67,46 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <!-- The default TV entry follows Android's day/night resources before
+             Sentorr has ever run. Explicit app themes select the other aliases. -->
+        <activity-alias
+            android:name=".TvLauncherSystem"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/tv_icon_system"
+            android:banner="@drawable/tv_banner_system"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <!-- TV launchers use a wide banner. Switch aliases alongside the
+             phone icon so an explicit theme change needs no APK reinstall. -->
+        <activity-alias
+            android:name=".TvLauncherDark"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_launcher"
+            android:banner="@drawable/tv_banner_dark"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".TvLauncherLight"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_launcher_light"
+            android:banner="@drawable/tv_banner_light"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
             </intent-filter>
         </activity-alias>
         <!-- Keeps downloads running in the background; see

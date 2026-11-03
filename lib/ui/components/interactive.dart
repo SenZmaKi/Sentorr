@@ -8,7 +8,9 @@ import '../shared/theme/theme.dart';
 /// "(Shift+N)". Touch has no keyboard to use it, so the suffix is dropped
 /// there from both tooltip and spoken label.
 String shortcutLabel(BuildContext context, String label) =>
-    context.input.isTouch ? label.replaceFirst(_shortcutSuffix, '') : label;
+    context.input == InputMode.pointer
+    ? label
+    : label.replaceFirst(_shortcutSuffix, '');
 
 final _shortcutSuffix = RegExp(
   r'\s*\((?:(?:Shift|Ctrl|Alt|Cmd)\+)?[^\s()]{1,3}\)$',
@@ -89,9 +91,27 @@ class _InteractiveState extends State<Interactive> {
             : SystemMouseCursors.basic,
         onShowHoverHighlight: (v) => setState(() => _hovered = v),
         onShowFocusHighlight: (v) => setState(() => _focused = v),
+        onFocusChange: (focused) {
+          if (context.input == InputMode.remote) {
+            setState(() => _focused = focused);
+          }
+          if (focused && context.input == InputMode.remote) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                Scrollable.ensureVisible(
+                  context,
+                  alignment: 0.35,
+                  duration: const Duration(milliseconds: 180),
+                );
+              }
+            });
+          }
+        },
         shortcuts: const {
           SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
           SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.select): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.gameButtonA): ActivateIntent(),
         },
         actions: {
           ActivateIntent: CallbackAction<ActivateIntent>(

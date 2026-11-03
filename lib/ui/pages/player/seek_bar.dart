@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../../components/motion.dart';
 import '../../shared/theme/theme.dart';
+import '../../shared/layout/adaptive.dart';
 import '../../shared/title_format.dart';
 import 'seek_track.dart';
 
@@ -239,8 +240,24 @@ class _SeekBarState extends State<SeekBar> with SingleTickerProviderStateMixin {
     );
   }
 
-  // Arrow keys are the page's ±5 s shortcuts; the bar only claims Home/End.
+  // On TV the seek bar claims horizontal D-pad presses; on a keyboard the
+  // player owns the arrow shortcuts regardless of which control is focused.
   KeyEventResult _key(KeyEvent event) {
+    if (event is KeyUpEvent) return KeyEventResult.ignored;
+    if (context.input == InputMode.remote &&
+        (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
+            event.logicalKey == LogicalKeyboardKey.arrowRight)) {
+      final step = event.logicalKey == LogicalKeyboardKey.arrowLeft ? -10 : 10;
+      final target = (_pending ?? widget.position) + Duration(seconds: step);
+      _seek(
+        target < Duration.zero
+            ? Duration.zero
+            : target > widget.duration
+            ? widget.duration
+            : target,
+      );
+      return KeyEventResult.handled;
+    }
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     if (event.logicalKey == LogicalKeyboardKey.home) {
       _seek(Duration.zero);

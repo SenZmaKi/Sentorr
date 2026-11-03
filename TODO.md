@@ -1,3 +1,0 @@
-- If a show is dropped or paused it doesn't show up in continue watching what about the other states like planned? What should be the behavior
-- If u close the app and media is playing in player then the media should pause
-- If the update is download the install button in navbar both android and dekstop should just trigger the install instead of sending u to the settings install and restart section  

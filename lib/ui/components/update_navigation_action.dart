@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../updates/controller.dart';
+import '../../updates/install_action.dart';
 import '../../updates/models.dart';
 import '../pages/settings/settings_category.dart';
 import '../pages/settings/settings_page.dart';
@@ -10,8 +11,7 @@ import 'app_shell.dart';
 import 'buttons.dart';
 import 'navigation.dart';
 
-/// An update's status stays visible outside settings; installation remains
-/// an explicit action on the Updates page.
+/// An update's status stays visible outside settings; ready updates install here.
 class UpdateNavigationAction extends ConsumerWidget {
   const UpdateNavigationAction({super.key, this.rail = false});
   final bool rail;
@@ -39,6 +39,10 @@ class UpdateNavigationAction extends ConsumerWidget {
       _ => Icons.system_update_rounded,
     };
     void open() {
+      if (state.phase == UpdatePhase.ready) {
+        installReadyUpdate(ref);
+        return;
+      }
       ref.read(settingsRequestProvider.notifier).open(SettingsCategory.updates);
       ref.read(appDestinationProvider.notifier).go(AppDestination.settings);
     }

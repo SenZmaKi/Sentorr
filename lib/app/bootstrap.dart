@@ -38,6 +38,7 @@ import '../library/playback.dart';
 import '../library/repository.dart';
 import '../notifications/notification_service.dart';
 import '../player/lifecycle.dart';
+import '../player/engine.dart';
 import '../player/recovery.dart';
 import '../player/session.dart';
 import '../player/queue_builder.dart';
@@ -262,6 +263,7 @@ class AppRuntime with WidgetsBindingObserver {
         checkFollowedSeries: container.read(releaseAlertsProvider).check,
       );
       await runtime.window.configureCloseHandler(() async {
+        await runtime.pauseActivePlayback();
         final preferences = container.read(settingsProvider).window;
         if (preferences.closeToTray && runtime.tray.canHideWindow) {
           await runtime.flush();
@@ -373,9 +375,16 @@ class AppRuntime with WidgetsBindingObserver {
 
   Future<void> dispose() => _shutdown ??= _dispose();
 
+  Future<void> pauseActivePlayback() async {
+    if (container.read(playerSessionProvider) != null) {
+      await container.read(playbackEngineProvider).player.pause();
+    }
+  }
+
   Future<void> _dispose() async {
     _quitting = true;
     Logger('sentorr.app').info('Shutting down');
+    await pauseActivePlayback();
     await cleanupAll([
       tray.dispose,
       if (supportsWindowCustomization) window.hide,

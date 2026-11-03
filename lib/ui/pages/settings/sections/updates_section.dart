@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../app/services.dart';
 import '../../../../settings/notifier.dart';
 import '../../../components/toggle.dart';
 import '../../../../updates/controller.dart';
 import '../../../../updates/models.dart';
-import '../../../../updates/platform_installer.dart';
+import '../../../../updates/install_action.dart';
 import '../../../components/buttons.dart';
 import '../settings_group.dart';
 
@@ -67,14 +66,7 @@ class UpdatesSection extends ConsumerWidget {
                 ? null
                 : () async {
                     if (state.phase == UpdatePhase.ready) {
-                      await ref.read(prepareForUpdateProvider)();
-                      final result = await controller.installAndRestart();
-                      if (result == UpdateInstallDisposition.quitThenRelaunch ||
-                          result ==
-                              UpdateInstallDisposition
-                                  .externalProcessWillTerminate) {
-                        await ref.read(quitApplicationProvider)();
-                      }
+                      await installReadyUpdate(ref);
                     } else if (state.phase == UpdatePhase.available) {
                       await controller.download();
                     } else if (state.phase == UpdatePhase.failed) {

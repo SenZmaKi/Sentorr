@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,6 +18,7 @@ import '../shared/theme/theme.dart';
 import 'app_shell.dart';
 import 'app_icon_sync.dart';
 import 'error_toasts.dart';
+import 'github_star_prompt.dart';
 import 'notification_taps.dart';
 import '../../shared/application_identity.dart';
 import '../shared/android_tv.dart';
@@ -40,6 +42,22 @@ class _SentorrAppState extends ConsumerState<SentorrApp> {
 
   @override
   Widget build(BuildContext context) {
+    final home = LaunchHost(
+      child: DownloadReviewHost(
+        child: PlayerHost(
+          child: AppShell(
+            pages: const {
+              AppDestination.home: HomePage(),
+              AppDestination.search: SearchPage(),
+              AppDestination.lists: ListsPage(),
+              AppDestination.downloads: DownloadsPage(),
+              AppDestination.settings: SettingsPage(),
+            },
+            titlePage: (route) => TitlePage(route: route),
+          ),
+        ),
+      ),
+    );
     return MaterialApp(
       title: ApplicationIdentity.name,
       debugShowCheckedModeBanner: false,
@@ -56,22 +74,7 @@ class _SentorrAppState extends ConsumerState<SentorrApp> {
           ),
         ),
       ),
-      home: LaunchHost(
-        child: DownloadReviewHost(
-          child: PlayerHost(
-            child: AppShell(
-              pages: const {
-                AppDestination.home: HomePage(),
-                AppDestination.search: SearchPage(),
-                AppDestination.lists: ListsPage(),
-                AppDestination.downloads: DownloadsPage(),
-                AppDestination.settings: SettingsPage(),
-              },
-              titlePage: (route) => TitlePage(route: route),
-            ),
-          ),
-        ),
-      ),
+      home: kReleaseMode ? GithubStarPromptHost(child: home) : home,
     );
   }
 }

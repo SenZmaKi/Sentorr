@@ -31,6 +31,8 @@ The supplied [light](docs/design-references/depth/after-light.png) and
 surface depth. Treat them as direction for grouping and lighting, not layouts to
 copy. [Design references](docs/design-references/README.md) preserve provenance.
 
+Spool is Sentorr's mascot. Use the [approved Spool reference](docs/design-references/mascot/README.md) when creating new mascot artwork.
+
 ## Tokens and theme ownership
 
 Resolve appearance through:

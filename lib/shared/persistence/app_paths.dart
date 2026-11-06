@@ -18,6 +18,8 @@ class AppPaths {
       File(path.join(rootDirectory.path, 'settings', 'settings.json'));
   File get windowStateFile =>
       File(path.join(rootDirectory.path, 'state', 'window.json'));
+  File get githubStarPromptFile =>
+      File(path.join(rootDirectory.path, 'state', 'github_star_prompt.json'));
   File get playbackRecoveryFile =>
       File(path.join(rootDirectory.path, 'state', 'playback.json'));
   File get watchHistoryFile =>

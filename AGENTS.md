@@ -41,6 +41,7 @@ Paths below are relative to `../senpwai/`. Read the relevant branch on demand ra
 ## Website
 
 - `website/` is the Astro marketing site, deployed to GitHub Pages beside the update feeds. Read `website/AGENTS.md` before changing it; it follows `DESIGN.md`'s tokens and Senpwai's `website/` layout.
+- At the first official stable release, change `defaultChannel` in `website/src/pages/download.astro` to `'stable'` so `/download` opens the Stable tab and updates to `/download?channel=stable` without reloading. Keep explicit Nightly links working.
 
 ## Misc
 - Google Drive backup needs build-time OAuth credentials. Local runs and builds: `flutter run --dart-define-from-file=dart_defines.local.json` (gitignored; keys `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`). Release workflows read the same names from repo secrets. The Drive option is hidden without them.

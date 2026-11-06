@@ -98,8 +98,9 @@ import { releases } from '../lib/site';
       tabs[next].click();
     });
   });
-  // A bare /download, or an unknown channel, opens stable.
-  void selectChannel(new URLSearchParams(location.search).get('channel') === 'nightly' ? 'nightly' : 'stable');
+  const defaultChannel: Channel = 'nightly';
+  const channel = new URLSearchParams(location.search).get('channel');
+  void selectChannel(channel === 'stable' || channel === 'nightly' ? channel : defaultChannel);
 </script>
 
 <style>

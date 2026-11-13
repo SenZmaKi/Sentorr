@@ -10,6 +10,7 @@ import '../../library/models.dart';
 import '../../library/notifier.dart';
 import '../../library/download_review.dart';
 import '../../library/season_download.dart';
+import '../../media/finder.dart';
 import '../../imdb/models.dart';
 import '../../player/models.dart';
 import '../../player/session.dart';
@@ -22,30 +23,73 @@ import '../../titles/episodes.dart';
 import '../components/confirm_dialog.dart';
 import 'copy_prompt.dart';
 import 'open_folder.dart';
+import 'stream_download_prompt.dart';
 import 'play_route.dart';
 import 'title_format.dart';
 
 /// What the viewer can do with an item's download, wherever it shows.
 extension DownloadActions on WidgetRef {
-  /// Finds a torrent for [item] and queues it, shown first when the viewer
-  /// reviews downloads or the match needs them; failures surface as error
-  /// toasts. When a paired device already has it, offers to copy it from
-  /// there instead, unless the viewer chose a torrent ([offerCopy] false).
+  /// Offers the playing or cached torrent first, then a paired copy when
+  /// [offerCopy] permits. Otherwise starts the normal torrent review.
   Future<void> download(
     BuildContext context,
     PlaybackItem item, {
     bool offerCopy = true,
   }) async {
+    final overlay = Navigator.of(context, rootNavigator: true).context;
     final copies = read(peerCopiesProvider);
-    final offer = copies.offer((i) => offerCopy && i.id == item.id);
-    if (!offer.isEmpty) {
-      final choice = await askToCopy(context, offer);
-      if (choice == null) return;
-      if (choice == CopyChoice.copy) return copies.start(offer);
+    final reviews = read(downloadReviewsProvider.notifier);
+    final lookup = read(mediaFinderProvider).download(item, peers: offerCopy);
+    if (lookup == null) return;
+    var reviewing = false;
+    void search() {
+      reviewing = true;
+      _reviewed(
+        reviews
+            .review(
+              [item],
+              resolution: lookup.torrents,
+              searchCancel: lookup.searchCancel,
+            )
+            .whenComplete(lookup.close),
+        () => "Couldn't download ${itemLabel(item)}",
+      );
     }
-    _reviewed(read(downloadReviewsProvider.notifier).review([item]), () {
-      return "Couldn't download ${itemLabel(item)}";
-    });
+
+    try {
+      final local = await lookup.local;
+      if (!overlay.mounted) return;
+      if (local != null) {
+        final choice = await askToSaveStream(
+          overlay,
+          local.torrent,
+          playing: local.playing,
+          item: itemLabel(item),
+        );
+        if (choice == null) return;
+        if (choice == StreamDownloadChoice.search) return search();
+        lookup.searchCancel.cancel('Saving local data');
+        if (!await local.save()) {
+          ErrorReports.report(
+            "Couldn't save ${itemLabel(item)}",
+            'The cached data is no longer available. Use Download again to search.',
+          );
+        }
+        return;
+      }
+      final peer = await lookup.peer;
+      if (!overlay.mounted) return;
+      if (peer != null && !peer.isEmpty) {
+        final choice = await askToCopy(overlay, peer);
+        if (choice == null) return;
+        if (choice == CopyChoice.copy) return copies.start(peer);
+      }
+      search();
+    } catch (error) {
+      ErrorReports.report("Couldn't download ${itemLabel(item)}", error);
+    } finally {
+      if (!reviewing) lookup.close();
+    }
   }
 
   /// Finds torrents for every aired episode of [series]' [season] not

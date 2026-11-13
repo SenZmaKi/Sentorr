@@ -16,6 +16,7 @@ import 'package:sentorr/library/planner.dart';
 import 'package:sentorr/library/playback.dart';
 import 'package:sentorr/player/models.dart';
 import 'package:sentorr/player/stream/offline_source.dart';
+import 'package:sentorr/player/stream/reusable_torrent.dart';
 import 'package:sentorr/player/torrent_search.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/shared/persistence/app_paths.dart';
@@ -39,8 +40,14 @@ Future<void> waitUntil(bool Function() ready) async {
 }
 
 void main() {
+  for (final mode in ['search', 'playing', 'cached']) {
+    _plannerTest(mode);
+  }
+}
+
+void _plannerTest(String mode) {
   test(
-    'an episode downloads into the library layout and plays from disk',
+    '$mode saves an episode into the library layout and plays from disk',
     () async {
       final root = await Directory.systemTemp.createTemp('sentorr-planner-');
       final seedDir = await Directory('${root.path}/seed').create();
@@ -51,7 +58,7 @@ void main() {
           .writeAsBytes(bytes);
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       final base = 'http://127.0.0.1:${server.port}';
-      var seedPort = 0, metadataRequests = 0;
+      var seedPort = 0, metadataRequests = 0, searches = 0;
       late Uint8List metadata;
       server.listen((request) async {
         if (request.uri.path == '/movie.torrent') {
@@ -132,8 +139,13 @@ void main() {
           initialSettingsProvider.overrideWithValue(const AppSettings()),
           torrentEngineProvider.overrideWithValue(engine),
           networkClientProvider.overrideWithValue(network),
-          torrentSearchProvider.overrideWithValue(
-            (item, {title, cancel}) async => TorrentResolution(
+          torrentSearchProvider.overrideWithValue((
+            item, {
+            title,
+            cancel,
+          }) async {
+            searches++;
+            return TorrentResolution(
               query: TorrentQuery(title: 'Show'),
               candidates: [
                 TorrentCandidate(
@@ -146,8 +158,8 @@ void main() {
                 ),
               ],
               failures: const [],
-            ),
-          ),
+            );
+          }),
           ...libraryOverrides(const [], library),
         ],
       );
@@ -165,6 +177,7 @@ void main() {
         'Season 01',
         'Show S01E03.mkv',
       );
+      TorrentStreamSession? session;
       try {
         await container
             .read(downloadQueueProvider)
@@ -172,8 +185,50 @@ void main() {
               const DownloadSettings(seedingMode: SeedingMode.indefinitely),
             );
         container.listen(downloadsProvider, (_, _) {});
-        final handoff = Stopwatch()..start();
-        await container.read(downloadPlannerProvider).download(item);
+        final planner = container.read(downloadPlannerProvider);
+        TorrentStream? playing;
+        final handoff = Stopwatch();
+        if (mode == 'search') {
+          handoff.start();
+          await planner.download(item);
+        } else {
+          final cache = Directory(p.join(root.path, 'cache', release.infoHash));
+          await cache.create(recursive: true);
+          await source.copy(p.join(cache.path, p.basename(source.path)));
+          final opened = session = TorrentStreamSession(
+            engine: engine,
+            config: TorrentStreamConfig(
+              cacheDirectory: cache.parent.path,
+              retainedDirectory: release.infoHash,
+            ),
+          );
+          final files = await opened.open(TorrentSource.metadata(metadata));
+          final stream = await opened.prepareFile(
+            files.single.index,
+            prepareContainer: false,
+            indexMedia: false,
+          );
+          if (mode == 'cached') {
+            await opened.close();
+          } else {
+            playing = stream;
+          }
+          seed.pause();
+          handoff.start();
+          await planner.downloadStream(
+            item,
+            ReusableTorrent.fromFile(release, stream.file),
+            metadata: metadata,
+            directory: cache.path,
+            storage: mode == 'cached'
+                ? TorrentStorage.cached
+                : TorrentStorage.temporary,
+          );
+          expect(
+            File(p.join(cache.path, stream.file.path)).existsSync(),
+            false,
+          );
+        }
         expect(handoff.elapsed, lessThan(const Duration(seconds: 8)));
         await container
             .read(downloadQueueProvider)
@@ -181,7 +236,8 @@ void main() {
               const DownloadSettings(seedingMode: SeedingMode.disabled),
             );
         final entry = container.read(libraryProvider).single;
-        expect(metadataRequests, 1);
+        expect(searches, mode == 'search' ? 1 : 0);
+        expect(metadataRequests, mode == 'search' ? 1 : 0);
         expect(
           container.read(downloadQueueProvider).items.single.job.magnet,
           isNull,
@@ -193,6 +249,22 @@ void main() {
         );
         expect(await File(expected).readAsBytes(), bytes);
         expect(container.read(offline), isA<LocalFile>());
+        if (playing != null) {
+          final client = HttpClient();
+          try {
+            final request = await client.getUrl(playing.uri);
+            request.headers.set(HttpHeaders.rangeHeader, 'bytes=0-63');
+            final response = await request.close();
+            expect(response.statusCode, HttpStatus.partialContent);
+            expect(
+              await response.expand((chunk) => chunk).toList(),
+              bytes.take(64),
+            );
+          } finally {
+            client.close(force: true);
+          }
+          await session!.close();
+        }
         // The planner's hold is gone; the finished download let go too.
         await waitUntil(() => engine.torrents.isEmpty);
 
@@ -231,6 +303,7 @@ void main() {
           isA<NotDownloaded>(),
         );
       } finally {
+        await session?.close();
         // Provider disposal cannot await the queue's final persistence write.
         await container.read(downloadQueueProvider).dispose();
         container.dispose();

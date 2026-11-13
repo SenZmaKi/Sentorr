@@ -61,6 +61,7 @@ class SyncService
   );
   late final _buffered = BufferedMedia(
     (id) => _ref.read(sharedStreamsProvider)[id],
+    restore: (id, hash) => _ref.read(cachedStreamRestoreProvider)(id, hash),
   );
   LocalDiscovery? _discovery;
   bool _started = false;

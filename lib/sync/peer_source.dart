@@ -27,7 +27,8 @@ OfflineSource? sharedPeerSource(
     for (final entry in peers.entries)
       if (entry.value.online)
         for (final stream in entry.value.streams)
-          if (stream.id == item.id && (stream.bufferedBytes ?? 0) > 0)
+          if (stream.id == item.id &&
+              ((stream.bufferedBytes ?? 0) > 0 || stream.cached))
             (id: entry.key, stream: stream),
   ]..sort((a, b) => b.stream.bufferedBytes!.compareTo(a.stream.bufferedBytes!));
   for (final candidate in candidates) {

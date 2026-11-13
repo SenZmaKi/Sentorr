@@ -1,3 +1,8 @@
+import '../sync/shared_streams.dart';
+import '../player/stream/session_config.dart';
+import '../media/finder.dart';
+import '../media/cached_media.dart';
+
 import 'dart:io';
 
 import '../shared/cleanup.dart';
@@ -199,6 +204,24 @@ class AppRuntime with WidgetsBindingObserver {
           initialLibraryProvider.overrideWithValue(downloaded),
           devicesRepositoryProvider.overrideWithValue(devices),
           initialDevicesProvider.overrideWithValue(paired),
+          cachedStreamRestoreProvider.overrideWith(
+            (ref) =>
+                (id, hash) => openCachedStream(ref, id, hash),
+          ),
+          cachedStreamLibraryProvider.overrideWith(
+            (ref) => (
+              list: ref.read(torrentCacheProvider).saved,
+              revision: ref.watch(torrentCacheRevisionProvider).value ?? 0,
+            ),
+          ),
+          cachedPlaybackProvider.overrideWith(
+            (ref) =>
+                (item) => cachedPlaybackFor(ref, item),
+          ),
+          peerDownloadLookupProvider.overrideWith(
+            (ref) =>
+                (item) => verifiedPeerCopy(ref, item),
+          ),
           peerPlaybackProvider.overrideWith(
             (ref) =>
                 (item, excluded) => verifiedPeerSource(ref, item, excluded),

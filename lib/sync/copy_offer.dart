@@ -21,11 +21,25 @@ class CopyOffer {
     bool Function(PlaybackItem item) wanted,
   ) {
     final found = <String, PeerCopy>{};
-    for (final d in devices) {
-      for (final m in d.media) {
-        if (found.containsKey(m.id) || !wanted(m.item)) continue;
-        found[m.id] = (deviceId: d.id, deviceName: d.name, media: m);
-      }
+    final ordered =
+        [
+          for (final (rank, d) in devices.indexed)
+            for (final m in d.media) (device: d, media: m, rank: rank),
+        ]..sort((a, b) {
+          final kind = (a.media.bufferedBytes == null ? 0 : 1).compareTo(
+            b.media.bufferedBytes == null ? 0 : 1,
+          );
+          if (kind != 0) return kind;
+          final bytes = (b.media.bufferedBytes ?? 0).compareTo(
+            a.media.bufferedBytes ?? 0,
+          );
+          return bytes != 0 ? bytes : a.rank.compareTo(b.rank);
+        });
+    for (final entry in ordered) {
+      final d = entry.device;
+      final m = entry.media;
+      if (found.containsKey(m.id) || !wanted(m.item)) continue;
+      found[m.id] = (deviceId: d.id, deviceName: d.name, media: m);
     }
     return CopyOffer([...found.values]..sort(_airOrder));
   }

@@ -69,6 +69,7 @@ class TorrentPlayback {
     required this.fetchMetadata,
     OfflineLookup? offline,
     this.peerLookup,
+    this.discover,
     this.peerRecoveryPolicy = const PeerRecoveryPolicy(),
     this.peerStallGrace = const Duration(seconds: 10),
     ParkedStreams? parked,
@@ -148,6 +149,7 @@ class TorrentPlayback {
   /// The item's download, played or shared before any search.
   final OfflineLookup offline;
   final PeerLookup? peerLookup;
+  final PlaybackDiscovery? discover;
   PeerFile? _peerFile;
   bool _pinnedSource = false;
   final PeerRecoveryPolicy peerRecoveryPolicy;
@@ -241,15 +243,32 @@ class TorrentPlayback {
       return;
     }
     if (_stale(generation)) return;
-    var saved =
-        source ?? (torrent == null && options == null ? offline(item) : null);
+    OfflineSource? saved;
     if (source == null &&
         torrent == null &&
         options == null &&
-        (saved == null || saved is PeerFile) &&
-        peerLookup != null) {
-      saved = await peerLookup!(item, _failedPeers);
-      if (_stale(generation)) return;
+        discover != null) {
+      status.value = const StreamStatus(stage: StreamStage.finding);
+      try {
+        final found = await discover!(item, _cancel!);
+        if (_stale(generation)) return;
+        saved = found.source;
+        options = found.torrents;
+      } catch (error, stack) {
+        if (!_stale(generation)) _fail(generation, item, null, error, stack);
+        return;
+      }
+    } else {
+      saved =
+          source ?? (torrent == null && options == null ? offline(item) : null);
+      if (source == null &&
+          torrent == null &&
+          options == null &&
+          (saved == null || saved is PeerFile) &&
+          peerLookup != null) {
+        saved = await peerLookup!(item, _failedPeers);
+        if (_stale(generation)) return;
+      }
     }
     if (saved is LocalFile && File(saved.path).existsSync()) {
       try {
@@ -279,6 +298,24 @@ class TorrentPlayback {
       } catch (error) {
         _log.info('Peer open failed: $error');
         if (!_stale(generation)) await _recoverPeer();
+      }
+      return;
+    }
+    if (saved is CachedPlayback) {
+      status.value = StreamStatus(
+        stage: StreamStage.connecting,
+        torrent: saved.torrent,
+      );
+      try {
+        await _stream(
+          generation,
+          item,
+          saved.torrent,
+          resume: start,
+          fileIndex: saved.fileIndex,
+        );
+      } catch (error, stack) {
+        _fail(generation, item, saved.torrent, error, stack);
       }
       return;
     }

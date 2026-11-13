@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:sentorr/library/planner.dart';
 import 'package:sentorr/player/models.dart';
 import 'package:sentorr/torrents/resolution_models.dart';
+import 'package:sentorr/player/stream/reusable_torrent.dart';
+import 'package:torrent_stream/torrent_stream.dart';
 
 /// Records what it was asked to download; [missing] ids have no exact
 /// match.
@@ -18,6 +21,17 @@ class FakePlanner implements DownloadPlanner {
 
   /// What a search finds; [missing] ids are not in it.
   TorrentCandidate? found;
+
+  @override
+  Future<void> downloadStream(
+    PlaybackItem item,
+    ReusableTorrent torrent, {
+    Uint8List? metadata,
+    required String directory,
+    required TorrentStorage storage,
+  }) async {
+    planned.add(item.id);
+  }
 
   @override
   Future<TorrentCandidate?> download(

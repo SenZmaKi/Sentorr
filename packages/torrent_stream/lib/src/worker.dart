@@ -69,6 +69,8 @@ Future<Object?> _run(
         storage: message['storage'] as TorrentStorage,
         peers: message['peers'] as List,
       );
+    case 'retain':
+      await core.retain(hash(), owner());
     case 'metadata':
       return core.metadata(hash(), message['timeout'] as Duration?);
     case 'diagnose':

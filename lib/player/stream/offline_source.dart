@@ -1,4 +1,5 @@
 import 'package:torrent_stream/torrent_stream.dart';
+import 'package:dio/dio.dart';
 
 import '../../torrents/resolution_models.dart';
 import '../models.dart';
@@ -22,6 +23,13 @@ class DownloadTorrent extends OfflineSource {
   const DownloadTorrent(this.torrent, this.fileIndex);
   final TorrentCandidate torrent;
   final int fileIndex;
+}
+
+/// A retained stream whose episode selection can predate the cache index.
+class CachedPlayback extends OfflineSource {
+  const CachedPlayback(this.torrent, this.fileIndex);
+  final TorrentCandidate torrent;
+  final int? fileIndex;
 }
 
 /// A finished download on a paired device, served over the local network.
@@ -73,3 +81,9 @@ typedef PeerLookup = Future<PeerFile?> Function(
   PlaybackItem item,
   Set<Uri> excluded,
 );
+
+typedef PlaybackDiscovery =
+    Future<({OfflineSource? source, TorrentResolution? torrents})> Function(
+      PlaybackItem item,
+      CancelToken cancel,
+    );

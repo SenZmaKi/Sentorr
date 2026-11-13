@@ -45,6 +45,14 @@ extension EngineAdditions on EngineCore {
     }
   }
 
+  Future<void> retain(String hash, String owner) => _serialize(hash, () async {
+    final entry = _entry(hash);
+    entry.lifetime.check();
+    entry.owners.putIfAbsent(owner, TorrentOwner.new);
+    entry.applyPause();
+    publish();
+  });
+
   Future<String> _add(
     Map source, {
     required String hash,
@@ -58,7 +66,7 @@ extension EngineAdditions on EngineCore {
     if (known != null) {
       _checkDestination(known, directory, storage);
       if (storage.index > known.storage.index) {
-        await _move(known, directory, storage);
+        await known.disk.exclusive(() => _move(known, directory, storage));
       }
       known.lifetime.check();
       known.owners.putIfAbsent(owner, TorrentOwner.new);

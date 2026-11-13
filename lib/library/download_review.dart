@@ -59,6 +59,8 @@ class DownloadReviews extends Notifier<List<DownloadReview>> {
   Future<List<PlaybackItem>> review(
     List<PlaybackItem> items, {
     bool show = false,
+    Future<TorrentResolution>? resolution,
+    CancelToken? searchCancel,
   }) {
     final fresh = [
       for (final item in items)
@@ -72,6 +74,10 @@ class DownloadReviews extends Notifier<List<DownloadReview>> {
         shown: show || _reviewing,
       ),
     );
+    if (resolution != null && fresh.length == 1) {
+      run.prefetched[fresh.single.id] = resolution;
+      run.cancel.whenCancel.then((error) => searchCancel?.cancel(error));
+    }
     _mark(run, fresh);
     unawaited(_searchAll(run));
     return run.done.future;
@@ -282,11 +288,13 @@ class DownloadReviews extends Notifier<List<DownloadReview>> {
     final entry = byId(run.id)?.entry(itemId);
     if (entry == null) return;
     try {
-      final resolution = await ref.read(torrentSearchProvider)(
-        entry.item,
-        title: entry.title,
-        cancel: run.cancel,
-      );
+      final resolution =
+          await (run.prefetched.remove(itemId) ??
+              ref.read(torrentSearchProvider)(
+                entry.item,
+                title: entry.title,
+                cancel: run.cancel,
+              ));
       if (!_alive(run)) return;
       final match = TorrentMatch.of(
         resolution,
@@ -337,4 +345,5 @@ class _Run {
 
   /// Items this review marked as being prepared.
   final marked = <String>{};
+  final prefetched = <String, Future<TorrentResolution>>{};
 }

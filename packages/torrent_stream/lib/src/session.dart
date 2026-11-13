@@ -33,6 +33,9 @@ class TorrentStreamSession {
   Future<String?>? _adding;
 
   /// The torrent's info hash once open.
+  TorrentSource? get source => _source;
+  TorrentSource? _source;
+
   String? get infoHash => _hash;
   TorrentStreamFile? _file;
 
@@ -151,6 +154,7 @@ class TorrentStreamSession {
     final files = await _guard(
       engine.metadata(_hash!, timeout: config.metadataTimeout),
     );
+    _source = source;
     _files = files;
     _at(TorrentStreamPhase.metadataReady);
     return files;

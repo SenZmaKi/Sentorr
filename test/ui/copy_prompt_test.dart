@@ -11,7 +11,9 @@ import 'package:sentorr/imdb/models.dart';
 import 'package:sentorr/library/models.dart';
 import 'package:sentorr/library/notifier.dart';
 import 'package:sentorr/library/planner.dart';
+import 'package:sentorr/library/stream_download.dart';
 import 'package:sentorr/player/models.dart';
+import 'package:sentorr/player/stream/reusable_torrent.dart';
 import 'package:sentorr/player/torrent_search.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/shared/persistence/json_file_store.dart';
@@ -101,10 +103,20 @@ class _Copies extends PeerCopies {
   }
 }
 
+class _Streams implements StreamDownloads {
+  _Streams(this.result);
+
+  final StreamDownloadOffer? result;
+
+  @override
+  Future<StreamDownloadOffer?> offer(PlaybackItem item) async => result;
+}
+
 Future<(FakePlanner, _Copies)> _pump(
   WidgetTester tester,
   Widget child, {
   required List<PlaybackItem> onLaptop,
+  StreamDownloadOffer? streamOffer,
 }) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
@@ -143,6 +155,7 @@ Future<(FakePlanner, _Copies)> _pump(
       ),
       torrentSearchProvider.overrideWithValue(FakeSearch().call),
       downloadPlannerProvider.overrideWithValue(planner),
+      streamDownloadProvider.overrideWithValue(_Streams(streamOffer)),
       downloadsProvider.overrideWith((ref) => Stream.value(const [])),
       downloadQueueProvider.overrideWithValue(
         DownloadQueue(
@@ -183,6 +196,37 @@ Future<void> _settle(WidgetTester tester) async {
 }
 
 void main() {
+  for (final playing in [true, false]) {
+    testWidgets(
+      'Download offers the ${playing ? 'playing' : 'cached'} torrent first',
+      (tester) async {
+        var saved = false;
+        final release = fakeRelease(7);
+        final (planner, copies) = await _pump(
+          tester,
+          const _Asks(),
+          onLaptop: [_movie],
+          streamOffer: (
+            torrent: ReusableTorrent(release, 0, 'movie.mkv', 1 << 20),
+            playing: playing,
+            save: () async => saved = true,
+          ),
+        );
+        await tester.tap(find.byTooltip('Download'));
+        await _open(tester);
+        expect(find.text(release.name), findsOneWidget);
+        expect(find.text('Copy from Laptop?'), findsNothing);
+        await tester.tap(
+          find.text(playing ? 'Download full file' : 'Save to Downloads'),
+        );
+        await _settle(tester);
+        expect(saved, true);
+        expect(planner.planned, isEmpty);
+        expect(copies.started, isEmpty);
+      },
+    );
+  }
+
   testWidgets('a movie on another device is copied instead', (tester) async {
     final (planner, copies) = await _pump(
       tester,

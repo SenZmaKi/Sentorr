@@ -1,3 +1,7 @@
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
+import 'package:path/path.dart' as p;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:torrent_stream/torrent_stream.dart';
 
@@ -6,13 +10,29 @@ import '../../library/notifier.dart';
 import '../../settings/notifier.dart';
 import '../../shared/persistence/json_file_store.dart';
 import '../../torrents/models.dart';
+import '../../torrents/providers.dart';
+import '../../torrents/metadata_identity.dart';
+import 'reusable_torrent.dart';
 import 'torrent_cache.dart';
 
-final torrentCacheProvider = Provider<TorrentCache>(
-  (ref) => TorrentCache(
+final torrentCacheProvider = Provider<TorrentCache>((ref) {
+  final cache = TorrentCache(
     JsonFileStore(ref.watch(appPathsProvider).torrentCacheIndexFile),
-  ),
+  );
+  ref.onDispose(cache.close);
+  return cache;
+});
+
+final torrentCacheRevisionProvider = StreamProvider<int>(
+  (ref) => ref.watch(torrentCacheProvider).changes,
 );
+
+/// The app wires its cache catalog into device sharing. Lightweight hosts can
+/// share only their download library.
+final cachedStreamLibraryProvider =
+    Provider<({Future<List<CachedTorrent>> Function() list, int revision})>(
+      (ref) => (list: () async => const [], revision: 0),
+    );
 
 /// Where torrents are saved: the viewer's folder or the app's own.
 final torrentDirectoryProvider = Provider<String>(
@@ -42,7 +62,11 @@ Future<TorrentStreamConfig> sessionConfigFor(
   TorrentRelease release,
 ) async {
   final s = ref.read(settingsProvider).streaming;
-  final root = ref.read(torrentDirectoryProvider);
+  final cache = ref.read(torrentCacheProvider);
+  final existing = await cache.directoryFor(release.infoHash);
+  final root = existing == null
+      ? ref.read(torrentDirectoryProvider)
+      : p.dirname(existing);
   // A download keeps its own files; the cache would only hold a copy.
   final downloaded = ref
       .read(libraryProvider)
@@ -64,4 +88,29 @@ Future<TorrentStreamConfig> sessionConfigFor(
     pieceTimeout: Duration(seconds: s.pieceTimeoutSeconds),
     retainedDirectory: retained,
   );
+}
+
+/// Metadata saved with retained streams avoids another provider request.
+Future<Uint8List> streamMetadataFor(
+  Ref ref,
+  TorrentRelease release,
+  CancelToken cancel,
+) async {
+  final directory = await ref
+      .read(torrentCacheProvider)
+      .directoryFor(release.infoHash);
+  if (directory != null) {
+    final file = cachedTorrentMetadata(directory);
+    if (await file.exists()) {
+      final bytes = await file.readAsBytes();
+      try {
+        validateMetadataIdentity(bytes, release.infoHash);
+        if (cancel.isCancelled) throw cancel.cancelError!;
+        return bytes;
+      } on FormatException {
+        // Old or damaged metadata falls back to the normal verified fetch.
+      }
+    }
+  }
+  return ref.read(torrentMetadataProvider).fetch(release, cancel);
 }

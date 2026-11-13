@@ -1,3 +1,5 @@
+import '../media/cached_media.dart';
+import '../media/finder.dart';
 import '../shared/cleanup.dart';
 import '../watching/next_episode.dart';
 import '../settings/streaming_settings.dart';
@@ -16,7 +18,6 @@ import 'package:torrent_stream/torrent_stream.dart';
 import '../library/playback.dart';
 import '../torrents/engine.dart';
 import '../torrents/resolution_models.dart';
-import '../torrents/providers.dart';
 import '../following/notifier.dart';
 import '../lists/notifier.dart';
 import '../watching/notifier.dart';
@@ -42,6 +43,7 @@ import '../watching/models.dart';
 import 'stream/offline_source.dart';
 import 'stream/parked_stream.dart';
 import 'stream/session_config.dart';
+import 'stream/reusable_torrent.dart';
 import 'stream/torrent_playback.dart';
 import 'torrent_search.dart';
 import 'torrent_lookup.dart';
@@ -60,6 +62,7 @@ class PlaybackEngine {
     PlayerLifecycle? lifecycle,
     OfflineLookup? offline,
     PeerLookup? peerLookup,
+    PlaybackDiscovery? discover,
     ParkedStreams? parked,
     PreparedStreams? prepared,
     void Function(SharedStream)? share,
@@ -84,6 +87,7 @@ class PlaybackEngine {
       fetchMetadata: fetchMetadata,
       offline: offline,
       peerLookup: peerLookup,
+      discover: discover,
       parked: parked,
       prepared: prepared,
       share: share,
@@ -309,13 +313,45 @@ final playbackEngineProvider = Provider.autoDispose<PlaybackEngine>((ref) {
     configFor: (release) => sessionConfigFor(ref, release),
     find: (item, cancel) =>
         ref.read(torrentSearchProvider)(item, cancel: cancel),
-    fetchMetadata: (release, cancel) =>
-        ref.read(torrentMetadataProvider).fetch(release, cancel),
+    fetchMetadata: (release, cancel) => streamMetadataFor(ref, release, cancel),
     offline: (item) => offlineSourceFor(ref, item),
     peerLookup: ref.read(peerPlaybackProvider),
+    discover: (item, cancel) =>
+        ref.read(mediaFinderProvider).resolvePlayback(item, cancel),
     parked: ref.read(parkedStreamsProvider),
     prepared: ref.read(preparedStreamsProvider),
-    share: ref.read(sharedStreamsProvider.notifier).register,
+    share: (stream) {
+      ref.read(sharedStreamsProvider.notifier).register(stream);
+      final session = stream.session;
+      final source = session.source;
+      final snapshot = session.engine.torrent(session.infoHash ?? '');
+      if (source is TorrentMetadataSource &&
+          snapshot?.storage == TorrentStorage.cached) {
+        final release = stream.candidate.release;
+        unawaited(
+          ref
+              .read(torrentCacheProvider)
+              .remember(
+                stream.item.id,
+                snapshot!.savePath,
+                ReusableTorrent.fromFile(
+                  release,
+                  stream.stream.file,
+                  item: stream.item,
+                ),
+                source.bytes,
+              )
+              .then((_) => pinCachedPlayback(ref, stream, snapshot.savePath))
+              .catchError((Object error, StackTrace stack) {
+                _log.warning(
+                  'Could not remember the cached stream',
+                  error,
+                  stack,
+                );
+              }),
+        );
+      }
+    },
   );
   ref.listen(
     settingsProvider.select(

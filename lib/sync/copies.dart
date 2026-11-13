@@ -39,7 +39,14 @@ class PeerCopies {
     return CopyOffer.find([
       for (final d in devices.paired)
         if (peers[d.id] case final peer? when peer.online)
-          (id: d.id, name: d.name, media: peer.media),
+          (
+            id: d.id,
+            name: d.name,
+            media: [
+              ...peer.media,
+              ...peer.streams.where((m) => m.version == m.bufferedVersion),
+            ],
+          ),
     ], (item) => asked(item) && downloadable(_ref, item.id));
   }
 
@@ -118,7 +125,10 @@ class PeerCopies {
         throw PeerException("${copy.deviceName} can't be reached");
       }
       await partial.parent.create(recursive: true);
-      final version = copy.media.version;
+      final buffered = copy.media.bufferedBytes != null;
+      final version = buffered
+          ? copy.media.bufferedVersion
+          : copy.media.version;
       if (version == null) {
         throw const PeerException('Update the source device before copying');
       }
@@ -143,10 +153,11 @@ class PeerCopies {
             .open(
               route.address,
               route.fingerprint,
-              '/v1/media/$id',
+              '/v1/${buffered ? 'buffered' : 'media'}/$id',
               cancellation: attempt,
               headers: {
                 HttpHeaders.ifMatchHeader: '"$version"',
+                if (buffered) 'x-sentorr-torrent': copy.media.release.infoHash,
                 if (have > 0) HttpHeaders.rangeHeader: 'bytes=$have-',
               },
             ),
@@ -211,10 +222,13 @@ class PeerCopies {
             .open(
               route.address,
               route.fingerprint,
-              '/v1/media/$id',
+              '/v1/${buffered ? 'buffered' : 'media'}/$id',
               method: 'HEAD',
               cancellation: attempt,
-              headers: {HttpHeaders.ifMatchHeader: '"$version"'},
+              headers: {
+                HttpHeaders.ifMatchHeader: '"$version"',
+                if (buffered) 'x-sentorr-torrent': copy.media.release.infoHash,
+              },
             ),
       );
       final unchanged =

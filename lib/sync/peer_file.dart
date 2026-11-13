@@ -18,7 +18,7 @@ PeerFile? peerFileForOffer(
     media.id,
     buffered: buffered,
     infoHash: media.release.infoHash,
-    fileVersion: media.version,
+    fileVersion: buffered ? media.bufferedVersion : media.version,
   );
   if (url == null) return null;
   return PeerFile(
@@ -49,7 +49,8 @@ PeerFile? peerFileForOffer(
                 cancellation: request,
                 headers: {
                   if (buffered) 'x-sentorr-torrent': media.release.infoHash,
-                  if (media.version case final version?)
+                  if ((buffered ? media.bufferedVersion : media.version)
+                      case final version?)
                     'if-match': '"$version"',
                 },
               ),

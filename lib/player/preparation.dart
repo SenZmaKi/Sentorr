@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../torrents/engine.dart';
-import '../torrents/providers.dart';
 import 'stream/prepared_stream.dart';
 import 'stream/session_config.dart';
 
@@ -13,7 +12,7 @@ final preparedStreamsProvider = Provider<PreparedStreams>((ref) {
       engine: ref.read(torrentEngineProvider),
       configFor: (release) => sessionConfigFor(ref, release),
       fetchMetadata: (release, cancel) =>
-          ref.read(torrentMetadataProvider).fetch(release, cancel),
+          streamMetadataFor(ref, release, cancel),
     ),
   );
   ref.onDispose(prepared.clear);

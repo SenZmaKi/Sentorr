@@ -49,11 +49,23 @@ class PeerMedia {
     required this.fileIndex,
     this.version,
     this.bufferedBytes,
+    this.cached = false,
   });
+
+  PeerMedia.buffered({
+    required this.item,
+    required this.size,
+    required this.name,
+    required this.release,
+    required this.fileIndex,
+    required this.bufferedBytes,
+    this.cached = false,
+  }) : version = 'torrent-${release.infoHash.toLowerCase()}-$fileIndex-$size';
 
   /// What [entry]'s finished file of [size] bytes offers.
   PeerMedia.of(LibraryEntry entry, this.size, {this.version})
-    : bufferedBytes = null,
+    : cached = false,
+      bufferedBytes = null,
       item = entry.item,
       name = p.basename(entry.path),
       release = entry.release,
@@ -70,6 +82,10 @@ class PeerMedia {
 
   /// Only present in PeerLibrary.streams; these are not finished files.
   final int? bufferedBytes;
+  final bool cached;
+
+  String get bufferedVersion =>
+      'torrent-${release.infoHash.toLowerCase()}-$fileIndex-$size';
 
   String get id => item.id;
 
@@ -80,6 +96,7 @@ class PeerMedia {
     'release': releaseToJson(release),
     'file': fileIndex,
     if (bufferedBytes != null) 'bufferedBytes': bufferedBytes,
+    if (cached) 'cached': true,
     if (version != null) 'version': version,
   };
 
@@ -101,6 +118,7 @@ class PeerMedia {
       name: name,
       release: release,
       fileIndex: file,
+      cached: json['cached'] == true,
       bufferedBytes: json['bufferedBytes'] is int
           ? json['bufferedBytes'] as int
           : null,
@@ -207,8 +225,9 @@ class PeerLibrary {
           .where(
             (s) =>
                 s.size > 0 &&
-                (s.bufferedBytes ?? 0) > 0 &&
-                s.bufferedBytes! <= s.size,
+                ((s.bufferedBytes ?? 0) > 0 || s.cached) &&
+                (s.bufferedBytes ?? 0) >= 0 &&
+                (s.bufferedBytes ?? 0) <= s.size,
           )
           .toList(),
     );

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -13,6 +14,7 @@ import '../downloads/queue.dart';
 import '../player/models.dart';
 import '../player/stream/file_choice.dart';
 import '../player/stream/session_config.dart';
+import '../player/stream/reusable_torrent.dart';
 import '../player/stream/torrent_playback.dart';
 import '../player/torrent_search.dart';
 import '../settings/notifier.dart';
@@ -25,6 +27,8 @@ import 'layout.dart';
 import 'models.dart';
 import 'notifier.dart';
 import 'planning_cancel.dart';
+
+part 'planner_enqueue.dart';
 
 final _log = Logger('sentorr.library.planner');
 
@@ -66,6 +70,43 @@ class DownloadPlanner {
     TorrentCandidate? torrent,
     bool automatic = false,
     CancelToken? cancel,
+  }) => _downloadItem(
+    item,
+    torrent: torrent,
+    automatic: automatic,
+    cancel: cancel,
+  );
+
+  Future<void> downloadStream(
+    PlaybackItem item,
+    ReusableTorrent torrent, {
+    Uint8List? metadata,
+    required String directory,
+    required TorrentStorage storage,
+  }) async {
+    await _downloadItem(
+      item,
+      reuse: (
+        torrent: torrent,
+        metadata: metadata,
+        directory: directory,
+        storage: storage,
+      ),
+    );
+  }
+
+  Future<TorrentCandidate?> _downloadItem(
+    PlaybackItem item, {
+    TorrentCandidate? torrent,
+    bool automatic = false,
+    ({
+      ReusableTorrent torrent,
+      Uint8List? metadata,
+      String directory,
+      TorrentStorage storage,
+    })?
+    reuse,
+    CancelToken? cancel,
   }) async {
     final library = _ref.read(libraryProvider.notifier);
     final planning = _ref.read(planningProvider.notifier);
@@ -88,6 +129,29 @@ class DownloadPlanner {
     if (automatic && _ref.read(peerCopyProvider)(item)) return null;
     planning.start(item.id);
     try {
+      if (reuse != null) {
+        final source = reuse.torrent;
+        final candidate = TorrentCandidate(
+          release: source.release,
+          score: 0,
+          qualityScore: 0,
+          availabilityScore: 0,
+          sizeScore: 0,
+          requiresFileSelection: source.release.isPack,
+        );
+        await _enqueue(
+          item,
+          candidate,
+          automatic: automatic,
+          cancel: cancel,
+          existingMetadata: reuse.metadata,
+          directory: reuse.directory,
+          storage: reuse.storage,
+          fileIndex: source.fileIndex,
+          reuse: true,
+        );
+        return candidate;
+      }
       return await _queueFirstWorking(
         item,
         torrent: torrent,
@@ -186,114 +250,4 @@ class DownloadPlanner {
       (error is DioException && CancelToken.isCancel(error)) ||
       (error is TorrentStreamException &&
           error.code == TorrentStreamErrorCode.cancelled);
-
-  Future<void> _enqueue(
-    PlaybackItem item,
-    TorrentCandidate candidate, {
-    required bool automatic,
-    CancelToken? cancel,
-  }) async {
-    cancel?.throwIfCancellationRequested();
-    if (cancel == null &&
-        !automatic &&
-        item.series != null &&
-        item.season != null) {
-      await _ref
-          .read(downloadQueueProvider)
-          .startBatch('${item.series!.id}:season:${item.season}');
-    }
-    final engine = _ref.read(torrentEngineProvider);
-    final release = candidate.release;
-    final planner = 'plan:${item.id}';
-    _log.info('Preparing $item from ${release.name}');
-    final metadata = await _ref
-        .read(torrentMetadataProvider)
-        .fetch(release, cancel ?? CancelToken());
-    cancel?.throwIfCancellationRequested();
-    final hash = await engine.add(
-      TorrentSource.metadata(
-        metadata,
-        expectedInfoHash: release.infoHash,
-        trackers: release.trackers,
-      ),
-      owner: planner,
-      directory: _ref.read(torrentDirectoryProvider),
-    );
-    try {
-      final timeout = _ref
-          .read(settingsProvider)
-          .streaming
-          .metadataTimeoutSeconds;
-      final files = await whilePlanning(
-        engine.metadata(hash, timeout: Duration(seconds: timeout)),
-        cancel,
-      );
-      cancel?.throwIfCancellationRequested();
-      final file = playableFile(
-        files,
-        item,
-        pack: candidate.requiresFileSelection,
-        seriesPack: release.isSeriesPack,
-      );
-      if (file == null) {
-        throw DownloadPlanException(
-          item.isEpisode
-              ? "This torrent doesn't contain the episode."
-              : "This torrent doesn't contain a playable video.",
-        );
-      }
-      final layout = layoutFor(
-        item,
-        _ref.read(downloadsDirectoryProvider),
-        file.path,
-      );
-      final id = await _ref
-          .read(downloadQueueProvider)
-          .enqueue(
-            TorrentDownloadJob(
-              title: item.label,
-              batchId: item.series == null || item.season == null
-                  ? null
-                  : '${item.series!.id}:season:${item.season}',
-              torrentData: metadata,
-              trackers: release.trackers,
-              destinationDirectory: layout.directory,
-              selectedFileIndices: [file.index],
-              renamedFiles: {file.index: layout.name},
-            ),
-          );
-      await _ref
-          .read(libraryProvider.notifier)
-          .add(
-            LibraryEntry(
-              item: item,
-              downloadId: id,
-              release: release,
-              fileIndex: file.index,
-              path: p.join(layout.directory, layout.name),
-              addedAt: DateTime.now(),
-              automatic: automatic,
-            ),
-          );
-      _log.info('Queued $item as ${p.join(layout.directory, layout.name)}');
-      // Hold the torrent until the download does, so its metadata is reused.
-      final queued = _ref
-          .read(downloadQueueProvider)
-          .items
-          .where((d) => d.id == id)
-          .first;
-      if (queued.status == DownloadStatus.paused) return;
-      await engine.states
-          .map(
-            (_) => engine
-                .torrent(hash)
-                ?.owners
-                .any((owner) => owner.startsWith('download:$id:')),
-          )
-          .firstWhere((held) => held != false)
-          .timeout(const Duration(seconds: 10), onTimeout: () => null);
-    } finally {
-      await engine.release(hash, planner);
-    }
-  }
 }

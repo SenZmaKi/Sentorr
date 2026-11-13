@@ -14,7 +14,7 @@ class SharedStream {
   final TorrentStreamSession session;
   final TorrentStream stream;
 
-  PeerMedia get offer => PeerMedia(
+  PeerMedia get offer => PeerMedia.buffered(
     item: item,
     size: stream.file.length,
     name: stream.file.path.split('/').last,
@@ -27,6 +27,13 @@ class SharedStream {
 final sharedStreamsProvider =
     NotifierProvider<SharedStreamsNotifier, Map<String, SharedStream>>(
       SharedStreamsNotifier.new,
+    );
+
+/// Supplied by the app to restore a retained torrent when playback is closed.
+final cachedStreamRestoreProvider =
+    Provider<Future<SharedStream?> Function(String, String)>(
+      (ref) =>
+          (_, _) async => null,
     );
 
 /// Active and parked sessions already backed by verified torrent storage.
@@ -68,6 +75,9 @@ class BufferedStreamLease {
       ) {
     ready = _open(source);
     unawaited(ready.then<void>((_) {}, onError: (Object _) {}));
+  }
+  BufferedStreamLease.owned(SharedStream source) : session = source.session {
+    ready = Future.value(source.stream.uri);
   }
   final TorrentStreamSession session;
   late final Future<Uri> ready;

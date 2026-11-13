@@ -136,11 +136,21 @@ local separation does not undo intentional synchronization.
 
 A device shares its finished downloads whose files are still on disk
 (`/v1/library`, and `/v1/media/<imdb id>` with byte ranges).
-`offlineSourceFor` looks up a local file first, then a download in progress,
-then `peerSourceProvider` for cached UI availability. Launch and queued playback
-use `peerPlaybackProvider` to sync all paired devices concurrently, including
-those marked offline, with a five-second wait bound. Candidate offers are probed
-with authenticated HEAD requests concurrently, with a three-second wait bound.
+`MediaFinder` (`lib/media/finder.dart`) is the source lookup used by manual
+Download, Play and queued playback. It starts local cache lookup, paired-device
+verification and torrent search concurrently, then consumes results in that
+order. Local files and downloads in progress also take local priority. A fast
+torrent result cannot overtake a pending local or peer check. Choosing a local
+or peer source cancels the speculative search. Download review consumes the
+same search future, so falling through does not search twice. Explicit torrent
+choices bypass source discovery.
+
+`offlineSourceFor` supplies the immediate download-library view, while
+`cachedPlaybackProvider` includes retained streams. Peer verification shares
+an in-flight refresh and reuses it for two seconds across callers. Refreshes
+include paired devices marked offline, with a five-second wait bound.
+Candidate offers are probed with authenticated HEAD requests concurrently,
+with a three-second wait bound.
 Finished files retain priority over partial streams; probes that fail or time
 out are skipped. Cancelled launches and replaced player items discard late results. When
 Play finds only a peer's copy, the launch dialog asks before using it: it
@@ -151,17 +161,28 @@ episode in the player's episodes panel goes through the launch instead of
 jumping within the queue, so it asks too. mpv
 can't pin a self-signed certificate, so `MediaProxy` serves a loopback URL
 with a token and forwards each range request over the pinned connection.
-Active and parked torrent sessions with verified bytes also publish separate
-`streams` offers in the library. They never enter finished `media` or copy offers.
-A manual launch offers the paired device's partial stream before torrent search,
+Active and parked torrent sessions with verified bytes, and retained torrents
+whose recorded files still exist, publish separate `streams` offers in the
+library. Dormant caches carry `cached: true` and zero advertised buffered bytes
+until opened and verified. They are eligible for both playback and copying.
+Title metadata is retained with new cache entries; older file-index entries use
+watch history to identify their title. Hash-only legacy entries become shareable
+when opened again and their file choice is recorded.
+A manual launch offers the paired device's partial stream before using torrent results,
 with Stream instead as the alternative. Finished peer files take precedence;
 among partial offers the most verified bytes wins. The host must remain running.
 
 Partial playback goes through `/v1/buffered/<imdb id>` over the same pinned,
 mutually authenticated connection. `x-sentorr-torrent` binds requests to the
 offered torrent hash so an older lease cannot serve a newly offered release.
-The host attaches a separate torrent session owner to its existing engine and
-relays that owner's verified byte server. Missing ranges are downloaded normally;
+For active playback the host attaches a separate torrent session owner to its
+existing engine. For a dormant cache it restores the torrent from retained
+metadata and resume data. Both relay the engine's verified byte server. A cache
+lease defers eviction and manual clearing of files until the remote session
+closes. Offers disappear immediately when cleared; existing readers can finish.
+Buffered copies bind If-Match and ETag to torrent hash, file index and length,
+including the final verification request. They retain resumable partial files.
+The copy prompt explains that missing pieces are fetched on the source device. Missing ranges are downloaded normally;
 sparse filesystem bytes are never served. This owner survives closing or parking
 the local player, and is released five minutes after its last request completes.
 Closing sync releases all remote owners. A vanished offer or wrong hash returns

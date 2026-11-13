@@ -146,6 +146,10 @@ class _CopyPromptState extends ConsumerState<_CopyPrompt>
 /// What the prompt says, e.g. "Episodes 1–3 and 5 are already on MacBook.
 /// Copy them over your network and download the rest of season 2?"
 String copyMessage(CopyOffer offer, {String? rest}) {
+  if (offer.copies.any((copy) => copy.media.bufferedBytes != null)) {
+    return '${_capital(offer.what)} is available on ${offer.devices}, including cached stream data. '
+        'Save it here over your network? Any missing pieces will be fetched on the source device.';
+  }
   final several = offer.copies.length > 1;
   final had = {for (final c in offer.copies) c.deviceName}.length == 1
       ? '${_capital(offer.what)} ${several ? 'are' : 'is'} already on '

@@ -7,6 +7,8 @@ import '../downloads/models.dart';
 import '../library/models.dart';
 import '../library/notifier.dart';
 import '../shared/parallel.dart';
+import '../player/stream/session_config.dart';
+import '../watching/notifier.dart';
 import 'payload.dart';
 import 'shared_streams.dart';
 import 'file_version.dart';
@@ -56,13 +58,38 @@ Future<PeerLibrary> sharedLibrary(Ref ref) async {
           : null;
     },
   );
+  final streams = {
+    for (final stream in ref.read(sharedStreamsProvider).values)
+      if (stream.session.state.selectedBytes > 0) stream.item.id: stream.offer,
+  };
+  for (final cached in await ref.read(cachedStreamLibraryProvider).list()) {
+    final torrent = cached.torrent;
+    final item =
+        torrent.item ??
+        ref
+            .read(watchHistoryProvider)
+            .where((entry) => entry.id == torrent.itemId)
+            .firstOrNull
+            ?.item;
+    if (item == null ||
+        torrent.fileIndex == null ||
+        streams.containsKey(item.id)) {
+      continue;
+    }
+    streams[item.id] = PeerMedia.buffered(
+      item: item,
+      size: torrent.size,
+      name: torrent.filePath!,
+      release: torrent.release,
+      fileIndex: torrent.fileIndex!,
+      bufferedBytes: 0,
+      cached: true,
+    );
+  }
   return PeerLibrary(
     media: media.nonNulls.toList(),
     downloads: coming,
-    streams: [
-      for (final stream in ref.read(sharedStreamsProvider).values)
-        if (stream.session.state.selectedBytes > 0) stream.offer,
-    ],
+    streams: streams.values.toList(),
   );
 }
 
@@ -84,6 +111,7 @@ final sharedLibraryShapeProvider = Provider<String>((ref) {
       d.id: d.status,
   };
   return [
+    'cache:${ref.watch(cachedStreamLibraryProvider).revision}',
     for (final stream in ref.watch(sharedStreamsProvider).values)
       if (stream.session.state.selectedBytes > 0)
         '${stream.item.id}:${stream.candidate.release.infoHash}:stream',

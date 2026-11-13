@@ -1,3 +1,5 @@
+import '../media/finder.dart';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -174,27 +176,70 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
     bool skipPeer = false,
   }) async {
     try {
-      PrefetchedLaunch? prefetched;
       final entry = _prefetched;
-      if (entry != null) {
-        try {
-          prefetched = await entry.result;
-          if (cancel != _cancel) return;
-          _prepared = prefetched.queue;
-        } on Object {
-          if (cancel != _cancel) return;
-          // A failed page lookup never prevents an ordinary launch search.
-        }
-      }
-      final item =
-          state!.item ??
-          prefetched?.item ??
-          await _item(state!.request, cancel);
-      if (cancel != _cancel) return;
-      final offline = skipPeer
-          ? offlineSourceFor(ref, item)
-          : await refreshedOfflineSourceFor(ref, item);
+      final item = state!.item ?? await _item(state!.request, cancel);
       if (cancel != _cancel || !ref.mounted) return;
+      final languages = ref.read(settingsProvider).torrents.languages;
+      final query = torrentQueryFor(
+        item,
+        languages: languages,
+        title: title ?? state!.query?.title,
+      );
+      final preferences = state!.preferences;
+      final saved = reuseSaved
+          ? ref.read(watchHistoryProvider.notifier).savedRelease(item.id)
+          : null;
+      final lookup = ref
+          .read(mediaFinderProvider)
+          .playback(
+            item,
+            cancel: cancel,
+            peers: !skipPeer,
+            search: (token) async {
+              if (saved != null) {
+                return TorrentResolution(
+                  query: query,
+                  candidates: [
+                    TorrentCandidate(
+                      release: saved,
+                      score: 0,
+                      qualityScore: 0,
+                      availabilityScore: 0,
+                      sizeScore: 0,
+                      requiresFileSelection: saved.isPack,
+                    ),
+                  ],
+                  failures: const [],
+                );
+              }
+              if (entry != null) {
+                var waiting = true;
+                token.whenCancel.then((error) {
+                  if (waiting) entry.cancel.cancel(error);
+                });
+                try {
+                  final prefetched = await entry.result;
+                  if (cancel == _cancel) _prepared ??= prefetched.queue;
+                  if (prefetched.resolution != null) {
+                    return prefetched.resolution!;
+                  }
+                } on Object {
+                  if (cancel != _cancel) rethrow;
+                } finally {
+                  waiting = false;
+                }
+              }
+              return ref
+                  .read(torrentResolverProvider)
+                  .resolve(query, preferences: preferences, cancelToken: token);
+            },
+          );
+      final offline = await lookup.local ?? await lookup.peer;
+      if (cancel != _cancel || !ref.mounted) {
+        lookup.close();
+        return;
+      }
+      if (offline != null) lookup.close();
       if (offline is PeerFile) {
         if (!skipPeer) {
           // Another device's copy: the viewer gets a moment to stream instead.
@@ -217,9 +262,6 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
         ref.read(playerSessionProvider.notifier).play(request, queue: queue);
         return;
       }
-      final saved = reuseSaved
-          ? ref.read(watchHistoryProvider.notifier).savedRelease(item.id)
-          : null;
       if (saved != null) {
         // Resuming: the torrent last streamed for it, no search.
         _log.info('Resuming $item from ${saved.name}');
@@ -242,24 +284,14 @@ class PlaybackLaunchNotifier extends Notifier<PlaybackLaunch?> {
             );
         return;
       }
-      final languages = ref.read(settingsProvider).torrents.languages;
-      final query = torrentQueryFor(
-        item,
-        languages: languages,
-        title: title ?? state!.query?.title,
-      );
-      final preferences = state!.preferences;
       state = PlaybackLaunch(
         request: state!.request,
         preferences: preferences,
         item: item,
         query: query,
       );
-      final resolution =
-          prefetched?.resolution ??
-          await ref
-              .read(torrentResolverProvider)
-              .resolve(query, preferences: preferences, cancelToken: cancel);
+      final resolution = await lookup.torrents;
+      lookup.close();
       if (cancel != _cancel) return;
       final match = TorrentMatch.of(resolution, preferences);
       _log.info(

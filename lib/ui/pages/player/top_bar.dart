@@ -8,6 +8,7 @@ import '../../../player/models.dart';
 import '../../../imdb/models.dart';
 import '../../../player/stream/torrent_playback.dart';
 import '../../components/artwork_frame.dart';
+import '../../components/download_button.dart';
 import '../../components/player_control.dart';
 import '../../components/title_link.dart';
 import '../../shared/theme/theme.dart';
@@ -181,6 +182,10 @@ class TopBar extends StatelessWidget {
             child: TorrentStats(status: stream, compact: layout.compactStats),
           ),
         const SizedBox(width: Space.s8),
+        if (item != null && !panelOpen) ...[
+          DownloadButton(item: item),
+          const SizedBox(width: Space.s8),
+        ],
         _BarButton(
           icon: Icons.close_rounded,
           tooltip: 'Stop and close (Shift X)',

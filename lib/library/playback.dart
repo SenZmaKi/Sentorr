@@ -27,13 +27,21 @@ final peerPlaybackProvider = Provider<PeerLookup>(
   },
 );
 
+/// The app supplies its retained stream cache alongside the download library.
+final cachedPlaybackProvider =
+    Provider<Future<OfflineSource?> Function(PlaybackItem)>(
+      (ref) =>
+          (_) async => null,
+    );
+
 Future<OfflineSource?> refreshedOfflineSourceFor(
   Ref ref,
   PlaybackItem item,
 ) async {
   final local = offlineSourceFor(ref, item);
   if (local != null && local is! PeerFile) return local;
-  return ref.read(peerPlaybackProvider)(item, {});
+  final cached = await ref.read(cachedPlaybackProvider)(item);
+  return cached ?? await ref.read(peerPlaybackProvider)(item, {});
 }
 
 /// [item]'s download for the player: its file once finished, its torrent

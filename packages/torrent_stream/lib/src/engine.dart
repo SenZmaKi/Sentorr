@@ -151,6 +151,12 @@ class TorrentEngine {
           })
           as String;
 
+  /// Holds a torrent already in the engine without restarting an expired
+  /// transfer or changing its storage.
+  Future<void> retain(String infoHash, {required String owner}) async {
+    await _command('retain', {'hash': infoHash, 'owner': owner});
+  }
+
   /// The torrent's files once metadata arrives; [timeout] null waits on.
   Future<List<TorrentStreamFile>> metadata(
     String infoHash, {

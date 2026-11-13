@@ -103,6 +103,20 @@ void main() {
   }
 
   test(
+    'review consumes speculative discovery without searching again',
+    () async {
+      final c = container();
+      final item = _item(1);
+      final prefetched = search.call(item);
+      await c.read(downloadReviewsProvider.notifier).review([
+        item,
+      ], resolution: prefetched);
+      expect(search.searched, [item.id]);
+      expect(planner.planned, [item.id]);
+    },
+  );
+
+  test(
     'an exact season queues aired episodes not yet downloaded, in order',
     () async {
       final file = File(

@@ -68,7 +68,7 @@ class DriveBackupClient implements BackupRemote {
           merged = merged == null
               ? bundle
               : BackupBundle(
-                  watch: merged.watch.merge(bundle.watch, capacity: 100),
+                  watch: merged.watch.merge(bundle.watch),
                   following: merged.following.merge(bundle.following),
                   lists: merged.lists.merge(bundle.lists),
                 );

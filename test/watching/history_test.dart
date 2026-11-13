@@ -45,6 +45,34 @@ final _release = TorrentRelease(
 );
 
 void main() {
+  test('recording and merging retain history beyond 100 entries', () async {
+    final (container, repository) = _container();
+    final history = container.read(watchHistoryProvider.notifier);
+    for (var i = 1; i <= 150; i++) {
+      await history.record(
+        PlaybackItem(title: fakeTitle(i)),
+        position: const Duration(minutes: 5),
+        duration: _hour,
+      );
+    }
+    final backup = history.snapshot;
+    await history.record(
+      _movie,
+      position: const Duration(minutes: 10),
+      duration: _hour,
+    );
+    await history.merge(backup);
+    expect(container.read(watchHistoryProvider), hasLength(150));
+    expect(repository.saved, hasLength(150));
+    expect(
+      history.resumePoint(_movie.id),
+      const Duration(minutes: 9, seconds: 55),
+    );
+    expect(repository.saved.map((e) => e.id).toSet(), {
+      for (var i = 1; i <= 150; i++) fakeTitle(i).id,
+    });
+  });
+
   test('the streamed torrent is kept for resuming, until finished', () async {
     final (container, _) = _container();
     final history = container.read(watchHistoryProvider.notifier);

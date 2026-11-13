@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../home/catalog_rows.dart';
+import '../../../home/downloaded.dart';
 import '../../../home/more_like.dart';
 import '../../../home/series_updates.dart';
 import '../../../home/watch_activity.dart';
@@ -18,13 +19,13 @@ import 'home_section.dart';
 import 'continue_shelf.dart';
 import 'continuity_card.dart';
 import 'home_shelves.dart';
-import 'offline_notice.dart';
+import 'offline_spotlight.dart';
 import 'spotlight_ambient.dart';
 
 /// Streaming-style landing: a trending spotlight, personal rows (resume,
 /// new releases, more like something watched), then IMDb
-/// catalog rows. Offline, a notice and the finished downloads lead instead,
-/// rows that failed step aside, and everything reloads once back online.
+/// catalog rows. Offline, the page keeps to what plays without a connection,
+/// led by a spotlight of downloads, and everything returns once back online.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -53,16 +54,13 @@ class _HomePageState extends ConsumerState<HomePage> {
     ..._catalog,
   ];
 
+  /// Offline, only what plays: downloads lead, then what can be resumed
+  /// from this device or a paired one nearby.
   static const _offlineSections = <Widget>[
-    OfflineNotice(),
+    OfflineHead(),
     ContinuityCard(),
     ContinueWatchingShelf(),
     DownloadedShelf(),
-    NewEpisodesShelf(),
-    ListShelf(WatchStatus.planned),
-    CatalogShelf(CatalogRow.trending),
-    MoreLikeShelf(),
-    ..._catalog,
   ];
 
   static const _catalog = <Widget>[
@@ -108,15 +106,22 @@ class _HomePageState extends ConsumerState<HomePage> {
         textScaler: MediaQuery.textScalerOf(context),
         child: Stack(
           children: [
-            // The wash belongs to the spotlight, which steps aside offline.
-            if (online)
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: (box.maxWidth * 0.7).clamp(560, 1000),
-                child: SpotlightAmbient(scroll: _scroll),
+            // The wash follows whichever spotlight leads the page.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: (box.maxWidth * 0.7).clamp(560, 1000),
+              child: SpotlightAmbient(
+                scroll: _scroll,
+                titles: online
+                    ? ref.watch(featuredTitlesProvider).value ?? const []
+                    : [
+                        for (final p in ref.watch(offlineSpotlightProvider))
+                          p.show,
+                      ],
               ),
+            ),
             RefreshIndicator(
               onRefresh: _refresh,
               child: RevealMemory(child: Builder(builder: _list)),

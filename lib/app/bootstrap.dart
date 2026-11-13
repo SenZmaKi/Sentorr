@@ -52,6 +52,11 @@ import '../shared/graphics_cache.dart';
 import '../shared/log.dart';
 import '../shared/net/net.dart';
 import '../shared/net/online.dart';
+import '../watching/models.dart';
+import '../settings/streaming_settings.dart';
+import '../home/downloaded.dart';
+import '../library/offline_warmup.dart';
+import '../shared/net/reconnect.dart';
 import '../shared/persistence/app_paths.dart';
 import '../shared/persistence/app_image_cache.dart';
 import '../shared/persistence/credential_store.dart';
@@ -172,8 +177,11 @@ class AppRuntime with WidgetsBindingObserver {
       final tray = DesktopTrayController();
       rollback.add(tray.dispose);
       late final AppRuntime runtime;
-      final container = ProviderContainer(
-        observers: const [ProviderLogObserver()],
+      final reconnect = ReconnectReloader();
+      late final ProviderContainer container;
+      container = ProviderContainer(
+        observers: [const ProviderLogObserver(), reconnect],
+        retry: offlineAwareRetry(() => container.read(onlineProvider)),
         overrides: [
           prepareForUpdateProvider.overrideWithValue(() => runtime.flush()),
           quitApplicationProvider.overrideWithValue(() => runtime.quit()),
@@ -290,44 +298,29 @@ class AppRuntime with WidgetsBindingObserver {
       final sync = container.read(syncServiceProvider);
       rollback.add(sync.close);
       await sync.start();
-      // Listens for failed requests from the start, whatever page is open.
-      container.read(onlineProvider);
+      // Listens for failed requests from the start, whatever page is open,
+      // and checks once rather than waiting for a request to time out.
+      final checked = container.read(onlineProvider.notifier).check();
+      reconnect.attach(container);
+      container.read(offlineWarmupProvider);
       final recovery = await container.read(playbackRecoveryProvider).load();
       if (recovery != null) {
-        final item = recovery.item;
-        final request = item.series == null
-            ? PlayTitle(item.title)
-            : PlayEpisode(
-                item.series!,
-                ImdbEpisode(
-                  title: item.title,
-                  seasonNumber: item.season,
-                  episodeNumber: item.episode,
-                ),
-                season: item.season,
-              );
-        final release = recovery.release;
-        container
-            .read(playerSessionProvider.notifier)
-            .play(
-              request,
-              autoplay: false,
-              start: PlaybackRecovery.start(
-                recovery,
-                settings: settings.streaming,
-              ),
-              torrent: release == null
-                  ? null
-                  : TorrentCandidate(
-                      release: release,
-                      score: 0,
-                      qualityScore: 0,
-                      availabilityScore: 0,
-                      sizeScore: 0,
-                      requiresFileSelection: release.isPack,
-                    ),
-            );
-        container.read(playerViewProvider.notifier).minimize();
+        // Offline, a stream would only open to an empty player: restore it
+        // once the check finds a connection, and otherwise leave it saved
+        // for a later launch. What plays without one restores at once.
+        if (container.read(playableOfflineProvider(recovery.id))) {
+          _restorePlayback(container, recovery, settings.streaming);
+        } else {
+          unawaited(
+            checked.then((_) {
+              // Unless the viewer already started something meanwhile.
+              if (container.read(onlineProvider) &&
+                  container.read(playerSessionProvider) == null) {
+                _restorePlayback(container, recovery, settings.streaming);
+              }
+            }),
+          );
+        }
       }
       WidgetsBinding.instance.addObserver(runtime);
       log.info('Application services ready in ${clock.elapsedMilliseconds}ms');
@@ -435,4 +428,43 @@ class AppRuntime with WidgetsBindingObserver {
     await windowManager.setPreventClose(false);
     await windowManager.destroy();
   }
+}
+
+/// Reopens the player, paused and minimised, where [recovery] left off.
+void _restorePlayback(
+  ProviderContainer container,
+  WatchEntry recovery,
+  StreamingSettings streaming,
+) {
+  final item = recovery.item;
+  final request = item.series == null
+      ? PlayTitle(item.title)
+      : PlayEpisode(
+          item.series!,
+          ImdbEpisode(
+            title: item.title,
+            seasonNumber: item.season,
+            episodeNumber: item.episode,
+          ),
+          season: item.season,
+        );
+  final release = recovery.release;
+  container
+      .read(playerSessionProvider.notifier)
+      .play(
+        request,
+        autoplay: false,
+        start: PlaybackRecovery.start(recovery, settings: streaming),
+        torrent: release == null
+            ? null
+            : TorrentCandidate(
+                release: release,
+                score: 0,
+                qualityScore: 0,
+                availabilityScore: 0,
+                sizeScore: 0,
+                requiresFileSelection: release.isPack,
+              ),
+      );
+  container.read(playerViewProvider.notifier).minimize();
 }

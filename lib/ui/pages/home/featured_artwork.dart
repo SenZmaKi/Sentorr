@@ -8,9 +8,17 @@ import '../../shared/theme/theme.dart';
 /// Keep the next backdrop decoded for a smooth change, rather than retaining
 /// every featured title's full-size artwork and provider subscriptions.
 class FeaturedArtwork extends StatelessWidget {
-  const FeaturedArtwork({super.key, required this.titles, required this.index});
+  const FeaturedArtwork({
+    super.key,
+    required this.titles,
+    required this.index,
+    this.posterFallback = false,
+  });
   final List<ImdbTitle> titles;
   final int index;
+
+  /// Settle for the poster when no backdrop can be had, as offline.
+  final bool posterFallback;
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -29,7 +37,11 @@ class FeaturedArtwork extends StatelessWidget {
           key: ValueKey(titles[index].id),
           active: true,
           duration: Motion.spotlightHold + Motion.spotlightFade,
-          child: TitleBackdrop(title: titles[index], posterFallback: false),
+          child: TitleBackdrop(
+            title: titles[index],
+            waitForBackdrop: posterFallback,
+            posterFallback: posterFallback,
+          ),
         ),
       ),
     ],

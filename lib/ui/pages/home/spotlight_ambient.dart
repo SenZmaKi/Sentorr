@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../home/catalog_rows.dart';
 import '../../../imdb/images.dart';
 import '../../../imdb/models.dart';
 import '../../../imdb/providers.dart';
@@ -16,13 +15,19 @@ import 'featured_artwork.dart';
 /// so the hero reads as lit by its own picture. Drifts at a slower rate
 /// than [scroll] for depth.
 class SpotlightAmbient extends ConsumerWidget {
-  const SpotlightAmbient({super.key, required this.scroll});
+  const SpotlightAmbient({
+    super.key,
+    required this.scroll,
+    required this.titles,
+  });
 
   final ScrollController scroll;
 
+  /// The spotlight's titles, in its order.
+  final List<ImdbTitle> titles;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final titles = ref.watch(featuredTitlesProvider).value ?? const [];
     if (titles.isEmpty) return const SizedBox.shrink();
     final c = context.colors;
     final index = ref.watch(spotlightIndexProvider).clamp(0, titles.length - 1);

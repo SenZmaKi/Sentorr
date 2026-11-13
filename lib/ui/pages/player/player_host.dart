@@ -69,6 +69,10 @@ class _PlayerFrameState extends ConsumerState<_PlayerFrame> {
 
   DockCorner _corner = DockCorner.bottomRight;
 
+  /// Opened straight into the corner, as when playback is restored at
+  /// launch: the card rises into place rather than appearing there.
+  late final bool _opensDocked = widget.view == PlayerView.mini;
+
   /// Where the card is while a drag is in progress.
   Rect? _drag;
 
@@ -134,20 +138,26 @@ class _PlayerFrameState extends ConsumerState<_PlayerFrame> {
                     ? (d) => _release(d.velocity.pixelsPerSecond, size)
                     : null,
                 onPanCancel: mini ? () => _release(Offset.zero, size) : null,
-                child: AnimatedContainer(
+                child: _Entrance(
+                  enabled: _opensDocked,
                   duration: motion,
-                  curve: Motion.change,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(mini ? Radii.card : 0),
-                    boxShadow: mini ? floating.shadows : const [],
-                  ),
-                  // Follows the app's brightness: the player has its own
-                  // light and dark scheme (PlayerColors).
-                  child: const Material(
-                    type: MaterialType.transparency,
-                    child: PlayerPage(),
+                  child: AnimatedContainer(
+                    duration: motion,
+                    curve: Motion.change,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(
+                        mini ? Radii.card : 0,
+                      ),
+                      boxShadow: mini ? floating.shadows : const [],
+                    ),
+                    // Follows the app's brightness: the player has its own
+                    // light and dark scheme (PlayerColors).
+                    child: const Material(
+                      type: MaterialType.transparency,
+                      child: PlayerPage(),
+                    ),
                   ),
                 ),
               ),
@@ -157,4 +167,37 @@ class _PlayerFrameState extends ConsumerState<_PlayerFrame> {
       },
     );
   }
+}
+
+/// Fades the card in as it rises a little and settles to full size,
+/// anchored at its bottom edge.
+class _Entrance extends StatelessWidget {
+  const _Entrance({
+    required this.enabled,
+    required this.duration,
+    required this.child,
+  });
+
+  final bool enabled;
+  final Duration duration;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    tween: Tween(begin: enabled ? 0 : 1, end: 1),
+    duration: duration,
+    curve: Motion.enter,
+    child: child,
+    builder: (context, t, child) => Opacity(
+      opacity: t,
+      child: Transform.translate(
+        offset: Offset(0, (1 - t) * Space.s24),
+        child: Transform.scale(
+          scale: 0.94 + 0.06 * t,
+          alignment: Alignment.bottomCenter,
+          child: child,
+        ),
+      ),
+    ),
+  );
 }

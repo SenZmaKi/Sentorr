@@ -24,7 +24,7 @@ void main() {
     ], {});
     final a = snap(10), b = snap(20);
     expect(a.matches(b), false);
-    expect(a.merge(b, capacity: 100).matches(b.merge(a, capacity: 100)), true);
+    expect(a.merge(b).matches(b.merge(a)), true);
   });
 
   test('follow ties resolve shared preferences and manual consistently', () {
@@ -129,11 +129,7 @@ void main() {
       );
       expect(watch.snapshot.entries.single.revision > old.revision, true);
       expect(
-        watch.snapshot
-            .merge(WatchSnapshot([old], {}), capacity: 100)
-            .entries
-            .single
-            .position,
+        watch.snapshot.merge(WatchSnapshot([old], {})).entries.single.position,
         const Duration(minutes: 30),
       );
       await follow.unfollow(show.id);
@@ -148,19 +144,13 @@ void main() {
         isEmpty,
       );
       await watch.remove(title.id);
-      expect(
-        watch.snapshot.merge(WatchSnapshot([old], {}), capacity: 100).entries,
-        isEmpty,
-      );
+      expect(watch.snapshot.merge(WatchSnapshot([old], {})).entries, isEmpty);
       await watch.record(
         old.item,
         position: const Duration(minutes: 40),
         duration: old.duration,
       );
-      expect(
-        watch.snapshot.merge(watch.snapshot, capacity: 100).entries,
-        hasLength(1),
-      );
+      expect(watch.snapshot.merge(watch.snapshot).entries, hasLength(1));
     },
   );
   test(
@@ -179,15 +169,15 @@ void main() {
       final old = WatchSnapshot([entry(1, future, 10)], {});
       final newer = WatchSnapshot([entry(2, now, 30)], {});
       expect(
-        newer.merge(old, capacity: 100).entries.single.position,
+        newer.merge(old).entries.single.position,
         const Duration(minutes: 30),
       );
       final removed = WatchSnapshot([], {title.id: now}, {title.id: 3});
-      expect(old.merge(removed, capacity: 100).entries, isEmpty);
+      expect(old.merge(removed).entries, isEmpty);
       final restored = WatchSnapshot([
         entry(4, now.subtract(const Duration(hours: 1)), 40),
       ], {});
-      expect(removed.merge(restored, capacity: 100).entries, hasLength(1));
+      expect(removed.merge(restored).entries, hasLength(1));
       final show = fakeTitle(2, series: true);
       final stale = FollowedSnapshot([
         following(show, episode: 10, watchedAt: future).copyWith(revision: 1),
@@ -221,10 +211,7 @@ void main() {
         {'tt1': now.add(const Duration(minutes: 1))},
         {'tt1': 2},
       );
-      expect(
-        a.merge(b, capacity: 100).matches(b.merge(a, capacity: 100)),
-        true,
-      );
+      expect(a.merge(b).matches(b.merge(a)), true);
       final x = FollowedSnapshot([], a.removals, a.removalRevisions);
       final y = FollowedSnapshot([], b.removals, b.removalRevisions);
       expect(x.merge(y).matches(y.merge(x)), true);

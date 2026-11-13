@@ -16,6 +16,7 @@ import 'interceptors/network_failures.dart';
 import 'interceptors/rate_limit.dart';
 import 'interceptors/request_logging.dart';
 import 'request_cancellation_scope.dart';
+import 'simulated_offline.dart';
 import 'size_limited_cache_store.dart';
 
 /// The owner closes both the transport and cache. Pass a Sentorr-owned cache
@@ -113,6 +114,7 @@ Dio buildDio({
         keyBuilder: networkCacheKey,
       ),
     ),
+    if (simulateOffline) const SimulatedOfflineInterceptor(),
     ConcurrencyInterceptor(perHost: perHost),
     RateLimitInterceptor(dio),
     if (logging) RequestLoggingInterceptor(Logger('sentorr.net')),

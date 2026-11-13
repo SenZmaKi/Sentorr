@@ -19,6 +19,8 @@ final savedNextEpisodesProvider =
     );
 
 class SavedNextEpisodes extends Notifier<Map<String, WatchEntry?>> {
+  static const _metadataCapacity = 100;
+
   final _requested = <String>{};
 
   @override
@@ -60,8 +62,8 @@ class SavedNextEpisodes extends Notifier<Map<String, WatchEntry?>> {
               duration: next.runtime ?? Duration.zero,
             );
       repository.nextEpisodes[key] = saved;
-      // Bound metadata independently of the history's entry capacity.
-      while (repository.nextEpisodes.length > WatchHistoryNotifier.capacity) {
+      // Bound cached metadata independently of watch history.
+      while (repository.nextEpisodes.length > _metadataCapacity) {
         repository.nextEpisodes.remove(repository.nextEpisodes.keys.first);
       }
       if (ref.mounted) state = Map.of(repository.nextEpisodes);

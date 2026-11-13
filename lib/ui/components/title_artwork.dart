@@ -35,8 +35,10 @@ class TitleArtwork extends StatelessWidget {
           final scale = box.maxHeight / h;
           if (w * scale > width) width = w * scale;
         }
+        final url = imdbImageUrl(image.url, width: width * dpr);
         return AppImage(
-          url: imdbImageUrl(image.url, width: width * dpr),
+          url: url,
+          fallbackUrls: imdbImageRenditions(url),
           decodeWidth: (width * dpr).clamp(1, 2560).ceil(),
           alignment: alignment,
           width: box.maxWidth,

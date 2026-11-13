@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
+import 'simulated_offline.dart';
+
 const _probeTimeout = Duration(seconds: 3);
 const _dnsProbeHost = 'www.imdb.com';
 const _httpProbes = [
@@ -14,6 +16,7 @@ const _httpProbes = [
 /// Senpwai's probe. DNS alone can pass on captive or broken networks, so a
 /// short HTTP probe follows; any response counts.
 Future<bool> hasInternet({Duration timeout = _probeTimeout}) async {
+  if (simulateOffline) return false;
   try {
     final addresses = await InternetAddress.lookup(_dnsProbeHost)
         .timeout(timeout);

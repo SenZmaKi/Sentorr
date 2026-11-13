@@ -6,6 +6,7 @@ import 'package:file/file.dart' as file;
 import 'package:file/local.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:path/path.dart' as path;
+import 'package:sentorr/shared/net/simulated_offline.dart';
 import 'package:sentorr/shared/persistence/app_paths.dart';
 
 class AppImageCache {
@@ -39,6 +40,9 @@ class AppImageCache {
         _cacheKey,
         stalePeriod: const Duration(days: 30),
         maxNrOfCacheObjects: 1 << 30,
+        fileService: simulateOffline
+            ? SimulatedOfflineFileService()
+            : HttpFileService(),
         repo: _SizeLimitedCacheInfoRepository(
           delegate: JsonCacheInfoRepository(
             path: paths.imageCacheMetadataFile.path,

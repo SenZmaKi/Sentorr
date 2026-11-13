@@ -11,6 +11,7 @@ import '../../../player/queue_builder.dart';
 import '../../../titles/pick_up.dart';
 import '../../components/download_button.dart';
 import '../../components/list_button.dart';
+import '../../../shared/net/online.dart';
 import '../../components/load_error.dart';
 import '../../components/motion.dart';
 import '../../shared/theme/theme.dart';
@@ -85,6 +86,7 @@ class _TitlePageState extends ConsumerState<TitlePage> {
   @override
   Widget build(BuildContext context) {
     final details = ref.watch(titleDetailsProvider(_title.id));
+    final online = ref.watch(onlineProvider);
     final d = details.value;
     final loading = d == null && details.isLoading;
     final seasons = [...?d?.seasons.where((n) => n >= 0)]..sort();
@@ -151,7 +153,9 @@ class _TitlePageState extends ConsumerState<TitlePage> {
                   ],
                 ),
               ),
-              if (details.hasError && d == null)
+              // Offline, the hero shows what is known; details return
+              // with the connection.
+              if (details.hasError && d == null && online)
                 padded(
                   LoadError(
                     message:

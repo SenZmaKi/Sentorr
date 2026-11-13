@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../home/continue_rows.dart';
+import '../../../home/downloaded.dart';
+import '../../../shared/net/online.dart';
 import '../../../following/notifier.dart';
 import '../../../titles/pick_up.dart';
 import '../../../imdb/models.dart';
@@ -47,9 +49,17 @@ class ContinueWatchingShelf extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final history = ref.read(watchHistoryProvider.notifier);
-    final rows = ref.watch(continueRowsProvider);
+    final online = ref.watch(onlineProvider);
+    final rows = [
+      for (final row in ref.watch(continueRowsProvider))
+        // Offline, only what plays from this device or one nearby.
+        if (online ||
+            (row.entry != null &&
+                ref.watch(playableOfflineProvider(row.entry!.id))))
+          row,
+    ];
     if (rows.isEmpty &&
-        !ref.watch(followedSeriesProvider).any((s) => !s.manual)) {
+        (!online || !ref.watch(followedSeriesProvider).any((s) => !s.manual))) {
       return const SizedBox.shrink();
     }
     return AsyncShelf<ContinueRow>(

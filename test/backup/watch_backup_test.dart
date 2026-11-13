@@ -72,7 +72,6 @@ void main() {
               _entry(1, const Duration(hours: 2), minutes: 40),
               _entry(3, const Duration(hours: 3)),
             ]),
-            capacity: 100,
           );
       expect(merged.entries.map((e) => e.id), ['tt2', 'tt1', 'tt3']);
       expect(merged.entries[1].position, const Duration(minutes: 40));
@@ -81,27 +80,24 @@ void main() {
     test('a removal on either side wins over older progress', () {
       final removal = {'tt1': _now.subtract(const Duration(hours: 1))};
       final merged = _snap([_entry(1, const Duration(hours: 5))])
-          .merge(_snap([], removal), capacity: 100);
+          .merge(_snap([], removal));
       expect(merged.entries, isEmpty);
       expect(merged.removals, removal);
     });
 
     test('watching again after a removal brings the title back', () {
-      final merged = _snap([_entry(1, const Duration(minutes: 5))]).merge(
-        _snap([], {'tt1': _now.subtract(const Duration(hours: 1))}),
-        capacity: 100,
-      );
+      final merged = _snap([_entry(1, const Duration(minutes: 5))])
+          .merge(_snap([], {'tt1': _now.subtract(const Duration(hours: 1))}));
       expect(merged.entries.map((e) => e.id), ['tt1']);
     });
 
-    test('drops the oldest past capacity and forgets old removals', () {
-      final merged =
-          _snap([for (var i = 1; i <= 5; i++) _entry(i, Duration(hours: i))])
-              .merge(
-                _snap([], {'tt9': _now.subtract(const Duration(days: 200))}),
-                capacity: 3,
-              );
-      expect(merged.entries.map((e) => e.id), ['tt1', 'tt2', 'tt3']);
+    test('keeps history beyond 100 entries and forgets old removals', () {
+      final merged = _snap([
+        for (var i = 1; i <= 150; i++) _entry(i, Duration(hours: i)),
+      ]).merge(_snap([], {'tt9': _now.subtract(const Duration(days: 200))}));
+      expect(merged.entries.map((e) => e.id), [
+        for (var i = 1; i <= 150; i++) 'tt$i',
+      ]);
       expect(merged.removals, isEmpty);
     });
 

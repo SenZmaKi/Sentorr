@@ -33,9 +33,9 @@ class WatchSnapshot {
   static const removalMemory = Duration(days: 90);
 
   /// Both as one: each movie or episode keeps its most recently updated
-  /// record, the oldest go past [capacity], and what either side removed
+  /// record, and what either side removed
   /// stays removed unless watched again since.
-  WatchSnapshot merge(WatchSnapshot other, {required int capacity}) {
+  WatchSnapshot merge(WatchSnapshot other) {
     final cutoff = DateTime.now().subtract(removalMemory);
     final removed = <String, DateTime>{};
     final revisions = <String, int>{};
@@ -69,7 +69,7 @@ class WatchSnapshot {
           compareRevision(e.revision, e.updatedAt, revisions[e.key] ?? 0, at) >
               0;
     }).toList()..sort((a, b) => compareWatch(b, a));
-    return WatchSnapshot(kept.take(capacity).toList(), removed, revisions);
+    return WatchSnapshot(kept, removed, revisions);
   }
 
   /// Whether [other] holds the same records and removals.

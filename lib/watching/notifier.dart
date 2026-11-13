@@ -31,9 +31,6 @@ final watchHistoryProvider =
     );
 
 class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
-  /// Entries kept; the oldest go first.
-  static const capacity = 100;
-
   /// An item opened for less than this was sampled, not started.
   static const minimumWatched = Duration(seconds: 30);
 
@@ -79,9 +76,7 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
     if (!known && (entry.finished || position < minimumWatched)) {
       return Future.value();
     }
-    return _commit(
-      [entry, ..._without((e) => e.id == item.id)].take(capacity).toList(),
-    );
+    return _commit([entry, ..._without((e) => e.id == item.id)]);
   }
 
   /// Where [itemId] should resume; null to start from the beginning.
@@ -123,7 +118,7 @@ class WatchHistoryNotifier extends Notifier<List<WatchEntry>> {
   /// when it changes nothing.
   Future<void> merge(WatchSnapshot incoming) {
     _observe(incoming);
-    final merged = snapshot.merge(incoming, capacity: capacity);
+    final merged = snapshot.merge(incoming);
     if (merged.matches(snapshot)) {
       return _dirty ? _commit(_entries) : Future.value();
     }

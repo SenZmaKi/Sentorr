@@ -69,6 +69,7 @@ Future<ProviderContainer> _pumpHome(
   TestViewport viewport, {
   required bool online,
   FakeImdbRepository? imdb,
+  List<LibraryEntry>? library,
 }) async {
   useViewport(tester, viewport);
   final root = Directory.systemTemp.createTempSync('sentorr-offline-');
@@ -82,16 +83,19 @@ Future<ProviderContainer> _pumpHome(
       ...watchListsOverrides(),
       ...followedSeriesOverrides(),
       ...watchHistoryOverrides(),
-      ...libraryOverrides([
-        LibraryEntry(
-          item: PlaybackItem(title: fakeTitle(1)),
-          downloadId: 'd1',
-          release: fakeRelease(1),
-          fileIndex: 0,
-          path: (File('${root.path}/movie.mkv')..createSync()).path,
-          addedAt: DateTime(2026, 10, 3),
-        ),
-      ]),
+      ...libraryOverrides(
+        library ??
+            [
+              LibraryEntry(
+                item: PlaybackItem(title: fakeTitle(1)),
+                downloadId: 'd1',
+                release: fakeRelease(1),
+                fileIndex: 0,
+                path: (File('${root.path}/movie.mkv')..createSync()).path,
+                addedAt: DateTime(2026, 10, 3),
+              ),
+            ],
+      ),
       downloadsProvider.overrideWith((ref) => Stream.value(const [])),
       imdbRepositoryProvider.overrideWithValue(imdb ?? _OfflineImdb()),
       onlineProvider.overrideWith(() => _Online(online)),
@@ -113,20 +117,30 @@ Future<ProviderContainer> _pumpHome(
 
 void main() {
   for (final viewport in [viewports.first, viewports[8]]) {
-    testWidgets('offline, home leads with the notice and downloads at '
-        '${viewport.name}', (tester) async {
-      final container = await _pumpHome(tester, viewport, online: false);
+    testWidgets('offline, home keeps to downloads at ${viewport.name}', (
+      tester,
+    ) async {
+      await _pumpHome(tester, viewport, online: false);
       expect(tester.takeException(), isNull);
-      expect(find.text('You’re offline'), findsOneWidget);
-      expect(find.text('Downloaded'), findsOneWidget);
-      expect(find.text('Title 1'), findsOneWidget);
-      // Rows that failed step aside instead of each saying so.
+      expect(find.textContaining('Offline'), findsOneWidget);
+      // The spotlight features the download, and a shelf lists it.
+      expect(find.text('Downloaded'), findsWidgets);
+      expect(find.text('Title 1'), findsWidgets);
+      // Nothing that needs the internet to play, and no failed rows.
+      expect(find.byType(CatalogShelf), findsNothing);
+      expect(find.byType(ListShelf), findsNothing);
       expect(find.byType(LoadError), findsNothing);
-
-      await tester.tap(find.text('Open Downloads'));
-      expect(container.read(appDestinationProvider), AppDestination.downloads);
+      expect(find.text('Play'), findsWidgets);
     });
   }
+
+  testWidgets('offline with nothing downloaded says how to change that', (
+    tester,
+  ) async {
+    await _pumpHome(tester, viewports[8], online: false, library: const []);
+    expect(find.text('Nothing downloaded yet'), findsOneWidget);
+    expect(find.byType(CatalogShelf), findsNothing);
+  });
 
   testWidgets('list row toggles preserve the following shelf in view', (
     tester,

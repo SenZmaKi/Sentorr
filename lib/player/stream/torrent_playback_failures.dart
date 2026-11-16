@@ -35,9 +35,11 @@ extension _TorrentPlaybackFailures on TorrentPlayback {
       unawaited(_release());
       status.value = s.copyWith(
         stage: StreamStage.failed,
-        problem:
-            "This video couldn't be played. It may be in a format this "
-            'device does not support.',
+        problem: hasMissingMp4Header(s.localFile!)
+            ? 'This file is incomplete or damaged. Verify and recover it '
+                  'to download the missing pieces.'
+            : "This video couldn't be played. The file may be damaged "
+                  'or use an unsupported format.',
       );
       return true;
     }

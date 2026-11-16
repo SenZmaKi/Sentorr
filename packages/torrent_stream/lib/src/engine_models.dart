@@ -55,6 +55,7 @@ class TorrentSnapshot {
     this.fileBytes = const [],
     this.paused = false,
     this.transferState = TorrentTransferState.unknown,
+    this.checkingProgress = 0,
     this.downloadBytesPerSecond = 0,
     this.uploadBytesPerSecond = 0,
     this.receivedBytes = 0,
@@ -85,6 +86,9 @@ class TorrentSnapshot {
   final List<int> fileBytes;
   final bool paused;
   final TorrentTransferState transferState;
+
+  /// Share of pieces hashed, 0–1, while [transferState] is checking files.
+  final double checkingProgress;
 
   /// Payload rates in bytes/second, excluding protocol overhead.
   final int downloadBytesPerSecond, uploadBytesPerSecond;

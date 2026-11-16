@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../../player/engine.dart';
+import '../../../library/notifier.dart';
 import '../../../player/focus_playback.dart';
 import '../../../settings/notifier.dart';
 import '../../../player/queue_builder.dart';
@@ -28,6 +29,7 @@ import 'player_panels.dart';
 import 'player_ui.dart';
 import 'player_value.dart';
 import 'stage_states.dart';
+import 'recover_download.dart';
 import 'nerd_stats.dart';
 import 'switching_prompt.dart';
 import 'torrent_stats.dart';
@@ -401,6 +403,30 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     final queue = session.queue;
     final next = queue?.next;
     final others = (stream?.options?.candidates.length ?? 0) > 1;
+    if (stream?.localFile != null &&
+        stream?.peer == null &&
+        session.current != null) {
+      final entry = ref
+          .watch(libraryProvider)
+          .where(
+            (e) => e.id == session.current!.id && e.path == stream!.localFile,
+          )
+          .firstOrNull;
+      if (entry != null) {
+        return LocalPlaybackProblem(
+          key: ValueKey((entry.id, entry.path)),
+          entry: entry,
+          onReady: () => unawaited(_engine.reopen(entry.item)),
+          onRetry: () => unawaited(_engine.reopen(entry.item)),
+          onBack: _actions.close,
+          onSkip: next == null ? null : _actions.next,
+          onChoose: queue == null ? null : _actions.chooseTorrent,
+          chooseLabel: others
+              ? 'Choose another torrent'
+              : 'Search for torrents',
+        );
+      }
+    }
     return PlaybackProblem(
       message: message,
       onBack: _actions.close,

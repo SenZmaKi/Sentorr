@@ -100,6 +100,10 @@ class TorrentEngine {
     return _send(await _start(), op, args);
   }
 
+  /// Flushes pending writes and hashes storage again before trusting completion.
+  Future<List<int>> verify(String infoHash) async =>
+      (await _command('verify', {'hash': infoHash}) as List).cast<int>();
+
   /// Initialize discovery while a caller fetches HTTP torrent metadata.
   Future<void> start() async {
     if (_closed) {

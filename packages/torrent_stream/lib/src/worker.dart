@@ -73,6 +73,8 @@ Future<Object?> _run(
       await core.retain(hash(), owner());
     case 'metadata':
       return core.metadata(hash(), message['timeout'] as Duration?);
+    case 'verify':
+      return core.verify(hash());
     case 'diagnose':
       return core.diagnose(hash(), message['stream'] as int?);
     case 'want':

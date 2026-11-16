@@ -17,6 +17,11 @@ extension EngineStorage on EngineCore {
     }
     await entry.disk.exclusive(() async {
       for (final MapEntry(key: index, value: name) in names.entries) {
+        // Resume data may already map this file to its library name.
+        // Renaming a path onto itself can fail with "File exists" natively.
+        if (p.equals(p.normalize(entry.files[index].path), p.normalize(name))) {
+          continue;
+        }
         final outcome = Completer<AlertInfo>();
         final subscription = native.events.listen((alert) {
           if (!outcome.isCompleted &&

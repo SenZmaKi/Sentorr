@@ -7,6 +7,7 @@ import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 
 import '../library/layout.dart';
+import '../library/integrity.dart';
 import '../library/models.dart';
 import '../library/notifier.dart';
 import '../player/models.dart';
@@ -239,6 +240,12 @@ class PeerCopies {
         await partial.delete();
         if (await metadata.exists()) await metadata.delete();
         throw const PeerException('The source file changed during copying');
+      }
+      if (!_wanted(id, attempt)) return;
+      final integrity = _ref.read(libraryIntegrityProvider);
+      final data = await integrity.metadata(entry);
+      if (data != null) {
+        await integrity.verify(entry, partial.path, data);
       }
       if (!_wanted(id, attempt)) return;
       final target = File(entry.path);

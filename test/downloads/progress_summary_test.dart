@@ -76,7 +76,12 @@ void main() {
       DownloadStatus.preparing,
       DownloadStatus.paused,
     ]) {
-      final finished = item('a', status, done: 10, size: 10);
+      final finished = item(
+        'a',
+        status,
+        done: 10,
+        size: 10,
+      ).copyWith(seedingStartedAt: DateTime(2026));
       expect(DownloadProgressSummary.of([finished], held: {'a'}), isNull);
       final s = DownloadProgressSummary.of([
         finished,

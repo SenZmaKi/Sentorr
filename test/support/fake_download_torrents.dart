@@ -18,6 +18,18 @@ class FakeTorrents implements DownloadTorrents {
   final byHash = <String, FakeTorrent>{};
   @override
   String? failure;
+  @override
+  Future<List<int>> verify(String hash) async {
+    verifications++;
+    if (failVerification) throw StateError('disk verification failed');
+    if (verifiedBytes != null) byHash[hash]!.done = verifiedBytes!;
+    return [0, byHash[hash]!.done];
+  }
+
+  int verifications = 0;
+  int? verifiedBytes;
+  bool failVerification = false;
+
   bool failPause = false;
   bool failMetadata = false;
   Completer<void>? metadataGate;

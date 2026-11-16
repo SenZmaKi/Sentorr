@@ -8,6 +8,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:torrent_stream/torrent_stream.dart';
 
 import '../../torrents/models.dart';
+import '../../library/file_damage.dart';
 import '../../settings/streaming_settings.dart';
 import '../../settings/playback_preferences.dart';
 import '../../torrents/resolution_models.dart';

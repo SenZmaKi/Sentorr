@@ -147,7 +147,6 @@ class DownloadItem {
 
   /// File completion is independent of whether sharing is running or waiting.
   bool get hasFinishedDownloading =>
-      isDone ||
       seedingStartedAt != null ||
       status == DownloadStatus.completed ||
       status == DownloadStatus.seeding;

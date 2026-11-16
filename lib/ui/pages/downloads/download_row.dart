@@ -7,6 +7,7 @@ import '../../components/buttons.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/progress_track.dart';
 import '../../shared/download_actions.dart';
+import '../../shared/verify_download.dart';
 import '../../shared/theme/theme.dart';
 import '../../shared/title_format.dart';
 import 'row_frame.dart';
@@ -70,6 +71,11 @@ class DownloadRow extends ConsumerWidget {
       ),
     ],
     Downloaded() => [
+      SIconButton(
+        icon: Icons.fact_check_outlined,
+        tooltip: 'Verify download',
+        onPressed: () => verifyDownload(context, entry),
+      ),
       SIconButton(
         icon: Icons.folder_open_rounded,
         tooltip: 'Show in folder',

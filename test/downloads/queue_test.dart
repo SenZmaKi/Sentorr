@@ -69,6 +69,34 @@ void main() {
     await root.delete(recursive: true);
   });
 
+  test(
+    'missing pieces after disk recheck do not complete a download',
+    () async {
+      await queue.enqueue(job('a'));
+      await settle();
+      torrents['a'].done = 100;
+      torrents.verifiedBytes = 50;
+      await queue.tick();
+      expect(torrents.verifications, 1);
+      expect(queue.items.single.status, DownloadStatus.downloading);
+      expect(queue.items.single.hasFinishedDownloading, isFalse);
+      expect(queue.items.single.downloadedBytes, 50);
+    },
+  );
+
+  test(
+    'verification errors fail instead of preserving byte-count completion',
+    () async {
+      await queue.enqueue(job('a'));
+      await settle();
+      torrents['a'].done = 100;
+      torrents.failVerification = true;
+      await queue.tick();
+      expect(queue.items.single.status, DownloadStatus.failed);
+      expect(queue.items.single.hasFinishedDownloading, isFalse);
+    },
+  );
+
   test('shutdown completes before download providers are disposed', () async {
     final container = ProviderContainer(
       overrides: [downloadQueueProvider.overrideWithValue(queue)],

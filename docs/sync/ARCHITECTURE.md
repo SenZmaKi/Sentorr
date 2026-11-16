@@ -416,3 +416,45 @@ and a pause/caption change made after handoff. Closing playback, switching items
 or disposing the player cancels late reconnects and prevents fallback work from
 opening an obsolete item. The initial handoff remains pinned until accepted so
 failed preparation does not pause the source or start an unintended replacement.
+
+### Download integrity and recovery
+
+New torrent downloads flush native disk writes and force a piece hash recheck
+before first entering seeding/completed state. A failed check leaves missing
+bytes in the queue to download again; a verification error leaves a failed
+record rather than promoting a byte-count-only completion. Byte counts alone no
+longer make an active download available as a finished local file.
+
+Before publishing a peer copy, the receiver probes internet access. Online it
+fetches info-hash-validated torrent metadata and rechecks the receiving `.part`
+file against the selected torrent file. Offline it accepts the existing pinned
+peer transfer contract without torrent verification. Online metadata/check
+failures retain the partial for retry and do not publish it. For multi-file v1
+torrents, missing adjacent boundary-piece bytes can prevent full verification
+even when the selected file itself arrived intact.
+
+Reported local playback failures automatically check the selected file against
+its torrent pieces, including data in the middle and end. The error screen shows
+checking, then distinguishes valid data, confirmed damage, and unavailable or
+inconclusive verification. Confirmed damage offers Recover missing pieces; valid
+data retains playback retry without offering a redundant download; unavailable
+verification offers Retry verification. Multi-file boundary uncertainty is not
+labelled confirmed corruption. Leaving the screen discards late UI results.
+Recovery retains existing payload, replaces stale completion with a fresh queue
+record for the same torrent and file, and downloads missing pieces. The MP4
+prefix check remains only a quick clue for fallback errors without a library
+entry. Existing historical completed records are not automatically audited.
+
+Users can also run the same check proactively through Verify download in the
+completed-download menu or the Downloads row's verify action. This includes
+completed peer copies. The adaptive verification dialog identifies the item,
+shows verification progress, and offers recovery only for confirmed damage or
+retry for unavailable verification. Closing the dialog discards late UI results;
+the underlying check still finishes and closes its native engine.
+
+Verification respects file mappings restored from resume data: renaming an
+already-mapped path to itself is skipped, since native storage can reject it
+with File exists. Unexpected verification failures log their stage and stack
+rather than being silently presented as connection failures. A failed full
+piece check plus a demonstrably zeroed/truncated MP4 header confirms damage
+even when absent neighbouring files would otherwise make boundaries ambiguous.

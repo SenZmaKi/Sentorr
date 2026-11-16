@@ -254,6 +254,7 @@ class TorrentEntry {
       transferState: live
           ? transferState(s!.state)
           : TorrentTransferState.unknown,
+      checkingProgress: live && s!.state == 1 ? s.progress : 0,
       downloadBytesPerSecond: live ? s!.downloadPayloadRate.round() : 0,
       uploadBytesPerSecond: live ? s!.uploadPayloadRate.round() : 0,
       receivedBytes: s?.allTimeDownload ?? 0,

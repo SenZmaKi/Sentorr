@@ -185,6 +185,24 @@ class DownloadQueue {
 
   /// Seeds when settings ask, then completes and lets the torrent go.
   Future<DownloadItem> _finish(DownloadItem item) async {
+    if (item.seedingStartedAt == null) {
+      final bytes = await torrents.verify(item.infoHash!);
+      if (item.files.any(
+        (f) => f.index >= bytes.length || bytes[f.index] < f.totalBytes,
+      )) {
+        return item.copyWith(
+          files: [
+            for (final f in item.files)
+              DownloadFileProgress(
+                f.index,
+                f.path,
+                f.totalBytes,
+                f.index < bytes.length ? bytes[f.index] : 0,
+              ),
+          ],
+        );
+      }
+    }
     final started = item.seedingStartedAt ?? DateTime.now();
     final done = seedingDone(item, settings, started);
     if (!done) {

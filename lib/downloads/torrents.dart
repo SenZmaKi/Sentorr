@@ -12,6 +12,7 @@ abstract interface class DownloadTorrents {
   });
   Future<List<TorrentStreamFile>> metadata(String infoHash);
   Future<void> rename(String infoHash, Map<int, String> names);
+  Future<List<int>> verify(String infoHash);
   Future<void> want(String infoHash, String owner, Set<int> files);
   Future<void> setPaused(String infoHash, String owner, bool paused);
   Future<void> release(String infoHash, String owner, {bool deleteFiles});
@@ -46,6 +47,9 @@ class EngineTorrents implements DownloadTorrents {
   @override
   Future<void> rename(String infoHash, Map<int, String> names) =>
       engine.rename(infoHash, names);
+
+  @override
+  Future<List<int>> verify(String infoHash) => engine.verify(infoHash);
 
   @override
   Future<void> want(String infoHash, String owner, Set<int> files) =>

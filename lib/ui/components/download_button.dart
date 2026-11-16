@@ -6,6 +6,7 @@ import '../../library/notifier.dart';
 import '../../player/models.dart';
 import '../../sync/elsewhere.dart';
 import '../shared/download_actions.dart';
+import '../shared/verify_download.dart';
 import '../shared/theme/theme.dart';
 import 'app_shell.dart';
 import 'buttons.dart';
@@ -114,6 +115,11 @@ class DownloadButton extends ConsumerWidget {
         'Play',
         icon: Icons.play_arrow_rounded,
         onPressed: () => ref.playDownload(entry),
+      ),
+      MenuAction(
+        'Verify download',
+        icon: Icons.fact_check_outlined,
+        onPressed: () => verifyDownload(context, entry),
       ),
       MenuAction(
         'Show in folder',

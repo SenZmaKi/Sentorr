@@ -48,7 +48,16 @@ extension DownloadEngineOperations on DownloadQueue {
         uploadedBefore: _uploadBefore[id] ?? 0,
       );
       if (next.isDone && previous.status != DownloadStatus.paused) {
-        next = await _finish(next);
+        try {
+          next = await _finish(next);
+        } catch (error, stack) {
+          _log.warning('Download verification failed', error, stack);
+          await _release(previous);
+          next = previous.withStatus(
+            DownloadStatus.failed,
+            error: 'Could not verify downloaded data: $error',
+          );
+        }
       }
       changed |= next.status != previous.status;
       if (next.status != previous.status) {
@@ -69,7 +78,7 @@ extension DownloadEngineOperations on DownloadQueue {
   // Starting sharing records that all selected files finished downloading.
   // An engine failure ends sharing, without invalidating that completion.
   DownloadItem _afterFailure(DownloadItem item, String error) {
-    if (item.seedingStartedAt != null || item.isDone) {
+    if (item.seedingStartedAt != null) {
       return item
           .copyWith(
             files: [

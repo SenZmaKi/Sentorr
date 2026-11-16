@@ -19,6 +19,7 @@ import 'stream_host.dart';
 import 'torrent_entry.dart';
 
 part 'adds.dart';
+part 'verification.dart';
 part 'storage.dart';
 
 /// The engine isolate's one session and every torrent in it. Commands may

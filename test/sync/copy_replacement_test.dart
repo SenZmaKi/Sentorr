@@ -1,3 +1,5 @@
+import 'package:sentorr/shared/net/online.dart';
+
 import 'dart:async';
 import 'dart:io';
 
@@ -87,6 +89,7 @@ void main() {
     );
     final c = ProviderContainer(
       overrides: [
+        internetProbeProvider.overrideWithValue(() async => false),
         ...syncOverrides(devices: [paired]),
         ...libraryOverrides(),
         downloadsDirectoryProvider.overrideWithValue(root.path),

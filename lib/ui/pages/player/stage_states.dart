@@ -156,6 +156,8 @@ class PlaybackProblem extends StatelessWidget {
     super.key,
     required this.message,
     this.onRetry,
+    this.recovery,
+    this.progress,
     this.onSkip,
     this.onChoose,
     this.chooseLabel = 'Choose another torrent',
@@ -163,6 +165,10 @@ class PlaybackProblem extends StatelessWidget {
   });
 
   final String message;
+  final Widget? recovery;
+
+  /// Work still running on the problem, e.g. a download check.
+  final Widget? progress;
   final VoidCallback? onRetry, onSkip, onChoose;
   final String chooseLabel;
   final VoidCallback onBack;
@@ -192,6 +198,10 @@ class PlaybackProblem extends StatelessWidget {
                     color: context.player.foreground,
                   ),
                 ),
+                if (progress case final progress?) ...[
+                  const SizedBox(height: Space.s24),
+                  progress,
+                ],
                 const SizedBox(height: Space.s24),
                 Wrap(
                   spacing: Space.s8,
@@ -199,6 +209,7 @@ class PlaybackProblem extends StatelessWidget {
                   alignment: WrapAlignment.center,
                   children: [
                     SButton(label: 'Back', onPressed: onBack),
+                    ?recovery,
                     if (onSkip != null)
                       SButton(
                         label: 'Play next',

@@ -425,25 +425,44 @@ bytes in the queue to download again; a verification error leaves a failed
 record rather than promoting a byte-count-only completion. Byte counts alone no
 longer make an active download available as a finished local file.
 
-Before publishing a peer copy, the receiver probes internet access. Online it
-fetches info-hash-validated torrent metadata and rechecks the receiving `.part`
-file against the selected torrent file. Offline it accepts the existing pinned
-peer transfer contract without torrent verification. Online metadata/check
-failures retain the partial for retry and do not publish it. For multi-file v1
-torrents, missing adjacent boundary-piece bytes can prevent full verification
-even when the selected file itself arrived intact.
+Before publishing a peer copy, the receiver looks for the torrent's metadata:
+first the download record's own `.torrent` bytes, then the info dictionary
+libtorrent keeps in the title folder's `.<infohash>.resume` state, and only
+then the network. With metadata it rechecks the receiving `.part` file against
+the selected torrent file; check failures retain the partial for retry and do
+not publish it. Without any (offline, never downloaded here) the copy is
+accepted on the pinned peer transfer contract and joins the library unverified,
+for the background audit to check later. Checking a `.part` restores the
+title folder's resume state afterwards so the partial never remaps the torrent.
+For multi-file v1 torrents, missing adjacent boundary-piece bytes can prevent
+full verification even when the selected file itself arrived intact.
 
 Reported local playback failures automatically check the selected file against
 its torrent pieces, including data in the middle and end. The error screen shows
-checking, then distinguishes valid data, confirmed damage, and unavailable or
-inconclusive verification. Confirmed damage offers Recover missing pieces; valid
-data retains playback retry without offering a redundant download; unavailable
-verification offers Retry verification. Multi-file boundary uncertainty is not
-labelled confirmed corruption. Leaving the screen discards late UI results.
+checking, then distinguishes valid data, confirmed damage, inconclusive and
+unavailable verification. Confirmed damage and inconclusive boundary pieces
+offer Recover missing pieces, which is safe either way: it keeps valid data and
+downloads only pieces that fail. Valid data retains playback retry without a
+redundant download; unavailable verification (no metadata locally or online, or
+an engine error) offers Retry verification. Multi-file boundary uncertainty is
+not labelled confirmed corruption. Leaving the screen discards late UI results.
 Recovery retains existing payload, replaces stale completion with a fresh queue
 record for the same torrent and file, and downloads missing pieces. The MP4
-prefix check remains only a quick clue for fallback errors without a library
-entry. Existing historical completed records are not automatically audited.
+and Matroska header checks remain only quick clues for fallback errors without
+a library entry. Checks and recovery use metadata already on the device first,
+so they work offline for anything downloaded here. Recovery and checks use the
+torrent's save folder (the title folder for episodes) and its relative file
+name, matching the original download and its resume state.
+
+Library entries record `verifiedAt` once a full check passes: when the queue
+finishes a download (it hashes before completing), when a peer copy is checked,
+or when a manual or playback check finds the file intact. The library audit
+(`lib/library/integrity_audit.dart`) checks the rest, one at a time and only
+while nothing plays, starting a minute after launch: downloads finished before
+verification existed and copies received unverified. Confirmed damage is
+recovered automatically; inconclusive or unavailable results are left until
+the next reconnection. Torrents still downloading are skipped so two native
+sessions never hash and write the same files. All checks are serialized.
 
 Users can also run the same check proactively through Verify download in the
 completed-download menu or the Downloads row's verify action. This includes
@@ -456,5 +475,8 @@ Verification respects file mappings restored from resume data: renaming an
 already-mapped path to itself is skipped, since native storage can reject it
 with File exists. Unexpected verification failures log their stage and stack
 rather than being silently presented as connection failures. A failed full
-piece check plus a demonstrably zeroed/truncated MP4 header confirms damage
-even when absent neighbouring files would otherwise make boundaries ambiguous.
+piece check plus a zeroed/truncated MP4 header or a missing Matroska EBML header
+confirms damage even when absent neighbouring files would otherwise make
+boundaries ambiguous. Native flushes and rechecks fail only after five minutes
+without any checking progress in the session, rather than after a fixed total,
+so very large files on slow disks can finish.

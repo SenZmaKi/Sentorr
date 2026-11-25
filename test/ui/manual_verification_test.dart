@@ -67,7 +67,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(find.text('Check: $state'), findsOneWidget);
-        if (state == IntegrityState.damaged) {
+        if (state.recoverable) {
           await tester.tap(find.text('Recover missing pieces'));
           await tester.pumpAndSettle();
           expect(service.recoveries, 1);

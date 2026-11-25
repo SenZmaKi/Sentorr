@@ -73,11 +73,12 @@ class _VerificationState extends ConsumerState<_Verification> {
 
   @override
   Widget build(BuildContext context) {
-    final entry = ref
-        .watch(libraryProvider)
-        .where((e) => e.id == widget.entry.id)
-        .firstOrNull;
-    final sameFile = identical(entry, widget.entry);
+    final sameFile = widget.entry.sameFile(
+      ref
+          .watch(libraryProvider)
+          .where((e) => e.id == widget.entry.id)
+          .firstOrNull,
+    );
     final result = _result;
     final checking = result == null && sameFile && !_queued;
     final busy = result == null || _recovering;
@@ -118,6 +119,7 @@ class _VerificationState extends ConsumerState<_Verification> {
                 : switch (result?.state) {
                     IntegrityState.valid => 'No problems found',
                     IntegrityState.damaged => 'Missing or damaged pieces',
+                    IntegrityState.inconclusive => 'Some pieces unconfirmed',
                     _ => 'Verification incomplete',
                   },
             style: context.type.title.copyWith(color: c.foreground),
@@ -165,7 +167,7 @@ class _VerificationState extends ConsumerState<_Verification> {
                 onPressed: () => Navigator.pop(context),
               ),
               if (sameFile && !busy && !_queued)
-                if (result.state == IntegrityState.damaged)
+                if (result.state.recoverable)
                   SButton.primary(
                     label: 'Recover missing pieces',
                     onPressed: _recover,

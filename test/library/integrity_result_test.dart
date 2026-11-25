@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentorr/library/integrity.dart';
 import 'package:sentorr/library/models.dart';
+import 'package:sentorr/library/notifier.dart';
 import 'package:sentorr/player/models.dart';
 
 import '../support/fake_imdb.dart';
+import '../support/fake_library.dart';
 import '../support/fake_torrents.dart';
 
 class FixtureIntegrity extends LibraryIntegrity {
@@ -49,7 +51,7 @@ void main() {
     (
       offline: false,
       error: const UnverifiableMedia(),
-      expected: IntegrityState.unavailable,
+      expected: IntegrityState.inconclusive,
     ),
     (
       offline: false,
@@ -63,6 +65,7 @@ void main() {
         late FixtureIntegrity integrity;
         final container = ProviderContainer(
           overrides: [
+            ...libraryOverrides([entry]),
             libraryIntegrityProvider.overrideWith(
               (ref) => integrity = FixtureIntegrity(
                 ref,
@@ -78,6 +81,10 @@ void main() {
             .check(entry);
         expect(result.state, scenario.expected);
         expect(integrity.fileChecks, scenario.offline ? 0 : 1);
+        expect(
+          container.read(libraryProvider).single.verifiedAt != null,
+          scenario.expected == IntegrityState.valid,
+        );
       },
     );
   }

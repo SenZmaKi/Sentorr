@@ -1,5 +1,16 @@
 /// A decoder failure alone cannot distinguish damaged data from codec support.
-enum IntegrityState { valid, damaged, unavailable }
+enum IntegrityState {
+  valid,
+  damaged,
+
+  /// Pieces shared with neighbouring files could not be confirmed. Recovery
+  /// is safe: it keeps valid data and downloads only failing pieces.
+  inconclusive,
+  unavailable;
+
+  /// Recovering may repair the file.
+  bool get recoverable => this == damaged || this == inconclusive;
+}
 
 class IntegrityResult {
   const IntegrityResult(this.state, this.message);

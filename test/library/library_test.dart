@@ -118,7 +118,11 @@ void main() {
       DownloadStatus.paused,
       DownloadStatus.failed,
     ]) {
-      expect(offlineStateOf(e, at(status, done: 100)), isA<Downloaded>());
+      // All bytes arrived but were never hash-checked, e.g. a failed check.
+      expect(
+        offlineStateOf(e, at(status, done: 100)),
+        isNot(isA<Downloaded>()),
+      );
       expect(
         offlineStateOf(
           e,

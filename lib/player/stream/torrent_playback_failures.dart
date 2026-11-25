@@ -35,7 +35,7 @@ extension _TorrentPlaybackFailures on TorrentPlayback {
       unawaited(_release());
       status.value = s.copyWith(
         stage: StreamStage.failed,
-        problem: hasMissingMp4Header(s.localFile!)
+        problem: hasMissingHeader(s.localFile!)
             ? 'This file is incomplete or damaged. Verify and recover it '
                   'to download the missing pieces.'
             : "This video couldn't be played. The file may be damaged "

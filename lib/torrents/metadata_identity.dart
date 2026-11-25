@@ -6,6 +6,35 @@ import 'package:crypto/crypto.dart';
 /// Checks raw bencode framing and hashes the original info bytes. No native
 /// library is loaded here; full torrent semantics remain the engine's job.
 void validateMetadataIdentity(Uint8List bytes, String expectedHash) {
+  final info = _info(bytes);
+  if (info == null ||
+      sha1.convert(info).toString() != expectedHash.toLowerCase()) {
+    throw const FormatException(
+      'Torrent info hash mismatch or invalid framing',
+    );
+  }
+}
+
+/// Torrent metadata rebuilt from resume data libtorrent saved with its info
+/// dictionary; null when it has none or it is not [expectedHash]'s.
+Uint8List? metadataFromResume(Uint8List resume, String expectedHash) {
+  try {
+    final info = _info(resume);
+    if (info == null) return null;
+    final torrent = Uint8List.fromList([
+      ...ascii.encode('d4:info'),
+      ...info,
+      101,
+    ]);
+    validateMetadataIdentity(torrent, expectedHash);
+    return torrent;
+  } on FormatException {
+    return null;
+  }
+}
+
+/// The raw bytes of [bytes]' top-level `info` dictionary.
+Uint8List? _info(Uint8List bytes) {
   final reader = _Bencode(bytes);
   if (reader.byte != 100) throw const FormatException('Expected dictionary');
   reader.offset++;
@@ -24,13 +53,10 @@ void validateMetadataIdentity(Uint8List bytes, String expectedHash) {
     }
   }
   reader.offset++;
-  if (reader.offset != bytes.length ||
-      info == null ||
-      sha1.convert(info).toString() != expectedHash.toLowerCase()) {
-    throw const FormatException(
-      'Torrent info hash mismatch or invalid framing',
-    );
+  if (reader.offset != bytes.length) {
+    throw const FormatException('Invalid bencode framing');
   }
+  return info;
 }
 
 class _Bencode {

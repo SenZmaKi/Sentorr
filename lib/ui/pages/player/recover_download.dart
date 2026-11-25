@@ -50,7 +50,7 @@ class _LocalPlaybackProblemState extends ConsumerState<LocalPlaybackProblem> {
     // Recovery replaces the library record before its future completes.
     // Keep this state alive so it can hand playback to the repaired download;
     // starting another verifier here races the active torrent's disk writes.
-    if (!_recovering && !identical(oldWidget.entry, widget.entry)) {
+    if (!_recovering && !oldWidget.entry.sameFile(widget.entry)) {
       _result = null;
       _progress = null;
       unawaited(_check());
@@ -98,11 +98,12 @@ class _LocalPlaybackProblemState extends ConsumerState<LocalPlaybackProblem> {
   @override
   Widget build(BuildContext context) {
     // If the entry was removed or replaced, do not recover the stale file.
-    final current = ref
-        .watch(libraryProvider)
-        .where((e) => e.id == widget.entry.id)
-        .firstOrNull;
-    final sameFile = identical(current, widget.entry);
+    final sameFile = widget.entry.sameFile(
+      ref
+          .watch(libraryProvider)
+          .where((e) => e.id == widget.entry.id)
+          .firstOrNull,
+    );
     final result = _result;
     return PlaybackProblem(
       message: _recovering
@@ -112,9 +113,9 @@ class _LocalPlaybackProblemState extends ConsumerState<LocalPlaybackProblem> {
           : result.state == IntegrityState.valid
           ? '${result.message} Playback may have failed because of the format '
                 'or player. Downloading the same bytes again is unlikely to help.'
-          : result.state == IntegrityState.unavailable
-          ? '${result.message} The cause of the playback failure is unconfirmed.'
-          : result.message,
+          : result.state == IntegrityState.damaged
+          ? result.message
+          : '${result.message} The cause of the playback failure is unconfirmed.',
       progress: result == null && !_recovering
           ? ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
@@ -128,7 +129,7 @@ class _LocalPlaybackProblemState extends ConsumerState<LocalPlaybackProblem> {
       onRetry: result?.state == IntegrityState.valid ? widget.onRetry : null,
       recovery: !sameFile || _recovering || result == null
           ? null
-          : result.state == IntegrityState.damaged
+          : result.state.recoverable
           ? SButton(
               label: 'Recover missing pieces',
               icon: Icons.build_rounded,

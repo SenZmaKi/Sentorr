@@ -49,6 +49,12 @@ class LibraryNotifier extends Notifier<List<LibraryEntry>> {
     return _commit([entry, ...state.where((e) => e.id != entry.id)]);
   }
 
+  /// Replaces [entry]'s record where it stands, keeping the library's order.
+  Future<void> update(LibraryEntry entry) {
+    if (!state.any((e) => e.id == entry.id)) return Future.value();
+    return _commit([for (final e in state) e.id == entry.id ? entry : e]);
+  }
+
   /// Stops [id]'s download and deletes its file. Other episodes of the same
   /// torrent keep theirs, so files are removed here rather than by the
   /// torrent engine.

@@ -111,6 +111,59 @@ void main() {
     },
   );
 
+  testWidgets('recording a passed check does not start another', (
+    tester,
+  ) async {
+    final entry = LibraryEntry(
+      item: PlaybackItem(title: fakeTitle(1)),
+      downloadId: 'download',
+      release: fakeRelease(1),
+      fileIndex: 0,
+      path: '/movie.mkv',
+      addedAt: DateTime(2026),
+    );
+    late ControlledIntegrity service;
+    late WidgetRef widgetRef;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...libraryOverrides([entry]),
+          libraryIntegrityProvider.overrideWith(
+            (ref) => service = ControlledIntegrity(ref),
+          ),
+        ],
+        child: MaterialApp(
+          theme: buildSentorrTheme(Brightness.dark),
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) {
+                widgetRef = ref;
+                final current = ref.watch(libraryProvider).single;
+                return LocalPlaybackProblem(
+                  key: ValueKey((current.id, current.path)),
+                  entry: current,
+                  onReady: () {},
+                  onBack: () {},
+                  onRetry: () {},
+                  chooseLabel: 'Search for torrents',
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    service.pending.single.complete(
+      const IntegrityResult(IntegrityState.valid, 'Valid'),
+    );
+    await widgetRef
+        .read(libraryProvider.notifier)
+        .update(entry.verified(DateTime(2026, 2)));
+    await tester.pumpAndSettle();
+    expect(service.pending, hasLength(1));
+    expect(find.text('Try again'), findsOneWidget);
+  });
+
   for (final brightness in Brightness.values) {
     for (final state in IntegrityState.values) {
       testWidgets('$brightness playback verification: $state', (tester) async {
@@ -154,7 +207,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(find.textContaining('Result: $state'), findsOneWidget);
-        if (state == IntegrityState.damaged) {
+        if (state.recoverable) {
           await tester.tap(find.text('Recover missing pieces'));
           await tester.pumpAndSettle();
           expect(service.recoveries, 1);

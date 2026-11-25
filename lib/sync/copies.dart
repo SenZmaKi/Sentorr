@@ -252,11 +252,14 @@ class PeerCopies {
         throw const PeerException('The source file changed during copying');
       }
       if (!_wanted(id, attempt)) return;
+      // Without the torrent's details here or online, the copy joins
+      // unchecked and the library audit checks it once they can be had.
       final integrity = _ref.read(libraryIntegrityProvider);
       final data = await integrity.metadata(entry);
       if (data != null) {
         await integrity.verify(entry, partial.path, data);
       }
+      final verifiedAt = data == null ? null : DateTime.now();
       if (!_wanted(id, attempt)) return;
       final target = File(entry.path);
       // Windows will not rename over a file.
@@ -282,6 +285,7 @@ class PeerCopies {
               addedAt: DateTime.now(),
               origin: entry.origin,
               reason: entry.reason,
+              verifiedAt: verifiedAt,
             ),
           );
       _log.info('Copied ${entry.item} from ${copy.deviceName}');

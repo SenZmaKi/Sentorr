@@ -17,6 +17,7 @@ import 'models.dart';
 import 'file_damage.dart';
 import 'integrity_result.dart';
 export 'integrity_result.dart';
+import 'local_metadata.dart';
 import 'notifier.dart';
 
 final _log = Logger('sentorr.library.integrity');
@@ -34,12 +35,18 @@ class IncompleteMedia implements Exception {
 }
 
 /// Checks the receiving file against its original torrent, independently of
-/// the source's completion claim. Metadata is fetched only while online.
+/// the source's completion claim. Metadata already on the device is used
+/// first; otherwise it is fetched while online.
 class LibraryIntegrity {
   LibraryIntegrity(this.ref);
   final Ref ref;
 
+  /// Checks run one at a time: two native sessions must not hash or write
+  /// the same torrent's files together.
+  Future<void> _tail = Future.value();
+
   Future<Uint8List?> metadata(LibraryEntry entry) async {
+    if (await localMetadata(ref, entry) case final local?) return local;
     if (!await ref.read(internetProbeProvider)()) return null;
     return ref
         .read(torrentMetadataProvider)
@@ -58,14 +65,15 @@ class LibraryIntegrity {
       if (data == null) {
         return const IntegrityResult(
           IntegrityState.unavailable,
-          'Verification is unavailable offline. Connect to the internet '
-          'and retry verification.',
+          'Verification needs this torrent\'s details, which are not on this '
+          'device. Connect to the internet and retry verification.',
         );
       }
       stage = 'checking local torrent data';
       _log.info('Verifying ${entry.id} (${entry.infoHash})');
       await verify(entry, entry.path, data, onProgress: onProgress);
       _log.info('Verified ${entry.id}');
+      await _markVerified(entry);
       return const IntegrityResult(
         IntegrityState.valid,
         'No missing or damaged pieces found. All torrent pieces for this '
@@ -79,9 +87,10 @@ class LibraryIntegrity {
       );
     } on UnverifiableMedia {
       return const IntegrityResult(
-        IntegrityState.unavailable,
-        'Verification could not confirm all pieces. Neighbouring torrent '
-        'files may be needed to check shared boundary pieces.',
+        IntegrityState.inconclusive,
+        'Some pieces this file shares with neighbouring torrent files could '
+        'not be confirmed. Recovering keeps valid data and downloads any '
+        'pieces that fail.',
       );
     } on Object catch (error, stack) {
       _log.warning(
@@ -97,7 +106,22 @@ class LibraryIntegrity {
     }
   }
 
+  /// Hashes [path], [entry]'s file or a copy of it on its way, against
+  /// [data]. Throws [IncompleteMedia] or [UnverifiableMedia] when it fails.
   Future<void> verify(
+    LibraryEntry entry,
+    String path,
+    Uint8List data, {
+    OnIntegrityProgress? onProgress,
+  }) {
+    final run = _tail.then(
+      (_) => _verify(entry, path, data, onProgress: onProgress),
+    );
+    _tail = run.then((_) {}, onError: (Object _) {});
+    return run;
+  }
+
+  Future<void> _verify(
     LibraryEntry entry,
     String path,
     Uint8List data, {
@@ -106,12 +130,20 @@ class LibraryIntegrity {
     final engine = TorrentEngine();
     const owner = 'verification';
     StreamSubscription<List<TorrentSnapshot>>? checking;
+    // The engine saves resume state when it closes. Only the library file's
+    // belongs there; a copy's partial must not remap the torrent's file.
+    final resume = resumeFileOf(entry);
+    final kept = path == entry.path
+        ? null
+        : await resume.exists()
+        ? await resume.readAsBytes()
+        : Uint8List(0);
     try {
       onProgress?.call(const IntegrityProgress(IntegrityStage.file));
       final hash = await engine.add(
         TorrentSource.metadata(data, expectedInfoHash: entry.infoHash),
         owner: owner,
-        directory: p.dirname(path),
+        directory: entry.saveDirectory,
         storage: TorrentStorage.kept,
       );
       final files = await engine.metadata(hash);
@@ -121,7 +153,9 @@ class LibraryIntegrity {
           await File(path).length() != file.length) {
         throw const IncompleteMedia();
       }
-      await engine.rename(hash, {entry.fileIndex: p.basename(path)});
+      await engine.rename(hash, {
+        entry.fileIndex: p.relative(path, from: entry.saveDirectory),
+      });
       onProgress?.call(const IntegrityProgress(IntegrityStage.pieces));
       if (onProgress != null) {
         // Monotonic: a check libtorrent began on add may yield to the recheck.
@@ -138,10 +172,10 @@ class LibraryIntegrity {
       onProgress?.call(const IntegrityProgress(IntegrityStage.pieces, 1));
       if (entry.fileIndex >= bytes.length ||
           bytes[entry.fileIndex] != file.length) {
-        // Boundary-piece ambiguity cannot explain an invalid MP4 header.
+        // Boundary-piece ambiguity cannot explain an invalid header.
         // Keep full hashing for every format; this supplies extra evidence
         // when a multi-file torrent lacks neighbouring boundary bytes.
-        if (hasMissingMp4Header(path, mediaName: entry.path) ||
+        if (hasMissingHeader(path, mediaName: entry.path) ||
             files.where((f) => !f.isPadFile && f.length > 0).length == 1) {
           throw const IncompleteMedia();
         }
@@ -150,6 +184,32 @@ class LibraryIntegrity {
     } finally {
       await checking?.cancel();
       await engine.close();
+      if (kept != null) await _restore(resume, kept);
+    }
+  }
+
+  Future<void> _restore(File resume, Uint8List kept) async {
+    try {
+      if (kept.isEmpty) {
+        if (await resume.exists()) await resume.delete();
+      } else {
+        await resume.writeAsBytes(kept, flush: true);
+      }
+    } on FileSystemException catch (error) {
+      _log.warning('Could not restore ${resume.path}', error);
+    }
+  }
+
+  /// Records that [entry]'s file checked intact, unless it changed since.
+  /// Failing to record it leaves the file for another check, not invalid.
+  Future<void> _markVerified(LibraryEntry entry) async {
+    try {
+      final library = ref.read(libraryProvider.notifier);
+      final current = library.entry(entry.id);
+      if (current == null || !current.sameFile(entry)) return;
+      await library.update(current.verified(DateTime.now()));
+    } on Object catch (error, stack) {
+      _log.warning('Could not record verifying ${entry.id}', error, stack);
     }
   }
 
@@ -160,6 +220,8 @@ class LibraryIntegrity {
     if (data == null) {
       throw StateError('Connect to the internet to recover this file.');
     }
+    // Replacing the download while a check hashes its files would race.
+    await _tail;
     final queue = ref.read(downloadQueueProvider);
     if (queue.items.any((d) => d.id == entry.downloadId)) {
       await queue.cancel(entry.downloadId);
@@ -168,9 +230,10 @@ class LibraryIntegrity {
       TorrentDownloadJob(
         title: entry.item.label,
         torrentData: data,
-        destinationDirectory: p.dirname(entry.path),
+        trackers: entry.release.trackers,
+        destinationDirectory: entry.saveDirectory,
         selectedFileIndices: [entry.fileIndex],
-        renamedFiles: {entry.fileIndex: p.basename(entry.path)},
+        renamedFiles: {entry.fileIndex: entry.savedName},
       ),
     );
     await ref

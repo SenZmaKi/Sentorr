@@ -38,6 +38,11 @@ video rendering, Android's native libraries/foreground service, public swarm
 availability, or physical-device network discovery. Separate widget tests cover
 light/dark verification states and late results after navigation. Native integrity
 tests cover middle-only damage and reloading renamed-file resume mappings.
+`test/library/integrity_offline_test.dart` checks an episode offline using only
+the metadata in its title folder's libtorrent resume state, then detects damage.
+`test/library/integrity_audit_test.dart` covers the background audit: unchecked
+files are audited once, damage is recovered, and queue-verified downloads are
+not checked again.
 
 ## Verified run (2026-11-13, macOS ARM64)
 

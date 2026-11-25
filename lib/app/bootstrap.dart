@@ -38,6 +38,7 @@ import '../lists/notifier.dart';
 import '../lists/repository.dart';
 import '../lists/seed.dart';
 import '../library/download_alerts.dart';
+import '../library/integrity_audit.dart';
 import '../library/notifier.dart';
 import '../library/planner.dart';
 import '../library/playback.dart';
@@ -328,6 +329,7 @@ class AppRuntime with WidgetsBindingObserver {
       final checked = container.read(onlineProvider.notifier).check();
       reconnect.attach(container);
       container.read(offlineWarmupProvider);
+      container.read(integrityAuditProvider).start();
       final recovery = await container.read(playbackRecoveryProvider).load();
       if (recovery != null) {
         // Offline, a stream would only open to an empty player: restore it

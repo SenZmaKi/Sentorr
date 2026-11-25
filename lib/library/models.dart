@@ -1,3 +1,5 @@
+import 'package:path/path.dart' as p;
+
 import '../player/models.dart';
 import '../torrents/models.dart';
 import '../watching/title_codec.dart';
@@ -26,6 +28,7 @@ class LibraryEntry {
     required this.addedAt,
     this.origin = LibraryOrigin.manual,
     this.reason,
+    this.verifiedAt,
   });
 
   final PlaybackItem item;
@@ -44,6 +47,27 @@ class LibraryEntry {
   /// Why smart downloads picked it, e.g. `Next episode`.
   final String? reason;
 
+  /// When every piece of the file last checked against its torrent. Null
+  /// for files finished before checks existed or copied unchecked offline.
+  final DateTime? verifiedAt;
+
+  /// The torrent's save folder, which keeps its resume state: the title
+  /// folder, above an episode's season folder. See [layoutFor].
+  String get saveDirectory =>
+      item.series == null ? p.dirname(path) : p.dirname(p.dirname(path));
+
+  /// [path] relative to [saveDirectory], as the torrent names the file.
+  String get savedName => p.relative(path, from: saveDirectory);
+
+  /// The same download of the same file, whatever was learned about it since.
+  bool sameFile(LibraryEntry? other) =>
+      other != null &&
+      other.id == id &&
+      other.downloadId == downloadId &&
+      other.infoHash == infoHash &&
+      other.fileIndex == fileIndex &&
+      other.path == path;
+
   /// Downloaded on its own rather than by the viewer.
   bool get automatic => origin != LibraryOrigin.manual;
 
@@ -57,6 +81,20 @@ class LibraryEntry {
     addedAt: addedAt,
     origin: origin,
     reason: origin == LibraryOrigin.smart ? reason : null,
+    verifiedAt: verifiedAt,
+  );
+
+  /// This entry, its file found intact at [at].
+  LibraryEntry verified(DateTime at) => LibraryEntry(
+    item: item,
+    downloadId: downloadId,
+    release: release,
+    fileIndex: fileIndex,
+    path: path,
+    addedAt: addedAt,
+    origin: origin,
+    reason: reason,
+    verifiedAt: at,
   );
 
   String get id => item.id;
@@ -76,6 +114,7 @@ class LibraryEntry {
     // Read by versions before origins, which know series downloads only.
     'automatic': origin == LibraryOrigin.series,
     'reason': ?reason,
+    'verifiedAt': ?verifiedAt?.toUtc().toIso8601String(),
   };
 
   /// Null when [json] is not an entry, so one bad record is skipped.
@@ -114,6 +153,8 @@ class LibraryEntry {
               ? LibraryOrigin.series
               : LibraryOrigin.manual),
       reason: json['reason'] as String?,
+      verifiedAt: DateTime.tryParse(json['verifiedAt'] as String? ?? '')
+          ?.toLocal(),
     );
   }
 }

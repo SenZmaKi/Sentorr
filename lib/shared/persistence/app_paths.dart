@@ -32,6 +32,8 @@ class AppPaths {
       File(path.join(rootDirectory.path, 'state', 'downloads.json'));
   File get libraryFile =>
       File(path.join(rootDirectory.path, 'state', 'library.json'));
+  File get smartDownloadsFile =>
+      File(path.join(rootDirectory.path, 'state', 'smart_downloads.json'));
 
   /// This device's sync identity and the devices paired with it.
   File get devicesFile =>

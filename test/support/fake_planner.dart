@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:sentorr/library/models.dart';
 import 'package:sentorr/library/planner.dart';
 import 'package:sentorr/player/models.dart';
 import 'package:sentorr/torrents/resolution_models.dart';
@@ -13,7 +14,7 @@ import 'package:torrent_stream/torrent_stream.dart';
 class FakePlanner implements DownloadPlanner {
   Completer<void>? gate;
   final planned = <String>[];
-  final automatic = <bool>[];
+  final origins = <LibraryOrigin>[];
   Set<String> missing = {};
 
   /// Torrents each download was given, null when it searched.
@@ -37,12 +38,13 @@ class FakePlanner implements DownloadPlanner {
   Future<TorrentCandidate?> download(
     PlaybackItem item, {
     TorrentCandidate? torrent,
-    bool automatic = false,
+    LibraryOrigin origin = LibraryOrigin.manual,
+    String? reason,
     CancelToken? cancel,
   }) async {
     await gate?.future;
     if (cancel?.isCancelled ?? false) throw cancel!.cancelError!;
-    this.automatic.add(automatic);
+    origins.add(origin);
     given.add(torrent);
     if (missing.contains(item.id)) {
       throw const DownloadPlanException('No exact torrent match to download.');

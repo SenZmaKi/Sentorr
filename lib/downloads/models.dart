@@ -35,6 +35,7 @@ class TorrentDownloadJob {
     Iterable<Uri> trackers = const [],
     List<int> selectedFileIndices = const [],
     Map<int, String> renamedFiles = const {},
+    this.background = false,
   }) : torrentData = torrentData == null
            ? null
            : Uint8List.fromList(torrentData),
@@ -54,6 +55,23 @@ class TorrentDownloadJob {
   final List<int> selectedFileIndices;
   final Map<int, String> renamedFiles;
 
+  /// Started by the app rather than the viewer: it runs one at a time,
+  /// after the viewer's own downloads, and waits while the queue is held.
+  final bool background;
+
+  /// This job with its [background] flag set to [value].
+  TorrentDownloadJob inBackground(bool value) => TorrentDownloadJob(
+    title: title,
+    destinationDirectory: destinationDirectory,
+    batchId: batchId,
+    magnet: magnet,
+    torrentData: torrentData,
+    trackers: trackers,
+    selectedFileIndices: selectedFileIndices,
+    renamedFiles: renamedFiles,
+    background: value,
+  );
+
   TorrentSource get source => magnet != null
       ? TorrentSource.magnet(magnet!)
       : TorrentSource.metadata(torrentData!, trackers: trackers);
@@ -68,6 +86,7 @@ class TorrentDownloadJob {
     'directory': destinationDirectory,
     'selection': selectedFileIndices,
     'renames': {for (final e in renamedFiles.entries) '${e.key}': e.value},
+    if (background) 'background': true,
   };
   factory TorrentDownloadJob.fromJson(Map<String, dynamic> json) =>
       TorrentDownloadJob(
@@ -90,6 +109,7 @@ class TorrentDownloadJob {
         renamedFiles: (json['renames'] as Map<String, dynamic>).map(
           (key, value) => MapEntry(int.parse(key), value as String),
         ),
+        background: json['background'] == true,
       );
 }
 
@@ -192,6 +212,7 @@ class DownloadItem {
   }
 
   DownloadItem copyWith({
+    TorrentDownloadJob? job,
     DownloadStatus? status,
     String? infoHash,
     List<DownloadFileProgress>? files,
@@ -205,7 +226,7 @@ class DownloadItem {
     bool clearError = false,
   }) => DownloadItem(
     id: id,
-    job: job,
+    job: job ?? this.job,
     status: status ?? this.status,
     infoHash: infoHash ?? this.infoHash,
     files: files ?? this.files,

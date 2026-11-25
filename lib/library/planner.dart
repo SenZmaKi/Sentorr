@@ -44,10 +44,17 @@ class DownloadPlanException implements Exception {
 final downloadPlannerProvider = Provider<DownloadPlanner>(DownloadPlanner.new);
 
 /// Starts copying an automatic download from a paired device that has it
-/// instead of downloading it; false when none does. The app provides it.
-final peerCopyProvider = Provider<bool Function(PlaybackItem item)>(
+/// instead of downloading it, owned by `origin` and picked for `reason`;
+/// false when none does. The app provides it.
+typedef PeerCopy = bool Function(
+  PlaybackItem item,
+  LibraryOrigin origin,
+  String? reason,
+);
+
+final peerCopyProvider = Provider<PeerCopy>(
   (ref) =>
-      (_) => false,
+      (_, _, _) => false,
 );
 
 /// Turns "download this" into a queued download: finds a torrent, picks
@@ -60,20 +67,23 @@ class DownloadPlanner {
   /// streaming switches to on its own.
   static const maxFallbacks = TorrentPlayback.maxAutoSwitches;
 
-  /// Queues [item] from [torrent], or the best torrent found; [automatic]
-  /// downloads take only exact matches. When a torrent can't be queued the
+  /// Queues [item] from [torrent], or the best torrent found; downloads
+  /// from any [origin] but the viewer take only exact matches. [reason]
+  /// says why smart downloads picked it. When a torrent can't be queued the
   /// next untried one is, as in streaming. Returns the torrent queued from;
   /// does nothing when [item] is already downloaded or being prepared, and
   /// copies an automatic one a paired device has.
   Future<TorrentCandidate?> download(
     PlaybackItem item, {
     TorrentCandidate? torrent,
-    bool automatic = false,
+    LibraryOrigin origin = LibraryOrigin.manual,
+    String? reason,
     CancelToken? cancel,
   }) => _downloadItem(
     item,
     torrent: torrent,
-    automatic: automatic,
+    origin: origin,
+    reason: reason,
     cancel: cancel,
   );
 
@@ -98,7 +108,8 @@ class DownloadPlanner {
   Future<TorrentCandidate?> _downloadItem(
     PlaybackItem item, {
     TorrentCandidate? torrent,
-    bool automatic = false,
+    LibraryOrigin origin = LibraryOrigin.manual,
+    String? reason,
     ({
       ReusableTorrent torrent,
       Uint8List? metadata,
@@ -126,7 +137,10 @@ class DownloadPlanner {
     }
     if (_ref.read(planningProvider).contains(item.id)) return null;
     // Nobody to ask: a copy over the network beats a torrent.
-    if (automatic && _ref.read(peerCopyProvider)(item)) return null;
+    final automatic = origin != LibraryOrigin.manual;
+    if (automatic && _ref.read(peerCopyProvider)(item, origin, reason)) {
+      return null;
+    }
     planning.start(item.id);
     try {
       if (reuse != null) {
@@ -142,7 +156,8 @@ class DownloadPlanner {
         await _enqueue(
           item,
           candidate,
-          automatic: automatic,
+          origin: origin,
+          reason: reason,
           cancel: cancel,
           existingMetadata: reuse.metadata,
           directory: reuse.directory,
@@ -155,7 +170,8 @@ class DownloadPlanner {
       return await _queueFirstWorking(
         item,
         torrent: torrent,
-        automatic: automatic,
+        origin: origin,
+        reason: reason,
         cancel: cancel,
         avoid: avoid,
       );
@@ -173,11 +189,13 @@ class DownloadPlanner {
   /// ones failed. Rethrows the last failure when nothing else is left.
   Future<TorrentCandidate> _queueFirstWorking(
     PlaybackItem item, {
-    required bool automatic,
+    required LibraryOrigin origin,
+    String? reason,
     required Set<String> avoid,
     TorrentCandidate? torrent,
     CancelToken? cancel,
   }) async {
+    final automatic = origin != LibraryOrigin.manual;
     final failed = {...avoid};
     TorrentResolution? options;
     Object? lastError;
@@ -211,7 +229,13 @@ class DownloadPlanner {
       }
       cancel?.throwIfCancellationRequested();
       try {
-        await _enqueue(item, candidate, automatic: automatic, cancel: cancel);
+        await _enqueue(
+          item,
+          candidate,
+          origin: origin,
+          reason: reason,
+          cancel: cancel,
+        );
         return candidate;
       } catch (error, stack) {
         if (_cancelled(error) || fallbacks >= maxFallbacks) rethrow;

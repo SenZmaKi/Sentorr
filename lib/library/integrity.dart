@@ -183,7 +183,8 @@ class LibraryIntegrity {
             fileIndex: entry.fileIndex,
             path: entry.path,
             addedAt: entry.addedAt,
-            automatic: entry.automatic,
+            origin: entry.origin,
+            reason: entry.reason,
           ),
         );
   }

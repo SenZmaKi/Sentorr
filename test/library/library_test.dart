@@ -27,7 +27,7 @@ LibraryEntry entry(PlaybackItem item) => LibraryEntry(
   fileIndex: 2,
   path: '/downloads/Show Reborn (2019)/Season 01/Show Reborn S01E03.mkv',
   addedAt: DateTime(2026, 10, 2),
-  automatic: true,
+  origin: LibraryOrigin.series,
 );
 
 void main() {

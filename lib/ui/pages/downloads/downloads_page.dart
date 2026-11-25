@@ -9,6 +9,7 @@ import '../../../library/download_review.dart';
 import '../../../library/models.dart';
 import '../../../library/notifier.dart';
 import '../../../library/season_download.dart';
+import '../../../settings/notifier.dart';
 import '../../../sync/elsewhere.dart';
 import '../../../titles/episodes.dart';
 import '../../components/app_shell.dart';
@@ -21,8 +22,9 @@ import '../page_scaffold.dart';
 import 'complete_tab.dart';
 import 'download_groups.dart';
 import 'ongoing_tab.dart';
+import 'smart_tab.dart';
 
-enum DownloadsTab { ongoing, complete }
+enum DownloadsTab { ongoing, complete, smart }
 
 /// The tab the viewer picked; null follows what there is. Opening the
 /// Downloads page forgets the pick, so it lands where things are happening.
@@ -46,8 +48,9 @@ class DownloadsTabNotifier extends Notifier<DownloadsTab?> {
   void pick(DownloadsTab tab) => state = tab;
 }
 
-/// Everything downloaded or on its way, in two tabs: Ongoing and Complete.
-/// It opens on Ongoing while anything is, otherwise on Complete.
+/// Everything downloaded or on its way, in tabs: Ongoing and Complete,
+/// and Smart while smart downloads are on or hold anything. It opens on
+/// Ongoing while anything is, otherwise on Complete.
 class DownloadsPage extends ConsumerWidget {
   const DownloadsPage({super.key});
 
@@ -77,14 +80,21 @@ class DownloadsPage extends ConsumerWidget {
             state: offlineStateOf(e, downloads[e.downloadId]),
           ),
     ];
+    final smart = [
+      for (final v in views)
+        if (v.entry.origin == LibraryOrigin.smart) v,
+    ];
     final ongoing = [
       for (final v in views)
-        if (v.state is! Downloaded) v,
+        if (v.state is! Downloaded && v.entry.origin != LibraryOrigin.smart) v,
     ];
     final complete = [
       for (final v in views)
-        if (v.state is Downloaded) v,
+        if (v.state is Downloaded && v.entry.origin != LibraryOrigin.smart) v,
     ];
+    final showSmart =
+        smart.isNotEmpty ||
+        ref.watch(settingsProvider.select((s) => s.smart.enabled));
     final here = {
       for (final v in views) v.entry.id,
       ...ref.watch(planningProvider),
@@ -104,11 +114,12 @@ class DownloadsPage extends ConsumerWidget {
     ];
     final busy =
         ongoing.isNotEmpty || planning > 0 || seasons.isNotEmpty || reviews > 0;
-    final tab =
-        ref.watch(downloadsTabProvider) ??
-        (busy || complete.isEmpty
-            ? DownloadsTab.ongoing
-            : DownloadsTab.complete);
+    final picked = ref.watch(downloadsTabProvider);
+    final tab = picked != null && (picked != DownloadsTab.smart || showSmart)
+        ? picked
+        : busy || complete.isEmpty
+        ? DownloadsTab.ongoing
+        : DownloadsTab.complete;
     return LayoutBuilder(
       builder: (context, box) {
         final compact = LayoutSize(box.biggest).compact;
@@ -125,6 +136,8 @@ class DownloadsPage extends ConsumerWidget {
                       ongoing.length + reviews,
                     ),
                     DownloadsTab.complete: _label('Complete', complete.length),
+                    if (showSmart)
+                      DownloadsTab.smart: _label('Smart', smart.length),
                   },
                   onChanged: ref.read(downloadsTabProvider.notifier).pick,
                 ),
@@ -157,6 +170,7 @@ class DownloadsPage extends ConsumerWidget {
                 elsewhere: held(finished: true),
                 compact: compact,
               ),
+              DownloadsTab.smart => SmartTab(views: smart, compact: compact),
             },
           ],
         );

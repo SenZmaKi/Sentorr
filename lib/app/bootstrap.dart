@@ -29,6 +29,7 @@ import '../downloads/manager.dart';
 import '../downloads/taskbar_progress.dart';
 import '../torrents/engine.dart';
 import '../following/auto_downloads.dart';
+import '../smart_downloads/controller.dart';
 import '../following/models.dart';
 import '../following/notifier.dart';
 import '../following/release_alerts.dart';
@@ -231,9 +232,9 @@ class AppRuntime with WidgetsBindingObserver {
           ),
           peerCopyProvider.overrideWith(
             (ref) =>
-                (item) => ref
+                (item, origin, reason) => ref
                     .read(peerCopiesProvider)
-                    .copyIfOffered(item, automatic: true),
+                    .copyIfOffered(item, origin: origin, reason: reason),
           ),
           networkClientProvider.overrideWithValue(network),
           networkFailuresProvider.overrideWithValue(network.networkFailures),
@@ -318,6 +319,7 @@ class AppRuntime with WidgetsBindingObserver {
       }
       if (Platform.isWindows) container.read(taskbarProgressProvider).start();
       container.read(autoDownloadsProvider).start();
+      container.read(smartDownloadsProvider).start();
       final sync = container.read(syncServiceProvider);
       rollback.add(sync.close);
       await sync.start();

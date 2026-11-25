@@ -6,6 +6,7 @@ import '../app/services.dart';
 import '../shared/persistence/json_file_store.dart';
 import '../settings/notifier.dart';
 import '../torrents/engine.dart';
+import 'background_hold.dart';
 import 'models.dart';
 import 'queue.dart';
 import 'repository.dart';
@@ -23,6 +24,11 @@ final downloadQueueProvider = Provider<DownloadQueue>((ref) {
   ref.listen(
     settingsProvider.select((s) => s.downloads),
     (_, next) => unawaited(queue.configure(next.queue)),
+  );
+  ref.listen(
+    backgroundHoldProvider,
+    (_, hold) => unawaited(queue.holdBackground(hold?.name)),
+    fireImmediately: true,
   );
   final timer = Timer.periodic(
     const Duration(seconds: 1),

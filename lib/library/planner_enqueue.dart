@@ -4,7 +4,8 @@ extension _EnqueueDownload on DownloadPlanner {
   Future<void> _enqueue(
     PlaybackItem item,
     TorrentCandidate candidate, {
-    required bool automatic,
+    required LibraryOrigin origin,
+    String? reason,
     CancelToken? cancel,
     Uint8List? existingMetadata,
     String? directory,
@@ -14,7 +15,7 @@ extension _EnqueueDownload on DownloadPlanner {
   }) async {
     cancel?.throwIfCancellationRequested();
     if (cancel == null &&
-        !automatic &&
+        origin == LibraryOrigin.manual &&
         item.series != null &&
         item.season != null) {
       await _ref
@@ -104,6 +105,7 @@ extension _EnqueueDownload on DownloadPlanner {
               destinationDirectory: layout.directory,
               selectedFileIndices: [file.index],
               renamedFiles: {file.index: layout.name},
+              background: origin != LibraryOrigin.manual,
             ),
           );
       await _ref
@@ -116,7 +118,8 @@ extension _EnqueueDownload on DownloadPlanner {
               fileIndex: file.index,
               path: p.join(layout.directory, layout.name),
               addedAt: DateTime.now(),
-              automatic: automatic,
+              origin: origin,
+              reason: reason,
             ),
           );
       _log.info('Queued $item as ${p.join(layout.directory, layout.name)}');

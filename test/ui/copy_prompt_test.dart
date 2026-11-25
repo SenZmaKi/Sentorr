@@ -81,7 +81,11 @@ class _Copies extends PeerCopies {
   final started = <String>[];
 
   @override
-  void start(CopyOffer offer, {bool automatic = false}) {
+  void start(
+    CopyOffer offer, {
+    LibraryOrigin origin = LibraryOrigin.manual,
+    String? reason,
+  }) {
     for (final c in offer.copies) {
       started.add(c.media.id);
       ref

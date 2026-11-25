@@ -13,6 +13,7 @@ import 'package:sentorr/lists/models.dart';
 import 'package:sentorr/lists/mark_watched.dart';
 import 'package:sentorr/player/models.dart';
 import 'package:sentorr/settings/models.dart';
+import 'package:sentorr/library/models.dart';
 import 'package:sentorr/library/planner.dart';
 import 'package:sentorr/torrents/resolution_models.dart';
 
@@ -100,14 +101,16 @@ class GatedPlanner extends FakePlanner {
   Future<TorrentCandidate?> download(
     PlaybackItem item, {
     TorrentCandidate? torrent,
-    bool automatic = false,
+    LibraryOrigin origin = LibraryOrigin.manual,
+    String? reason,
     CancelToken? cancel,
   }) {
     if (!entered.isCompleted) entered.complete();
     return super.download(
       item,
       torrent: torrent,
-      automatic: automatic,
+      origin: origin,
+      reason: reason,
       cancel: cancel,
     );
   }

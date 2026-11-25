@@ -19,6 +19,7 @@ class FakeImdbRepository implements ImdbRepository {
     List<ImdbTitle>? trending,
     this.seasons = const {},
     this.episodes = const {},
+    this.recommendations = const {},
   }) : trending =
            trending ??
            [for (var i = 1; i <= 12; i++) fakeTitle(i, series: i.isEven)];
@@ -30,6 +31,18 @@ class FakeImdbRepository implements ImdbRepository {
 
   /// Episodes per `seriesId/season`.
   final Map<String, List<ImdbEpisode>> episodes;
+
+  /// Titles like each title ID.
+  final Map<String, List<ImdbTitle>> recommendations;
+
+  @override
+  Future<ImdbPage<ImdbTitle>> getRecommendations(
+    String id, {
+    int limit = 10,
+    String? cursor,
+    bool refresh = false,
+    CancelToken? cancelToken,
+  }) async => ImdbPage(items: recommendations[id] ?? const []);
 
   @override
   Future<List<ImdbTitle>> trendingTitles({

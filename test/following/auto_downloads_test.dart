@@ -62,7 +62,7 @@ LibraryEntry _entry(int episode) => LibraryEntry(
   fileIndex: 0,
   path: '/nowhere/$episode.mkv',
   addedAt: DateTime(2026),
-  automatic: true,
+  origin: LibraryOrigin.series,
 );
 
 void main() {
@@ -78,6 +78,8 @@ void main() {
     AutoDownload mode = AutoDownload.chosen,
     bool? own = true,
     int keep = 0,
+    int reached = 1,
+    double progress = .3,
     List<LibraryEntry> library = const [],
   }) {
     final c = ProviderContainer(
@@ -95,8 +97,8 @@ void main() {
         ...followedSeriesOverrides([
           following(
             _series,
-            episode: 1,
-            progress: .3,
+            episode: reached,
+            progress: progress,
           ).copyWith(autoDownload: own, resetAutoDownload: own == null),
         ]),
         ...libraryOverrides(library),
@@ -134,7 +136,7 @@ void main() {
     planner.missing = {'tt913'};
     await c.read(autoDownloadsProvider).check('tt2');
     expect(planner.planned, ['tt912', 'tt921']);
-    expect(planner.automatic.every((a) => a), isTrue);
+    expect(planner.origins, everyElement(LibraryOrigin.series));
     final reviews = c.read(autoDownloadReviewsProvider);
     expect(reviews.single.item.id, 'tt913');
     // A review is not retried until it is dismissed or handled.
@@ -159,9 +161,11 @@ void main() {
     expect(planner.planned, isEmpty, reason: 'off overrides the switch');
   });
 
-  test('only the newest episodes are kept when a limit is set', () async {
+  test('watched episodes past the limit are deleted', () async {
     final c = container(
       keep: 2,
+      reached: 3,
+      progress: 1,
       library: [for (var n = 1; n <= 4; n++) _entry(n)],
     );
     await c.read(autoDownloadsProvider).check('tt2');
@@ -169,5 +173,18 @@ void main() {
       3,
       4,
     ]);
+  });
+
+  test('unwatched episodes stay past the limit', () async {
+    // Trimming the next episodes to watch had them due again on each check,
+    // downloading and deleting them over and over.
+    final c = container(keep: 1, library: [_entry(2), _entry(3)]);
+    await c.read(autoDownloadsProvider).check('tt2');
+    await c.read(autoDownloadsProvider).check('tt2');
+    expect([for (final e in c.read(libraryProvider)) e.item.episode]..sort(), [
+      2,
+      3,
+    ]);
+    expect(planner.planned, ['tt921', 'tt921']);
   });
 }

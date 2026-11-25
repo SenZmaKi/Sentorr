@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:logging/logging.dart';
 
 import '../app/services.dart';
+import '../downloads/background_hold.dart';
 import '../downloads/manager.dart';
 import '../downloads/models.dart';
 import '../library/models.dart';
@@ -67,17 +68,26 @@ final autoDownloadsProvider = Provider<AutoDownloads>((ref) {
 });
 
 /// Downloads aired episodes of watched series whose auto-download is on,
-/// keeps each one's newest episodes within the settings limit, and says
-/// when one is ready to watch.
+/// deletes watched ones past the settings limit, and says when one is
+/// ready to watch. Runs only while automatic downloads may.
 class AutoDownloads {
   AutoDownloads(this._ref);
   final Ref _ref;
   ProviderSubscription<AsyncValue<List<DownloadItem>>>? _watch;
   final _finished = <String>{};
   Future<void> _tail = Future.value();
+  ProviderSubscription<BackgroundHold?>? _hold;
+
+  /// Whether a check was skipped while held, so it runs once released.
+  bool _missed = false;
 
   /// Starts telling the viewer about finished automatic downloads.
   void start() {
+    _hold ??= _ref.listen(backgroundHoldProvider, (_, hold) {
+      if (hold != null || !_missed) return;
+      _missed = false;
+      unawaited(checkAll());
+    });
     var baseline = true;
     _watch ??= _ref.listen(downloadsProvider, (_, next) {
       final items = next.value;
@@ -99,6 +109,7 @@ class AutoDownloads {
 
   /// Runs every watched series' auto-downloads, one series at a time.
   Future<void> checkAll({bool refresh = false}) => _serial(() async {
+    if (_held()) return;
     for (final s in _ref.read(trackedSeriesProvider)) {
       await _run(s, refresh: refresh);
     }
@@ -106,6 +117,7 @@ class AutoDownloads {
 
   /// Runs [seriesId]'s auto-download now, e.g. as its switch turns on.
   Future<void> check(String seriesId) => _serial(() async {
+    if (_held()) return;
     final s = _ref
         .read(trackedSeriesProvider)
         .where((s) => s.id == seriesId)
@@ -150,7 +162,7 @@ class AutoDownloads {
         try {
           await _ref
               .read(downloadPlannerProvider)
-              .download(item, automatic: true, cancel: cancel);
+              .download(item, origin: LibraryOrigin.series, cancel: cancel);
           queued++;
         } on DownloadPlanException catch (error) {
           if (!_eligible(series.id) || cancel.isCancelled) return;
@@ -173,19 +185,39 @@ class AutoDownloads {
     }
   }
 
+  bool _held() {
+    if (!_ref.mounted || _ref.read(backgroundHoldProvider) == null) {
+      return false;
+    }
+    _missed = true;
+    return true;
+  }
+
   bool _eligible(String id) =>
       _ref.mounted &&
       _ref.read(trackedSeriesProvider).any((s) => s.id == id && enabledFor(s));
 
-  /// Deletes [seriesId]'s oldest automatic downloads past the limit.
+  /// Deletes [seriesId]'s oldest watched automatic downloads past the
+  /// limit. Unwatched ones stay whatever the limit, or the next check
+  /// would download them again.
   Future<void> _trim(String seriesId) async {
     final keep = _ref.read(settingsProvider).following.keepEpisodes;
     if (keep == 0) return;
+    final series = _ref
+        .read(trackedSeriesProvider)
+        .where((s) => s.id == seriesId)
+        .firstOrNull;
+    if (series == null) return;
     final entries = [
       for (final e in _ref.read(libraryProvider))
-        if (e.automatic && e.item.series?.id == seriesId) e,
-    ]..sort((a, b) => compareEpisodes(_number(b), _number(a)));
-    for (final old in entries.skip(keep)) {
+        if (e.origin == LibraryOrigin.series && e.item.series?.id == seriesId)
+          e,
+    ];
+    final watched = [
+      for (final e in entries)
+        if (series.seen(_number(e))) e,
+    ]..sort((a, b) => compareEpisodes(_number(a), _number(b)));
+    for (final old in watched.take(entries.length - keep)) {
       if (!_eligible(seriesId)) return;
       _log.info('Keeping $keep episodes of $seriesId: removing ${old.item}');
       await _ref.read(libraryProvider.notifier).remove(old.id);
@@ -201,7 +233,8 @@ class AutoDownloads {
         .where((e) => e.downloadId == download.id)
         .firstOrNull;
     final series = entry?.item.series;
-    if (entry == null || !entry.automatic || series == null) return;
+    if (entry == null || entry.origin != LibraryOrigin.series) return;
+    if (series == null) return;
     if (!_ref.read(settingsProvider).notifications.notifyDownloadsReady) return;
     final item = entry.item;
     await _ref
@@ -219,5 +252,8 @@ class AutoDownloads {
     return result;
   }
 
-  void dispose() => _watch?.close();
+  void dispose() {
+    _watch?.close();
+    _hold?.close();
+  }
 }

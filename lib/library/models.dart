@@ -2,6 +2,18 @@ import '../player/models.dart';
 import '../torrents/models.dart';
 import '../watching/title_codec.dart';
 
+/// Who asked for a download, which decides who may delete it.
+enum LibraryOrigin {
+  /// The viewer; only they remove it.
+  manual,
+
+  /// Its series auto-downloads; trimmed by the series' keep limit.
+  series,
+
+  /// Smart downloads; deleted once watched or removed from the reserve.
+  smart,
+}
+
 /// A movie or episode the viewer downloaded: which download holds it and
 /// where its file lands. Keyed by the item's IMDb id.
 class LibraryEntry {
@@ -12,7 +24,8 @@ class LibraryEntry {
     required this.fileIndex,
     required this.path,
     required this.addedAt,
-    this.automatic = false,
+    this.origin = LibraryOrigin.manual,
+    this.reason,
   });
 
   final PlaybackItem item;
@@ -26,8 +39,25 @@ class LibraryEntry {
   final String path;
   final DateTime addedAt;
 
-  /// Downloaded because its series auto-downloads, not by the viewer.
-  final bool automatic;
+  final LibraryOrigin origin;
+
+  /// Why smart downloads picked it, e.g. `Next episode`.
+  final String? reason;
+
+  /// Downloaded on its own rather than by the viewer.
+  bool get automatic => origin != LibraryOrigin.manual;
+
+  /// This entry, owned by [origin] instead.
+  LibraryEntry owned(LibraryOrigin origin) => LibraryEntry(
+    item: item,
+    downloadId: downloadId,
+    release: release,
+    fileIndex: fileIndex,
+    path: path,
+    addedAt: addedAt,
+    origin: origin,
+    reason: origin == LibraryOrigin.smart ? reason : null,
+  );
 
   String get id => item.id;
   String get infoHash => release.infoHash;
@@ -42,7 +72,10 @@ class LibraryEntry {
     'file': fileIndex,
     'path': path,
     'addedAt': addedAt.toUtc().toIso8601String(),
-    'automatic': automatic,
+    'origin': origin.name,
+    // Read by versions before origins, which know series downloads only.
+    'automatic': origin == LibraryOrigin.series,
+    'reason': ?reason,
   };
 
   /// Null when [json] is not an entry, so one bad record is skipped.
@@ -73,7 +106,14 @@ class LibraryEntry {
       fileIndex: file,
       path: path,
       addedAt: at.toLocal(),
-      automatic: json['automatic'] == true,
+      origin:
+          LibraryOrigin.values
+              .where((o) => o.name == json['origin'])
+              .firstOrNull ??
+          (json['automatic'] == true
+              ? LibraryOrigin.series
+              : LibraryOrigin.manual),
+      reason: json['reason'] as String?,
     );
   }
 }

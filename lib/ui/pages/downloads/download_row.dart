@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../downloads/models.dart';
 import '../../../library/models.dart';
+import '../../../smart_downloads/controller.dart';
 import '../../components/buttons.dart';
 import '../../components/cards/card_parts.dart';
 import '../../components/progress_track.dart';
@@ -36,12 +37,29 @@ class DownloadRow extends ConsumerWidget {
     facts: _Progress(state, download),
     note: switch (state) {
       DownloadFailed(:final error) => error,
-      _ => null,
+      _ => entry.reason,
     },
     onTap: () => ref.playDownload(entry),
-    actions: _actions(context, ref),
+    actions: entry.origin == LibraryOrigin.smart
+        ? _smartActions(ref)
+        : _actions(context, ref),
     compact: compact,
   );
+
+  /// Smart downloads come and go on their own: the viewer keeps one or
+  /// lets another be picked instead.
+  List<Widget> _smartActions(WidgetRef ref) => [
+    SIconButton(
+      icon: Icons.bookmark_add_outlined,
+      tooltip: 'Keep download',
+      onPressed: () => ref.read(smartDownloadsProvider).keep(entry.id),
+    ),
+    SIconButton(
+      icon: Icons.close_rounded,
+      tooltip: 'Remove and pick something else',
+      onPressed: () => ref.read(smartDownloadsProvider).remove(entry.id),
+    ),
+  ];
 
   List<Widget> _actions(BuildContext context, WidgetRef ref) => switch (state) {
     Downloading(status: OfflineProgress.copying) => [

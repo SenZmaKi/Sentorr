@@ -50,6 +50,9 @@ dependencies:
   url_launcher: ^6.3.3
   bonsoir: ^7.1.5
   basic_utils: ^5.8.2
+  connectivity_plus: ^7.3.1
+  # Pinned: young package, source reviewed at this version.
+  disk_space_info: 0.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -400,7 +400,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ready to download'), findsNothing);
     expect(planner.planned, ['tt1']);
-    expect(planner.automatic.single, isFalse);
+    expect(planner.origins.single, LibraryOrigin.manual);
   });
 
   testWidgets('without review an exact match downloads straight away', (

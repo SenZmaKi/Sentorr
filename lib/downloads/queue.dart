@@ -41,6 +41,14 @@ class DownloadQueue {
   final _uploadBefore = <String, int>{};
   final _changes = StreamController<List<DownloadItem>>.broadcast();
   DownloadSettings settings = const DownloadSettings();
+
+  /// Background downloads at once; the viewer's own come first.
+  static const maxActiveBackground = 1;
+
+  /// Why background downloads wait, e.g. playback or mobile data; null
+  /// lets them run.
+  String? get backgroundHold => _backgroundHold;
+  String? _backgroundHold;
   Future<void> _tail = Future.value();
   int _sequence = 0;
   bool _disposed = false;
@@ -176,6 +184,30 @@ class DownloadQueue {
     _publish();
   });
 
+  /// Makes background download [id] the viewer's own: it takes a regular
+  /// slot and no longer waits on holds.
+  Future<void> promote(String id) => _serial(() async {
+    final item = _item(id);
+    if (!item.job.background) return;
+    _log.info('Promoted ${_name(item)} from the background');
+    _replace(item.copyWith(job: item.job.inBackground(false)));
+    _reconcile();
+    await _commit();
+  });
+
+  /// Holds background downloads for [reason], or lets them run when null.
+  Future<void> holdBackground(String? reason) => _serial(() async {
+    if (reason == _backgroundHold) return;
+    _log.info(
+      reason == null
+          ? 'Background downloads may run'
+          : 'Background downloads wait: $reason',
+    );
+    _backgroundHold = reason;
+    _reconcile();
+    _publish();
+  });
+
   /// Reads transfer progress from the engine and applies queue policy.
   Future<void> tick() {
     if (_disposed) return Future.value();
@@ -219,8 +251,10 @@ class DownloadQueue {
         .withStatus(DownloadStatus.completed);
   }
 
-  /// Gives queue slots in order; a download being watched always runs, and
-  /// while an active stream needs more bytes the others can wait.
+  /// Gives queue slots in order, the viewer's downloads before background
+  /// ones; a download being watched always runs, and while an active
+  /// stream needs more bytes the others can wait. Background downloads
+  /// also wait while held or while any of the viewer's are unfinished.
   void _reconcile() {
     final watched = {
       for (final t in torrents.torrents)
@@ -234,7 +268,20 @@ class DownloadQueue {
     final yieldToPlayback = settings.pauseWhileStreaming && watched.isNotEmpty;
     var downloads = settings.maxActiveDownloads;
     var seeds = settings.maxActiveSeeds;
-    for (final item in _items.toList()) {
+    var background = maxActiveBackground;
+    final foregroundPending = _items.any(
+      (i) =>
+          !i.job.background &&
+          !i.status.isTerminal &&
+          i.status != DownloadStatus.paused &&
+          !i.hasFinishedDownloading,
+    );
+    final backgroundWaits = _backgroundHold != null || foregroundPending;
+    final ordered = [
+      ..._items.where((i) => !i.job.background),
+      ..._items.where((i) => i.job.background),
+    ];
+    for (final item in ordered) {
       if (!_attached.contains(item.id) ||
           item.status.isTerminal ||
           item.status == DownloadStatus.paused) {
@@ -243,7 +290,11 @@ class DownloadQueue {
       }
       final isSeed = item.seedingStartedAt != null;
       final isWatched = watched.contains(item.infoHash);
-      var allowed = isSeed ? seeds-- > 0 : downloads-- > 0;
+      final waits =
+          item.job.background &&
+          (_backgroundHold != null ||
+              (!isSeed && (backgroundWaits || background-- <= 0)));
+      var allowed = !waits && (isSeed ? seeds-- > 0 : downloads-- > 0);
       if (yieldToPlayback && !isWatched) allowed = false;
       if (isWatched) allowed = true;
       _hold(item, running: allowed);

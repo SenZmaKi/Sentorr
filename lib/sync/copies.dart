@@ -52,17 +52,26 @@ class PeerCopies {
   }
 
   /// Starts copying [item] from a device that has it; false when none
-  /// does. For automatic downloads, which have no one to ask.
-  bool copyIfOffered(PlaybackItem item, {bool automatic = false}) {
+  /// does. For automatic downloads, which have no one to ask; [reason]
+  /// says why smart downloads picked it.
+  bool copyIfOffered(
+    PlaybackItem item, {
+    LibraryOrigin origin = LibraryOrigin.manual,
+    String? reason,
+  }) {
     final offer = this.offer((i) => i.id == item.id);
     if (offer.isEmpty) return false;
-    start(offer, automatic: automatic);
+    start(offer, origin: origin, reason: reason);
     return true;
   }
 
   /// Queues [offer]'s copies; each shows as copying until it is in the
   /// library.
-  void start(CopyOffer offer, {bool automatic = false}) {
+  void start(
+    CopyOffer offer, {
+    LibraryOrigin origin = LibraryOrigin.manual,
+    String? reason,
+  }) {
     final root = _ref.read(downloadsDirectoryProvider);
     for (final copy in offer.copies) {
       final media = copy.media;
@@ -74,7 +83,8 @@ class PeerCopies {
         fileIndex: media.fileIndex,
         path: p.join(layout.directory, layout.name),
         addedAt: DateTime.now(),
-        automatic: automatic,
+        origin: origin,
+        reason: reason,
       );
       _ref
           .read(copyingProvider.notifier)
@@ -270,7 +280,8 @@ class PeerCopies {
               fileIndex: entry.fileIndex,
               path: entry.path,
               addedAt: DateTime.now(),
-              automatic: entry.automatic,
+              origin: entry.origin,
+              reason: entry.reason,
             ),
           );
       _log.info('Copied ${entry.item} from ${copy.deviceName}');

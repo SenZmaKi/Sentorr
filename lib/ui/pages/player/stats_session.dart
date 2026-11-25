@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import '../../../player/diagnostics.dart';
 import '../../../settings/models.dart';
+import '../../../shared/disk_space.dart';
 import '../../../shared/persistence/app_paths.dart';
 
 /// What a recording ran under: device, player configuration and the
@@ -26,7 +27,7 @@ Future<Map<String, Object?>> describeStatsSession({
       'locale': PlatformDispatcher.instance.locale.toLanguageTag(),
       'freeDiskBytes': paths == null
           ? null
-          : await _freeBytes(paths.rootDirectory.path),
+          : await freeBytes(paths.rootDirectory.path),
     },
     'player': await diagnostics.readConfig(),
     'settings': {
@@ -40,18 +41,4 @@ Future<Map<String, Object?>> describeStatsSession({
       'torrents': settings.torrents.toJson(),
     },
   };
-}
-
-/// Free space on [path]'s volume, where desktops can tell; a full disk
-/// stalls a torrent without any network symptom.
-Future<int?> _freeBytes(String path) async {
-  if (!Platform.isMacOS && !Platform.isLinux) return null;
-  try {
-    final result = await Process.run('df', ['-k', path]);
-    final row = (result.stdout as String).trim().split('\n').last;
-    final available = int.tryParse(row.split(RegExp(r'\s+'))[3]);
-    return available == null ? null : available * 1024;
-  } catch (_) {
-    return null;
-  }
 }

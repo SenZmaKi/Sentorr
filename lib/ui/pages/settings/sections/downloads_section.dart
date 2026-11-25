@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +15,7 @@ import '../../../shared/theme/theme.dart';
 import '../settings_controls.dart';
 import '../settings_group.dart';
 import 'auto_download_group.dart';
+import 'smart_download_group.dart';
 
 typedef _Edit = void Function(
   DownloadPreferences Function(DownloadPreferences) change,
@@ -67,9 +70,25 @@ class DownloadsSection extends ConsumerWidget {
                     edit((d) => d.copyWith(pauseWhileStreaming: v)),
               ),
             ),
+            if (Platform.isAndroid || Platform.isIOS)
+              SettingsTile(
+                icon: Icons.signal_cellular_alt_rounded,
+                title: 'Automatic downloads on mobile data',
+                subtitle: d.automaticOnMobileData
+                    ? 'New episodes and smart downloads use mobile data too'
+                    : 'New episodes and smart downloads wait for Wi-Fi',
+                keywords: 'cellular metered data wifi network',
+                trailing: SToggle(
+                  value: d.automaticOnMobileData,
+                  semanticLabel: 'Automatic downloads on mobile data',
+                  onChanged: (v) =>
+                      edit((d) => d.copyWith(automaticOnMobileData: v)),
+                ),
+              ),
           ],
         ),
         const AutoDownloadGroup(),
+        const SmartDownloadGroup(),
         SettingsGroup(
           title: 'Sharing',
           description: 'Seeding finished downloads back to others',

@@ -12,6 +12,7 @@ class DownloadPreferences {
     this.seedMinutes = 1440,
     this.maxSeeds = 5,
     this.reviewMatches = true,
+    this.automaticOnMobileData = false,
   });
 
   static const maxSlots = 10;
@@ -28,6 +29,10 @@ class DownloadPreferences {
   /// Show the torrents found before they download, counting down when all
   /// match exactly. Compromises and misses always ask.
   final bool reviewMatches;
+
+  /// Whether automatic downloads, of followed series and smart downloads,
+  /// run on mobile data. Off, they wait for Wi-Fi or Ethernet.
+  final bool automaticOnMobileData;
 
   DownloadSettings get queue => DownloadSettings(
     maxActiveDownloads: maxActive,
@@ -48,6 +53,7 @@ class DownloadPreferences {
     int? seedMinutes,
     int? maxSeeds,
     bool? reviewMatches,
+    bool? automaticOnMobileData,
   }) => DownloadPreferences(
     directory: resetDirectory ? null : directory ?? this.directory,
     maxActive: maxActive ?? this.maxActive,
@@ -57,6 +63,7 @@ class DownloadPreferences {
     seedMinutes: seedMinutes ?? this.seedMinutes,
     maxSeeds: maxSeeds ?? this.maxSeeds,
     reviewMatches: reviewMatches ?? this.reviewMatches,
+    automaticOnMobileData: automaticOnMobileData ?? this.automaticOnMobileData,
   );
 
   factory DownloadPreferences.fromJson(Map<String, dynamic> json) {
@@ -79,6 +86,10 @@ class DownloadPreferences {
       seedMinutes: jsonInt(json['seedMinutes'], d.seedMinutes),
       maxSeeds: jsonInt(json['maxSeeds'], d.maxSeeds, min: 1, max: maxSlots),
       reviewMatches: jsonBool(json['reviewMatches'], d.reviewMatches),
+      automaticOnMobileData: jsonBool(
+        json['automaticOnMobileData'],
+        d.automaticOnMobileData,
+      ),
     );
   }
 
@@ -91,5 +102,6 @@ class DownloadPreferences {
     'seedMinutes': seedMinutes,
     'maxSeeds': maxSeeds,
     'reviewMatches': reviewMatches,
+    'automaticOnMobileData': automaticOnMobileData,
   };
 }

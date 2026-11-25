@@ -70,8 +70,11 @@ class _Copies extends PeerCopies {
   final started = <String>[];
 
   @override
-  void start(CopyOffer offer, {bool automatic = false}) =>
-      started.addAll([for (final c in offer.copies) c.media.id]);
+  void start(
+    CopyOffer offer, {
+    LibraryOrigin origin = LibraryOrigin.manual,
+    String? reason,
+  }) => started.addAll([for (final c in offer.copies) c.media.id]);
 }
 
 /// [child] with a laptop online that has [finished] and is downloading

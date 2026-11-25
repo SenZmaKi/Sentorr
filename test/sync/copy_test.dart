@@ -189,9 +189,30 @@ void main() {
   test('an automatic download copies without asking', () async {
     final (_, phone) = await devices();
     final copies = phone.read(peerCopiesProvider);
-    expect(copies.copyIfOffered(_episode(1), automatic: true), true);
-    expect(copies.copyIfOffered(_episode(3), automatic: true), false);
+    expect(
+      copies.copyIfOffered(_episode(1), origin: LibraryOrigin.series),
+      true,
+    );
+    expect(
+      copies.copyIfOffered(_episode(3), origin: LibraryOrigin.series),
+      false,
+    );
     await until(() => phone.read(libraryProvider).length == 1);
     expect(phone.read(libraryProvider).single.automatic, true);
+  });
+
+  test('a smart pick copied from a device keeps why it was picked', () async {
+    final (_, phone) = await devices();
+    phone
+        .read(peerCopiesProvider)
+        .copyIfOffered(
+          _episode(1),
+          origin: LibraryOrigin.smart,
+          reason: 'Next episode',
+        );
+    await until(() => phone.read(libraryProvider).length == 1);
+    final entry = phone.read(libraryProvider).single;
+    expect(entry.origin, LibraryOrigin.smart);
+    expect(entry.reason, 'Next episode');
   });
 }

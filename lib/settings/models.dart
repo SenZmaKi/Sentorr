@@ -7,6 +7,7 @@ import 'following_settings.dart';
 import 'json.dart';
 import 'network_settings.dart';
 import 'notification_settings.dart';
+import 'smart_download_settings.dart';
 import 'streaming_settings.dart';
 import 'torrent_settings.dart';
 import 'update_settings.dart';
@@ -17,6 +18,7 @@ export 'download_settings.dart';
 export 'following_settings.dart';
 export 'network_settings.dart';
 export 'notification_settings.dart';
+export 'smart_download_settings.dart';
 export 'streaming_settings.dart';
 export 'torrent_settings.dart';
 export 'update_settings.dart';
@@ -78,6 +80,7 @@ class AppSettings {
     this.downloads = const DownloadPreferences(),
     this.network = const NetworkSettings(),
     this.following = const FollowingSettings(),
+    this.smart = const SmartDownloadSettings(),
     this.updates = const UpdateSettings(),
     this.backup = const BackupSettings(),
   });
@@ -97,6 +100,7 @@ class AppSettings {
   final DownloadPreferences downloads;
   final NetworkSettings network;
   final FollowingSettings following;
+  final SmartDownloadSettings smart;
   final UpdateSettings updates;
   final BackupSettings backup;
 
@@ -112,6 +116,7 @@ class AppSettings {
     DownloadPreferences? downloads,
     NetworkSettings? network,
     FollowingSettings? following,
+    SmartDownloadSettings? smart,
     UpdateSettings? updates,
     BackupSettings? backup,
   }) => AppSettings(
@@ -126,6 +131,7 @@ class AppSettings {
     downloads: downloads ?? this.downloads,
     network: network ?? this.network,
     following: following ?? this.following,
+    smart: smart ?? this.smart,
     updates: updates ?? this.updates,
     backup: backup ?? this.backup,
   );
@@ -150,6 +156,7 @@ class AppSettings {
       legacy: jsonObject(json['streaming']),
     ),
     following: FollowingSettings.fromJson(jsonObject(json['following'])),
+    smart: SmartDownloadSettings.fromJson(jsonObject(json['smart'])),
     updates: UpdateSettings.fromJson(jsonObject(json['updates'])),
     backup: BackupSettings.fromJson(jsonObject(json['backup'])),
   );
@@ -167,6 +174,7 @@ class AppSettings {
     'downloads': downloads.toJson(),
     'network': network.toJson(),
     'following': following.toJson(),
+    'smart': smart.toJson(),
     'updates': updates.toJson(),
     'backup': backup.toJson(),
   };

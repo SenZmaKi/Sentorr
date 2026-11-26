@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -18,7 +19,14 @@ import 'torrent_cache.dart';
 final torrentCacheProvider = Provider<TorrentCache>((ref) {
   final cache = TorrentCache(
     JsonFileStore(ref.watch(appPathsProvider).torrentCacheIndexFile),
+    budget: () => ref.read(settingsProvider).streaming.torrentBudgetBytes,
   );
+  ref.listen(settingsProvider.select((s) => s.streaming.torrentBudgetBytes), (
+    before,
+    now,
+  ) {
+    if (before != null && now < before) unawaited(cache.trim());
+  });
   ref.onDispose(cache.close);
   return cache;
 });
@@ -50,13 +58,13 @@ final torrentRootsProvider = Provider<List<String>>(
 );
 
 /// Disk used by kept torrents and sessions' leftovers.
-final keptTorrentsSizeProvider = FutureProvider.autoDispose<int>(
-  (ref) =>
-      ref.watch(torrentCacheProvider).size(ref.watch(torrentRootsProvider)),
-);
+final keptTorrentsSizeProvider = FutureProvider.autoDispose<int>((ref) {
+  ref.watch(torrentCacheRevisionProvider);
+  return ref.watch(torrentCacheProvider).size(ref.watch(torrentRootsProvider));
+});
 
 /// Engine settings for a session streaming [release], keeping its files
-/// when recent torrents are kept.
+/// when watched torrents have a budget.
 Future<TorrentStreamConfig> sessionConfigFor(
   Ref ref,
   TorrentRelease release,
@@ -73,9 +81,7 @@ Future<TorrentStreamConfig> sessionConfigFor(
       .any((e) => e.infoHash == release.infoHash);
   final retained = downloaded
       ? null
-      : await ref
-            .read(torrentCacheProvider)
-            .use(root, release.infoHash, keep: s.keepRecentTorrents);
+      : await ref.read(torrentCacheProvider).use(root, release.infoHash);
   return TorrentStreamConfig(
     cacheDirectory: root,
     // Small urgent read window while media duration is still being discovered.

@@ -31,7 +31,8 @@ watching) lives in the app on the main isolate, driven by engine snapshots.
 
 | | Stream cache | Downloads |
 | --- | --- | --- |
-| Owner | App, evicted oldest first | User, never removed automatically |
+| Owner | App, evicted oldest first | User; automatic ones make room once watched |
+| Budget | Space for watched torrents (10 GB) | Space for downloads (50 GB), copies included |
 | Location | `cache/streams/<infohash>` or the chosen torrent folder | Downloads folder, readable names |
 | Layout | Torrent's own paths | `Series/Season 01/Series S01E03.ext`, `Movie (Year)/Movie (Year).ext` |
 | Cleared by | Storage → clear | Deleting the download |
@@ -41,12 +42,25 @@ file index, release and path. Buttons, the player and auto-download read it
 instead of scanning the disk. Completed downloads play as local files; one in
 progress streams from its own torrent.
 
+### Space budgets
+
+Budgets, not free disk space, decide what fits. The stream cache measures its
+folders and evicts the least recently watched until they fit; the playing torrent
+counts at its file's full size and stays, and one too big for the budget on its own
+is deleted once playback releases it. Zero keeps nothing.
+
+`lib/library/budget.dart` counts each download and copy at its full size from when
+it is queued. To make room it deletes watched automatic downloads oldest first, and
+for anything but a smart pick, unwatched smart picks. The viewer's own downloads
+are never deleted: when that isn't enough they are asked to raise the budget, while
+series downloads become reviews and smart downloads pause as over budget.
+
 ## Settings
 
 - **Network** (shared by streams and downloads, one session): download and upload
   limits, connections, uTP, DHT, LSD, UPnP, NAT-PMP.
-- **Streaming**: read-ahead, piece memory, timeouts, recent torrents kept (cache).
-- **Downloads**: folder, simultaneous downloads, pause downloads while watching
+- **Streaming**: read-ahead, piece memory, timeouts, space for watched torrents.
+- **Downloads**: folder, space for downloads, simultaneous downloads, pause downloads while watching
   (on), seeding (off / until ratio and time / always) and simultaneous seeds.
 - **Following**: auto-download default (off / series I turn on / every series I
   follow), episodes kept per auto-downloading series (0 keeps all, the default).

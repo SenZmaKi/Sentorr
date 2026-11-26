@@ -57,9 +57,10 @@ void main() {
         );
         final cache = TorrentCache(
           JsonFileStore(File('${root.path}/index.json')),
+          budget: () => 1 << 30,
         );
         final cacheRoot = '${root.path}/cache';
-        await cache.use(cacheRoot, hash, keep: 3);
+        await cache.use(cacheRoot, hash);
         final engine = native.loopbackEngine();
         final original = TorrentStreamSession(
           engine: engine,

@@ -29,6 +29,7 @@ class LibraryEntry {
     this.origin = LibraryOrigin.manual,
     this.reason,
     this.verifiedAt,
+    this.bytes,
   });
 
   final PlaybackItem item;
@@ -50,6 +51,10 @@ class LibraryEntry {
   /// When every piece of the file last checked against its torrent. Null
   /// for files finished before checks existed or copied unchecked offline.
   final DateTime? verifiedAt;
+
+  /// The file's full size, counted against the download budget before it
+  /// finishes. Null for entries from before budgets.
+  final int? bytes;
 
   /// The torrent's save folder, which keeps its resume state: the title
   /// folder, above an episode's season folder. See [layoutFor].
@@ -82,6 +87,7 @@ class LibraryEntry {
     origin: origin,
     reason: origin == LibraryOrigin.smart ? reason : null,
     verifiedAt: verifiedAt,
+    bytes: bytes,
   );
 
   /// This entry, its file found intact at [at].
@@ -95,6 +101,7 @@ class LibraryEntry {
     origin: origin,
     reason: reason,
     verifiedAt: at,
+    bytes: bytes,
   );
 
   String get id => item.id;
@@ -115,6 +122,7 @@ class LibraryEntry {
     'automatic': origin == LibraryOrigin.series,
     'reason': ?reason,
     'verifiedAt': ?verifiedAt?.toUtc().toIso8601String(),
+    'bytes': ?bytes,
   };
 
   /// Null when [json] is not an entry, so one bad record is skipped.
@@ -155,6 +163,7 @@ class LibraryEntry {
       reason: json['reason'] as String?,
       verifiedAt: DateTime.tryParse(json['verifiedAt'] as String? ?? '')
           ?.toLocal(),
+      bytes: json['bytes'] is int ? json['bytes'] as int : null,
     );
   }
 }

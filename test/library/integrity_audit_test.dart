@@ -11,7 +11,6 @@ import 'package:sentorr/library/integrity_audit.dart';
 import 'package:sentorr/library/models.dart';
 import 'package:sentorr/library/notifier.dart';
 import 'package:sentorr/player/models.dart';
-import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/shared/net/online.dart';
 import 'package:sentorr/shared/persistence/json_file_store.dart';
 

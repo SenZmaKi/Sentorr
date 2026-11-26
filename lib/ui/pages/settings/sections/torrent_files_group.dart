@@ -7,6 +7,7 @@ import '../../../../player/stream/session_config.dart';
 import '../../../../settings/models.dart';
 import '../../../components/buttons.dart';
 import '../../../components/confirm_dialog.dart';
+import '../../../components/space_meter.dart';
 import '../../../shared/open_folder.dart';
 import '../../../shared/theme/theme.dart';
 import '../../../shared/title_format.dart';
@@ -18,8 +19,8 @@ typedef StreamingEdit = void Function(
   StreamingSettings Function(StreamingSettings) change,
 );
 
-/// Where streamed torrents are saved, how many stay after watching, and
-/// the space they take, together.
+/// Where streamed torrents are saved, how much space they may keep after
+/// watching, and a way to free it, together.
 class TorrentFilesGroup extends StatelessWidget {
   const TorrentFilesGroup({
     super.key,
@@ -32,36 +33,61 @@ class TorrentFilesGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final keep = settings.keepRecentTorrents;
+    final budget = settings.torrentBudgetBytes;
     return SettingsGroup(
       title: 'Watched torrents',
       description:
           'Streams are saved while you watch; Downloads keeps its own '
-          'folder',
+          'folder and space',
       keywords: 'torrent files',
       children: [
         _FolderTile(custom: settings.torrentDirectory != null, edit: edit),
         SettingsTile(
-          icon: Icons.history_toggle_off_rounded,
-          title: 'Keep recent torrents',
-          subtitle: keep == 0
-              ? 'Each torrent is deleted when playback ends'
+          icon: Icons.data_usage_rounded,
+          title: 'Space for watched torrents',
+          subtitle: budget == 0
+              ? 'Off; each torrent is deleted when playback ends'
               : 'Watching one again picks up what was already fetched; '
-                    'older ones are deleted',
-          keywords: 'lru cache reuse',
+                    'the least recently watched are deleted to make room',
+          keywords: 'keep recent cache reuse budget limit lru disk storage',
           trailing: LimitField(
-            value: keep,
-            presets: const {0: 'Off'},
-            customDefault: 3,
+            value: (budget / gigabyte).round(),
+            presets: const {
+              0: 'Off',
+              5: '5 GB',
+              10: '10 GB',
+              20: '20 GB',
+              50: '50 GB',
+            },
+            customDefault: 10,
             min: 1,
-            max: StreamingSettings.maxKeptTorrents,
-            unit: 'torrents',
-            semanticLabel: 'Keep recent torrents',
-            onChanged: (n) => edit((s) => s.copyWith(keepRecentTorrents: n)),
+            unit: 'GB',
+            semanticLabel: 'Space for watched torrents',
+            onChanged: (n) =>
+                edit((s) => s.copyWith(torrentBudgetBytes: n * gigabyte)),
           ),
+          below: budget == 0 ? null : _KeptMeter(budget: budget),
         ),
         const _KeptTile(),
       ],
+    );
+  }
+}
+
+/// How much of the budget kept torrents fill.
+class _KeptMeter extends ConsumerWidget {
+  const _KeptMeter({required this.budget});
+  final int budget;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final size = ref.watch(keptTorrentsSizeProvider).value;
+    return Padding(
+      padding: const EdgeInsets.only(top: Space.s8),
+      child: SpaceMeter(
+        budget: budget,
+        segments: [SpaceSegment('Kept', size ?? 0, SpaceKind.reclaimable)],
+      ),
     );
   }
 }
@@ -142,7 +168,9 @@ class _KeptTile extends ConsumerWidget implements SettingsSearchable {
       subtitle: playing
           ? 'Close the player to clear torrents'
           : size.when(
-              data: (bytes) => '${sizeLabel(bytes)} on disk',
+              data: (bytes) =>
+                  '${sizeLabel(bytes)} on disk; watching one '
+                  'again starts over',
               loading: () => 'Measuring…',
               error: (_, _) => 'Size unknown',
             ),

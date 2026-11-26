@@ -92,36 +92,45 @@ extension _EnqueueDownload on DownloadPlanner {
           'Choose a Downloads folder outside this torrent cache folder.',
         );
       }
-      final id = await _ref
-          .read(downloadQueueProvider)
-          .enqueue(
-            TorrentDownloadJob(
-              title: item.label,
-              batchId: item.series == null || item.season == null
-                  ? null
-                  : '${item.series!.id}:season:${item.season}',
-              torrentData: metadata,
-              trackers: release.trackers,
-              destinationDirectory: layout.directory,
-              selectedFileIndices: [file.index],
-              renamedFiles: {file.index: layout.name},
-              background: origin != LibraryOrigin.manual,
-            ),
-          );
-      await _ref
-          .read(libraryProvider.notifier)
-          .add(
-            LibraryEntry(
-              item: item,
-              downloadId: id,
-              release: release,
-              fileIndex: file.index,
-              path: p.join(layout.directory, layout.name),
-              addedAt: DateTime.now(),
-              origin: origin,
-              reason: reason,
-            ),
-          );
+      final budget = _ref.read(downloadBudgetProvider);
+      await budget.hold(item, file.length, origin);
+      final String id;
+      try {
+        cancel?.throwIfCancellationRequested();
+        id = await _ref
+            .read(downloadQueueProvider)
+            .enqueue(
+              TorrentDownloadJob(
+                title: item.label,
+                batchId: item.series == null || item.season == null
+                    ? null
+                    : '${item.series!.id}:season:${item.season}',
+                torrentData: metadata,
+                trackers: release.trackers,
+                destinationDirectory: layout.directory,
+                selectedFileIndices: [file.index],
+                renamedFiles: {file.index: layout.name},
+                background: origin != LibraryOrigin.manual,
+              ),
+            );
+        await _ref
+            .read(libraryProvider.notifier)
+            .add(
+              LibraryEntry(
+                item: item,
+                downloadId: id,
+                release: release,
+                fileIndex: file.index,
+                path: p.join(layout.directory, layout.name),
+                addedAt: DateTime.now(),
+                origin: origin,
+                reason: reason,
+                bytes: file.length,
+              ),
+            );
+      } finally {
+        budget.release(item.id);
+      }
       _log.info('Queued $item as ${p.join(layout.directory, layout.name)}');
       // Hold the torrent until the download does, so its metadata is reused.
       final queued = _ref

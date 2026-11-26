@@ -13,9 +13,13 @@ class DownloadPreferences {
     this.maxSeeds = 5,
     this.reviewMatches = true,
     this.automaticOnMobileData = false,
+    this.budgetBytes = defaultBudgetBytes,
   });
 
   static const maxSlots = 10;
+  static const gigabyte = 1024 * 1024 * 1024;
+  static const defaultBudgetBytes = 50 * gigabyte;
+  static const minBudgetBytes = gigabyte;
 
   /// Null uses the system downloads folder.
   final String? directory;
@@ -33,6 +37,10 @@ class DownloadPreferences {
   /// Whether automatic downloads, of followed series and smart downloads,
   /// run on mobile data. Off, they wait for Wi-Fi or Ethernet.
   final bool automaticOnMobileData;
+
+  /// Space every download and copy may take together. Automatic ones make
+  /// room by deleting what was watched; the viewer decides the rest.
+  final int budgetBytes;
 
   DownloadSettings get queue => DownloadSettings(
     maxActiveDownloads: maxActive,
@@ -54,6 +62,7 @@ class DownloadPreferences {
     int? maxSeeds,
     bool? reviewMatches,
     bool? automaticOnMobileData,
+    int? budgetBytes,
   }) => DownloadPreferences(
     directory: resetDirectory ? null : directory ?? this.directory,
     maxActive: maxActive ?? this.maxActive,
@@ -64,6 +73,7 @@ class DownloadPreferences {
     maxSeeds: maxSeeds ?? this.maxSeeds,
     reviewMatches: reviewMatches ?? this.reviewMatches,
     automaticOnMobileData: automaticOnMobileData ?? this.automaticOnMobileData,
+    budgetBytes: budgetBytes ?? this.budgetBytes,
   );
 
   factory DownloadPreferences.fromJson(Map<String, dynamic> json) {
@@ -90,6 +100,11 @@ class DownloadPreferences {
         json['automaticOnMobileData'],
         d.automaticOnMobileData,
       ),
+      budgetBytes: jsonInt(
+        json['budgetBytes'],
+        d.budgetBytes,
+        min: minBudgetBytes,
+      ),
     );
   }
 
@@ -103,5 +118,6 @@ class DownloadPreferences {
     'maxSeeds': maxSeeds,
     'reviewMatches': reviewMatches,
     'automaticOnMobileData': automaticOnMobileData,
+    'budgetBytes': budgetBytes,
   };
 }

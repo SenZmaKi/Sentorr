@@ -15,6 +15,7 @@ import '../../../shared/theme/theme.dart';
 import '../settings_controls.dart';
 import '../settings_group.dart';
 import 'auto_download_group.dart';
+import 'download_budget_tile.dart';
 import 'smart_download_group.dart';
 
 typedef _Edit = void Function(
@@ -42,6 +43,7 @@ class DownloadsSection extends ConsumerWidget {
           keywords: 'offline save',
           children: [
             _FolderTile(custom: d.directory != null, edit: edit),
+            const DownloadBudgetTile(),
             SettingsTile(
               icon: Icons.download_rounded,
               title: 'Simultaneous downloads',

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 
+import '../library/budget.dart';
 import '../library/layout.dart';
 import '../library/integrity.dart';
 import '../library/models.dart';
@@ -85,6 +86,7 @@ class PeerCopies {
         addedAt: DateTime.now(),
         origin: origin,
         reason: reason,
+        bytes: media.size,
       );
       _ref
           .read(copyingProvider.notifier)
@@ -131,6 +133,8 @@ class PeerCopies {
     if (!_wanted(id, attempt)) return;
     final partial = File(_partial(entry));
     try {
+      await _ref.read(downloadBudgetProvider).fit(entry);
+      if (!_wanted(id, attempt)) return;
       final route = _ref.read(peersProvider.notifier).route(copy.deviceId);
       if (route == null) {
         throw PeerException("${copy.deviceName} can't be reached");
@@ -286,9 +290,12 @@ class PeerCopies {
               origin: entry.origin,
               reason: entry.reason,
               verifiedAt: verifiedAt,
+              bytes: entry.bytes,
             ),
           );
       _log.info('Copied ${entry.item} from ${copy.deviceName}');
+    } on DownloadBudgetFull {
+      _log.info('No room to copy ${entry.item}');
     } catch (error, stack) {
       if (!_wanted(id, attempt)) return;
       // The partial file stays, so trying again resumes it.

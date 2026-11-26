@@ -8,6 +8,7 @@ import '../app/services.dart';
 import '../downloads/background_hold.dart';
 import '../downloads/manager.dart';
 import '../downloads/models.dart';
+import '../library/budget.dart';
 import '../library/models.dart';
 import '../library/notifier.dart';
 import '../library/planner.dart';
@@ -164,6 +165,12 @@ class AutoDownloads {
               .read(downloadPlannerProvider)
               .download(item, origin: LibraryOrigin.series, cancel: cancel);
           queued++;
+        } on DownloadBudgetFull catch (error) {
+          if (!_eligible(series.id) || cancel.isCancelled) return;
+          // The rest wouldn't fit either; the next check tries again.
+          _log.info('No room for $item: $error');
+          reviews.add(AutoDownloadReview(item, error.message));
+          break;
         } on DownloadPlanException catch (error) {
           if (!_eligible(series.id) || cancel.isCancelled) return;
           _log.info('$item needs review: $error');

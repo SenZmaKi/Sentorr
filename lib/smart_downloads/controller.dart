@@ -10,13 +10,13 @@ import '../downloads/manager.dart';
 import '../downloads/models.dart';
 import '../following/notifier.dart';
 import '../following/tracked.dart';
+import '../library/budget.dart';
 import '../library/models.dart';
 import '../library/notifier.dart';
 import '../library/planner.dart';
 import '../player/models.dart';
 import '../settings/models.dart';
 import '../settings/notifier.dart';
-import '../shared/disk_space.dart';
 import '../watching/notifier.dart';
 import 'candidates.dart';
 import 'dismissals.dart';
@@ -69,9 +69,6 @@ class SmartDownloads {
   /// Torrent searches one run may make.
   static const maxAttempts = 6;
 
-  /// Space left on the disk smart downloads won't take.
-  static const minFreeBytes = 5 * 1024 * 1024 * 1024;
-
   final _subscriptions = <ProviderSubscription<Object?>>[];
   final _timers = <Timer>[];
   Timer? _debounce;
@@ -92,6 +89,12 @@ class SmartDownloads {
             if (before?.enabled == true && !now.enabled) _cancel?.cancel();
             _soon(Duration.zero);
           },
+        ),
+      )
+      ..add(
+        _ref.listen<int>(
+          settingsProvider.select((s) => s.downloads.budgetBytes),
+          (_, _) => _soon(settle),
         ),
       )
       ..add(
@@ -193,10 +196,6 @@ class SmartDownloads {
       return _status(SmartStatus.waitingForDownloads);
     }
     if (_settled(settings.target)) return;
-    final free = await freeBytes(_ref.read(downloadsDirectoryProvider));
-    if (free != null && free < minFreeBytes) {
-      return _status(SmartStatus.lowDiskSpace);
-    }
     final history = _ref.read(watchHistoryProvider);
     final series = _ref.read(trackedSeriesProvider);
     if (history.isEmpty && series.isEmpty) {
@@ -235,6 +234,8 @@ class SmartDownloads {
               reason: pick.reason,
               cancel: cancel,
             );
+      } on DownloadBudgetFull {
+        return _status(SmartStatus.overBudget);
       } catch (error) {
         if (cancel.isCancelled) return;
         _log.info('Could not pick ${pick.item}: $error');

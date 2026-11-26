@@ -77,7 +77,8 @@ class SmartTab extends ConsumerWidget {
     SmartStatus.waitingForDownloads => 'Waiting for your own downloads.',
     SmartStatus.offline => 'Waiting for the internet.',
     SmartStatus.waitingForWifi => 'Waiting for Wi-Fi.',
-    SmartStatus.lowDiskSpace => 'Paused: the disk is nearly full.',
+    SmartStatus.overBudget =>
+      'Paused: downloads fill their space. Raise it in Settings › Downloads.',
     SmartStatus.nothingToPick =>
       'Nothing more to pick for now. Watch more for new picks.',
   };

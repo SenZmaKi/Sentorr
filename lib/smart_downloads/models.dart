@@ -21,7 +21,9 @@ enum SmartStatus {
   waitingForDownloads,
   offline,
   waitingForWifi,
-  lowDiskSpace,
+
+  /// Downloads fill their space and nothing watched can make room.
+  overBudget,
 
   /// Everything worth picking is downloaded or has no matching torrent.
   nothingToPick,

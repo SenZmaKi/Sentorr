@@ -138,6 +138,7 @@ class ChoiceField<T> extends StatelessWidget {
 }
 
 const megabyte = 1024 * 1024;
+const gigabyte = 1024 * megabyte;
 
 /// A number with named non-numeric values, e.g. Unlimited or Off: a
 /// dropdown of [presets] plus Custom, and a number field while Custom is

@@ -4,6 +4,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sentorr/app/services.dart';
+import 'package:sentorr/settings/models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentorr/imdb/models.dart';
 import 'package:sentorr/library/notifier.dart';
@@ -91,6 +93,7 @@ void main() {
       overrides: [
         internetProbeProvider.overrideWithValue(() async => false),
         ...syncOverrides(devices: [paired]),
+        initialSettingsProvider.overrideWithValue(const AppSettings()),
         ...libraryOverrides(),
         downloadsDirectoryProvider.overrideWithValue(root.path),
         peersProvider.overrideWith(() => FixedPeers({})),

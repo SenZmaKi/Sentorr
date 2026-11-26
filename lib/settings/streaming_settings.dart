@@ -2,6 +2,7 @@ import 'json.dart';
 import 'playback_preferences.dart';
 
 const _mb = 1024 * 1024;
+const _gb = 1024 * _mb;
 
 /// How streams buffer, and where their torrents are cached.
 class StreamingSettings {
@@ -22,7 +23,7 @@ class StreamingSettings {
     this.metadataTimeoutSeconds = 60,
     this.pieceTimeoutSeconds = 45,
     this.torrentDirectory,
-    this.keepRecentTorrents = 3,
+    this.torrentBudgetBytes = defaultTorrentBudgetBytes,
   });
 
   /// Pause when leaving the app and resume when returning.
@@ -50,7 +51,7 @@ class StreamingSettings {
   /// Show time left instead of elapsed time in the player clock.
   final bool showRemainingTime;
 
-  static const maxKeptTorrents = 20;
+  static const defaultTorrentBudgetBytes = 10 * _gb;
 
   /// Legacy byte setting retained for older settings files. Playback now
   /// uses [downloadAheadMinutes].
@@ -70,9 +71,10 @@ class StreamingSettings {
   /// Where torrents are saved; null uses the app's own folder.
   final String? torrentDirectory;
 
-  /// Recently watched torrents kept on disk, so watching again starts from
-  /// what was downloaded. Zero removes each one when playback ends.
-  final int keepRecentTorrents;
+  /// Space watched torrents may keep on disk, so watching again starts
+  /// from what was downloaded; the least recently watched go first. Zero
+  /// removes each one when playback ends.
+  final int torrentBudgetBytes;
 
   StreamingSettings copyWith({
     bool? pauseOnFocusLoss,
@@ -92,7 +94,7 @@ class StreamingSettings {
     int? pieceTimeoutSeconds,
     String? torrentDirectory,
     bool resetTorrentDirectory = false,
-    int? keepRecentTorrents,
+    int? torrentBudgetBytes,
   }) => StreamingSettings(
     pauseOnFocusLoss: pauseOnFocusLoss ?? this.pauseOnFocusLoss,
     playback: playback ?? this.playback,
@@ -116,7 +118,7 @@ class StreamingSettings {
     torrentDirectory: resetTorrentDirectory
         ? null
         : torrentDirectory ?? this.torrentDirectory,
-    keepRecentTorrents: keepRecentTorrents ?? this.keepRecentTorrents,
+    torrentBudgetBytes: torrentBudgetBytes ?? this.torrentBudgetBytes,
   );
 
   factory StreamingSettings.fromJson(Map<String, dynamic> json) {
@@ -172,10 +174,10 @@ class StreamingSettings {
       torrentDirectory: directory is String && directory.trim().isNotEmpty
           ? directory
           : null,
-      keepRecentTorrents: jsonInt(
-        json['keepRecentTorrents'],
-        d.keepRecentTorrents,
-        max: maxKeptTorrents,
+      torrentBudgetBytes: jsonInt(
+        json['torrentBudgetBytes'],
+        // Keeping no recent torrents, from before budgets, still keeps none.
+        json['keepRecentTorrents'] == 0 ? 0 : d.torrentBudgetBytes,
       ),
     );
   }
@@ -197,6 +199,6 @@ class StreamingSettings {
     'metadataTimeoutSeconds': metadataTimeoutSeconds,
     'pieceTimeoutSeconds': pieceTimeoutSeconds,
     'torrentDirectory': torrentDirectory,
-    'keepRecentTorrents': keepRecentTorrents,
+    'torrentBudgetBytes': torrentBudgetBytes,
   };
 }

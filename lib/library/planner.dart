@@ -23,6 +23,7 @@ import '../torrents/match.dart';
 import '../player/torrent_lookup.dart';
 import '../torrents/resolution_models.dart';
 import '../torrents/providers.dart';
+import 'budget.dart';
 import 'layout.dart';
 import 'models.dart';
 import 'notifier.dart';
@@ -238,7 +239,11 @@ class DownloadPlanner {
         );
         return candidate;
       } catch (error, stack) {
-        if (_cancelled(error) || fallbacks >= maxFallbacks) rethrow;
+        if (_cancelled(error) ||
+            error is DownloadBudgetFull ||
+            fallbacks >= maxFallbacks) {
+          rethrow;
+        }
         _log.warning(
           'Could not queue $item from ${candidate.release.name}',
           error,

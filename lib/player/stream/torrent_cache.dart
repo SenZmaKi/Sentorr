@@ -11,55 +11,105 @@ import '../../shared/persistence/json_file_store.dart';
 import '../../torrents/models.dart';
 import 'reusable_torrent.dart';
 
+part 'torrent_cache_entry.dart';
+
 final _log = Logger('sentorr.player.cache');
 
-/// Keeps the files of recently watched torrents, so watching one again
-/// starts from what was already downloaded. Each lives in a folder named
-/// after its info hash under the torrent folder in use when it was watched;
-/// the least recently watched go first. Only folders it recorded, and
-/// sessions' leftover temporary folders, are ever deleted.
+/// Keeps the files of recently watched torrents within a byte budget, so
+/// watching one again starts from what was already downloaded. Each lives
+/// in a folder named after its info hash under the torrent folder in use
+/// when it was watched; the least recently watched go first. Only folders
+/// it recorded, and sessions' leftover temporary folders, are ever deleted.
 class TorrentCache {
-  TorrentCache(this.index);
+  TorrentCache(this.index, {required this.budget});
 
   /// Prefix the streaming engine gives sessions that keep nothing.
   static const temporaryPrefix = 'torrent-stream-';
 
   final JsonFileStore index;
+
+  /// Bytes kept torrents may take; zero keeps none.
+  final int Function() budget;
   final _changes = StreamController<int>.broadcast();
   var _revision = 0;
   Stream<int> get changes => _changes.stream;
   Future<void> close() => _serial(() => _changes.close());
   Future<void> _tail = Future.value();
 
-  /// Marks [infoHash] watched under [root] and removes kept torrents past
-  /// the newest [keep]. Returns the folder name the session should keep,
-  /// or null when [keep] is zero and nothing is kept.
-  Future<String?> use(String root, String infoHash, {required int keep}) =>
-      _serial(() async {
-        final entries = await _read();
-        final hash = infoHash.toLowerCase();
-        final previous = entries
-            .where((e) => e.hash == hash && e.root == root)
-            .firstOrNull;
-        entries.remove(previous);
-        if (keep > 0) {
-          _pendingDelete.remove(
-            path.normalize(path.absolute(path.join(root, hash))),
-          );
-          entries.insert(
-            0,
-            _Entry(hash, root, DateTime.now(), previous?.items ?? const {}),
-          );
-        }
-        final evicted = entries.skip(keep).toList();
-        entries.removeRange(keep.clamp(0, entries.length), entries.length);
-        for (final e in evicted) {
-          _log.info('Evicting kept torrent ${e.hash} from ${e.root}');
-          await _delete(e.directory);
-        }
-        await _write(entries);
-        return keep > 0 ? hash : null;
-      });
+  /// Marks [infoHash] watched under [root] and removes kept torrents the
+  /// budget no longer fits. Returns the folder name the session should
+  /// keep, or null when the budget is zero and nothing is kept.
+  Future<String?> use(String root, String infoHash) => _serial(() async {
+    final entries = await _read();
+    final hash = infoHash.toLowerCase();
+    final keep = budget() > 0;
+    final previous = entries
+        .where((e) => e.hash == hash && e.root == root)
+        .firstOrNull;
+    entries.remove(previous);
+    if (keep) {
+      _pendingDelete.remove(_key(Directory(path.join(root, hash))));
+      entries.insert(
+        0,
+        _Entry(hash, root, DateTime.now(), previous?.items ?? const {}),
+      );
+    } else if (previous != null) {
+      await _delete(previous.directory);
+    }
+    await _trim(entries, playing: keep ? hash : null);
+    await _write(entries);
+    return keep ? hash : null;
+  });
+
+  /// Removes kept torrents the budget no longer fits, e.g. after it was
+  /// lowered.
+  Future<void> trim() => _serial(() async {
+    final entries = await _read();
+    if (await _trim(entries)) await _write(entries);
+  });
+
+  /// Evicts from [entries], least recently watched first, until what is
+  /// kept fits the budget, and any torrent too big to keep on its own.
+  /// [playing] counts as [reserve] bytes at least, the size of its file,
+  /// so the budget holds while it downloads. It and pinned folders stay
+  /// for now; one too big for the budget goes once released. Returns
+  /// whether any went.
+  Future<bool> _trim(
+    List<_Entry> entries, {
+    String? playing,
+    int reserve = 0,
+  }) async {
+    final limit = budget();
+    bool held(_Entry e) =>
+        e.hash == playing || _pins.containsKey(_key(e.directory));
+    final sizes = <_Entry, int>{};
+    for (final e in entries) {
+      final size = await directorySize(e.directory);
+      sizes[e] = e.hash == playing && reserve > size ? reserve : size;
+    }
+    // Too big to keep on their own: they go whatever else is kept.
+    bool oversized(_Entry e) => sizes[e]! > limit;
+    var total = 0;
+    for (final e in entries) {
+      if (!oversized(e)) total += sizes[e]!;
+    }
+    final evicted = <_Entry>[];
+    for (final e in entries.reversed) {
+      if (held(e)) continue;
+      if (oversized(e)) {
+        evicted.add(e);
+      } else if (total > limit) {
+        evicted.add(e);
+        total -= sizes[e]!;
+      }
+    }
+    for (final e in evicted) {
+      _log.info('Evicting kept torrent ${e.hash} from ${e.root}');
+      entries.remove(e);
+      await _delete(e.directory);
+    }
+    return evicted.isNotEmpty;
+  }
 
   Future<void> remember(
     String itemId,
@@ -83,6 +133,8 @@ class TorrentCache {
       entry.usedAt,
       {...entry.items, itemId: torrent},
     );
+    // The file playing is known now: make room for all of it.
+    await _trim(entries, playing: entry.hash, reserve: torrent.size);
     await _write(entries);
   });
 
@@ -130,7 +182,7 @@ class TorrentCache {
           (entry) => path.equals(entry.directory.path, cached.directory),
         );
         if (!valid || !await Directory(cached.directory).exists()) return null;
-        final key = path.normalize(path.absolute(cached.directory));
+        final key = _key(Directory(cached.directory));
         _pins[key] = (_pins[key] ?? 0) + 1;
         var released = false;
         return () => _serial(() async {
@@ -143,6 +195,9 @@ class TorrentCache {
           }
           _pins.remove(key);
           if (_pendingDelete.remove(key)) await _delete(Directory(key));
+          // Released, a torrent too big for the budget can go.
+          final entries = await _read();
+          if (await _trim(entries)) await _write(entries);
         });
       });
 
@@ -242,8 +297,10 @@ class TorrentCache {
     if (!_changes.isClosed) _changes.add(++_revision);
   }
 
+  static String _key(Directory dir) => path.normalize(path.absolute(dir.path));
+
   Future<void> _delete(Directory dir) async {
-    final key = path.normalize(path.absolute(dir.path));
+    final key = _key(dir);
     if (_pins.containsKey(key)) {
       _pendingDelete.add(key);
       return;
@@ -260,39 +317,4 @@ class TorrentCache {
     _tail = result.then((_) {}, onError: (Object _) {});
     return result;
   }
-}
-
-class _Entry {
-  const _Entry(this.hash, this.root, this.usedAt, this.items);
-  final String hash, root;
-  final DateTime usedAt;
-  final Map<String, ReusableTorrent> items;
-
-  Directory get directory => Directory(path.join(root, hash));
-
-  static _Entry? fromJson(Object? json) {
-    if (json is! Map<String, dynamic>) return null;
-    final hash = json['hash'], root = json['root'];
-    final at = DateTime.tryParse(json['usedAt'] as String? ?? '');
-    if (hash is! String || root is! String || at == null) return null;
-    // Only plain hash names, so a bad index can never point at other files.
-    if (!RegExp(r'^([0-9a-f]{40}|[0-9a-f]{64})$').hasMatch(hash)) return null;
-    final items = json['items'];
-    return _Entry(hash, root, at, {
-      if (items is Map<String, dynamic>)
-        for (final entry in items.entries)
-          if (ReusableTorrent.fromJson(entry.value, itemId: entry.key)
-              case final torrent?)
-            if (torrent.release.infoHash.toLowerCase() == hash)
-              entry.key: torrent,
-    });
-  }
-
-  Map<String, dynamic> toJson() => {
-    'hash': hash,
-    'root': root,
-    'usedAt': usedAt.toUtc().toIso8601String(),
-    if (items.isNotEmpty)
-      'items': items.map((id, torrent) => MapEntry(id, torrent.toJson())),
-  };
 }

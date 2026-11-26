@@ -248,6 +248,7 @@ class LibraryIntegrity {
             addedAt: entry.addedAt,
             origin: entry.origin,
             reason: entry.reason,
+            bytes: entry.bytes,
           ),
         );
   }

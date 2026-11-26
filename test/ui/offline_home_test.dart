@@ -18,7 +18,6 @@ import 'package:sentorr/ui/pages/home/list_shelf.dart';
 import 'package:sentorr/player/models.dart';
 import 'package:sentorr/settings/models.dart';
 import 'package:sentorr/shared/net/online.dart';
-import 'package:sentorr/ui/components/app_shell.dart';
 import 'package:sentorr/ui/components/load_error.dart';
 import 'package:sentorr/ui/pages/home/home_page.dart';
 import 'package:sentorr/ui/shared/theme/theme.dart';

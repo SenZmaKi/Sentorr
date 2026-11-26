@@ -9,7 +9,7 @@ void main() {
       for (final seconds in [1, 12, 60]) {
         final settings = const StreamingSettings()
             .copyWith(playbackResumeBufferSeconds: seconds)
-            .copyWith(keepRecentTorrents: 4);
+            .copyWith(torrentBudgetBytes: 4096);
         expect(
           StreamingSettings.fromJson(settings.toJson())
               .playbackResumeBufferSeconds,
@@ -58,7 +58,7 @@ void main() {
     final restored = StreamingSettings.fromJson(
       const StreamingSettings()
           .copyWith(showRemainingTime: true)
-          .copyWith(keepRecentTorrents: 4)
+          .copyWith(torrentBudgetBytes: 4096)
           .toJson(),
     );
     expect(restored.showRemainingTime, isTrue);
@@ -68,7 +68,7 @@ void main() {
     for (final seconds in [0, 17]) {
       final saved = const StreamingSettings()
           .copyWith(resumeRewindSeconds: seconds)
-          .copyWith(keepRecentTorrents: 4);
+          .copyWith(torrentBudgetBytes: 4096);
       final restored = StreamingSettings.fromJson(saved.toJson());
       expect(restored.resumeRewindSeconds, seconds);
       expect(
@@ -90,7 +90,7 @@ void main() {
     expect(AppSettings.fromJson({}).streaming.captionsEnabled, isFalse);
     final settings = const StreamingSettings()
         .copyWith(captionsEnabled: true)
-        .copyWith(keepRecentTorrents: 4);
+        .copyWith(torrentBudgetBytes: 4096);
     final restored = AppSettings.fromJson(
       AppSettings(streaming: settings).toJson(),
     );
@@ -125,7 +125,7 @@ void main() {
     expect(defaults.limitDownloadAhead, true);
     final changed = defaults
         .copyWith(downloadAheadMinutes: 17, limitDownloadAhead: false)
-        .copyWith(keepRecentTorrents: 4);
+        .copyWith(torrentBudgetBytes: 4096);
     final restored = StreamingSettings.fromJson(changed.toJson());
     expect(restored.downloadAheadMinutes, 17);
     expect(restored.limitDownloadAhead, false);
@@ -147,11 +147,22 @@ void main() {
   test('disabling focus pausing survives saving and other edits', () {
     final settings = const StreamingSettings()
         .copyWith(pauseOnFocusLoss: false)
-        .copyWith(keepRecentTorrents: 4);
+        .copyWith(torrentBudgetBytes: 4096);
     final restored = AppSettings.fromJson(
       AppSettings(streaming: settings).toJson(),
     );
     expect(restored.streaming.pauseOnFocusLoss, isFalse);
-    expect(restored.streaming.keepRecentTorrents, 4);
+    expect(restored.streaming.torrentBudgetBytes, 4096);
+  });
+
+  test('keeping no recent torrents carries over as a zero budget', () {
+    expect(
+      StreamingSettings.fromJson({'keepRecentTorrents': 0}).torrentBudgetBytes,
+      0,
+    );
+    expect(
+      StreamingSettings.fromJson({'keepRecentTorrents': 3}).torrentBudgetBytes,
+      StreamingSettings.defaultTorrentBudgetBytes,
+    );
   });
 }

@@ -385,14 +385,14 @@ void main() {
       const AppSettings(
         torrents: TorrentSettings(autoActionDelaySeconds: 9, minimumSeeders: 5),
         sources: SourceSettings(disabled: {TorrentSourceId.bitsearch}),
-        streaming: StreamingSettings(keepRecentTorrents: 0),
+        streaming: StreamingSettings(torrentBudgetBytes: 0),
         network: NetworkSettings(utp: false),
       ).toJson(),
     );
     expect(settings.torrents.autoActionDelaySeconds, 9);
     expect(settings.torrents.minimumSeeders, 5);
     expect(settings.sources.enabled(TorrentSourceId.bitsearch), isFalse);
-    expect(settings.streaming.keepRecentTorrents, 0);
+    expect(settings.streaming.torrentBudgetBytes, 0);
     expect(settings.network.utp, isFalse);
     final bad = AppSettings.fromJson({
       'torrents': {'autoActionDelaySeconds': 999},

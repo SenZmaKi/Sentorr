@@ -120,7 +120,7 @@ jobs:
   build-macos:
     name: Build universal macOS app
     needs: prepare
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 90
     env:
       VERSION: ${{ needs.prepare.outputs.version }}

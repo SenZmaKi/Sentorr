@@ -140,6 +140,7 @@ void main() {
                 'title': {
                   'id': 'tt0133093',
                   'titleText': {'text': 'The Matrix'},
+                  'titleType': {'id': 'movie'},
                 },
               },
             },

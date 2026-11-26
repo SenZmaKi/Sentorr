@@ -30,6 +30,14 @@ at least 1280 pixels wide. It is not a designated backdrop or a spoiler-safe
 asset. Movies have an empty season list and nullable episode count. Missing
 metadata remains nullable, not a fabricated zero or inferred ongoing state.
 
+The IMDb layer only returns known watchable title types: movies, shorts,
+TV movies/shorts/specials, series/miniseries/episodes, videos and music videos.
+Trending, search, autocomplete and recommendations (including detail previews)
+drop games, podcasts and missing or unknown types. Direct details for those
+titles fail with `ImdbException`. Search retains its narrower discovery filters.
+Filtered pages may be shorter or empty; cursors and totals remain IMDb's
+upstream values so callers can still traverse subsequent pages.
+
 Detail requests fetch bounded preview collections together. Later pages remain
 separate operations. `ImdbPage` exposes immutable items, nextCursor and optional
 total. Keep cursors tied to their filters/sort. The application caps page requests

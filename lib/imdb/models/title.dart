@@ -1,5 +1,19 @@
 import 'common.dart';
 
+/// Audiovisual title types supported by Sentorr. Unknown types fail closed.
+const imdbWatchableTypeIds = {
+  'movie',
+  'short',
+  'tvMovie',
+  'tvShort',
+  'tvSpecial',
+  'tvSeries',
+  'tvMiniSeries',
+  'tvEpisode',
+  'video',
+  'musicVideo',
+};
+
 class ImdbTitle {
   ImdbTitle({
     required this.id,
@@ -24,6 +38,7 @@ class ImdbTitle {
   final int? endYear;
   final String? type;
   final String? typeId;
+  bool get isWatchable => imdbWatchableTypeIds.contains(typeId);
   final bool? canHaveEpisodes;
   final double? rating;
   final int? voteCount;

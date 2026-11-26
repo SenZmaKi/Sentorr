@@ -63,7 +63,7 @@ class ImdbRepository {
       cancelToken: cancelToken,
       refresh: refresh,
     );
-    return _parse(() => map.page(data['topMeterTitles'], map.title).items);
+    return _parse(() => map.titlePage(data['topMeterTitles']).items);
   }
 
   Future<ImdbPage<ImdbTitle>> searchTitles(
@@ -88,10 +88,7 @@ class ImdbRepository {
       cancelToken: cancelToken,
     );
     return _parse(
-      () => map.page(
-        data['advancedTitleSearch'],
-        (node) => map.title(map.object(node['title'])!),
-      ),
+      () => map.titlePage(data['advancedTitleSearch'], nested: true),
     );
   }
 
@@ -212,9 +209,7 @@ class ImdbRepository {
       refresh: refresh,
       cancelToken: cancelToken,
     );
-    return _parse(
-      () => map.page(_title(data, id)['moreLikeThisTitles'], map.title),
-    );
+    return _parse(() => map.titlePage(_title(data, id)['moreLikeThisTitles']));
   }
 
   Future<ImdbPage<ImdbImage>> getImages(
@@ -262,6 +257,7 @@ class ImdbRepository {
           .array(json['d'])
           .cast<map.Json>()
           .where((j) => RegExp(r'^tt\d+$').hasMatch(j['id'] as String))
+          .where((j) => imdbWatchableTypeIds.contains(j['qid']))
           .map(
             (j) => ImdbTitle(
               id: j['id'] as String,

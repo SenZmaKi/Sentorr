@@ -70,6 +70,19 @@ ImdbPage<T> page<T>(Object? value, T Function(Json) parse) {
   );
 }
 
+/// Keep IMDb's cursor and total: filtering must not change page traversal.
+ImdbPage<ImdbTitle> titlePage(Object? value, {bool nested = false}) {
+  final result = page(
+    value,
+    (node) => title(nested ? object(node['title'])! : node),
+  );
+  return ImdbPage(
+    items: result.items.where((title) => title.isWatchable).toList(),
+    nextCursor: result.nextCursor,
+    total: result.total,
+  );
+}
+
 ImdbCredit credit(Json j, {Json? category}) {
   final person = object(j['name'])!;
   final role = category ?? object(j['category'])!;
@@ -115,14 +128,20 @@ ImdbReview review(Json j) {
 }
 
 ImdbTitleDetails details(Json j) {
+  final summary = title(j);
+  if (!summary.isWatchable) {
+    throw ImdbException(
+      'Title ${summary.id} is not a supported watchable title.',
+    );
+  }
   final episodes = object(j['episodes']);
   return ImdbTitleDetails(
-    title: title(j),
+    title: summary,
     originalTitle: object(j['originalTitleText'])?['text'] as String?,
     releaseDate: date(j['releaseDate']),
     certificate: object(j['certificate'])?['rating'] as String?,
     credits: page(j['credits'], credit),
-    recommendations: page(j['moreLikeThisTitles'], title),
+    recommendations: titlePage(j['moreLikeThisTitles']),
     images: page(j['images'], (j) => image(j)!),
     principalCredits: array(j['principalCredits']).expand((group) {
       final g = object(group)!;

@@ -41,7 +41,7 @@ class AppImageCache {
         stalePeriod: const Duration(days: 30),
         maxNrOfCacheObjects: 1 << 30,
         fileService: simulateOffline
-            ? SimulatedOfflineFileService()
+            ? _SimulatedOfflineFileService()
             : HttpFileService(),
         repo: _SizeLimitedCacheInfoRepository(
           delegate: JsonCacheInfoRepository(
@@ -235,4 +235,11 @@ class _AbsoluteCacheFileSystem implements FileSystem {
     await directory.create(recursive: true);
     return directory.childFile(path.basename(name));
   }
+}
+
+/// Artwork downloads fail, leaving only what is already on disk.
+class _SimulatedOfflineFileService extends FileService {
+  @override
+  Future<FileServiceResponse> get(String url, {Map<String, String>? headers}) =>
+      Future.error(simulatedOfflineError);
 }
